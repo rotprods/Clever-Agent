@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "goal_id": "CLEVER-JARVIS-001",
+  "checkpoints": [
+    {"id":"CP00","name":"Canonical bootstrap","status":"COMPLETE","exit":"Goal, agents contract, architecture, security, upstream ledger, parity method and durable state exist in Git."},
+    {"id":"CP01","name":"Forensic upstream inventory","status":"IN_PROGRESS","depends_on":["CP00"],"exit":"All four pinned source trees are cloned/indexed; generated capability ledger and runtime/test inventory exist; upstream baselines run."},
+    {"id":"CP02","name":"Canonical contracts and Rust kernel scaffold","status":"PENDING","depends_on":["CP01"],"exit":"Versioned schemas compile for Rust/Python/TypeScript/Swift; kernel identity/event/capability/policy skeleton passes contract tests."},
+    {"id":"CP03","name":"OpenJarvis cognitive adapter","status":"PENDING","depends_on":["CP02"],"exit":"OpenJarvis engine/agent/memory/trace/learning/tool/scheduler/security capabilities are mapped and parity-tested through canonical contracts."},
+    {"id":"CP04","name":"OpenClaw gateway adapter","status":"PENDING","depends_on":["CP02"],"exit":"Gateway/channels/sessions/nodes/providers/media/tools/skills/plugins/automation capabilities are mapped and parity-tested."},
+    {"id":"CP05","name":"Omi perception and episodic adapter","status":"PENDING","depends_on":["CP02"],"exit":"Capture/STT/diarization/conversation/memory/mobile/wearable/SDK/app surfaces are mapped and parity-tested."},
+    {"id":"CP06","name":"Clicky macOS embodiment","status":"PENDING","depends_on":["CP02"],"exit":"PTT/screen/TTS/STT/overlay/pointing/multi-monitor behaviors operate through kernel identity/session contracts with parity tests."},
+    {"id":"CP07","name":"Unified identity, events and memory","status":"PENDING","depends_on":["CP03","CP04","CP05","CP06"],"exit":"Cross-runtime identity/event flow and canonical memory semantics replace duplicated state without parity regression."},
+    {"id":"CP08","name":"Unified policy and action plane","status":"PENDING","depends_on":["CP07"],"exit":"All side effects flow through risk classification, authorization, idempotency, verification and audit; adversarial tests pass."},
+    {"id":"CP09","name":"Cross-device and multichannel continuity","status":"PENDING","depends_on":["CP08"],"exit":"Goals/sessions can hand off among desktop, supported mobile/wearable nodes and messaging channels without state fragmentation."},
+    {"id":"CP10","name":"Learning and proactive autonomy","status":"PENDING","depends_on":["CP09"],"exit":"Trace-driven routing/skill/prompt improvement and proactive goal execution operate behind evaluation/security promotion gates."},
+    {"id":"CP11","name":"100 percent capability parity and upstream sync","status":"PENDING","depends_on":["CP10"],"exit":"Generated parity report is 100% VERIFIED or every exclusion has explicit waiver; upstream drift detector is operational."},
+    {"id":"CP12","name":"Production hardening and release","status":"PENDING","depends_on":["CP11"],"exit":"E2E, security, recovery, offline/degradation, performance, packaging, SBOM and release evidence pass on supported hardware."}
+  ]
+}
