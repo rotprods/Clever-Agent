@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rotprods.dev/schemas/capability.schema.json",
+  "title": "Clever-Agent CP01 Capability",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "capability_id", "source_surface_id", "source_repo", "source_commit",
+    "family", "surface_kind", "name", "runtime_owner", "interface", "source_path", "source_line",
+    "evidence_strength", "promotion_status", "parity_status", "equivalence_status",
+    "contract_fingerprint", "equivalence_candidate_key", "status"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "capability_id": {"type": "string", "pattern": "^cap_[0-9a-f]{24}$"},
+    "source_surface_id": {"type": "string", "pattern": "^surf_[0-9a-f]{24}$"},
+    "source_repo": {"enum": ["openjarvis", "openclaw", "omi", "clicky"]},
+    "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "family": {"type": "string", "minLength": 1},
+    "surface_kind": {"type": "string", "minLength": 1},
+    "name": {"type": "string", "minLength": 1},
+    "runtime_owner": {"type": "string", "minLength": 1},
+    "interface": {"type": "object"},
+    "source_path": {"type": "string", "minLength": 1},
+    "source_line": {"type": "integer", "minimum": 1},
+    "evidence_strength": {"enum": ["DEFINITION", "REGISTRATION", "ROUTE_OR_PROTOCOL", "BEHAVIOR_TEST"]},
+    "promotion_status": {"enum": ["DISCOVERED_CANDIDATE", "BEHAVIOR_MAPPED"]},
+    "parity_status": {"const": "UNVERIFIED"},
+    "equivalence_status": {"const": "UNPROVEN"},
+    "contract_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "equivalence_candidate_key": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "status": {"const": "IN_SCOPE"}
+  }
+}
