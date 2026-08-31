@@ -31,20 +31,51 @@ LANGUAGE_BY_SUFFIX = {
     ".cpp": "cpp",
     ".cxx": "cpp",
     ".hpp": "cpp",
+    ".m": "objective-c",
+    ".mm": "objective-cpp",
     ".kt": "kotlin",
     ".java": "java",
     ".go": "go",
     ".sh": "shell",
+    ".proto": "protobuf",
+    ".sql": "sql",
+    ".graphql": "graphql",
+    ".gql": "graphql",
+    ".vue": "vue",
+    ".svelte": "svelte",
+    ".html": "html",
+    ".css": "css",
+    ".scss": "scss",
+    ".metal": "metal",
+    ".toml": "config",
+    ".yaml": "config",
+    ".yml": "config",
+    ".json": "config",
 }
 MANIFEST_NAMES = {
     "package.json",
     "pyproject.toml",
-    "requirements.txt",
     "Cargo.toml",
     "pubspec.yaml",
     "Package.swift",
+    "Package.resolved",
     "go.mod",
+    "go.sum",
     "pnpm-workspace.yaml",
+    "wrangler.toml",
+    "Podfile",
+    "Podfile.lock",
+    "build.gradle",
+    "build.gradle.kts",
+    "settings.gradle",
+    "settings.gradle.kts",
+    "gradle.properties",
+    "CMakeLists.txt",
+    "west.yml",
+    "platformio.ini",
+    "Makefile",
+    "Gemfile",
+    "Gemfile.lock",
 }
 SKIP_DIRS = {
     ".git",
@@ -59,6 +90,17 @@ SKIP_DIRS = {
     "DerivedData",
     "__pycache__",
 }
+
+
+def _is_manifest(path: Path) -> bool:
+    name = path.name
+    return (
+        name in MANIFEST_NAMES
+        or name.startswith("requirements") and name.endswith(".txt")
+        or name.startswith("Dockerfile")
+        or name.startswith("docker-compose") and path.suffix in {".yml", ".yaml"}
+        or path.as_posix().endswith(".xcodeproj/project.pbxproj")
+    )
 
 
 def _read_text(path: Path) -> str | None:
@@ -76,8 +118,12 @@ def _iter_files(root: Path) -> Iterable[Path]:
             continue
         if any(part in SKIP_DIRS for part in path.relative_to(root).parts):
             continue
-        if path.suffix.lower() in LANGUAGE_BY_SUFFIX or path.name in MANIFEST_NAMES:
+        if path.suffix.lower() in LANGUAGE_BY_SUFFIX or _is_manifest(path):
             yield path
+
+
+def _python_dependency_name(item: str) -> str:
+    return re.split(r"[<>=!~;\s\[]", item, 1)[0]
 
 
 def _manifest_dependencies(path: Path, text: str) -> list[str]:
@@ -88,31 +134,51 @@ def _manifest_dependencies(path: Path, text: str) -> list[str]:
             for key in ("dependencies", "devDependencies", "peerDependencies", "optionalDependencies"):
                 deps.update((data.get(key) or {}).keys())
             return sorted(deps)
-        if path.name in {"pyproject.toml", "Cargo.toml"}:
+        if path.name == "pyproject.toml":
             data = tomllib.loads(text)
-            if path.name == "pyproject.toml":
-                project = data.get("project") or {}
-                raw = project.get("dependencies") or []
-                return sorted({re.split(r"[<>=!~;\s\[]", item, 1)[0] for item in raw if item})
-            deps = data.get("dependencies") or {}
-            return sorted(deps.keys())
-        if path.name == "requirements.txt":
+            project = data.get("project") or {}
+            deps = {_python_dependency_name(item) for item in project.get("dependencies") or [] if item}
+            for values in (project.get("optional-dependencies") or {}).values():
+                deps.update(_python_dependency_name(item) for item in values if item)
+            return sorted(value for value in deps if value)
+        if path.name == "Cargo.toml":
+            data = tomllib.loads(text)
+            deps: set[str] = set()
+            for key in ("dependencies", "dev-dependencies", "build-dependencies"):
+                section = data.get(key) or {}
+                if isinstance(section, dict):
+                    deps.update(section.keys())
+            return sorted(deps)
+        if path.name.startswith("requirements") and path.name.endswith(".txt"):
             deps = set()
             for raw in text.splitlines():
                 line = raw.strip()
                 if not line or line.startswith("#") or line.startswith("-"):
                     continue
-                deps.add(re.split(r"[<>=!~;\s\[]", line, 1)[0])
-            return sorted(value for value in deps if value)
+                name = _python_dependency_name(line)
+                if name:
+                    deps.add(name)
+            return sorted(deps)
         if path.name == "go.mod":
-            deps = []
+            deps: set[str] = set()
+            in_require = False
             for raw in text.splitlines():
                 line = raw.strip()
+                if line == "require (":
+                    in_require = True
+                    continue
+                if in_require and line == ")":
+                    in_require = False
+                    continue
                 if line.startswith("require "):
                     fields = line.split()
                     if len(fields) >= 2:
-                        deps.append(fields[1])
-            return sorted(set(deps))
+                        deps.add(fields[1])
+                elif in_require and line and not line.startswith("//"):
+                    fields = line.split()
+                    if fields:
+                        deps.add(fields[0])
+            return sorted(deps)
         if path.name == "pubspec.yaml":
             deps: set[str] = set()
             in_deps = False
@@ -156,7 +222,7 @@ def graphify_repository(root: str | Path, repo_id: str, source_commit: str) -> R
         language = LANGUAGE_BY_SUFFIX.get(path.suffix.lower(), "manifest")
         language_counts[language] = language_counts.get(language, 0) + 1
         digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
-        file_kind = "manifest" if path.name in MANIFEST_NAMES else "file"
+        file_kind = "manifest" if _is_manifest(path) else "file"
         file_node = Node(
             id=stable_id("file", repo_id, source_commit, rel),
             kind=file_kind,
@@ -172,9 +238,6 @@ def graphify_repository(root: str | Path, repo_id: str, source_commit: str) -> R
 
         if file_kind == "manifest":
             for dependency in _manifest_dependencies(path, text):
-                # A dependency is canonical per pinned repository snapshot, not
-                # per manifest. Multiple workspace manifests may point at the
-                # same dependency node through independent `requires` edges.
                 dep_node = Node(
                     id=stable_id("dependency", repo_id, source_commit, dependency),
                     kind="dependency",

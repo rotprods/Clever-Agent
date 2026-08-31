@@ -2,13 +2,31 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 
 from scripts.cosgraph.engine import build_cos_hypergraph
 from scripts.graphify.engine import graphify_repository
 from scripts.graphify.model import Node, RepositoryGraph, stable_id
-from scripts.upstream.ledger import load_upstream_pins
+from scripts.upstream.ledger import UpstreamPin, load_upstream_pins
+from scripts.upstream.source_projection import materialize_pin
+from scripts.upstream.sync_upstreams import acquire, pin_ref
+from scripts.upstream.verify_pins import verify
+
+
+def _git(repository: Path, *args: str) -> str:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=repository,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr)
+    return result.stdout.strip()
 
 
 class LedgerTests(unittest.TestCase):
@@ -29,6 +47,85 @@ class LedgerTests(unittest.TestCase):
             )
             pins = load_upstream_pins(path)
             self.assertEqual(pins[0].pinned_commit, "a" * 40)
+
+
+class AcquisitionTests(unittest.TestCase):
+    def _source_repo(self, root: Path) -> tuple[Path, str]:
+        source = root / "source"
+        source.mkdir()
+        _git(source, "init", "--quiet")
+        _git(source, "config", "user.email", "test@example.invalid")
+        _git(source, "config", "user.name", "Graphify Test")
+        (source / "hello.py").write_text("def hello():\n    return 'world'\n", encoding="utf-8")
+        (source / "package.json").write_text(json.dumps({"dependencies": {"alpha": "1"}}), encoding="utf-8")
+        (source / "asset.bin").write_bytes(b"binary-asset-that-must-not-materialize")
+        _git(source, "add", ".")
+        _git(source, "commit", "--quiet", "-m", "fixture")
+        return source, _git(source, "rev-parse", "HEAD")
+
+    def test_object_store_is_exact_retryable_and_sparse_projection_excludes_binary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source, commit = self._source_repo(root)
+            pin = UpstreamPin("fixture", "local/fixture", source.as_posix(), "master", commit, "MIT", "test", "adapter")
+            cache = root / "cache"
+            first = acquire(pin, cache)
+            second = acquire(pin, cache)
+            repository = cache / pin.id
+            self.assertEqual(first["actual_commit"], commit)
+            self.assertEqual(second["actual_commit"], commit)
+            self.assertEqual(_git(repository, "rev-parse", pin_ref(pin)), commit)
+            self.assertFalse((repository / "hello.py").exists())
+
+            projection = materialize_pin(pin, cache)
+            self.assertEqual(projection["worktree_head"], commit)
+            self.assertTrue((repository / "hello.py").exists())
+            self.assertTrue((repository / "package.json").exists())
+            self.assertFalse((repository / "asset.bin").exists())
+
+    def test_wrong_sha_and_unreachable_remote_fail_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source, _ = self._source_repo(root)
+            wrong = UpstreamPin("wrong", "local/wrong", source.as_posix(), "master", "0" * 40, "MIT", "test", "adapter")
+            with self.assertRaises(RuntimeError):
+                acquire(wrong, root / "wrong-cache")
+            unreachable = UpstreamPin(
+                "offline",
+                "local/offline",
+                (root / "does-not-exist").as_posix(),
+                "master",
+                "1" * 40,
+                "MIT",
+                "test",
+                "adapter",
+            )
+            with self.assertRaises(RuntimeError):
+                acquire(unreachable, root / "offline-cache")
+
+    def test_verifier_uses_immutable_pin_ref_not_floating_head(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source, commit = self._source_repo(root)
+            pin = UpstreamPin("fixture", "local/fixture", source.as_posix(), "master", commit, "MIT", "test", "adapter")
+            cache = root / "cache"
+            acquire(pin, cache)
+            ledger = root / "ledger.yaml"
+            ledger.write_text(
+                "version: 1\nsources:\n"
+                "  - id: fixture\n"
+                "    repository: local/fixture\n"
+                f"    url: {source.as_posix()}\n"
+                "    branch: master\n"
+                f"    pinned_commit: {commit}\n"
+                "    license: MIT\n"
+                "    role: test\n"
+                "    integration: adapter\n",
+                encoding="utf-8",
+            )
+            payload = verify(ledger, cache)
+            self.assertEqual(payload["sources"][0]["status"], "VERIFIED")
+            self.assertEqual(payload["sources"][0]["actual_commit"], commit)
 
 
 class GraphifyTests(unittest.TestCase):
