@@ -2,6 +2,19 @@
 
 `Clever-Agent` is the control plane for a real, local-first, multimodal personal AI system that unifies the capabilities of four upstream projects while preserving their strongest native runtimes.
 
+## Start here
+
+For any repository-capable coding agent:
+
+1. Read `AGENTS.md`.
+2. Execute `/empezarproyecto` using `commands/EMPEZARPROYECTO.md`.
+3. Run `python scripts/validate_agentic_state.py`.
+4. Resolve the active iteration and claim the next wave before material changes.
+
+Claude Code exposes `/empezarproyecto` as a project skill at `.claude/skills/empezarproyecto/SKILL.md`. Codex uses `AGENTS.md` as the native persistent project-instruction surface. Tool-specific details live in `DEVELOPMENT_AGENTIC.md`.
+
+Current durable frontier is in `STATE.md`; never rely on this README remaining current.
+
 ## Upstream foundations
 
 - **OpenJarvis** — local intelligence, model/engine routing, agents, memory, traces, learning, evaluation, security and scheduling.
@@ -27,19 +40,21 @@ The target remains polyglot on purpose:
 - **C/C++ / Zephyr** — wearable and embedded hardware.
 - **Protobuf + versioned JSON Schema** — cross-runtime contracts.
 
-## Canonical control files
+## Canonical project-control files
 
-- `GOAL.md` — mission, invariants, non-goals and definition of done.
-- `AGENTS.md` — repository execution contract for coding agents.
-- `AUTOPROMPT.md` — autonomous execution metaprompt.
-- `ARCHITECTURE.md` — target system architecture and runtime boundaries.
-- `CAPABILITY_PARITY.md` — parity methodology and seeded capability map.
-- `SECURITY_MODEL.md` — trust zones, permissions and action-risk policy.
+- `GOAL.md` — stable mission, invariants and Definition of Done.
+- `AGENTS.md` — authoritative multi-agent execution contract.
+- `STATE.md` — human-readable live frontier.
+- `CHECKPOINTS.md` + `CHECKPOINT_REGISTRY.json` — human/machine gates.
+- `HANDOFF.md` — exact continuation state.
+- `PROTOCOLS.md` — waves, claims, reconciliation, gauntlet and persistence.
+- `AUTOPROMPT.md` — master iteration dispatcher.
+- `iterations/<id>/METAPROMPT.md` — executable iteration prompt.
+- `DEVELOPMENT_AGENTIC.md` — Codex/Claude/ChatGPT operating topology.
+- `.agentic/CONFIG.yaml` — machine-oriented development configuration.
 - `UPSTREAM_LEDGER.yaml` — pinned upstream snapshots and provenance.
-- `CHECKPOINT_REGISTRY.json` — canonical implementation gates.
-- `GOAL_STATE.json` / `EXECUTION_STATE.json` — durable current state.
-- `ROADMAP.md` — implementation sequence.
+- `ledgers/` + `evidence/` — append-only operational truth and proof.
 
-## Status
+## Current development model
 
-Bootstrap specification only. No upstream code is considered integrated yet.
+**No wave, no production.** Every material change has a wave, claim, acceptance criteria, tests/evidence and handoff. Chat is a temporary interaction surface, not project memory.

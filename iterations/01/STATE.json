@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "iteration_id": "I01",
+  "goal_id": "CLEVER-JARVIS-001",
+  "checkpoint_id": "CP01",
+  "name": "Forensic Capability Compiler",
+  "status": "IN_PROGRESS",
+  "completed_subcheckpoints": ["I01.0"],
+  "active_subcheckpoint": "I01.1",
+  "next_wave": "I01-W01",
+  "next_wave_name": "Reproducible upstream acquisition",
+  "blocking_issues": [],
+  "parity_denominator_status": "NOT_GENERATED",
+  "last_updated_date": "2026-08-31"
+}

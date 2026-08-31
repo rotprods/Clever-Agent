@@ -4,6 +4,12 @@
 **Repository:** `rotprods/Clever-Agent`  
 **Goal class:** multi-runtime personal AI platform / agentic operating system
 
+## Goal authority and mutation policy
+
+This file is the stable mission contract. Runtime progress, active waves and handoffs belong in `STATE.md`, state JSON, iteration files and ledgers — not by rewriting the goal to match current implementation.
+
+Changing the mission, hard invariants, parity denominator policy or global Definition of Done requires an explicit architecture/decision record and operator approval. Narrow implementation choices do not.
+
 ## Mission
 
 Build a production-grade **real JARVIS**: one coherent personal AI that can perceive, remember, reason, learn, communicate and act across the user's devices and channels while remaining local-first, user-owned, auditable and safe.
@@ -74,6 +80,9 @@ The system preserves mature upstream runtimes. Rewrites require measured benefit
 ### I-14 — Security cannot be optimized away
 Learning, self-modification, prompt optimization and routing may not weaken permission gates, auditability, privacy policy or sandbox boundaries.
 
+### I-15 — Durable multi-agent continuity
+Project continuity must survive loss of an individual agent/chat. Every material change belongs to a wave and is persisted through repository state, ledgers, evidence and handoff before the responsible session exits.
+
 ## Explicit non-goals
 
 - Claiming AGI, consciousness or human-equivalent cognition.
@@ -83,6 +92,7 @@ Learning, self-modification, prompt optimization and routing may not weaken perm
 - Treating raw chat history as a durable state database.
 - Giving third-party plugins unrestricted host access.
 - Replacing upstream implementations before parity baselines exist.
+- Building final kernel interfaces from an incomplete upstream inventory.
 
 ## Definition of Done
 
@@ -105,6 +115,7 @@ The goal is complete only when all of the following are true:
 15. **Parity:** generated report shows 100% of in-scope capabilities VERIFIED, or an explicit user-approved waiver exists for each excluded capability.
 16. **Upstream sync:** automated drift detection compares pinned upstreams to newer commits and opens a structured parity delta.
 17. **Release evidence:** end-to-end scenarios, performance baselines, recovery tests and release manifest are reproducible on supported hardware.
+18. **Agentic continuity:** a fresh repository-capable agent can execute `/empezarproyecto`, recover the exact active frontier from durable state and continue without relying on the originating chat.
 
 ## Required end-to-end acceptance scenarios
 
@@ -118,6 +129,7 @@ The goal is complete only when all of the following are true:
 - **Device trust:** new node pairs explicitly; unpaired remote device cannot issue privileged commands.
 - **Prompt-injection resistance:** malicious channel/web/document content cannot elevate permissions or exfiltrate protected secrets.
 - **Upstream parity regression:** remove/disable a mapped capability in a test branch → parity gate fails.
+- **Agent death/restart:** terminate an active agent after a persisted interaction → a new agent recovers checkpoint, wave, evidence and exact next action with no more than one interaction of loss.
 
 ## Success criterion
 
