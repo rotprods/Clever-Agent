@@ -1,0 +1,21 @@
+{
+  "$id": "https://rotprods.dev/schemas/cos20d_decision_graph.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "decisions": {"items": {"required": ["id", "source_component_id", "proposed_decision", "status", "confidence", "promotion_status", "dimensions", "rewrite_allowed", "migration_authorized", "required_promotions"], "type": "object"}, "type": "array"},
+    "dimension_model": {"const": "COS-20D-v2"},
+    "dimension_registry": {"maxItems": 20, "minItems": 20, "type": "array"},
+    "engine_version": {"const": "COS-GRAPH-ENGINE-V2"},
+    "graph_type": {"const": "cos20d_decision_graph"},
+    "invariants": {"type": "object"},
+    "relations": {"type": "array"},
+    "schema_version": {"const": 1},
+    "source_cos_model": {},
+    "source_graphs": {"type": "array"},
+    "summary": {"type": "object"}
+  },
+  "required": ["schema_version", "graph_type", "engine_version", "dimension_model", "dimension_registry", "invariants", "summary", "decisions", "relations"],
+  "title": "Clever-Agent COS20D Decision Graph",
+  "type": "object"
+}

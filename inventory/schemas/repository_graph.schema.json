@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rotprods.dev/schemas/repository_graph.schema.json",
+  "title": "Clever-Agent Repository Graph",
+  "type": "object",
+  "required": ["schema_version", "graph_type", "repo_id", "source_commit", "nodes", "edges"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "graph_type": {"const": "repository_graph"},
+    "repo_id": {"type": "string", "minLength": 1},
+    "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "metadata": {"type": "object"},
+    "nodes": {"type": "array", "items": {"type": "object", "required": ["id", "kind", "name", "source_repo", "source_commit"]}},
+    "edges": {"type": "array", "items": {"type": "object", "required": ["id", "relation", "source", "target"]}}
+  },
+  "additionalProperties": false
+}

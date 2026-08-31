@@ -1,0 +1,18 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://rotprods.dev/schemas/next_actions.schema.json",
+  "title":"Clever-Agent executable next actions",
+  "type":"object",
+  "required":["schema_version","project_id","checkpoint","iteration","frontier_wave","first_executable_task","tasks"],
+  "properties":{
+    "schema_version":{"const":1},
+    "project_id":{"type":"string"},
+    "checkpoint":{"type":"string"},
+    "iteration":{"type":"string"},
+    "frontier_wave":{"type":"string"},
+    "first_executable_task":{"type":"string"},
+    "status_model":{"type":"array","items":{"type":"string"}},
+    "tasks":{"type":"array","items":{"type":"object","required":["id","priority","wave","status","depends_on","owner_role","objective","outputs","gates"],"properties":{"id":{"type":"string"},"priority":{"type":"string"},"wave":{"type":"string"},"status":{"enum":["READY","BLOCKED","IN_PROGRESS","COMPLETE"]},"depends_on":{"type":"array","items":{"type":"string"}},"owner_role":{"type":"string"},"objective":{"type":"string"},"outputs":{"type":"array","items":{"type":"string"}},"gates":{"type":"array","items":{"type":"string"}}},"additionalProperties":false}}
+  },
+  "additionalProperties":false
+}

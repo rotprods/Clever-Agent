@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "sources": [
+    {
+      "actual_commit": "a80fa80721a8aebe51a170a7780705024ebc6e46",
+      "actual_remote": "https://github.com/farzaa/clicky",
+      "expected_remote": "https://github.com/farzaa/clicky",
+      "id": "clicky",
+      "pinned_commit": "a80fa80721a8aebe51a170a7780705024ebc6e46",
+      "pinned_ref": "refs/clever-agent/pinned/clicky",
+      "status": "VERIFIED",
+      "worktree_head": null
+    },
+    {
+      "actual_commit": "e1eca38ff28758d58cde43045691c8ba479063e9",
+      "actual_remote": "https://github.com/basedhardware/omi",
+      "expected_remote": "https://github.com/basedhardware/omi",
+      "id": "omi",
+      "pinned_commit": "e1eca38ff28758d58cde43045691c8ba479063e9",
+      "pinned_ref": "refs/clever-agent/pinned/omi",
+      "status": "VERIFIED",
+      "worktree_head": null
+    },
+    {
+      "actual_commit": "3ee32fb9c10dcf9d5713c0c4891e55227f5b1f0d",
+      "actual_remote": "https://github.com/openclaw/openclaw",
+      "expected_remote": "https://github.com/openclaw/openclaw",
+      "id": "openclaw",
+      "pinned_commit": "3ee32fb9c10dcf9d5713c0c4891e55227f5b1f0d",
+      "pinned_ref": "refs/clever-agent/pinned/openclaw",
+      "status": "VERIFIED",
+      "worktree_head": null
+    },
+    {
+      "actual_commit": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5",
+      "actual_remote": "https://github.com/open-jarvis/openjarvis",
+      "expected_remote": "https://github.com/open-jarvis/openjarvis",
+      "id": "openjarvis",
+      "pinned_commit": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5",
+      "pinned_ref": "refs/clever-agent/pinned/openjarvis",
+      "status": "VERIFIED",
+      "worktree_head": null
+    }
+  ]
+}

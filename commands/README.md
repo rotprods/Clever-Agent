@@ -5,11 +5,14 @@ These commands are semantic project protocols. Coding environments may expose th
 | Command | Purpose |
 |---|---|
 | `/empezarproyecto` | Boot/reconcile durable state and recover the exact frontier. |
+| `/context` | Build/validate the deterministic future-agent ContextPack. |
+| `/graphify` | Project pinned source evidence into auditable semantic surface candidates. |
+| `/cos-graph-engineV2` | Execute the 20D graph-governed observe→decide→verify→persist loop. |
 | `/wave` | Define, conflict-check and claim one vertical engineering slice. |
 | `/checkpoint` | Evaluate current checkpoint against persisted exit evidence. |
-| `/gauntlet` | Adversarially try to falsify a completion/parity/security claim. |
-| `/reconcile` | Resolve drift among Git, state, ledgers, handoff and evidence. |
+| `/gauntlet` | Adversarially falsify completion/parity/security claims. |
+| `/reconcile` | Resolve drift among Git, state, config, context, ledgers and evidence. |
 | `/handoff` | Persist exact operational continuation context. |
-| `/closewave` | Verify acceptance, persist evidence/state, release claims and hand off. |
+| `/closewave` | Verify acceptance, persist evidence/state/context, release claims and hand off. |
 
-`/empezarproyecto` is fully specified in `EMPEZARPROYECTO.md`. The remaining command semantics are defined in `PROTOCOLS.md` and `AGENTS.md` until dedicated command files are warranted.
+Canonical semantics live in `AGENTS.md`, `PROTOCOLS.md`, `docs/COS_GRAPH_ENGINE_V2.md` and `docs/GRAPH_ENGINEERING_PROTOCOL.md`.

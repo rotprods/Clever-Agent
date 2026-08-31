@@ -1,10 +1,10 @@
-schema_version: 1
+schema_version: 2
 project:
   id: CLEVER-JARVIS-001
   repository: rotprods/Clever-Agent
   default_branch: main
-  active_iteration: I01
-  active_checkpoint: CP01
+  active_iteration: I02
+  active_checkpoint: CP02
 
 authority:
   execution: AGENTS.md
@@ -13,15 +13,21 @@ authority:
   architecture:
     - ARCHITECTURE.md
     - CAPABILITY_PARITY.md
+    - docs/COS_GRAPH_ENGINE_V2.md
+    - docs/GRAPH_ENGINEERING_PROTOCOL.md
   machine_checkpoint: CHECKPOINT_REGISTRY.json
   human_state: STATE.md
   machine_state:
     - GOAL_STATE.json
     - EXECUTION_STATE.json
+  context_manifest: .agentic/context/CURRENT_CONTEXT.json
+  dimension_registry: .agentic/context/COS20D.json
+  next_actions: .agentic/context/NEXT_ACTIONS.json
   handoff: HANDOFF.md
 
 persistence:
   chat_is_authority: false
+  context_pack_is_authority: false
   max_context_loss_interactions: 1
   append_only_ledgers:
     - ledgers/RUN_LOG.ndjson
@@ -35,19 +41,64 @@ persistence:
 
 execution:
   mandatory_boot_command: /empezarproyecto
+  graph_engine: /cos-graph-engineV2
+  graphify_command: /graphify
+  context_command: /context
   material_mutation_requires_wave: true
   claim_required_before_write: true
   loop:
+    - BOOT_RECONCILE
     - OBSERVE
+    - GRAPHIFY
     - MODEL
-    - PLAN
+    - CROSS_LINK
+    - PROJECT_20D
+    - DECIDE
+    - PLAN_COMPILE
     - IMPLEMENT
     - VERIFY
     - GAUNTLET
     - EVIDENCE
     - PERSIST
-    - COMMIT
-    - RECONCILE
+    - AUTOPROMPT_REFLECT
+    - COMMIT_RECONCILE
+
+graph_engineering:
+  planes:
+    - P0_SOURCE_EVIDENCE
+    - P1_SEMANTIC_SURFACE
+    - P2_COS20D_DECISION
+    - P3_AGENT_CONTEXT
+  derivation_direction: P0 -> P1 -> P2 -> P3
+  higher_planes_may_mutate_lower_planes: false
+  raw_graph_is_parity_denominator: false
+  promotion_ladder:
+    - OBSERVED_SOURCE
+    - DISCOVERED_CANDIDATE
+    - BEHAVIOR_MAPPED
+    - CONTRACT_MAPPED
+    - TEST_MAPPED
+    - VERIFIED
+    - MIGRATION_ELIGIBLE
+  destructive_convergence_requires: MIGRATION_ELIGIBLE
+
+context:
+  context_manifest: .agentic/context/CURRENT_CONTEXT.json
+  human_context: .agentic/context/CURRENT_CONTEXT.md
+  dimension_registry: .agentic/context/COS20D.json
+  next_actions: .agentic/context/NEXT_ACTIONS.json
+  context_builder: python scripts/context/build_context_pack.py
+  context_validator: python scripts/context/validate_context_pack.py
+  context_check: python scripts/context/build_context_pack.py --check
+  plan_validator: python scripts/context/validate_next_actions.py
+  regenerate_after_material_state_change: true
+
+planning:
+  regression: docs/REGRESSION_2026-08-31.md
+  consciousness_act: docs/ACTA_DE_CONSCIENCIA.md
+  implementation_plan: IMPLEMENTATION_PLAN.md
+  task_list: TASKS.md
+  machine_task_graph: .agentic/context/NEXT_ACTIONS.json
 
 waves:
   states:
@@ -68,6 +119,8 @@ waves:
     - CHECKPOINT_REGISTRY.json
     - GOAL_STATE.json
     - EXECUTION_STATE.json
+    - .agentic/CONFIG.yaml
+    - .agentic/context/
     - contracts/
 
 branching:
@@ -84,23 +137,27 @@ quality:
   parity_percentage_manual_edit: forbidden
   security_review_on_trust_boundary_change: true
   state_validator: python scripts/validate_agentic_state.py
+  context_validator: python scripts/context/validate_context_pack.py
+  plan_validator: python scripts/context/validate_next_actions.py
 
 tool_integrations:
   codex:
     native_project_instructions: AGENTS.md
     shim: CODEX.md
-    note: Do not depend on CODEX.md auto-discovery; AGENTS.md is canonical.
+    context_manifest: .agentic/context/CURRENT_CONTEXT.json
   claude_code:
     session_instructions: CLAUDE.md
     start_skill: .claude/skills/empezarproyecto/SKILL.md
     slash_command: /empezarproyecto
+    context_manifest: .agentic/context/CURRENT_CONTEXT.json
   chatgpt:
     operating_contract: AGENTS.md
     persistence_required: true
+    context_manifest: .agentic/context/CURRENT_CONTEXT.json
 
 current_iteration:
-  id: I01
-  metaprompt: iterations/01/METAPROMPT.md
-  plan: iterations/01/ITERATION.md
-  state: iterations/01/STATE.json
-  next_wave: I01-W01
+  id: I02
+  metaprompt: iterations/02/METAPROMPT.md
+  plan: iterations/02/ITERATION.md
+  state: iterations/02/STATE.json
+  next_wave: CP02-W01

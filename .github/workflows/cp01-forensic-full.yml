@@ -1,0 +1,73 @@
+name: CP01 Full Forensic Graph
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - wave/cp01/i01-w01-graphify-cosgraph
+    paths:
+      - '.github/workflows/cp01-forensic-full.yml'
+      - 'UPSTREAM_LEDGER.yaml'
+      - 'scripts/upstream/**'
+      - 'scripts/graphify/**'
+      - 'scripts/cosgraph/**'
+
+permissions:
+  contents: read
+
+jobs:
+  full-forensic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout Clever-Agent
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Acquire exact upstream object stores
+        run: python -m scripts.upstream.sync_upstreams
+
+      - name: Verify immutable upstream pins
+        run: python -m scripts.upstream.verify_pins
+
+      - name: Materialize source-only sparse projections
+        run: python -m scripts.upstream.source_projection
+
+      - name: Verify projections still resolve exact pins
+        run: python -m scripts.upstream.verify_pins
+
+      - name: Graphify all upstreams and build COS hypergraph
+        run: python -m scripts.graphify.batch
+
+      - name: Assert four-source provenance and non-destructive COS invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          ledger = json.loads(Path('evidence/cp01/acquisition/pin_verification.json').read_text())
+          summary = json.loads(Path('reports/cp01/cos_graph_summary.json').read_text())
+          assert len(ledger['sources']) == 4
+          assert all(row['status'] == 'VERIFIED' for row in ledger['sources'])
+          assert len(summary['source_graphs']) == 4
+          assert summary['invariants']['automatic_rewrite_forbidden'] is True
+          assert summary['invariants']['canonicalization_is_non_destructive'] is True
+          assert summary['totals']['source_nodes'] > 0
+          PY
+
+      - name: Upload CP01 forensic evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp01-forensic-graph-${{ github.sha }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            evidence/cp01/acquisition/*.json
+            graphs/upstreams/*.json
+            graphs/cos_hypergraph.json
+            reports/cp01/cos_graph_summary.json

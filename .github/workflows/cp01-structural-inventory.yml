@@ -1,0 +1,72 @@
+name: CP01 Structural Inventory
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - wave/cp01/i01-w01-graphify-cosgraph
+    paths:
+      - 'scripts/inventory/**'
+      - 'scripts/upstream/**'
+      - 'tests/test_inventory.py'
+      - 'inventory/schemas/repository_inventory.schema.json'
+      - 'UPSTREAM_LEDGER.yaml'
+      - '.github/workflows/cp01-structural-inventory.yml'
+  pull_request:
+    paths:
+      - 'scripts/inventory/**'
+      - 'scripts/upstream/**'
+      - 'tests/test_inventory.py'
+      - 'inventory/schemas/repository_inventory.schema.json'
+      - 'UPSTREAM_LEDGER.yaml'
+      - '.github/workflows/cp01-structural-inventory.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  structural-inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout Clever-Agent
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate structural scanner contract
+        run: python -m unittest tests.test_inventory -v
+      - name: Acquire exact upstream object stores
+        run: python -m scripts.upstream.sync_upstreams
+      - name: Verify immutable upstream pins
+        run: python -m scripts.upstream.verify_pins
+      - name: Compile blobless structural inventories from complete Git trees
+        run: python -m scripts.inventory.batch
+      - name: Assert complete four-source structural inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          summary = json.loads(Path('reports/cp01/structural_inventory_summary.json').read_text())
+          assert len(summary['sources']) == 4
+          for row in summary['sources']:
+              assert row['tree_entry_count'] > 0
+              assert len(row['tree_sha256']) == 64
+          for path in Path('inventory/upstreams').glob('*.json'):
+              data = json.loads(path.read_text())
+              assert data['summary']['blob_sizes_collected'] is False
+              assert all(row['size'] is None for row in data['files'])
+          PY
+      - name: Upload W02 structural evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp01-structural-inventory-${{ github.sha }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            evidence/cp01/acquisition/*.json
+            inventory/upstreams/*.json
+            reports/cp01/structural_inventory_summary.json

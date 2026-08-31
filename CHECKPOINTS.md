@@ -7,8 +7,8 @@
 | ID | Checkpoint | Status | Exit gate |
 |---|---|---|---|
 | CP00 | Canonical bootstrap | COMPLETE | Stable goal, architecture, security, upstream ledger, parity method and durable state exist. |
-| CP01 | Forensic upstream inventory | IN_PROGRESS | All four pinned upstreams inventoried; exhaustive capability denominator, baseline test evidence and license inventory exist. |
-| CP02 | Canonical contracts + Rust kernel scaffold | PENDING | Versioned contracts compile across target runtimes; core identity/event/capability/policy skeleton passes contract tests. |
+| CP01 | Forensic upstream inventory | COMPLETE | All four pinned upstreams inventoried; exhaustive capability denominator, baseline test evidence and license inventory exist. |
+| CP02 | Canonical contracts + Rust kernel scaffold | IN_PROGRESS | Versioned contracts compile across target runtimes; core identity/event/capability/policy skeleton passes contract tests. |
 | CP03 | OpenJarvis cognitive adapter | PENDING | OpenJarvis capability families parity-tested through canonical contracts. |
 | CP04 | OpenClaw gateway adapter | PENDING | Gateway/channel/node/provider/tool/plugin/automation families parity-tested. |
 | CP05 | Omi perception + episodic adapter | PENDING | Capture/STT/diarization/conversation/mobile/wearable/SDK families parity-tested. |
@@ -28,39 +28,32 @@ Iteration 01 exists to create the **forensic capability compiler**. It does not 
 
 ## I01.0 — Agentic repository bootstrap
 
-**Status:** COMPLETE after this configuration is merged.
+**Status: COMPLETE**
 
-Exit:
-
-- `/empezarproyecto` defined;
-- wave/claim/handoff protocols defined;
-- `STATE.md`, `HANDOFF.md`, `CHANGELOG.md` and ledgers exist;
-- tool-specific shims route to `AGENTS.md`;
-- CI validates canonical state files;
-- iteration metaprompt exists.
+Exit achieved: `/empezarproyecto`, wave/claim/handoff protocols, durable state/ledgers, tool shims, CI validator and iteration metaprompt exist.
 
 ## I01.1 — Reproducible upstream acquisition
 
-Exit:
+**Status: COMPLETE** — evidence `EVID-0002` / W01 forensic run `33402789051`.
 
-- script fetches/validates all four exact SHAs from `UPSTREAM_LEDGER.yaml` into an ignored local cache;
-- source manifest records repo, ref, tree hash, languages/package roots and acquisition result;
-- no vendored source is silently committed;
-- evidence proves SHA pin correctness.
+Exit achieved: all four exact SHAs reproducibly acquired/verified via partial object stores and immutable pin refs without vendoring upstream worktrees.
 
 ## I01.2 — Static repository inventory compiler
 
-Exit:
+**Status: COMPLETE** — evidence `EVID-0005` / structural run `33429197669`.
 
-- deterministic scanner enumerates files, languages, workspaces/packages/modules, manifests and build systems;
-- output schema is versioned and tested;
-- scanner runs against all four sources.
+Exit achieved:
+
+- deterministic complete-Git-tree scanner enumerates paths, languages, package/workspace manifests, runtime boundaries, tests, CI/release, docs and license/notice surfaces;
+- scanner is blobless and does not resolve blob sizes;
+- all four exact sources successfully scanned;
+- 50,681 total tree entries, 390 manifests, 17,651 tests and 615 runtime boundaries recorded.
 
 ## I01.3 — Behavioral/public-surface extraction
 
-Exit:
+**Status: IN_PROGRESS / NEXT FRONTIER**
 
-Inventory, with source evidence:
+Exit requires source-backed inventory of:
 
 - CLI commands;
 - HTTP/WebSocket/API routes and protocols;
@@ -75,6 +68,8 @@ Inventory, with source evidence:
 
 ## I01.4 — Capability normalization + denominator compiler
 
+**Status: PENDING**
+
 Exit:
 
 - `ledgers/CAPABILITY_LEDGER.jsonl` generated deterministically;
@@ -85,6 +80,8 @@ Exit:
 
 ## I01.5 — Upstream baseline test harness
 
+**Status: PENDING**
+
 Exit:
 
 - runnable upstream test/build commands recorded by platform/runtime;
@@ -93,6 +90,8 @@ Exit:
 - results stored under `evidence/cp01/baselines/`.
 
 ## I01.6 — Licensing, notices and supply-chain inventory
+
+**Status: PENDING**
 
 Exit:
 
@@ -103,6 +102,8 @@ Exit:
 
 ## I01.7 — Capability graph + adversarial completeness gauntlet
 
+**Status: PENDING**
+
 Exit:
 
 - capability dependency graph generated;
@@ -111,6 +112,8 @@ Exit:
 - sampling against docs/tests/code does not find unexplained denominator gaps.
 
 ## I01.8 — CP01 close/reconciliation
+
+**Status: PENDING**
 
 Exit:
 
@@ -125,3 +128,7 @@ Exit:
 ## Checkpoint advancement rule
 
 A subcheckpoint/checkpoint advances only when its exit condition is represented by persisted evidence. A future plan, generated documentation or an agent statement is not evidence of completion.
+
+## CP01 release — COMPLETE
+
+CP01 closed from exact-source release evidence. The generated denominator is a behavior-mapped integration denominator, not a claim of Clever adapter parity. CP02 is now active.

@@ -1,0 +1,17 @@
+{
+  "active_subcheckpoint": "I02.1",
+  "blocking_issues": [],
+  "checkpoint_id": "CP02",
+  "completed_subcheckpoints": [
+    "I02.0"
+  ],
+  "goal_id": "CLEVER-JARVIS-001",
+  "iteration_id": "I02",
+  "last_updated_date": "2026-09-01",
+  "name": "Canonical Contracts + Rust Kernel Scaffold",
+  "next_wave": "CP02-W01",
+  "next_wave_name": "Canonical contract schemas",
+  "parity_denominator_status": "GENERATED_UNVERIFIED",
+  "schema_version": 1,
+  "status": "IN_PROGRESS"
+}

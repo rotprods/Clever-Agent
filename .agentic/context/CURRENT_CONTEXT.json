@@ -1,0 +1,183 @@
+{
+  "accepted_decision_ids": [
+    "D-0001",
+    "D-0002",
+    "D-0003",
+    "D-0004",
+    "D-0005",
+    "D-0006",
+    "D-0007",
+    "D-0008",
+    "D-0009",
+    "D-0010",
+    "D-0011"
+  ],
+  "active_claims": [],
+  "authority_read_order": [
+    "GOAL.md",
+    "SECURITY_MODEL.md",
+    "AGENTS.md",
+    "ARCHITECTURE.md",
+    "CAPABILITY_PARITY.md",
+    "docs/ACTA_DE_CONSCIENCIA.md",
+    "docs/COS_GRAPH_ENGINE_V2.md",
+    "docs/GRAPH_ENGINEERING_PROTOCOL.md",
+    "CHECKPOINT_REGISTRY.json",
+    "STATE.md",
+    "GOAL_STATE.json",
+    "EXECUTION_STATE.json",
+    "iterations/02/STATE.json",
+    "IMPLEMENTATION_PLAN.md",
+    "TASKS.md",
+    ".agentic/context/NEXT_ACTIONS.json",
+    ".agentic/context/CURRENT_CONTEXT.json",
+    "HANDOFF.md"
+  ],
+  "dimension_model": {
+    "count": 20,
+    "id": "COS-20D-v2",
+    "registry_path": ".agentic/context/COS20D.json"
+  },
+  "evidence_ids": [
+    "EVID-0001",
+    "EVID-0002",
+    "EVID-0003",
+    "EVID-0004",
+    "EVID-0005",
+    "EVID-0006"
+  ],
+  "frontier": {
+    "blocking_issues": [],
+    "checkpoint": "CP02",
+    "completed_waves": [
+      "I01-W00",
+      "I01-W01",
+      "I01-W02",
+      "I01-W03",
+      "I01-W04",
+      "I01-W05",
+      "I01-W06",
+      "I01-W07",
+      "I01-W08"
+    ],
+    "iteration": "I02",
+    "next_wave": "CP02-W01",
+    "next_wave_name": "Canonical contract schemas",
+    "parity_denominator_status": "GENERATED_UNVERIFIED",
+    "subcheckpoint": "I02.1"
+  },
+  "graph_planes": [
+    {
+      "authority": "PRIMARY_EVIDENCE",
+      "id": "P0_SOURCE_EVIDENCE",
+      "mutable_by_higher_planes": false,
+      "products": [
+        "pinned Git trees",
+        "repository_graph v1",
+        "structural inventories",
+        "source/test/docs evidence"
+      ]
+    },
+    {
+      "authority": "DERIVED_CANDIDATES",
+      "id": "P1_SEMANTIC_SURFACE",
+      "mutable_by_higher_planes": false,
+      "products": [
+        "Graphify V2 semantic_surface_projection",
+        "registered/executable behavioral surfaces"
+      ]
+    },
+    {
+      "authority": "DERIVED_PROVISIONAL_DECISIONS",
+      "id": "P2_COS20D_DECISION",
+      "mutable_by_higher_planes": false,
+      "products": [
+        "COS-20L runtime facets",
+        "COS-20D decision graph",
+        "promotion requirements"
+      ]
+    },
+    {
+      "authority": "DERIVED_RECOVERY_VIEW",
+      "id": "P3_AGENT_CONTEXT",
+      "mutable_by_higher_planes": false,
+      "products": [
+        "CURRENT_CONTEXT.json",
+        "CURRENT_CONTEXT.md",
+        "NEXT_ACTIONS pointers",
+        "HANDOFF pointers"
+      ]
+    }
+  ],
+  "hard_invariants": {
+    "automatic_destructive_merge_forbidden": true,
+    "candidate_is_not_capability": true,
+    "chat_is_authority": false,
+    "context_pack_is_derived_not_primary_truth": true,
+    "cos_decisions_are_provisional_until_promoted": true,
+    "max_context_loss_interactions": 1,
+    "migration_requires_behavioral_equivalence_evidence": true,
+    "raw_graph_is_not_parity_denominator": true,
+    "source_graph_is_immutable": true
+  },
+  "ledger_pointers": {
+    "capabilities": "ledgers/CAPABILITY_LEDGER.jsonl",
+    "claims": "ledgers/CLAIM_LEDGER.ndjson",
+    "decisions": "ledgers/DECISION_LEDGER.ndjson",
+    "evidence": "ledgers/EVIDENCE_LEDGER.ndjson",
+    "risks": "ledgers/RISK_LEDGER.ndjson"
+  },
+  "open_risks": [
+    {
+      "risk_id": "RISK-0001",
+      "severity": "MEDIUM",
+      "status": "OPEN"
+    },
+    {
+      "risk_id": "RISK-0002",
+      "severity": "HIGH",
+      "status": "OPEN"
+    },
+    {
+      "risk_id": "RISK-0003",
+      "severity": "HIGH",
+      "status": "OPEN"
+    }
+  ],
+  "planning": {
+    "active_iteration_state": "iterations/02/STATE.json",
+    "consciousness_act": "docs/ACTA_DE_CONSCIENCIA.md",
+    "first_executable_task": "CP02-001",
+    "implementation_plan": "IMPLEMENTATION_PLAN.md",
+    "next_actions": ".agentic/context/NEXT_ACTIONS.json",
+    "regression": "docs/REGRESSION_2026-08-31.md",
+    "task_count": 29,
+    "tasks": "TASKS.md"
+  },
+  "project": {
+    "project_id": "CLEVER-JARVIS-001",
+    "repository": "rotprods/Clever-Agent"
+  },
+  "protocol": "COS-GRAPH-ENGINE-V2-20D",
+  "recovery_commands": [
+    "python scripts/validate_agentic_state.py",
+    "python scripts/context/validate_context_pack.py",
+    "python scripts/context/build_context_pack.py --check",
+    "python scripts/context/validate_next_actions.py",
+    "/empezarproyecto"
+  ],
+  "required_next_outputs": [
+    "versioned canonical Protobuf and JSON Schema contracts",
+    "canonical cross-runtime fixtures",
+    "Rust/Python/TypeScript/Swift compatibility strategy",
+    "round-trip and version-skew tests",
+    "Rust kernel identity/event/capability/policy scaffold"
+  ],
+  "schema_version": 1,
+  "upstream_refs": {
+    "clicky": "a80fa80721a8aebe51a170a7780705024ebc6e46",
+    "omi": "e1eca38ff28758d58cde43045691c8ba479063e9",
+    "openclaw": "3ee32fb9c10dcf9d5713c0c4891e55227f5b1f0d",
+    "openjarvis": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5"
+  }
+}

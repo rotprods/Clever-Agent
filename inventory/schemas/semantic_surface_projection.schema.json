@@ -1,0 +1,19 @@
+{
+  "$id": "https://rotprods.dev/schemas/semantic_surface_projection.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "counts": {"type": "object"},
+    "graph_type": {"const": "semantic_surface_projection"},
+    "invariants": {"type": "object"},
+    "projection_version": {"const": "GRAPHIFY-V2"},
+    "repo_id": {"minLength": 1, "type": "string"},
+    "schema_version": {"const": 1},
+    "source_commit": {"pattern": "^[0-9a-f]{40}$", "type": "string"},
+    "source_repository_graph_stats": {"type": "object"},
+    "surfaces": {"items": {"required": ["id", "kind", "name", "source_repo", "source_commit", "promotion_status", "behavioral_evidence_required"], "type": "object"}, "type": "array"}
+  },
+  "required": ["schema_version", "graph_type", "projection_version", "repo_id", "source_commit", "source_repository_graph_stats", "invariants", "counts", "surfaces"],
+  "title": "Graphify V2 Semantic Surface Projection",
+  "type": "object"
+}

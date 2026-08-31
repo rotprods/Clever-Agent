@@ -1,0 +1,233 @@
+{
+  "phase": "I01-W03",
+  "schema_version": 1,
+  "sources": [
+    {
+      "by_evidence_strength": {
+        "DEFINITION": 144,
+        "PROFILED_BOUNDARY": 76,
+        "REGISTRATION": 2,
+        "ROUTE_OR_PROTOCOL": 2
+      },
+      "by_family": {
+        "api_protocol": 7,
+        "capture_perception": 13,
+        "device_wearable": 11,
+        "embodiment": 74,
+        "memory_persistence": 2,
+        "scheduler_automation": 2,
+        "security_policy": 28,
+        "session_identity": 18,
+        "speech_audio": 64,
+        "tool": 4,
+        "worker_service": 1
+      },
+      "by_kind": {
+        "definition": 102,
+        "native_action": 118,
+        "protocol_contract": 2,
+        "registry_registration": 2
+      },
+      "by_promotion_status": {
+        "BEHAVIOR_MAPPED": 80,
+        "DISCOVERED_CANDIDATE": 144
+      },
+      "by_repo": {
+        "clicky": 224
+      },
+      "generic_surface_count": 148,
+      "profile_surface_count": 76,
+      "source_repo": "clicky",
+      "surface_count": 224
+    },
+    {
+      "by_evidence_strength": {
+        "DEFINITION": 17737,
+        "REGISTRATION": 477,
+        "ROUTE_OR_PROTOCOL": 3313
+      },
+      "by_family": {
+        "agent": 9,
+        "api_protocol": 781,
+        "capture_perception": 945,
+        "channel_gateway": 505,
+        "device_wearable": 5514,
+        "embodiment": 2914,
+        "inference": 619,
+        "learning_evaluation": 29,
+        "memory_persistence": 4374,
+        "plugin_extension": 590,
+        "scheduler_automation": 459,
+        "security_policy": 1191,
+        "session_identity": 1465,
+        "speech_audio": 1099,
+        "tool": 981,
+        "worker_service": 52
+      },
+      "by_kind": {
+        "cli_command": 84,
+        "definition": 11904,
+        "http_route": 993,
+        "lifecycle_hook": 16,
+        "native_action": 5813,
+        "plugin_contribution": 4,
+        "protocol_contract": 2247,
+        "registry_registration": 348,
+        "route_mount": 109,
+        "websocket_route": 9
+      },
+      "by_promotion_status": {
+        "BEHAVIOR_MAPPED": 3790,
+        "DISCOVERED_CANDIDATE": 17737
+      },
+      "by_repo": {
+        "omi": 21527
+      },
+      "generic_surface_count": 21527,
+      "profile_surface_count": 0,
+      "source_repo": "omi",
+      "surface_count": 21527
+    },
+    {
+      "by_evidence_strength": {
+        "DEFINITION": 48649,
+        "REGISTRATION": 1637,
+        "ROUTE_OR_PROTOCOL": 1412
+      },
+      "by_family": {
+        "agent": 1841,
+        "api_protocol": 570,
+        "capture_perception": 652,
+        "channel_gateway": 8033,
+        "device_wearable": 2757,
+        "embodiment": 4147,
+        "inference": 686,
+        "learning_evaluation": 123,
+        "memory_persistence": 4053,
+        "plugin_extension": 7342,
+        "scheduler_automation": 839,
+        "security_policy": 5102,
+        "session_identity": 9169,
+        "speech_audio": 1911,
+        "tool": 3935,
+        "worker_service": 538
+      },
+      "by_kind": {
+        "cli_command": 778,
+        "definition": 43242,
+        "http_route": 49,
+        "lifecycle_hook": 467,
+        "native_action": 5407,
+        "plugin_contribution": 409,
+        "protocol_contract": 585,
+        "registry_registration": 761
+      },
+      "by_promotion_status": {
+        "BEHAVIOR_MAPPED": 3049,
+        "DISCOVERED_CANDIDATE": 48649
+      },
+      "by_repo": {
+        "openclaw": 51698
+      },
+      "generic_surface_count": 51698,
+      "profile_surface_count": 0,
+      "source_repo": "openclaw",
+      "surface_count": 51698
+    },
+    {
+      "by_evidence_strength": {
+        "DEFINITION": 2188,
+        "REGISTRATION": 256,
+        "ROUTE_OR_PROTOCOL": 390
+      },
+      "by_family": {
+        "agent": 210,
+        "api_protocol": 75,
+        "capture_perception": 8,
+        "channel_gateway": 313,
+        "device_wearable": 94,
+        "embodiment": 155,
+        "inference": 273,
+        "learning_evaluation": 80,
+        "memory_persistence": 215,
+        "plugin_extension": 12,
+        "scheduler_automation": 62,
+        "security_policy": 163,
+        "session_identity": 109,
+        "speech_audio": 67,
+        "tool": 949,
+        "worker_service": 49
+      },
+      "by_kind": {
+        "cli_command": 196,
+        "definition": 1146,
+        "http_route": 115,
+        "native_action": 1042,
+        "protocol_contract": 77,
+        "registry_registration": 227,
+        "route_mount": 29,
+        "websocket_route": 2
+      },
+      "by_promotion_status": {
+        "BEHAVIOR_MAPPED": 646,
+        "DISCOVERED_CANDIDATE": 2188
+      },
+      "by_repo": {
+        "openjarvis": 2834
+      },
+      "generic_surface_count": 2834,
+      "profile_surface_count": 0,
+      "source_repo": "openjarvis",
+      "surface_count": 2834
+    }
+  ],
+  "surface_summary": {
+    "by_evidence_strength": {
+      "DEFINITION": 68718,
+      "PROFILED_BOUNDARY": 76,
+      "REGISTRATION": 2372,
+      "ROUTE_OR_PROTOCOL": 5117
+    },
+    "by_family": {
+      "agent": 2060,
+      "api_protocol": 1433,
+      "capture_perception": 1618,
+      "channel_gateway": 8851,
+      "device_wearable": 8376,
+      "embodiment": 7290,
+      "inference": 1578,
+      "learning_evaluation": 232,
+      "memory_persistence": 8644,
+      "plugin_extension": 7944,
+      "scheduler_automation": 1362,
+      "security_policy": 6484,
+      "session_identity": 10761,
+      "speech_audio": 3141,
+      "tool": 5869,
+      "worker_service": 640
+    },
+    "by_kind": {
+      "cli_command": 1058,
+      "definition": 56394,
+      "http_route": 1157,
+      "lifecycle_hook": 483,
+      "native_action": 12380,
+      "plugin_contribution": 413,
+      "protocol_contract": 2911,
+      "registry_registration": 1338,
+      "route_mount": 138,
+      "websocket_route": 11
+    },
+    "by_promotion_status": {
+      "BEHAVIOR_MAPPED": 7565,
+      "DISCOVERED_CANDIDATE": 68718
+    },
+    "by_repo": {
+      "clicky": 224,
+      "omi": 21527,
+      "openclaw": 51698,
+      "openjarvis": 2834
+    },
+    "surface_count": 76283
+  }
+}

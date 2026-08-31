@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rotprods.dev/schemas/repository_inventory.schema.json",
+  "title": "Clever-Agent Structural Repository Inventory",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "inventory_type",
+    "source_repo",
+    "repository",
+    "source_commit",
+    "tree_ref",
+    "tree_entry_count",
+    "tree_sha256",
+    "summary",
+    "package_workspace_roots",
+    "manifests",
+    "runtime_service_app_boundaries",
+    "test_roots",
+    "test_files",
+    "ci_release_files",
+    "docs_roots",
+    "doc_files",
+    "license_notice_files",
+    "files"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "inventory_type": {"const": "structural_repository_inventory"},
+    "source_repo": {"type": "string", "minLength": 1},
+    "repository": {"type": "string", "pattern": "^[^/]+/[^/]+$"},
+    "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "tree_ref": {"type": "string", "minLength": 1},
+    "tree_entry_count": {"type": "integer", "minimum": 0},
+    "tree_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "summary": {"type": "object"},
+    "package_workspace_roots": {"type": "array", "items": {"type": "string"}},
+    "manifests": {"type": "array", "items": {"type": "string"}},
+    "runtime_service_app_boundaries": {"type": "array", "items": {"type": "object"}},
+    "test_roots": {"type": "array", "items": {"type": "string"}},
+    "test_files": {"type": "array", "items": {"type": "string"}},
+    "ci_release_files": {"type": "array", "items": {"type": "string"}},
+    "docs_roots": {"type": "array", "items": {"type": "string"}},
+    "doc_files": {"type": "array", "items": {"type": "string"}},
+    "license_notice_files": {"type": "array", "items": {"type": "string"}},
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["mode", "object_type", "object_id", "size", "path"],
+        "properties": {
+          "mode": {"type": "string"},
+          "object_type": {"type": "string"},
+          "object_id": {"type": "string"},
+          "size": {"type": ["integer", "null"]},
+          "path": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

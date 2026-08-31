@@ -1,0 +1,58 @@
+name: CP01 Graphify COSGraph
+
+on:
+  push:
+    paths:
+      - 'scripts/**'
+      - 'tests/**'
+      - 'inventory/schemas/**'
+      - '.github/workflows/cp01-graphify.yml'
+  pull_request:
+    paths:
+      - 'scripts/**'
+      - 'tests/**'
+      - 'inventory/schemas/**'
+
+permissions:
+  contents: read
+
+jobs:
+  graphify-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile Python tooling
+        run: python -m compileall -q scripts tests
+      - name: Run CP01 compiler unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Smoke Graphify to COSGraph pipeline
+        shell: bash
+        run: |
+          set -euo pipefail
+          TMP="$(mktemp -d)"
+          mkdir -p "$TMP/repo"
+          cat > "$TMP/repo/app.py" <<'PY'
+          from fastapi import FastAPI
+          app = FastAPI()
+          class DemoAgent:
+              pass
+          @app.get('/health')
+          def health():
+              return {'ok': True}
+          PY
+          python -m scripts.graphify.cli "$TMP/repo" --repo-id smoke --commit aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --output "$TMP/repository_graph.json"
+          python -m scripts.cosgraph.cli --graph "$TMP/repository_graph.json" --output "$TMP/cos_hypergraph.json"
+          python - <<'PY' "$TMP/repository_graph.json" "$TMP/cos_hypergraph.json"
+          import json, sys
+          graph = json.load(open(sys.argv[1]))
+          cos = json.load(open(sys.argv[2]))
+          assert graph['graph_type'] == 'repository_graph'
+          assert cos['graph_type'] == 'cos_hypergraph'
+          assert len(cos['source_nodes']) == len(graph['nodes'])
+          assert cos['invariants']['automatic_rewrite_forbidden'] is True
+          PY

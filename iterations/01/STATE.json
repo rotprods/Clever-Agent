@@ -1,15 +1,25 @@
 {
-  "schema_version": 1,
-  "iteration_id": "I01",
-  "goal_id": "CLEVER-JARVIS-001",
-  "checkpoint_id": "CP01",
-  "name": "Forensic Capability Compiler",
-  "status": "IN_PROGRESS",
-  "completed_subcheckpoints": ["I01.0"],
-  "active_subcheckpoint": "I01.1",
-  "next_wave": "I01-W01",
-  "next_wave_name": "Reproducible upstream acquisition",
+  "active_subcheckpoint": "COMPLETE",
   "blocking_issues": [],
-  "parity_denominator_status": "NOT_GENERATED",
-  "last_updated_date": "2026-08-31"
+  "checkpoint_id": "CP01",
+  "completed_subcheckpoints": [
+    "I01.0",
+    "I01.1",
+    "I01.2",
+    "I01.3",
+    "I01.4",
+    "I01.5",
+    "I01.6",
+    "I01.7",
+    "I01.8"
+  ],
+  "goal_id": "CLEVER-JARVIS-001",
+  "iteration_id": "I01",
+  "last_updated_date": "2026-09-01",
+  "name": "Forensic Capability Compiler",
+  "next_wave": null,
+  "next_wave_name": null,
+  "parity_denominator_status": "GENERATED_UNVERIFIED",
+  "schema_version": 1,
+  "status": "COMPLETE"
 }
