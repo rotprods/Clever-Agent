@@ -107,15 +107,21 @@ class AcquisitionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             source, commit = self._source_repo(root)
-            pin = UpstreamPin("fixture", "local/fixture", source.as_posix(), "master", commit, "MIT", "test", "adapter")
+            local_pin = UpstreamPin("fixture", "local/fixture", source.as_posix(), "master", commit, "MIT", "test", "adapter")
             cache = root / "cache"
-            acquire(pin, cache)
+            acquire(local_pin, cache)
+            repository = cache / local_pin.id
+
+            # Preserve the already-acquired object store but make its declared
+            # origin match the same HTTPS-only policy enforced in production.
+            github_url = "https://github.com/local/fixture"
+            _git(repository, "remote", "set-url", "origin", github_url)
             ledger = root / "ledger.yaml"
             ledger.write_text(
                 "version: 1\nsources:\n"
                 "  - id: fixture\n"
                 "    repository: local/fixture\n"
-                f"    url: {source.as_posix()}\n"
+                f"    url: {github_url}\n"
                 "    branch: master\n"
                 f"    pinned_commit: {commit}\n"
                 "    license: MIT\n"

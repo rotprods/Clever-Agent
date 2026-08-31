@@ -113,6 +113,13 @@ def materialize_pin(pin: UpstreamPin, cache_root: Path) -> dict[str, object]:
     if actual != pin.pinned_commit:
         raise RuntimeError(f"{pin.id}: refusing projection from mismatched pin {actual}")
 
+    # A freshly initialized object store has an unborn HEAD. Sparse-checkout
+    # commands require a resolvable index baseline, so create a private local
+    # worktree ref first. This never changes the immutable pin ref.
+    worktree_ref = f"refs/clever-agent/worktree/{pin.id}"
+    _git("symbolic-ref", "HEAD", worktree_ref, cwd=repository)
+    _git("update-ref", worktree_ref, pin.pinned_commit, cwd=repository)
+
     _git("sparse-checkout", "init", "--no-cone", cwd=repository)
     _git_with_input(
         repository,
@@ -128,6 +135,7 @@ def materialize_pin(pin: UpstreamPin, cache_root: Path) -> dict[str, object]:
         "id": pin.id,
         "pinned_commit": pin.pinned_commit,
         "worktree_head": head,
+        "worktree_ref": worktree_ref,
         "projection_mode": "sparse-source-only",
         "materialized_tracked_files": len(tracked),
         "status": "VERIFIED",

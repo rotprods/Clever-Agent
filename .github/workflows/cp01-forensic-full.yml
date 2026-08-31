@@ -8,6 +8,9 @@ on:
     paths:
       - '.github/workflows/cp01-forensic-full.yml'
       - 'UPSTREAM_LEDGER.yaml'
+      - 'scripts/upstream/**'
+      - 'scripts/graphify/**'
+      - 'scripts/cosgraph/**'
 
 permissions:
   contents: read
