@@ -28,8 +28,8 @@ jobs:
           python-version: '3.12'
       - name: Compile Python tooling
         run: python -m compileall -q scripts tests
-      - name: Run Graphify and COSGraph unit tests
-        run: python -m unittest -v tests.test_graphify_cosgraph
+      - name: Run CP01 compiler unit tests
+        run: python -m unittest discover -s tests -v
       - name: Smoke Graphify to COSGraph pipeline
         shell: bash
         run: |
