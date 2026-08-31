@@ -1,0 +1,29 @@
+{
+  "application_rule": "Evaluate dimensions on canonical components, decisions, waves and ContextPacks; do not replicate them onto every raw source node.",
+  "dimension_model": "COS-20D-v2",
+  "dimensions": [
+    {"description":"Which durable goal, checkpoint and acceptance criterion does this decision advance?","id":"D00_MISSION_GOAL","name":"Mission / goal"},
+    {"description":"What source paths, commits, tests and evidence prove the modeled fact?","id":"D01_PROVENANCE_EVIDENCE","name":"Provenance / evidence"},
+    {"description":"Where does this surface live across repositories, packages, modules and graphs?","id":"D02_SOURCE_TOPOLOGY","name":"Source topology"},
+    {"description":"What behavior is actually provided, with what inputs, outputs and semantics?","id":"D03_CAPABILITY_SEMANTICS","name":"Capability semantics"},
+    {"description":"What does this surface require and what depends on it?","id":"D04_DEPENDENCY_GRAPH","name":"Dependency graph"},
+    {"description":"Which runtime, process, adapter or device owns execution and lifecycle?","id":"D05_RUNTIME_OWNERSHIP","name":"Runtime ownership"},
+    {"description":"Which API, route, command, event, registry or protocol exposes the behavior?","id":"D06_INTERFACE_CONTRACTS","name":"Interface contracts"},
+    {"description":"What durable, cached or transactional state does the behavior read or mutate?","id":"D07_STATE_DATA","name":"State / data"},
+    {"description":"How does the behavior create, retrieve, derive or consolidate memory/knowledge?","id":"D08_MEMORY_KNOWLEDGE","name":"Memory / knowledge"},
+    {"description":"How do goals, plans, routing and control flow reach this surface?","id":"D09_INTENT_CONTROL","name":"Intent / control"},
+    {"description":"What startup, shutdown, leasing, scheduling and concurrency semantics apply?","id":"D10_LIFECYCLE_CONCURRENCY","name":"Lifecycle / concurrency"},
+    {"description":"What external effects occur and how are retries, receipts and idempotency handled?","id":"D11_SIDE_EFFECT_IDEMPOTENCY","name":"Side effect / idempotency"},
+    {"description":"What trust boundary, permission, secret, sandbox or policy gate protects it?","id":"D12_SECURITY_PERMISSION","name":"Security / permission"},
+    {"description":"How does it fail, degrade, retry, roll back and recover after process or network loss?","id":"D13_FAILURE_RECOVERY","name":"Failure / recovery"},
+    {"description":"Which health, latency, cost, energy and telemetry signals make behavior observable?","id":"D14_OBSERVABILITY_ECONOMICS","name":"Observability / economics"},
+    {"description":"Which tests or evaluations prove behavior and parity rather than implementation presence?","id":"D15_TEST_EVAL_PARITY","name":"Test / eval / parity"},
+    {"description":"Which OS, hardware, device, BLE, firmware or platform constraints apply?","id":"D16_PLATFORM_DEVICE","name":"Platform / device"},
+    {"description":"How is the behavior presented or controlled through desktop, mobile, voice or visual embodiment?","id":"D17_EMBODIMENT_UX","name":"Embodiment / UX"},
+    {"description":"Which manifests, licenses, builds, releases, dependencies and deployment constraints apply?","id":"D18_SUPPLY_CHAIN_DEPLOYMENT","name":"Supply chain / deployment"},
+    {"description":"How can upstream versions, state, capability availability or contracts drift over time?","id":"D19_TEMPORAL_DRIFT","name":"Temporal / drift"}
+  ],
+  "engine": "COS-GRAPH-ENGINE-V2",
+  "orthogonal_to": "COS-20L runtime layers",
+  "schema_version": 1
+}

@@ -2,12 +2,14 @@
 
 Do not create a Claude-specific operating system for this repository.
 
-1. Read `AGENTS.md` first; it is authoritative.
-2. Invoke the project skill `/empezarproyecto` before material changes. Its canonical implementation delegates to `commands/EMPEZARPROYECTO.md`.
-3. Read the active iteration metaprompt resolved from `.agentic/CONFIG.yaml`.
-4. Every material mutation requires a claimed wave.
-5. Persist run/wave/evidence/state/handoff before ending.
-6. Do not mark your own implementation complete without the required tests/evidence; use an independent gauntlet when practical.
-7. If this file conflicts with `AGENTS.md`, `AGENTS.md` wins.
+1. Read `AGENTS.md` first.
+2. Invoke `/empezarproyecto`; its canonical implementation is `commands/EMPEZARPROYECTO.md`.
+3. Run state + context validators and `ContextPack --check`.
+4. Load `.agentic/context/CURRENT_CONTEXT.json` and the exact COS-20D registry.
+5. Every material mutation requires a claimed wave/support subwave.
+6. Execute the shared `/cos-graph-engineV2` loop.
+7. Treat Graphify V2 outputs as candidates and COS decisions as provisional until promotion evidence exists.
+8. Persist run/wave/evidence/state/HANDOFF, regenerate ContextPack and validate before ending.
+9. If this file conflicts with `AGENTS.md`, `AGENTS.md` wins.
 
-Current expected frontier: CP01 / Iteration 01 forensic capability compiler. Verify persisted state rather than assuming this line remains current.
+Never assume the frontier from this shim; derive it from canonical state/context validation.

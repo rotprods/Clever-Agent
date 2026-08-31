@@ -1,0 +1,61 @@
+# CURRENT CONTEXT — Clever-Agent
+
+> Deterministic derived recovery view. It is never a primary source of truth; Git, canonical state and evidence outrank it.
+
+## Frontier
+
+- Project: `CLEVER-JARVIS-001`
+- Checkpoint: `CP01`
+- Iteration: `I01` / `I01.2`
+- Next wave: `I01-W02 — Structural inventory`
+- Parity denominator: `NOT_GENERATED`
+- Protocol: `COS-GRAPH-ENGINE-V2-20D`
+- 20D model: `COS-20D-v2` (20 dimensions)
+
+## Hard invariants
+
+- `chat_is_authority` = `false`
+- `raw_graph_is_not_parity_denominator` = `true`
+- `candidate_is_not_capability` = `true`
+- `source_graph_is_immutable` = `true`
+- `cos_decisions_are_provisional_until_promoted` = `true`
+- `automatic_destructive_merge_forbidden` = `true`
+- `migration_requires_behavioral_equivalence_evidence` = `true`
+- `context_pack_is_derived_not_primary_truth` = `true`
+- `max_context_loss_interactions` = `1`
+
+## Active claims
+
+- `CLAIM-I01-W02-001` → `I01-W02` · `chatgpt-gpt-5.6-sol`
+- `CLAIM-I01-W02-CTX-001` → `I01-W02-CTX` · `chatgpt-gpt-5.6-sol`
+
+## Open risks
+
+- `RISK-0001` · `MEDIUM` · detail in `ledgers/RISK_LEDGER.ndjson`
+- `RISK-0002` · `HIGH` · detail in `ledgers/RISK_LEDGER.ndjson`
+- `RISK-0003` · `HIGH` · detail in `ledgers/RISK_LEDGER.ndjson`
+- `RISK-0004` · `MEDIUM` · detail in `ledgers/RISK_LEDGER.ndjson`
+
+## Recovery order
+
+1. `GOAL.md`
+2. `SECURITY_MODEL.md`
+3. `AGENTS.md`
+4. `ARCHITECTURE.md`
+5. `CAPABILITY_PARITY.md`
+6. `docs/COS_GRAPH_ENGINE_V2.md`
+7. `docs/GRAPH_ENGINEERING_PROTOCOL.md`
+8. `CHECKPOINT_REGISTRY.json`
+9. `STATE.md`
+10. `GOAL_STATE.json`
+11. `EXECUTION_STATE.json`
+12. `iterations/01/STATE.json`
+13. `.agentic/context/CURRENT_CONTEXT.json`
+14. `HANDOFF.md`
+
+## Resume
+
+- `python scripts/validate_agentic_state.py`
+- `python scripts/context/validate_context_pack.py`
+- `python scripts/context/build_context_pack.py --check`
+- `/empezarproyecto`

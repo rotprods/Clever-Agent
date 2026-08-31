@@ -1,0 +1,26 @@
+{
+  "$id": "https://rotprods.dev/schemas/context_pack.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "accepted_decision_ids": {"type": "array"},
+    "active_claims": {"type": "array"},
+    "authority_read_order": {"minItems": 1, "type": "array"},
+    "dimension_model": {"properties": {"count": {"const": 20}}, "required": ["id", "count", "registry_path"], "type": "object"},
+    "evidence_ids": {"type": "array"},
+    "frontier": {"required": ["checkpoint", "iteration", "subcheckpoint", "next_wave", "parity_denominator_status"], "type": "object"},
+    "graph_planes": {"maxItems": 4, "minItems": 4, "type": "array"},
+    "hard_invariants": {"type": "object"},
+    "ledger_pointers": {"type": "object"},
+    "open_risks": {"type": "array"},
+    "project": {"type": "object"},
+    "protocol": {"const": "COS-GRAPH-ENGINE-V2-20D"},
+    "recovery_commands": {"type": "array"},
+    "required_next_outputs": {"type": "array"},
+    "schema_version": {"const": 1},
+    "upstream_refs": {"minProperties": 4, "type": "object"}
+  },
+  "required": ["schema_version", "protocol", "project", "frontier", "upstream_refs", "authority_read_order", "graph_planes", "dimension_model", "hard_invariants", "active_claims", "open_risks", "accepted_decision_ids", "evidence_ids", "ledger_pointers", "required_next_outputs", "recovery_commands"],
+  "title": "Clever-Agent COS V2 ContextPack",
+  "type": "object"
+}
