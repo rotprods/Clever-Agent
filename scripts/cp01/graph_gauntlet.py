@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import argparse
-from collections import Counter, defaultdict
+from collections import Counter
 import json
 from pathlib import Path
 from typing import Any
@@ -52,12 +52,7 @@ def _required_dimensions(cap: dict[str, Any], surface: dict[str, Any]) -> list[s
     return sorted(dims)
 
 
-def build_graph(
-    capabilities: list[dict[str, Any]],
-    surfaces: list[dict[str, Any]],
-    baselines: dict[str, Any],
-    supply_chain: dict[str, Any],
-) -> dict[str, Any]:
+def build_graph(capabilities: list[dict[str, Any]], surfaces: list[dict[str, Any]], baselines: dict[str, Any], supply_chain: dict[str, Any]) -> dict[str, Any]:
     surface_map = {row["surface_id"]: row for row in surfaces}
     nodes: dict[str, dict[str, Any]] = {}
     edges: set[tuple[str, str, str]] = set()
@@ -71,7 +66,7 @@ def build_graph(
             raise ValueError(f"unsupported edge relation: {relation}")
         edges.add((source, relation, target))
 
-    repos = sorted({row["source_repo"] for row in capabilities})
+    repos = sorted({row["source_repo"] for row in surfaces} | {row["source_repo"] for row in capabilities})
     for repo in repos:
         add_node(_node_id("repo", repo), "source_repo", source_repo=repo)
 
@@ -79,7 +74,16 @@ def build_graph(
         sid = surface["surface_id"]
         surface_node = _node_id("surface", sid)
         repo_node = _node_id("repo", surface["source_repo"])
-        add_node(surface_node, "behavioral_surface", surface_id=sid, family=surface["family"], surface_kind=surface["surface_kind"], source_path=surface["source_path"], evidence_strength=surface["evidence_strength"])
+        add_node(
+            surface_node,
+            "behavioral_surface",
+            surface_id=sid,
+            family=surface["family"],
+            surface_kind=surface["surface_kind"],
+            source_path=surface["source_path"],
+            evidence_strength=surface["evidence_strength"],
+            promotion_status=surface["promotion_status"],
+        )
         add_edge(surface_node, "sourced_from", repo_node)
 
     for cap in capabilities:
@@ -97,7 +101,7 @@ def build_graph(
         add_edge(cap_node, "implemented_by", surface_node)
         add_edge(cap_node, "owned_by", owner_node)
         add_edge(cap_node, "classified_as", family_node)
-        if cap["evidence_strength"] in {"REGISTRATION", "ROUTE_OR_PROTOCOL", "BEHAVIOR_TEST"}:
+        if cap["evidence_strength"] in {"PROFILED_BOUNDARY", "REGISTRATION", "ROUTE_OR_PROTOCOL", "BEHAVIOR_TEST"}:
             add_edge(cap_node, "registered_via", surface_node)
         if cap["evidence_strength"] == "BEHAVIOR_TEST":
             add_edge(cap_node, "tested_by", surface_node)
@@ -146,6 +150,7 @@ def build_graph(
         "cos20d_pressure": {key: dimension_pressure[key] for key in sorted(dimension_pressure)},
         "invariants": {
             "source_evidence_immutable": True,
+            "candidate_surfaces_retained_without_capability_invention": True,
             "provisional_decisions_cannot_authorize_migration": True,
             "cross_repo_capability_merge_performed": False,
             "all_capabilities_unverified": all(row["parity_status"] == "UNVERIFIED" for row in capabilities),
@@ -157,13 +162,24 @@ def gauntlet(graph: dict[str, Any], capabilities: list[dict[str, Any]], surfaces
     errors: list[str] = []
     node_ids = {node["id"] for node in graph["nodes"]}
     edge_tuples = {(edge["source"], edge["relation"], edge["target"]) for edge in graph["edges"]}
-    surface_ids = {row["surface_id"] for row in surfaces}
-    capability_ids = {row["capability_id"] for row in capabilities}
-    repos = {row["source_repo"] for row in capabilities}
-    if repos != {"openjarvis", "openclaw", "omi", "clicky"}:
-        errors.append(f"capability graph repo coverage mismatch: {sorted(repos)}")
-    if len(capabilities) != len(surface_ids):
-        errors.append("capability/surface count mismatch")
+    all_surface_ids = {row["surface_id"] for row in surfaces}
+    eligible_surface_ids = {row["surface_id"] for row in surfaces if row.get("promotion_status") == "BEHAVIOR_MAPPED"}
+    candidate_surface_ids = all_surface_ids - eligible_surface_ids
+    mapped_surface_ids = {row["source_surface_id"] for row in capabilities}
+    capability_repos = {row["source_repo"] for row in capabilities}
+    surface_repos = {row["source_repo"] for row in surfaces}
+    if surface_repos != {"openjarvis", "openclaw", "omi", "clicky"}:
+        errors.append(f"surface graph repo coverage mismatch: {sorted(surface_repos)}")
+    if capability_repos != {"openjarvis", "openclaw", "omi", "clicky"}:
+        errors.append(f"capability graph repo coverage mismatch: {sorted(capability_repos)}")
+    if mapped_surface_ids != eligible_surface_ids:
+        errors.append(f"eligible capability/surface mapping mismatch missing={len(eligible_surface_ids - mapped_surface_ids)} extra={len(mapped_surface_ids - eligible_surface_ids)}")
+    if len(capabilities) != len(eligible_surface_ids):
+        errors.append("capability count does not equal behavior-mapped surface count")
+    for candidate_id in candidate_surface_ids:
+        node = _node_id("surface", candidate_id)
+        if node not in node_ids:
+            errors.append(f"candidate surface lost from graph: {candidate_id}")
     for cap in capabilities:
         cap_node = _node_id("capability", cap["capability_id"])
         surface_node = _node_id("surface", cap["source_surface_id"])
@@ -172,18 +188,17 @@ def gauntlet(graph: dict[str, Any], capabilities: list[dict[str, Any]], surfaces
             continue
         if (cap_node, "implemented_by", surface_node) not in edge_tuples:
             errors.append(f"missing implemented_by: {cap['capability_id']}")
-        required = set(graph["cos20d_pressure"].get(cap["capability_id"], []))
-        missing_core = CORE_20D - required
+        missing_core = CORE_20D - set(graph["cos20d_pressure"].get(cap["capability_id"], []))
         if missing_core:
             errors.append(f"missing core COS20D pressure for {cap['capability_id']}: {sorted(missing_core)}")
         if cap["parity_status"] != "UNVERIFIED" or cap["equivalence_status"] != "UNPROVEN":
             errors.append(f"premature verification/equivalence: {cap['capability_id']}")
     baseline_repos = {row["source_repo"] for row in baselines.get("sources", [])}
     supply_repos = {row["source_repo"] for row in supply_chain.get("sources", [])}
-    if baseline_repos != repos:
-        errors.append("baseline coverage does not match capability repos")
-    if supply_repos != repos:
-        errors.append("supply-chain coverage does not match capability repos")
+    if baseline_repos != surface_repos:
+        errors.append("baseline coverage does not match surface repos")
+    if supply_repos != surface_repos:
+        errors.append("supply-chain coverage does not match surface repos")
     if baselines.get("status") != "PASS":
         errors.append("W05 baseline matrix not PASS")
     if supply_chain.get("status") != "PASS":
@@ -200,6 +215,8 @@ def gauntlet(graph: dict[str, Any], capabilities: list[dict[str, Any]], surfaces
         "counts": {
             "capabilities": len(capabilities),
             "surfaces": len(surfaces),
+            "behavior_mapped_surfaces": len(eligible_surface_ids),
+            "candidate_surfaces": len(candidate_surface_ids),
             "nodes": len(graph["nodes"]),
             "edges": len(graph["edges"]),
             "relations": dict(sorted(counts.items())),
@@ -209,26 +226,17 @@ def gauntlet(graph: dict[str, Any], capabilities: list[dict[str, Any]], surfaces
     }
 
 
-def run_w07(
-    capabilities_path: str | Path = "ledgers/CAPABILITY_LEDGER.jsonl",
-    surfaces_path: str | Path = "inventory/surfaces/all.jsonl",
-    baselines_path: str | Path = "evidence/cp01/baselines/baseline_matrix.json",
-    supply_path: str | Path = "evidence/cp01/supply_chain.json",
-    graph_path: str | Path = "graphs/capability_graph.json",
-    gauntlet_path: str | Path = "evidence/cp01/gauntlet/w07_complete.json",
-) -> dict[str, Any]:
+def run_w07(capabilities_path: str | Path = "ledgers/CAPABILITY_LEDGER.jsonl", surfaces_path: str | Path = "inventory/surfaces/all.jsonl", baselines_path: str | Path = "evidence/cp01/baselines/baseline_matrix.json", supply_path: str | Path = "evidence/cp01/supply_chain.json", graph_path: str | Path = "graphs/capability_graph.json", gauntlet_path: str | Path = "evidence/cp01/gauntlet/w07_complete.json") -> dict[str, Any]:
     capabilities = read_jsonl(capabilities_path)
     surfaces = read_jsonl(surfaces_path)
     baselines = json.loads(Path(baselines_path).read_text(encoding="utf-8"))
     supply = json.loads(Path(supply_path).read_text(encoding="utf-8"))
     graph = build_graph(capabilities, surfaces, baselines, supply)
     check = gauntlet(graph, capabilities, surfaces, baselines, supply)
-    graph_output = Path(graph_path)
-    graph_output.parent.mkdir(parents=True, exist_ok=True)
-    graph_output.write_text(json.dumps(graph, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    gauntlet_output = Path(gauntlet_path)
-    gauntlet_output.parent.mkdir(parents=True, exist_ok=True)
-    gauntlet_output.write_text(json.dumps(check, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    Path(graph_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(graph_path).write_text(json.dumps(graph, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    Path(gauntlet_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(gauntlet_path).write_text(json.dumps(check, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if check["status"] != "PASS":
         raise RuntimeError("W07 gauntlet failed: " + "; ".join(check["errors"]))
     return {"graph": graph, "gauntlet": check}

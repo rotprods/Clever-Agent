@@ -16,6 +16,7 @@ class CP01GraphReleaseTests(unittest.TestCase):
             "surface_kind": "registry_registration",
             "source_path": "src/tools.py",
             "evidence_strength": "REGISTRATION",
+            "promotion_status": "BEHAVIOR_MAPPED",
             "interface": {"registrar": "registerTool"},
             "state_effects": ["state"],
             "permissions": ["permission"],
@@ -44,6 +45,17 @@ class CP01GraphReleaseTests(unittest.TestCase):
         relations = {edge["relation"] for edge in graph["edges"]}
         self.assertTrue({"exposes", "implemented_by", "registered_via", "owned_by", "persists_to", "permissioned_by", "executes_on", "recovers_via"}.issubset(relations))
         self.assertTrue(CORE_20D.issubset(set(graph["cos20d_pressure"][capability["capability_id"]])))
+
+    def test_candidate_surface_remains_in_graph_without_capability(self) -> None:
+        surface, capability, baselines, supply = self.fixture()
+        candidate = dict(surface)
+        candidate["surface_id"] = "surf_" + "3" * 24
+        candidate["promotion_status"] = "DISCOVERED_CANDIDATE"
+        candidate["evidence_strength"] = "DEFINITION"
+        graph = build_graph([capability], [surface, candidate], baselines, supply)
+        candidate_node = f"surface:{candidate['surface_id']}"
+        self.assertTrue(any(node["id"] == candidate_node for node in graph["nodes"]))
+        self.assertFalse(any(edge["target"] == candidate_node and edge["relation"] == "implemented_by" for edge in graph["edges"]))
 
     def test_gauntlet_detects_repo_coverage_mismatch(self) -> None:
         surface, capability, baselines, supply = self.fixture()
