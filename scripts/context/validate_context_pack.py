@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.context.build_context_pack import AUTHORITY_READ_ORDER, CONTEXT_JSON, DIMENSIONS_JSON, build_context_pack
+from scripts.context.build_context_pack import CONTEXT_JSON, DIMENSIONS_JSON, build_context_pack
 
 
 def _ids(root: Path, path: str, key: str) -> set[str]:
@@ -33,7 +33,7 @@ def validate_context_pack(root: Path = ROOT) -> list[str]:
         return [f"missing dimension registry: {DIMENSIONS_JSON}"]
     actual = json.loads(context_path.read_text(encoding="utf-8"))
     expected = build_context_pack(root)
-    for key in ("schema_version","protocol","project","frontier","upstream_refs","hard_invariants","active_claims","open_risks","accepted_decision_ids","evidence_ids","planning","required_next_outputs"):
+    for key in ("schema_version","protocol","project","frontier","upstream_refs","authority_read_order","hard_invariants","active_claims","open_risks","accepted_decision_ids","evidence_ids","planning","required_next_outputs"):
         if actual.get(key) != expected.get(key):
             errors.append(f"ContextPack drift at top-level key {key}")
 
@@ -45,7 +45,7 @@ def validate_context_pack(root: Path = ROOT) -> list[str]:
     if {str(value).split("_",1)[0] for value in ids} != {f"D{index:02d}" for index in range(20)}:
         errors.append("COS-20D ids must cover D00 through D19 exactly")
 
-    for path in AUTHORITY_READ_ORDER:
+    for path in actual.get("authority_read_order", []):
         if not (root / path).is_file():
             errors.append(f"Context authority path missing: {path}")
 
@@ -77,6 +77,8 @@ def validate_context_pack(root: Path = ROOT) -> list[str]:
 
     config = (root / ".agentic/CONFIG.yaml").read_text(encoding="utf-8")
     for token in (
+        f"active_checkpoint: {expected['frontier']['checkpoint']}",
+        f"active_iteration: {expected['frontier']['iteration']}",
         f"next_wave: {expected['frontier']['next_wave']}",
         "context_manifest: .agentic/context/CURRENT_CONTEXT.json",
         "dimension_registry: .agentic/context/COS20D.json",

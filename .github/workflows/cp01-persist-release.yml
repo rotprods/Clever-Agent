@@ -1,0 +1,96 @@
+name: Persist CP01 Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - release/cp01-to-cp02-final
+    paths:
+      - 'scripts/cp01/finalize.py'
+      - 'scripts/context/**'
+      - 'scripts/validate_agentic_state.py'
+      - 'iterations/02/**'
+      - '.github/workflows/cp01-persist-release.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cp01-persist-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  persist-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - name: Checkout exact release source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - name: Assert exact source checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile tooling and run regression suite
+        run: |
+          python -m compileall -q scripts tests
+          python -m unittest discover -s tests -v
+      - name: W01 acquire and verify exact upstreams
+        run: |
+          python -m scripts.upstream.sync_upstreams
+          python -m scripts.upstream.verify_pins
+          python -m scripts.upstream.source_projection
+      - name: W02 structural census
+        run: python -m scripts.inventory.batch
+      - name: W03 behavioral surfaces
+        run: python -m scripts.cp01.w03
+      - name: W04 capability denominator
+        run: python -m scripts.cp01.capabilities
+      - name: W05 baseline availability
+        run: python -m scripts.cp01.baselines
+      - name: W06 supply-chain evidence
+        run: python -m scripts.cp01.supply_chain
+      - name: W07 capability graph and gauntlet
+        run: python -m scripts.cp01.graph_gauntlet
+      - name: W08 exact-source release candidate
+        run: python -m scripts.cp01.release --candidate-sha "$SOURCE_SHA"
+      - name: Persist CP01 release and enter CP02 in worktree
+        run: python -m scripts.cp01.finalize --source-sha "$SOURCE_SHA" --run-id "$GITHUB_RUN_ID"
+      - name: Validate post-transition Agentic Contract
+        run: |
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/validate_next_actions.py
+          python scripts/context/build_context_pack.py --check
+          git diff --check
+      - name: Commit durable release outputs and state transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            evidence/cp01 inventory/upstreams inventory/surfaces ledgers/CAPABILITY_LEDGER.jsonl \
+            graphs reports licenses \
+            CHECKPOINT_REGISTRY.json CHECKPOINTS.md GOAL_STATE.json EXECUTION_STATE.json STATE.md HANDOFF.md TASKS.md IMPLEMENTATION_PLAN.md CHANGELOG.md \
+            iterations/01/STATE.json iterations/02/STATE.json .agentic/CONFIG.yaml .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md .agentic/context/NEXT_ACTIONS.json \
+            ledgers/CLAIM_LEDGER.ndjson ledgers/EVIDENCE_LEDGER.ndjson ledgers/DECISION_LEDGER.ndjson ledgers/RUN_LOG.ndjson ledgers/WAVE_LEDGER.ndjson \
+            docs/ACTA_DE_CONSCIENCIA.md
+          if git diff --cached --quiet; then
+            echo "No persistence delta; release is already reconciled."
+            exit 0
+          fi
+          git commit -m "release(cp01): persist evidence and enter CP02"
+          python scripts/validate_agentic_state.py
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+      - name: Show release transaction
+        run: git --no-pager log -2 --oneline
