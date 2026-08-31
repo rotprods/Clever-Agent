@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from scripts.cp01.profiles import supplement_repository_surfaces
 from scripts.cp01.surfaces import extract_repository_surfaces, surface_summary
 from scripts.upstream.ledger import load_upstream_pins
 
@@ -53,6 +54,17 @@ def _load_structural(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
 
 
+def _merge_surface_rows(*groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rank = {"DEFINITION": 1, "REGISTRATION": 2, "ROUTE_OR_PROTOCOL": 3, "BEHAVIOR_TEST": 4}
+    unique: dict[str, dict[str, Any]] = {}
+    for rows in groups:
+        for row in rows:
+            previous = unique.get(row["surface_id"])
+            if previous is None or rank[row["evidence_strength"]] > rank[previous["evidence_strength"]]:
+                unique[row["surface_id"]] = row
+    return [unique[key] for key in sorted(unique)]
+
+
 def run_w03(
     ledger: str | Path = "UPSTREAM_LEDGER.yaml",
     cache_root: str | Path = ".cache/upstreams",
@@ -68,10 +80,13 @@ def run_w03(
     source_reports: list[dict[str, Any]] = []
 
     for pin in load_upstream_pins(ledger):
-        rows = extract_repository_surfaces(cache / pin.id, pin)
+        repository = cache / pin.id
+        generic = extract_repository_surfaces(repository, pin)
+        profiled = supplement_repository_surfaces(repository, pin)
+        rows = _merge_surface_rows(generic, profiled)
         _write_jsonl(output / f"{pin.id}.jsonl", rows)
         all_rows.extend(rows)
-        source_reports.append({"source_repo": pin.id, **surface_summary(rows)})
+        source_reports.append({"source_repo": pin.id, "generic_surface_count": len(generic), "profile_surface_count": len(profiled), **surface_summary(rows)})
 
     all_rows = sorted(all_rows, key=lambda row: row["surface_id"])
     _write_jsonl(output / "all.jsonl", all_rows)
@@ -140,6 +155,7 @@ def run_w03(
             "tests_are_not_product_surfaces": True,
             "definition_is_not_verified": True,
             "cross_repo_behavior_dedupe_performed": False,
+            "generic_plus_profile_extraction": True,
             "all_source_provenance_preserved": not any("provenance" in error for error in errors),
         },
     }
