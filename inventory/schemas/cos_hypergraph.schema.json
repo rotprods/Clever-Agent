@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rotprods.dev/schemas/cos_hypergraph.schema.json",
+  "title": "Clever-Agent COS Hypergraph",
+  "type": "object",
+  "required": ["schema_version", "graph_type", "cos_model", "source_graphs", "invariants", "source_nodes", "source_edges", "cos_facets", "canonical_components", "hyperedges"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "graph_type": {"const": "cos_hypergraph"},
+    "cos_model": {"type": "string"},
+    "source_graphs": {"type": "array", "items": {"type": "string"}},
+    "invariants": {"type": "object"},
+    "source_nodes": {"type": "array"},
+    "source_edges": {"type": "array"},
+    "cos_facets": {"type": "array"},
+    "canonical_components": {"type": "array"},
+    "hyperedges": {"type": "array"}
+  },
+  "additionalProperties": false
+}
