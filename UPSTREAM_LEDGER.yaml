@@ -1,0 +1,41 @@
+version: 1
+snapshot_date: '2026-08-31'
+policy:
+  integration_default: pinned-upstream-plus-adapter
+  preserve_history: true
+  preserve_license_and_notice: true
+  no_untracked_copying: true
+  drift_detection_required: true
+sources:
+  - id: openjarvis
+    repository: open-jarvis/OpenJarvis
+    url: https://github.com/open-jarvis/OpenJarvis
+    branch: main
+    pinned_commit: 72033b8ec288aa067ce4530ff9d96bf231e9c4e5
+    license: Apache-2.0
+    role: cognitive-runtime
+    integration: adapter
+  - id: openclaw
+    repository: openclaw/openclaw
+    url: https://github.com/openclaw/openclaw
+    branch: main
+    pinned_commit: 3ee32fb9c10dcf9d5713c0c4891e55227f5b1f0d
+    license: MIT
+    role: gateway-channels-nodes-plugins
+    integration: adapter
+  - id: omi
+    repository: BasedHardware/omi
+    url: https://github.com/BasedHardware/omi
+    branch: main
+    pinned_commit: e1eca38ff28758d58cde43045691c8ba479063e9
+    license: MIT
+    role: ambient-memory-mobile-wearable
+    integration: adapter
+  - id: clicky
+    repository: farzaa/clicky
+    url: https://github.com/farzaa/clicky
+    branch: main
+    pinned_commit: a80fa80721a8aebe51a170a7780705024ebc6e46
+    license: MIT
+    role: macos-desktop-embodiment
+    integration: adapter
