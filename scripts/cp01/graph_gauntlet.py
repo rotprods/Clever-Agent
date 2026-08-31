@@ -14,6 +14,10 @@ SUPPORTED_EDGE_TYPES = [
     "consumes", "recovers_via", "sourced_from", "classified_as", "has_baseline_candidate",
     "described_by_supply_chain"
 ]
+REGISTRATION_SURFACE_KINDS = {
+    "registry_registration", "plugin_contribution", "route_mount", "http_route",
+    "websocket_route", "cli_command", "lifecycle_hook"
+}
 CORE_20D = {
     "D00_MISSION_GOAL", "D01_PROVENANCE_EVIDENCE", "D02_SOURCE_TOPOLOGY",
     "D03_CAPABILITY_SEMANTICS", "D04_DEPENDENCY_GRAPH", "D05_RUNTIME_OWNERSHIP",
@@ -25,6 +29,10 @@ CORE_20D = {
 def _node_id(kind: str, value: str) -> str:
     safe = value.replace(" ", "_").replace("/", "_").replace(":", "_")
     return f"{kind}:{safe}"
+
+
+def _is_registered_surface(cap: dict[str, Any]) -> bool:
+    return cap.get("surface_kind") in REGISTRATION_SURFACE_KINDS
 
 
 def _required_dimensions(cap: dict[str, Any], surface: dict[str, Any]) -> list[str]:
@@ -101,7 +109,7 @@ def build_graph(capabilities: list[dict[str, Any]], surfaces: list[dict[str, Any
         add_edge(cap_node, "implemented_by", surface_node)
         add_edge(cap_node, "owned_by", owner_node)
         add_edge(cap_node, "classified_as", family_node)
-        if cap["evidence_strength"] in {"PROFILED_BOUNDARY", "REGISTRATION", "ROUTE_OR_PROTOCOL", "BEHAVIOR_TEST"}:
+        if _is_registered_surface(cap):
             add_edge(cap_node, "registered_via", surface_node)
         if cap["evidence_strength"] == "BEHAVIOR_TEST":
             add_edge(cap_node, "tested_by", surface_node)
@@ -151,10 +159,11 @@ def build_graph(capabilities: list[dict[str, Any]], surfaces: list[dict[str, Any
         "invariants": {
             "source_evidence_immutable": True,
             "candidate_surfaces_retained_without_capability_invention": True,
+            "registered_via_requires_registration_surface": True,
             "provisional_decisions_cannot_authorize_migration": True,
             "cross_repo_capability_merge_performed": False,
             "all_capabilities_unverified": all(row["parity_status"] == "UNVERIFIED" for row in capabilities),
-        }
+        },
     }
 
 
@@ -177,8 +186,7 @@ def gauntlet(graph: dict[str, Any], capabilities: list[dict[str, Any]], surfaces
     if len(capabilities) != len(eligible_surface_ids):
         errors.append("capability count does not equal behavior-mapped surface count")
     for candidate_id in candidate_surface_ids:
-        node = _node_id("surface", candidate_id)
-        if node not in node_ids:
+        if _node_id("surface", candidate_id) not in node_ids:
             errors.append(f"candidate surface lost from graph: {candidate_id}")
     for cap in capabilities:
         cap_node = _node_id("capability", cap["capability_id"])
@@ -188,6 +196,9 @@ def gauntlet(graph: dict[str, Any], capabilities: list[dict[str, Any]], surfaces
             continue
         if (cap_node, "implemented_by", surface_node) not in edge_tuples:
             errors.append(f"missing implemented_by: {cap['capability_id']}")
+        has_registered_via = (cap_node, "registered_via", surface_node) in edge_tuples
+        if has_registered_via != _is_registered_surface(cap):
+            errors.append(f"registered_via semantic mismatch: {cap['capability_id']}")
         missing_core = CORE_20D - set(graph["cos20d_pressure"].get(cap["capability_id"], []))
         if missing_core:
             errors.append(f"missing core COS20D pressure for {cap['capability_id']}: {sorted(missing_core)}")

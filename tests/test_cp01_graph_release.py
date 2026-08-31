@@ -39,12 +39,33 @@ class CP01GraphReleaseTests(unittest.TestCase):
         supply = {"status": "PASS", "sources": [{"source_repo": "openjarvis", "declared_license": "MIT", "license_verification": {"status": "VERIFIED_DECLARATION_MATCH"}, "counts": {"lockfiles": 1}}]}
         return surface, capability, baselines, supply
 
-    def test_graph_preserves_capability_surface_owner_and_20d_pressure(self) -> None:
+    def test_graph_preserves_capability_surface_owner_registration_and_20d_pressure(self) -> None:
         surface, capability, baselines, supply = self.fixture()
         graph = build_graph([capability], [surface], baselines, supply)
         relations = {edge["relation"] for edge in graph["edges"]}
         self.assertTrue({"exposes", "implemented_by", "registered_via", "owned_by", "persists_to", "permissioned_by", "executes_on", "recovers_via"}.issubset(relations))
         self.assertTrue(CORE_20D.issubset(set(graph["cos20d_pressure"][capability["capability_id"]])))
+
+    def test_profiled_native_boundary_is_not_registered_via(self) -> None:
+        surface, capability, baselines, supply = self.fixture()
+        native_surface = dict(surface)
+        native_surface.update({"surface_id": "surf_" + "4" * 24, "source_repo": "clicky", "surface_kind": "native_action", "evidence_strength": "PROFILED_BOUNDARY", "source_path": "CompanionManager.swift"})
+        native_cap = dict(capability)
+        native_cap.update({"capability_id": "cap_" + "5" * 24, "source_surface_id": native_surface["surface_id"], "source_repo": "clicky", "surface_kind": "native_action", "evidence_strength": "PROFILED_BOUNDARY", "runtime_owner": "clicky:macos"})
+        graph = build_graph([native_cap], [native_surface], {"status": "PASS", "sources": [{"source_repo": "clicky"}], "baselines": []}, {"status": "PASS", "sources": [{"source_repo": "clicky", "declared_license": "MIT", "license_verification": {"status": "VERIFIED_DECLARATION_MATCH"}, "counts": {"lockfiles": 0}}]})
+        cap_node = f"capability:{native_cap['capability_id']}"
+        surface_node = f"surface:{native_surface['surface_id']}"
+        self.assertTrue(any(edge["source"] == cap_node and edge["relation"] == "implemented_by" and edge["target"] == surface_node for edge in graph["edges"]))
+        self.assertFalse(any(edge["source"] == cap_node and edge["relation"] == "registered_via" for edge in graph["edges"]))
+
+    def test_protocol_contract_is_not_registered_via(self) -> None:
+        surface, capability, baselines, supply = self.fixture()
+        surface["surface_kind"] = "protocol_contract"
+        surface["evidence_strength"] = "ROUTE_OR_PROTOCOL"
+        capability["surface_kind"] = "protocol_contract"
+        capability["evidence_strength"] = "ROUTE_OR_PROTOCOL"
+        graph = build_graph([capability], [surface], baselines, supply)
+        self.assertFalse(any(edge["relation"] == "registered_via" for edge in graph["edges"]))
 
     def test_candidate_surface_remains_in_graph_without_capability(self) -> None:
         surface, capability, baselines, supply = self.fixture()

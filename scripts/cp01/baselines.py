@@ -3,9 +3,8 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
-import tomllib
 from typing import Any
 
 from scripts.upstream.ledger import UpstreamPin, load_upstream_pins
@@ -68,17 +67,31 @@ def _python_candidates(root: Path, pin: UpstreamPin, structural: dict[str, Any])
     tests = structural.get("test_files", [])
     if not any(str(path).endswith((".py", ".pyi")) for path in tests):
         return []
-    manifests = [str(path) for path in structural.get("manifests", []) if str(path).endswith(("pyproject.toml", "requirements.txt")) or "requirements" in Path(str(path)).name]
+    manifests = [
+        str(path)
+        for path in structural.get("manifests", [])
+        if str(path).endswith(("pyproject.toml", "requirements.txt")) or "requirements" in Path(str(path)).name
+    ]
     manifest = next((path for path in manifests if path.endswith("pyproject.toml")), manifests[0] if manifests else "<inferred-from-python-tests>")
     return [_candidate(pin, manifest, "python-tests", "python -m pytest", "structural:test_files")]
+
+
+def _xcode_project_path(manifest: str) -> str | None:
+    suffix = ".xcodeproj/project.pbxproj"
+    if not manifest.endswith(suffix):
+        return None
+    return manifest[: -len("/project.pbxproj")] if manifest.endswith("/project.pbxproj") else None
 
 
 def _toolchain_candidates(root: Path, pin: UpstreamPin, structural: dict[str, Any]) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     manifests = {str(path) for path in structural.get("manifests", [])}
     for manifest in sorted(manifests):
-        name = Path(manifest).name
-        if name == "Cargo.toml":
+        name = PurePosixPath(manifest).name
+        xcode_project = _xcode_project_path(manifest)
+        if xcode_project:
+            out.append(_candidate(pin, manifest, "xcode-project", f"xcodebuild -project {xcode_project} -list", "xcodeproj:project.pbxproj"))
+        elif name == "Cargo.toml":
             out.append(_candidate(pin, manifest, "rust-tests", "cargo test --workspace", "Cargo.toml"))
         elif name == "pubspec.yaml":
             command = "flutter test" if "app" in manifest.lower() else "dart test"
@@ -126,6 +139,9 @@ def run_w05(
         errors.append("baseline matrix does not cover all four upstreams")
     if any(row["execution_status"] == "PASS" for row in all_rows):
         errors.append("W05 discovery must never fabricate upstream PASS")
+    clicky_rows = [row for row in all_rows if row["source_repo"] == "clicky"]
+    if clicky_rows and all(row["classification"] == "NOT_APPLICABLE" for row in clicky_rows):
+        errors.append("clicky has Apple project metadata but no platform-gated baseline candidate")
     payload = {
         "schema_version": 1,
         "phase": "I01-W05",
@@ -134,7 +150,7 @@ def run_w05(
             "upstream_code_execution_authorized": False,
             "reason": "SECURITY_MODEL treats third-party upstream/plugin code as untrusted; no hardened hermetic sandbox is configured in CP01 CI",
             "not_run_is_pass": False,
-            "future_execution_requirement": "execute applicable baselines in isolated, network/secret-constrained runtime before adapter parity/release"
+            "future_execution_requirement": "execute applicable baselines in isolated, network/secret-constrained runtime before adapter parity/release",
         },
         "errors": errors,
         "sources": sorted(source_summaries, key=lambda row: row["source_repo"]),
