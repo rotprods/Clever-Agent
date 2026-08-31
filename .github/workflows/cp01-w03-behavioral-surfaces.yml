@@ -1,0 +1,75 @@
+name: CP01 W03 Behavioral Surfaces
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - wave/cp01/i01-w01-graphify-cosgraph
+    paths:
+      - 'scripts/cp01/**'
+      - 'inventory/schemas/behavioral_surface.schema.json'
+      - 'tests/test_cp01_surfaces.py'
+      - 'UPSTREAM_LEDGER.yaml'
+      - '.github/workflows/cp01-w03-behavioral-surfaces.yml'
+  pull_request:
+    paths:
+      - 'scripts/cp01/**'
+      - 'inventory/schemas/behavioral_surface.schema.json'
+      - 'tests/test_cp01_surfaces.py'
+      - 'UPSTREAM_LEDGER.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  behavioral-surfaces:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Clever-Agent
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile CP01 tooling
+        run: python -m compileall -q scripts tests
+      - name: Run behavioral surface unit tests
+        run: python -m unittest tests.test_cp01_surfaces -v
+      - name: Acquire exact upstream object stores
+        run: python -m scripts.upstream.sync_upstreams
+      - name: Verify immutable upstream pins
+        run: python -m scripts.upstream.verify_pins
+      - name: Materialize source-only projections
+        run: python -m scripts.upstream.source_projection
+      - name: Compile structural inventory context
+        run: python -m scripts.inventory.batch
+      - name: Compile W03 behavioral surfaces and gauntlet
+        run: python -m scripts.cp01.w03
+      - name: Assert W03 invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          summary = json.loads(Path('reports/cp01/w03_surface_summary.json').read_text())
+          gauntlet = json.loads(Path('evidence/cp01/gauntlet/w03_surface_coverage.json').read_text())
+          assert gauntlet['status'] == 'PASS', gauntlet
+          assert set(gauntlet['source_counts']) == {'openjarvis','openclaw','omi','clicky'}
+          assert all(value > 0 for value in gauntlet['source_counts'].values())
+          assert summary['surface_summary']['surface_count'] == sum(gauntlet['source_counts'].values())
+          assert gauntlet['invariants']['tests_are_not_product_surfaces'] is True
+          assert gauntlet['invariants']['cross_repo_behavior_dedupe_performed'] is False
+          PY
+      - name: Upload W03 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp01-w03-surfaces-${{ github.sha }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            inventory/surfaces/*.jsonl
+            reports/cp01/w03_surface_summary.json
+            evidence/cp01/gauntlet/w03_surface_coverage.json
+            evidence/cp01/acquisition/*.json
