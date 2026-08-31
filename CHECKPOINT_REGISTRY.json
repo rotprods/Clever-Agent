@@ -2,8 +2,8 @@
   "schema_version": 1,
   "goal_id": "CLEVER-JARVIS-001",
   "checkpoints": [
-    {"id":"CP00","name":"Canonical bootstrap","status":"READY_FOR_REVIEW","exit":"Goal, agents contract, architecture, security, upstream ledger, parity method and durable state exist in Git."},
-    {"id":"CP01","name":"Forensic upstream inventory","status":"PENDING","depends_on":["CP00"],"exit":"All four pinned source trees are cloned/indexed; generated capability ledger and runtime/test inventory exist; upstream baselines run."},
+    {"id":"CP00","name":"Canonical bootstrap","status":"COMPLETE","exit":"Goal, agents contract, architecture, security, upstream ledger, parity method and durable state exist in Git."},
+    {"id":"CP01","name":"Forensic upstream inventory","status":"IN_PROGRESS","depends_on":["CP00"],"exit":"All four pinned source trees are cloned/indexed; generated capability ledger and runtime/test inventory exist; upstream baselines run."},
     {"id":"CP02","name":"Canonical contracts and Rust kernel scaffold","status":"PENDING","depends_on":["CP01"],"exit":"Versioned schemas compile for Rust/Python/TypeScript/Swift; kernel identity/event/capability/policy skeleton passes contract tests."},
     {"id":"CP03","name":"OpenJarvis cognitive adapter","status":"PENDING","depends_on":["CP02"],"exit":"OpenJarvis engine/agent/memory/trace/learning/tool/scheduler/security capabilities are mapped and parity-tested through canonical contracts."},
     {"id":"CP04","name":"OpenClaw gateway adapter","status":"PENDING","depends_on":["CP02"],"exit":"Gateway/channels/sessions/nodes/providers/media/tools/skills/plugins/automation capabilities are mapped and parity-tested."},

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "goal_id": "CLEVER-JARVIS-001",
-  "branch": "bootstrap/jarvis-unification-v1",
-  "mode": "specification-bootstrap",
-  "current_checkpoint": "CP00",
-  "next_checkpoint": "CP01",
+  "branch": "main",
+  "mode": "forensic-inventory",
+  "current_checkpoint": "CP01",
+  "next_checkpoint": "CP02",
   "upstream_snapshot_date": "2026-08-31",
   "upstream_refs": {
     "openjarvis": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5",
@@ -14,6 +14,7 @@
   },
   "implementation_started": false,
   "blocking_issues": [],
+  "tracking_issue": 2,
   "required_next_outputs": [
     "generated upstream file/runtime inventory",
     "generated exhaustive capability ledger",
