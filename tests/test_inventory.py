@@ -12,9 +12,7 @@ from scripts.upstream.sync_upstreams import acquire
 
 
 def _git(repository: Path, *args: str) -> str:
-    result = subprocess.run(
-        ["git", *args], cwd=repository, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False
-    )
+    result = subprocess.run(["git", *args], cwd=repository, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
     if result.returncode != 0:
         raise RuntimeError(result.stderr)
     return result.stdout.strip()
@@ -50,7 +48,7 @@ class StructuralInventoryTests(unittest.TestCase):
         acquire(pin, cache)
         return pin, cache / pin.id
 
-    def test_scan_uses_full_git_tree_and_is_deterministic(self) -> None:
+    def test_scan_uses_full_git_tree_without_blob_sizes_and_is_deterministic(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             pin, repository = self._fixture(Path(tmp))
             first = scan_repository(repository, pin)
@@ -59,6 +57,10 @@ class StructuralInventoryTests(unittest.TestCase):
             self.assertEqual(first["tree_entry_count"], 9)
             paths = {row["path"] for row in first["files"]}
             self.assertIn("assets/model.bin", paths)
+            self.assertTrue(all(row["size"] is None for row in first["files"]))
+            self.assertFalse(first["summary"]["blob_sizes_collected"])
+            self.assertEqual(first["summary"]["total_bytes_known"], 0)
+            self.assertEqual(first["summary"]["unknown_size_objects"], 9)
             self.assertIn("packages/sdk", first["package_workspace_roots"])
             self.assertIn("tests/server.test.ts", first["test_files"])
             self.assertIn(".github/workflows/ci.yml", first["ci_release_files"])
@@ -69,16 +71,7 @@ class StructuralInventoryTests(unittest.TestCase):
     def test_scan_fails_closed_on_pin_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             pin, repository = self._fixture(Path(tmp))
-            wrong = UpstreamPin(
-                pin.id,
-                pin.repository,
-                pin.url,
-                pin.branch,
-                "f" * 40,
-                pin.license,
-                pin.role,
-                pin.integration,
-            )
+            wrong = UpstreamPin(pin.id, pin.repository, pin.url, pin.branch, "f" * 40, pin.license, pin.role, pin.integration)
             with self.assertRaises(RuntimeError):
                 scan_repository(repository, wrong)
 

@@ -19,3 +19,9 @@ jobs:
           python-version: '3.12'
       - name: Validate canonical agentic state
         run: python scripts/validate_agentic_state.py
+      - name: Validate executable next-action DAG
+        run: python scripts/context/validate_next_actions.py
+      - name: Validate ledger-backed COS V2 ContextPack
+        run: python scripts/context/validate_context_pack.py
+      - name: Verify deterministic ContextPack bytes
+        run: python scripts/context/build_context_pack.py --check

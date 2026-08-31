@@ -4,16 +4,33 @@ All notable project-control and implementation changes are recorded here. Eviden
 
 ## 2026-08-31
 
-### CP01 forensic compiler — Graphify/COSGraph + W01/W02
+### Regression + consciousness + executable planning control plane
 
-- Added exact-SHA upstream acquisition using partial Git object stores and immutable Clever-Agent pin refs.
-- Added source-only sparse worktree projection so source/config can be inspected without indiscriminate binary/model/media downloads.
-- Added `/graphify` deterministic polyglot source/manifests evidence graph compiler.
-- Added `/cosgraphengine` COS-20L non-destructive integration hypergraph and summary reporting.
-- Added unit/smoke CI plus a full four-upstream forensic workflow; W01 full forensic run passed and emitted a digest-addressed artifact.
-- Added W02 structural inventory compiler that reads complete pinned Git trees without materializing blobs.
-- Recorded the hard distinction between raw evidence graph nodes and the future W04 capability denominator.
-- Advanced the persisted frontier from I01-W01 to I01-W02 while keeping capability parity denominator `NOT_GENERATED`.
+- Added `docs/REGRESSION_2026-08-31.md` reconstructing CP00 → agentic OS → W01 → W02 → COS V2 with verified facts, discarded hypotheses and unresolved proof obligations.
+- Added `docs/ACTA_DE_CONSCIENCIA.md` as the canonical human north-star / project-awareness handoff.
+- Added `IMPLEMENTATION_PLAN.md`, `TASKS.md` and `.agentic/context/NEXT_ACTIONS.json` executable dependency graph.
+- Added task-DAG validation for IDs, dependencies, cycles, frontier and executability.
+- Persisted COS V2 decisions D-0006..D-0010 and context/performance risks RISK-0004..RISK-0005.
+- Fixed ContextPack memory ghosting by deriving it from canonical ledgers and validating all referenced IDs.
+- Added deterministic ContextPack + plan gates to Agentic Contract CI.
+- Identified W02 timeout root cause: `git ls-tree -l` requested blob sizes against blobless partial clones.
+- Changed structural inventory to complete Git tree metadata without blob-size resolution; unknown size is explicit and tested.
+- Added final-head structural workflow trigger/contract checks; W02 remains open until a successful four-source run is persisted.
+
+### COS Graph Engine V2 / 20D context control
+
+- Added four graph planes: P0 source evidence, P1 semantic surfaces, P2 COS20D decisions, P3 agent context.
+- Added COS-20D registry and promotion ladder through `MIGRATION_ELIGIBLE`.
+- Added Graphify V2 compact semantic projection and COSGraph V2 provisional decision compiler.
+- Added deterministic future-agent ContextPack and `/context`, `/graphify`, `/cos-graph-engineV2` command surfaces.
+- Updated agent loop to graph-governed `BOOT_RECONCILE → ... → COMMIT_RECONCILE`.
+
+### CP01 W01/W02 engineering
+
+- Implemented exact-SHA partial object-store acquisition and immutable pin verification.
+- Implemented source-only sparse projections.
+- Ran full four-upstream Graphify/COS forensic workflow successfully; preserved artifact/digest evidence.
+- Implemented complete-Git-tree structural inventory compiler; first full run timed out before evidence upload and therefore did not close W02.
 
 ### Agentic development bootstrap — Iteration 01
 

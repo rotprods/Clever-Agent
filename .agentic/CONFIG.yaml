@@ -22,6 +22,7 @@ authority:
     - EXECUTION_STATE.json
   context_manifest: .agentic/context/CURRENT_CONTEXT.json
   dimension_registry: .agentic/context/COS20D.json
+  next_actions: .agentic/context/NEXT_ACTIONS.json
   handoff: HANDOFF.md
 
 persistence:
@@ -85,10 +86,19 @@ context:
   context_manifest: .agentic/context/CURRENT_CONTEXT.json
   human_context: .agentic/context/CURRENT_CONTEXT.md
   dimension_registry: .agentic/context/COS20D.json
+  next_actions: .agentic/context/NEXT_ACTIONS.json
   context_builder: python scripts/context/build_context_pack.py
   context_validator: python scripts/context/validate_context_pack.py
   context_check: python scripts/context/build_context_pack.py --check
+  plan_validator: python scripts/context/validate_next_actions.py
   regenerate_after_material_state_change: true
+
+planning:
+  regression: docs/REGRESSION_2026-08-31.md
+  consciousness_act: docs/ACTA_DE_CONSCIENCIA.md
+  implementation_plan: IMPLEMENTATION_PLAN.md
+  task_list: TASKS.md
+  machine_task_graph: .agentic/context/NEXT_ACTIONS.json
 
 waves:
   states:
@@ -128,6 +138,7 @@ quality:
   security_review_on_trust_boundary_change: true
   state_validator: python scripts/validate_agentic_state.py
   context_validator: python scripts/context/validate_context_pack.py
+  plan_validator: python scripts/context/validate_next_actions.py
 
 tool_integrations:
   codex:
