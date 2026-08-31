@@ -4,6 +4,11 @@
   "branch": "main",
   "mode": "forensic-inventory",
   "current_checkpoint": "CP01",
+  "active_iteration": "I01",
+  "active_subcheckpoint": "I01.1",
+  "next_wave": "I01-W01",
+  "next_wave_name": "Reproducible upstream acquisition",
+  "mandatory_boot_command": "/empezarproyecto",
   "next_checkpoint": "CP02",
   "upstream_snapshot_date": "2026-08-31",
   "upstream_refs": {
@@ -16,6 +21,8 @@
   "blocking_issues": [],
   "tracking_issue": 2,
   "required_next_outputs": [
+    "reproducible exact-SHA upstream acquisition",
+    "upstream acquisition manifests and evidence",
     "generated upstream file/runtime inventory",
     "generated exhaustive capability ledger",
     "upstream baseline test report",

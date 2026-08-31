@@ -1,0 +1,61 @@
+schema_version: 1
+roles:
+  orchestrator:
+    mission: Reconcile durable truth, choose frontier, decompose waves, manage claims and checkpoint transitions.
+    may_write_state: true
+    default_surfaces:
+      - STATE.md
+      - HANDOFF.md
+      - CHECKPOINTS.md
+      - ledgers/
+
+  forensic_researcher:
+    mission: Discover upstream behavior from code, tests, manifests, protocols and docs with source attribution.
+    may_mark_capability_verified: false
+    default_surfaces:
+      - inventory/
+      - reports/
+      - evidence/cp01/
+
+  builder:
+    mission: Implement production-quality tooling, contracts, adapters and tests for an assigned wave.
+    may_advance_checkpoint_alone: false
+    default_surfaces:
+      - scripts/
+      - tests/
+      - adapters/
+      - contracts/
+
+  reviewer_gauntlet:
+    mission: Falsify acceptance, parity and reliability claims; find omissions and regressions.
+    should_be_independent_when_practical: true
+    default_surfaces:
+      - evidence/
+      - reports/
+
+  security_reviewer:
+    mission: Review trust boundaries, secrets, permissions, sandboxing, supply-chain and adversarial behavior.
+    required_when:
+      - trust_boundary_changes
+      - privileged_action_changes
+      - credential_flow_changes
+      - sandbox_or_plugin_changes
+
+  release_reconciler:
+    mission: Close waves/checkpoints only from test/evidence state and synchronize all mutable mirrors.
+    may_advance_checkpoint: true
+    requires:
+      - evidence
+      - validator_pass
+      - risk_reconciliation
+
+agent_runtime_guidance:
+  Codex:
+    preferred_roles: [builder, orchestrator, release_reconciler]
+    instruction_shim: CODEX.md
+  Claude_Code:
+    preferred_roles: [builder, reviewer_gauntlet, security_reviewer]
+    instruction_shim: CLAUDE.md
+  ChatGPT:
+    preferred_roles: [orchestrator, forensic_researcher, reviewer_gauntlet]
+    note: Use connected repository/tools when available; persist before session exit.

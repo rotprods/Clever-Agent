@@ -1,0 +1,93 @@
+schema_version: 1
+project:
+  id: CLEVER-JARVIS-001
+  repository: rotprods/Clever-Agent
+  default_branch: main
+  active_iteration: I01
+  active_checkpoint: CP01
+
+authority:
+  execution: AGENTS.md
+  goal: GOAL.md
+  security: SECURITY_MODEL.md
+  architecture:
+    - ARCHITECTURE.md
+    - CAPABILITY_PARITY.md
+  machine_checkpoint: CHECKPOINT_REGISTRY.json
+  human_state: STATE.md
+  machine_state:
+    - GOAL_STATE.json
+    - EXECUTION_STATE.json
+  handoff: HANDOFF.md
+
+persistence:
+  chat_is_authority: false
+  max_context_loss_interactions: 1
+  append_only_ledgers:
+    - ledgers/RUN_LOG.ndjson
+    - ledgers/WAVE_LEDGER.ndjson
+    - ledgers/CLAIM_LEDGER.ndjson
+    - ledgers/DECISION_LEDGER.ndjson
+    - ledgers/RISK_LEDGER.ndjson
+    - ledgers/EVIDENCE_LEDGER.ndjson
+    - ledgers/CAPABILITY_LEDGER.jsonl
+    - ledgers/UPSTREAM_DRIFT.ndjson
+
+execution:
+  mandatory_boot_command: /empezarproyecto
+  material_mutation_requires_wave: true
+  claim_required_before_write: true
+  loop:
+    - OBSERVE
+    - MODEL
+    - PLAN
+    - IMPLEMENT
+    - VERIFY
+    - GAUNTLET
+    - EVIDENCE
+    - PERSIST
+    - COMMIT
+    - RECONCILE
+
+waves:
+  states:
+    - PROPOSED
+    - CLAIMED
+    - IN_PROGRESS
+    - VERIFYING
+    - COMPLETE
+    - BLOCKED
+    - ABORTED
+    - ROLLED_BACK
+  high_contention_paths:
+    - AGENTS.md
+    - GOAL.md
+    - STATE.md
+    - HANDOFF.md
+    - CHECKPOINTS.md
+    - CHECKPOINT_REGISTRY.json
+    - GOAL_STATE.json
+    - EXECUTION_STATE.json
+    - contracts/
+
+branching:
+  direct_main_writes: discouraged
+  force_push_main: forbidden
+  patterns:
+    iteration: iteration/<nn>-<slug>
+    wave: wave/<checkpoint>/<wave>-<slug>
+    fix: fix/<slug>
+    chore: chore/<slug>
+
+quality:
+  evidence_required_for_completion: true
+  parity_percentage_manual_edit: forbidden
+  security_review_on_trust_boundary_change: true
+  state_validator: python scripts/validate_agentic_state.py
+
+current_iteration:
+  id: I01
+  metaprompt: iterations/01/METAPROMPT.md
+  plan: iterations/01/ITERATION.md
+  state: iterations/01/STATE.json
+  next_wave: I01-W01

@@ -1,0 +1,1 @@
+{"schema_version":1,"date":"2026-08-31","evidence_id":"EVID-0001","status":"PENDING_CI","type":"agentic_state_contract","path":"scripts/validate_agentic_state.py","claim":"Canonical project-control files and core state mirrors are internally consistent when validator passes."}

@@ -3,8 +3,9 @@
   "goal_id": "CLEVER-JARVIS-001",
   "status": "IN_PROGRESS",
   "active_checkpoint": "CP01",
-  "frontier": "Execute GitHub issue #2: forensic inventory of all four pinned upstream repositories and generation of the exhaustive capability ledger before finalizing kernel contracts.",
+  "active_iteration": "I01",
+  "frontier": "Execute /empezarproyecto, claim I01-W01, and implement reproducible acquisition/verification of all four pinned upstream repositories before finalizing inventory/compiler contracts.",
   "parity": {"verified": 0, "total": null, "ratio": null, "denominator_status": "NOT_GENERATED"},
   "invariants_locked": true,
-  "last_updated": "2026-08-31T15:07:00+02:00"
+  "last_updated_date": "2026-08-31"
 }
