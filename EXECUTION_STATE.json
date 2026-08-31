@@ -5,9 +5,10 @@
   "mode": "forensic-inventory",
   "current_checkpoint": "CP01",
   "active_iteration": "I01",
-  "active_subcheckpoint": "I01.1",
-  "next_wave": "I01-W01",
-  "next_wave_name": "Reproducible upstream acquisition",
+  "active_subcheckpoint": "I01.2",
+  "next_wave": "I01-W02",
+  "next_wave_name": "Structural inventory",
+  "completed_waves": ["I01-W00", "I01-W01"],
   "mandatory_boot_command": "/empezarproyecto",
   "next_checkpoint": "CP02",
   "upstream_snapshot_date": "2026-08-31",
@@ -17,16 +18,15 @@
     "omi": "e1eca38ff28758d58cde43045691c8ba479063e9",
     "clicky": "a80fa80721a8aebe51a170a7780705024ebc6e46"
   },
-  "implementation_started": false,
+  "implementation_started": true,
   "blocking_issues": [],
   "tracking_issue": 2,
   "required_next_outputs": [
-    "reproducible exact-SHA upstream acquisition",
-    "upstream acquisition manifests and evidence",
-    "generated upstream file/runtime inventory",
+    "generated complete-tree upstream structural inventories",
+    "evidence-backed public/behavioral surface extraction",
     "generated exhaustive capability ledger",
     "upstream baseline test report",
     "license/NOTICE inventory",
-    "contract requirements derived from actual capability graph"
+    "contract requirements derived from actual capability graph and completeness gauntlet"
   ]
 }

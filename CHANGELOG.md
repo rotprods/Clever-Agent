@@ -4,6 +4,17 @@ All notable project-control and implementation changes are recorded here. Eviden
 
 ## 2026-08-31
 
+### CP01 forensic compiler — Graphify/COSGraph + W01/W02
+
+- Added exact-SHA upstream acquisition using partial Git object stores and immutable Clever-Agent pin refs.
+- Added source-only sparse worktree projection so source/config can be inspected without indiscriminate binary/model/media downloads.
+- Added `/graphify` deterministic polyglot source/manifests evidence graph compiler.
+- Added `/cosgraphengine` COS-20L non-destructive integration hypergraph and summary reporting.
+- Added unit/smoke CI plus a full four-upstream forensic workflow; W01 full forensic run passed and emitted a digest-addressed artifact.
+- Added W02 structural inventory compiler that reads complete pinned Git trees without materializing blobs.
+- Recorded the hard distinction between raw evidence graph nodes and the future W04 capability denominator.
+- Advanced the persisted frontier from I01-W01 to I01-W02 while keeping capability parity denominator `NOT_GENERATED`.
+
 ### Agentic development bootstrap — Iteration 01
 
 - Added mandatory `/empezarproyecto` boot/reconciliation command.
