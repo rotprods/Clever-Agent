@@ -85,6 +85,19 @@ quality:
   security_review_on_trust_boundary_change: true
   state_validator: python scripts/validate_agentic_state.py
 
+tool_integrations:
+  codex:
+    native_project_instructions: AGENTS.md
+    shim: CODEX.md
+    note: Do not depend on CODEX.md auto-discovery; AGENTS.md is canonical.
+  claude_code:
+    session_instructions: CLAUDE.md
+    start_skill: .claude/skills/empezarproyecto/SKILL.md
+    slash_command: /empezarproyecto
+  chatgpt:
+    operating_contract: AGENTS.md
+    persistence_required: true
+
 current_iteration:
   id: I01
   metaprompt: iterations/01/METAPROMPT.md

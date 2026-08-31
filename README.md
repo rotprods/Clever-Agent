@@ -11,6 +11,8 @@ For any repository-capable coding agent:
 3. Run `python scripts/validate_agentic_state.py`.
 4. Resolve the active iteration and claim the next wave before material changes.
 
+Claude Code exposes `/empezarproyecto` as a project skill at `.claude/skills/empezarproyecto/SKILL.md`. Codex uses `AGENTS.md` as the native persistent project-instruction surface. Tool-specific details live in `DEVELOPMENT_AGENTIC.md`.
+
 Current durable frontier is in `STATE.md`; never rely on this README remaining current.
 
 ## Upstream foundations
@@ -48,6 +50,7 @@ The target remains polyglot on purpose:
 - `PROTOCOLS.md` — waves, claims, reconciliation, gauntlet and persistence.
 - `AUTOPROMPT.md` — master iteration dispatcher.
 - `iterations/<id>/METAPROMPT.md` — executable iteration prompt.
+- `DEVELOPMENT_AGENTIC.md` — Codex/Claude/ChatGPT operating topology.
 - `.agentic/CONFIG.yaml` — machine-oriented development configuration.
 - `UPSTREAM_LEDGER.yaml` — pinned upstream snapshots and provenance.
 - `ledgers/` + `evidence/` — append-only operational truth and proof.

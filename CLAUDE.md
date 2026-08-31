@@ -3,7 +3,7 @@
 Do not create a Claude-specific operating system for this repository.
 
 1. Read `AGENTS.md` first; it is authoritative.
-2. Execute `/empezarproyecto` from `commands/EMPEZARPROYECTO.md` before material changes.
+2. Invoke the project skill `/empezarproyecto` before material changes. Its canonical implementation delegates to `commands/EMPEZARPROYECTO.md`.
 3. Read the active iteration metaprompt resolved from `.agentic/CONFIG.yaml`.
 4. Every material mutation requires a claimed wave.
 5. Persist run/wave/evidence/state/handoff before ending.
