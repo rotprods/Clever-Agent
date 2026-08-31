@@ -7,7 +7,7 @@
   "required": [
     "schema_version", "capability_id", "source_surface_id", "source_repo", "source_commit",
     "family", "surface_kind", "name", "runtime_owner", "interface", "source_path", "source_line",
-    "evidence_strength", "promotion_status", "parity_status", "equivalence_status",
+    "evidence_strength", "promotion_status", "eligibility_basis", "parity_status", "equivalence_status",
     "contract_fingerprint", "equivalence_candidate_key", "status"
   ],
   "properties": {
@@ -23,8 +23,9 @@
     "interface": {"type": "object"},
     "source_path": {"type": "string", "minLength": 1},
     "source_line": {"type": "integer", "minimum": 1},
-    "evidence_strength": {"enum": ["DEFINITION", "REGISTRATION", "ROUTE_OR_PROTOCOL", "BEHAVIOR_TEST"]},
-    "promotion_status": {"enum": ["DISCOVERED_CANDIDATE", "BEHAVIOR_MAPPED"]},
+    "evidence_strength": {"enum": ["PROFILED_BOUNDARY", "REGISTRATION", "ROUTE_OR_PROTOCOL", "BEHAVIOR_TEST"]},
+    "promotion_status": {"const": "BEHAVIOR_MAPPED"},
+    "eligibility_basis": {"enum": ["PROFILED_BOUNDARY", "REGISTRATION", "ROUTE_OR_PROTOCOL", "BEHAVIOR_TEST"]},
     "parity_status": {"const": "UNVERIFIED"},
     "equivalence_status": {"const": "UNPROVEN"},
     "contract_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},

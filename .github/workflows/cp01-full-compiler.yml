@@ -40,17 +40,14 @@ jobs:
         run: python -m compileall -q scripts tests
       - name: Run complete CP01 unit/regression suite
         run: python -m unittest discover -s tests -v
-
       - name: W01 acquire exact upstream object stores
         run: python -m scripts.upstream.sync_upstreams
       - name: W01 verify immutable pins
         run: python -m scripts.upstream.verify_pins
       - name: W01 materialize source-only projections
         run: python -m scripts.upstream.source_projection
-
       - name: W02 compile complete-tree structural inventories
         run: python -m scripts.inventory.batch
-
       - name: W03 compile behavioral/public surfaces
         run: python -m scripts.cp01.w03
       - name: W04 compile capability denominator
@@ -63,7 +60,6 @@ jobs:
         run: python -m scripts.cp01.graph_gauntlet
       - name: W08 compile CP01 release candidate and CP02 requirements
         run: python -m scripts.cp01.release --candidate-sha "$GITHUB_SHA"
-
       - name: Assert CP01 release invariants
         shell: bash
         run: |
@@ -71,7 +67,6 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-
           candidate = json.loads(Path('evidence/cp01/CP01_RELEASE_CANDIDATE.json').read_text())
           denominator = json.loads(Path('reports/cp01/capability_denominator.json').read_text())
           w03 = json.loads(Path('reports/cp01/w03_surface_summary.json').read_text())
@@ -80,25 +75,26 @@ jobs:
           w06 = json.loads(Path('evidence/cp01/supply_chain.json').read_text())
           w07 = json.loads(Path('evidence/cp01/gauntlet/w07_complete.json').read_text())
           ledger_lines = [line for line in Path('ledgers/CAPABILITY_LEDGER.jsonl').read_text().splitlines() if line.strip()]
-
           assert candidate['status'] == 'PASS', candidate
           assert candidate['cp01_ready_for_state_transition'] is True
           assert candidate['candidate_sha'] and len(candidate['candidate_sha']) == 40
           assert candidate['hard_invariants']['migration_authorized'] is False
           assert candidate['hard_invariants']['cp01_parity_claimed_complete'] is False
           assert candidate['hard_invariants']['not_run_is_not_pass'] is True
+          assert candidate['hard_invariants']['candidate_definition_is_not_capability'] is True
           assert candidate['hard_invariants']['cross_repo_auto_dedupe'] is False
           assert denominator['denominator'] == len(ledger_lines) > 0
-          assert denominator['denominator'] == w03['surface_summary']['surface_count']
+          assert denominator['source_surface_count'] == w03['surface_summary']['surface_count']
+          assert denominator['source_surface_count'] == denominator['denominator'] + denominator['deferred_candidate_surface_count']
           assert denominator['verified'] == 0
           assert set(denominator['by_repo']) == {'openjarvis','openclaw','omi','clicky'}
           assert all(v > 0 for v in denominator['by_repo'].values())
           assert w04['status'] == w05['status'] == w06['status'] == w07['status'] == 'PASS'
+          assert w04['eligible_surface_count'] == denominator['denominator']
           assert all(row['execution_status'] != 'PASS' for row in w05['baselines'])
           assert Path('reports/CP01_CAPABILITY_REPORT.md').stat().st_size > 0
           assert Path('reports/CP02_CONTRACT_REQUIREMENTS.md').stat().st_size > 0
           PY
-
       - name: Upload complete CP01 evidence bundle
         uses: actions/upload-artifact@v4
         with:

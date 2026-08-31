@@ -27,7 +27,7 @@
     "lifecycle": {"type": "array", "items": {"type": "string"}},
     "failure_semantics": {"type": "array", "items": {"type": "string"}},
     "platform_constraints": {"type": "array", "items": {"type": "string"}},
-    "evidence_strength": {"enum": ["DEFINITION", "REGISTRATION", "ROUTE_OR_PROTOCOL", "BEHAVIOR_TEST"]},
+    "evidence_strength": {"enum": ["DEFINITION", "PROFILED_BOUNDARY", "REGISTRATION", "ROUTE_OR_PROTOCOL", "BEHAVIOR_TEST"]},
     "promotion_status": {"enum": ["DISCOVERED_CANDIDATE", "BEHAVIOR_MAPPED"]},
     "provenance": {
       "type": "object",

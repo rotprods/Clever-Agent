@@ -31,17 +31,18 @@ def _contract_requirements(capabilities: list[dict[str, Any]]) -> list[dict[str,
     return requirements
 
 
-def _render_report(candidate_sha: str, w03: dict[str, Any], denominator: dict[str, Any], w04: dict[str, Any], baseline: dict[str, Any], supply: dict[str, Any], w07: dict[str, Any]) -> str:
+def _render_report(candidate_sha: str, w03: dict[str, Any], denominator: dict[str, Any], baseline: dict[str, Any], supply: dict[str, Any], w07: dict[str, Any]) -> str:
     lines = [
         "# CP01 Capability Report", "",
         f"- Candidate SHA: `{candidate_sha}`",
-        f"- W03 surfaces: `{w03['surface_summary']['surface_count']}`",
-        f"- W04 denominator: `{denominator['denominator']}`",
+        f"- W03 total semantic surfaces: `{w03['surface_summary']['surface_count']}`",
+        f"- W03 behavior-mapped / denominator-eligible: `{denominator['denominator_eligible_surface_count']}`",
+        f"- W03 candidate-only definitions retained outside denominator: `{denominator['deferred_candidate_surface_count']}`",
+        f"- W04 capability denominator: `{denominator['denominator']}`",
         f"- Clever VERIFIED at CP01: `{denominator['verified']}`",
         f"- Denominator status: `{denominator['denominator_status']}`",
         f"- W07 graph nodes/edges: `{w07['counts']['nodes']}` / `{w07['counts']['edges']}`",
-        "", "## Capability denominator by upstream", "",
-        "| Upstream | Capabilities |", "|---|---:|",
+        "", "## Capability denominator by upstream", "", "| Upstream | Capabilities |", "|---|---:|",
     ]
     for repo, count in denominator["by_repo"].items():
         lines.append(f"| {repo} | {count} |")
@@ -54,7 +55,7 @@ def _render_report(candidate_sha: str, w03: dict[str, Any], denominator: dict[st
     lines.extend(["", "## Supply-chain status", ""])
     for source in supply["sources"]:
         lines.append(f"- `{source['source_repo']}`: license `{source['declared_license']}` → `{source['license_verification']['status']}`; {source['counts']['lockfiles']} lockfiles; {source['counts']['manifests']} manifests")
-    lines.extend(["", "## Release interpretation", "", "CP01 proves a reproducible source/behavior/capability denominator and its provenance. It does **not** claim Clever-Agent parity is complete. Adapter/runtime parity is proven in later checkpoints. No capability may be removed from the denominator because it is inconvenient to integrate.", ""])
+    lines.extend(["", "## Release interpretation", "", "CP01 proves a reproducible behavior-mapped capability denominator and retains candidate-only symbol evidence outside that denominator. It does **not** claim Clever-Agent adapter parity is complete. Candidate definitions remain available for future gauntlets; they are not silently discarded. No capability may be removed from the denominator because it is inconvenient to integrate.", ""])
     return "\n".join(lines)
 
 
@@ -79,8 +80,10 @@ def run_w08(candidate_sha: str = "UNKNOWN") -> dict[str, Any]:
         errors.append("capability denominator is empty")
     if denominator.get("denominator") != len(capabilities):
         errors.append("denominator does not match capability ledger")
-    if w03.get("surface_summary", {}).get("surface_count") != len(capabilities):
-        errors.append("W03 surface count does not match W04 denominator")
+    if w03.get("surface_summary", {}).get("surface_count") != denominator.get("source_surface_count"):
+        errors.append("W03 total surface count is not fully accounted by W04")
+    if denominator.get("source_surface_count") != denominator.get("denominator") + denominator.get("deferred_candidate_surface_count"):
+        errors.append("eligible + deferred surface partition does not close")
     for name, phase in (("W04", w04), ("W05", baseline), ("W06", supply), ("W07", w07)):
         if phase.get("status") != "PASS":
             errors.append(f"{name} not PASS")
@@ -88,31 +91,18 @@ def run_w08(candidate_sha: str = "UNKNOWN") -> dict[str, Any]:
         errors.append("denominator does not cover all upstreams")
     requirements = _contract_requirements(capabilities)
     candidate = {
-        "schema_version": 1,
-        "phase": "I01-W08",
-        "status": "PASS" if not errors else "FAIL",
-        "candidate_sha": candidate_sha,
-        "cp01_ready_for_state_transition": not errors,
-        "errors": errors,
-        "denominator": denominator["denominator"],
-        "verified": denominator["verified"],
-        "source_counts": denominator["by_repo"],
-        "contract_requirement_ids": [row["id"] for row in requirements if row["required"]],
-        "hard_invariants": {
-            "not_run_is_not_pass": baseline["execution_policy"]["not_run_is_pass"] is False,
-            "cross_repo_auto_dedupe": denominator["rules"]["cross_repo_auto_dedupe"],
-            "migration_authorized": False,
-            "cp01_parity_claimed_complete": False,
-        }
+        "schema_version": 1, "phase": "I01-W08", "status": "PASS" if not errors else "FAIL",
+        "candidate_sha": candidate_sha, "cp01_ready_for_state_transition": not errors, "errors": errors,
+        "source_surface_count": denominator["source_surface_count"], "denominator": denominator["denominator"],
+        "deferred_candidate_surface_count": denominator["deferred_candidate_surface_count"], "verified": denominator["verified"],
+        "source_counts": denominator["by_repo"], "contract_requirement_ids": [row["id"] for row in requirements if row["required"]],
+        "hard_invariants": {"not_run_is_not_pass": baseline["execution_policy"]["not_run_is_pass"] is False, "candidate_definition_is_not_capability": denominator["rules"]["candidate_definition_is_not_capability"], "cross_repo_auto_dedupe": denominator["rules"]["cross_repo_auto_dedupe"], "migration_authorized": False, "cp01_parity_claimed_complete": False}
     }
-    report = Path("reports/CP01_CAPABILITY_REPORT.md")
-    report.parent.mkdir(parents=True, exist_ok=True)
-    report.write_text(_render_report(candidate_sha, w03, denominator, w04, baseline, supply, w07), encoding="utf-8")
-    contracts = Path("reports/CP02_CONTRACT_REQUIREMENTS.md")
-    contracts.write_text(_render_contracts(requirements), encoding="utf-8")
-    release = Path("evidence/cp01/CP01_RELEASE_CANDIDATE.json")
-    release.parent.mkdir(parents=True, exist_ok=True)
-    release.write_text(json.dumps(candidate, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    Path("reports").mkdir(parents=True, exist_ok=True)
+    Path("reports/CP01_CAPABILITY_REPORT.md").write_text(_render_report(candidate_sha, w03, denominator, baseline, supply, w07), encoding="utf-8")
+    Path("reports/CP02_CONTRACT_REQUIREMENTS.md").write_text(_render_contracts(requirements), encoding="utf-8")
+    Path("evidence/cp01").mkdir(parents=True, exist_ok=True)
+    Path("evidence/cp01/CP01_RELEASE_CANDIDATE.json").write_text(json.dumps(candidate, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if errors:
         raise RuntimeError("CP01 release candidate failed: " + "; ".join(errors))
     return {"candidate": candidate, "requirements": requirements}

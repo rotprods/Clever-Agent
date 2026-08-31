@@ -11,11 +11,7 @@ SCHEMA_VERSION = 1
 
 
 def read_jsonl(path: str | Path) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for raw in Path(path).read_text(encoding="utf-8").splitlines():
-        if raw.strip():
-            rows.append(json.loads(raw))
-    return rows
+    return [json.loads(raw) for raw in Path(path).read_text(encoding="utf-8").splitlines() if raw.strip()]
 
 
 def _stable_hash(value: Any) -> str:
@@ -27,23 +23,17 @@ def _normalized_interface(surface: dict[str, Any]) -> dict[str, Any]:
     return {str(key): interface[key] for key in sorted(interface)}
 
 
+def _eligible(surface: dict[str, Any]) -> bool:
+    return surface.get("promotion_status") == "BEHAVIOR_MAPPED" and surface.get("evidence_strength") in {"PROFILED_BOUNDARY", "REGISTRATION", "ROUTE_OR_PROTOCOL", "BEHAVIOR_TEST"}
+
+
 def capability_from_surface(surface: dict[str, Any]) -> dict[str, Any]:
+    if not _eligible(surface):
+        raise ValueError(f"candidate-only surface is not denominator eligible: {surface.get('surface_id')}")
     surface_id = str(surface["surface_id"])
     identity = [surface["source_repo"], surface["source_commit"], surface_id]
-    contract = {
-        "family": surface["family"],
-        "surface_kind": surface["surface_kind"],
-        "interface": _normalized_interface(surface),
-        "runtime_owner": surface["runtime_owner"],
-    }
-    # Candidate key intentionally excludes source repo/owner. It is only a signal
-    # for later equivalence review; W04 never collapses rows on this key.
-    equivalence_candidate = {
-        "family": surface["family"],
-        "surface_kind": surface["surface_kind"],
-        "interface": _normalized_interface(surface),
-        "normalized_name": str(surface["name"]).strip().lower(),
-    }
+    contract = {"family": surface["family"], "surface_kind": surface["surface_kind"], "interface": _normalized_interface(surface), "runtime_owner": surface["runtime_owner"]}
+    equivalence_candidate = {"family": surface["family"], "surface_kind": surface["surface_kind"], "interface": _normalized_interface(surface), "normalized_name": str(surface["name"]).strip().lower()}
     return {
         "schema_version": SCHEMA_VERSION,
         "capability_id": f"cap_{_stable_hash(identity)[:24]}",
@@ -58,7 +48,8 @@ def capability_from_surface(surface: dict[str, Any]) -> dict[str, Any]:
         "source_path": surface["source_path"],
         "source_line": surface["line"],
         "evidence_strength": surface["evidence_strength"],
-        "promotion_status": surface["promotion_status"],
+        "promotion_status": "BEHAVIOR_MAPPED",
+        "eligibility_basis": surface["evidence_strength"],
         "parity_status": "UNVERIFIED",
         "equivalence_status": "UNPROVEN",
         "contract_fingerprint": _stable_hash(contract),
@@ -68,7 +59,7 @@ def capability_from_surface(surface: dict[str, Any]) -> dict[str, Any]:
 
 
 def compile_capabilities(surfaces: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
-    rows = [capability_from_surface(surface) for surface in surfaces]
+    rows = [capability_from_surface(surface) for surface in surfaces if _eligible(surface)]
     rows.sort(key=lambda row: row["capability_id"])
     return rows
 
@@ -80,16 +71,14 @@ def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
             handle.write(json.dumps(row, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n")
 
 
-def denominator_report(capabilities: list[dict[str, Any]]) -> dict[str, Any]:
+def denominator_report(capabilities: list[dict[str, Any]], source_surface_count: int = 0, deferred_candidate_count: int = 0) -> dict[str, Any]:
     by_repo = Counter(row["source_repo"] for row in capabilities)
     by_family = Counter(row["family"] for row in capabilities)
     by_promotion = Counter(row["promotion_status"] for row in capabilities)
     by_strength = Counter(row["evidence_strength"] for row in capabilities)
     candidate_groups: dict[str, list[dict[str, str]]] = defaultdict(list)
     for row in capabilities:
-        candidate_groups[row["equivalence_candidate_key"]].append(
-            {"capability_id": row["capability_id"], "source_repo": row["source_repo"], "name": row["name"]}
-        )
+        candidate_groups[row["equivalence_candidate_key"]].append({"capability_id": row["capability_id"], "source_repo": row["source_repo"], "name": row["name"]})
     cross_repo_candidates: list[dict[str, Any]] = []
     for key, members in candidate_groups.items():
         repos = {member["source_repo"] for member in members}
@@ -98,6 +87,9 @@ def denominator_report(capabilities: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "schema_version": 1,
         "phase": "I01-W04",
+        "source_surface_count": source_surface_count or len(capabilities) + deferred_candidate_count,
+        "denominator_eligible_surface_count": len(capabilities),
+        "deferred_candidate_surface_count": deferred_candidate_count,
         "denominator": len(capabilities),
         "verified": 0,
         "parity_ratio": 0.0 if capabilities else None,
@@ -107,73 +99,60 @@ def denominator_report(capabilities: list[dict[str, Any]]) -> dict[str, Any]:
         "by_promotion_status": dict(sorted(by_promotion.items())),
         "by_evidence_strength": dict(sorted(by_strength.items())),
         "cross_repo_equivalence_candidates": sorted(cross_repo_candidates, key=lambda item: item["equivalence_candidate_key"]),
-        "rules": {
-            "one_surface_maps_to_one_capability": True,
-            "cross_repo_auto_dedupe": False,
-            "name_only_equivalence_forbidden": True,
-            "candidate_equivalence_does_not_change_denominator": True,
-            "all_capabilities_unverified_at_cp01": True
-        }
+        "rules": {"candidate_definition_is_not_capability": True, "cross_repo_auto_dedupe": False, "name_only_equivalence_forbidden": True, "candidate_equivalence_does_not_change_denominator": True, "all_capabilities_unverified_at_cp01": True}
     }
 
 
 def gauntlet(surfaces: list[dict[str, Any]], capabilities: list[dict[str, Any]]) -> dict[str, Any]:
     errors: list[str] = []
-    source_surface_ids = [row["surface_id"] for row in surfaces]
-    mapped_surface_ids = [row["source_surface_id"] for row in capabilities]
+    all_ids = {row["surface_id"] for row in surfaces}
+    eligible_ids = {row["surface_id"] for row in surfaces if _eligible(row)}
+    deferred_ids = all_ids - eligible_ids
+    mapped_ids = [row["source_surface_id"] for row in capabilities]
     capability_ids = [row["capability_id"] for row in capabilities]
     if len(capability_ids) != len(set(capability_ids)):
         errors.append("capability_id collision")
-    if len(mapped_surface_ids) != len(set(mapped_surface_ids)):
-        errors.append("a surface maps to multiple capabilities")
-    if set(source_surface_ids) != set(mapped_surface_ids):
-        missing = sorted(set(source_surface_ids) - set(mapped_surface_ids))
-        extra = sorted(set(mapped_surface_ids) - set(source_surface_ids))
-        errors.append(f"surface mapping mismatch missing={len(missing)} extra={len(extra)}")
-    if len(surfaces) != len(capabilities):
-        errors.append(f"denominator changed by normalization surfaces={len(surfaces)} capabilities={len(capabilities)}")
+    if len(mapped_ids) != len(set(mapped_ids)):
+        errors.append("a denominator-eligible surface maps to multiple capabilities")
+    if set(mapped_ids) != eligible_ids:
+        errors.append(f"eligible surface mapping mismatch missing={len(eligible_ids - set(mapped_ids))} extra={len(set(mapped_ids) - eligible_ids)}")
+    if len(capabilities) != len(eligible_ids):
+        errors.append("denominator changed eligible surface count")
+    if eligible_ids & deferred_ids or eligible_ids | deferred_ids != all_ids:
+        errors.append("surface eligibility partition invalid")
     for row in capabilities:
-        if row["parity_status"] != "UNVERIFIED":
-            errors.append(f"CP01 capability marked verified: {row['capability_id']}")
-        if row["equivalence_status"] != "UNPROVEN":
-            errors.append(f"equivalence asserted without proof: {row['capability_id']}")
+        if row["parity_status"] != "UNVERIFIED" or row["equivalence_status"] != "UNPROVEN":
+            errors.append(f"premature verification/equivalence: {row['capability_id']}")
+        if row["promotion_status"] != "BEHAVIOR_MAPPED":
+            errors.append(f"candidate surface leaked into denominator: {row['capability_id']}")
     return {
         "schema_version": 1,
         "phase": "I01-W04",
         "status": "PASS" if not errors else "FAIL",
         "errors": errors,
-        "surface_count": len(surfaces),
+        "source_surface_count": len(surfaces),
+        "eligible_surface_count": len(eligible_ids),
+        "deferred_candidate_surface_count": len(deferred_ids),
         "capability_count": len(capabilities),
-        "invariants": {
-            "no_capability_loss": len(surfaces) == len(capabilities),
-            "no_cross_repo_auto_dedupe": True,
-            "no_manual_parity_percentage": True,
-            "all_capabilities_source_backed": set(source_surface_ids) == set(mapped_surface_ids),
-        },
+        "invariants": {"all_surfaces_accounted_for": len(all_ids) == len(eligible_ids) + len(deferred_ids), "no_eligible_capability_loss": len(eligible_ids) == len(capabilities), "candidate_definition_is_not_capability": True, "no_cross_repo_auto_dedupe": True, "no_manual_parity_percentage": True}
     }
 
 
-def run_w04(
-    surfaces_path: str | Path = "inventory/surfaces/all.jsonl",
-    ledger_path: str | Path = "ledgers/CAPABILITY_LEDGER.jsonl",
-    denominator_path: str | Path = "reports/cp01/capability_denominator.json",
-    gauntlet_path: str | Path = "evidence/cp01/gauntlet/w04_denominator.json",
-) -> dict[str, Any]:
+def run_w04(surfaces_path: str | Path = "inventory/surfaces/all.jsonl", ledger_path: str | Path = "ledgers/CAPABILITY_LEDGER.jsonl", denominator_path: str | Path = "reports/cp01/capability_denominator.json", gauntlet_path: str | Path = "evidence/cp01/gauntlet/w04_denominator.json") -> dict[str, Any]:
     surfaces = read_jsonl(surfaces_path)
     if not surfaces:
         raise RuntimeError("W04 refuses an empty W03 surface ledger")
     capabilities = compile_capabilities(surfaces)
-    report = denominator_report(capabilities)
+    deferred = sum(1 for row in surfaces if not _eligible(row))
+    report = denominator_report(capabilities, len(surfaces), deferred)
     check = gauntlet(surfaces, capabilities)
     if check["status"] != "PASS":
         raise RuntimeError("W04 gauntlet failed: " + "; ".join(check["errors"]))
     _write_jsonl(Path(ledger_path), capabilities)
-    denominator = Path(denominator_path)
-    denominator.parent.mkdir(parents=True, exist_ok=True)
-    denominator.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    gauntlet_output = Path(gauntlet_path)
-    gauntlet_output.parent.mkdir(parents=True, exist_ok=True)
-    gauntlet_output.write_text(json.dumps(check, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    Path(denominator_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(denominator_path).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    Path(gauntlet_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(gauntlet_path).write_text(json.dumps(check, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return {"capabilities": capabilities, "report": report, "gauntlet": check}
 
 

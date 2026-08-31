@@ -32,7 +32,7 @@ FAMILY_TOKENS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("agent", ("agent", "planner", "orchestrator")),
     ("inference", ("provider", "engine", "model", "inference", "llm", "router")),
     ("learning_evaluation", ("learning", "benchmark", "eval", "trace", "feedback", "mining")),
-    ("api_protocol", ("api", "route", "router", "http", "mcp", "protocol", "rpc")),
+    ("api_protocol", ("api", "route", "router", "http", "mcp", "protocol", "rpc", "request", "response", "event")),
     ("worker_service", ("worker", "service", "daemon", "server", "backend")),
 )
 
@@ -40,7 +40,8 @@ HIGH_VALUE = re.compile(
     r"agent|tool|skill|memory|store|provider|engine|model|channel|gateway|plugin|extension|"
     r"session|scheduler|security|permission|policy|device|ble|wearable|capture|screen|audio|"
     r"speech|transcri|diar|speaker|tts|stt|overlay|cursor|point|router|route|mcp|worker|service|"
-    r"conversation|reconcil|listen|pair|hook|command|action|trace|benchmark|eval",
+    r"conversation|reconcil|listen|pair|hook|command|action|trace|benchmark|eval|message|event|"
+    r"transport|request|response|registry|runtime",
     re.IGNORECASE,
 )
 
@@ -116,25 +117,11 @@ def _semantic_facets(path: str, name: str, matched: str) -> tuple[list[str], lis
     return permissions, state, lifecycle, failure
 
 
-def _stable_surface(
-    pin: UpstreamPin,
-    path: str,
-    line: int,
-    kind: str,
-    name: str,
-    interface: dict[str, Any],
-    strength: str,
-    text_hash: str,
-    matched: str,
-    extractor: str,
-) -> dict[str, Any]:
-    identity = json.dumps(
-        [pin.id, pin.pinned_commit, path, line, kind, name, interface],
-        sort_keys=True,
-        separators=(",", ":"),
-    )
+def _stable_surface(pin: UpstreamPin, path: str, line: int, kind: str, name: str, interface: dict[str, Any], strength: str, text_hash: str, matched: str, extractor: str) -> dict[str, Any]:
+    identity = json.dumps([pin.id, pin.pinned_commit, path, line, kind, name, interface], sort_keys=True, separators=(",", ":"))
     surface_id = f"surf_{hashlib.sha256(identity.encode()).hexdigest()[:24]}"
     permissions, state, lifecycle, failure = _semantic_facets(path, name, matched)
+    mapped_strengths = {"PROFILED_BOUNDARY", "REGISTRATION", "ROUTE_OR_PROTOCOL", "BEHAVIOR_TEST"}
     return {
         "schema_version": SCHEMA_VERSION,
         "surface_id": surface_id,
@@ -147,14 +134,14 @@ def _stable_surface(
         "source_path": path,
         "line": line,
         "interface": interface,
-        "registration_evidence": [matched[:240]] if strength in {"REGISTRATION", "ROUTE_OR_PROTOCOL"} else [],
+        "registration_evidence": [matched[:240]] if strength in mapped_strengths else [],
         "permissions": permissions,
         "state_effects": state,
         "lifecycle": lifecycle,
         "failure_semantics": failure,
         "platform_constraints": _platforms(pin.id, path),
         "evidence_strength": strength,
-        "promotion_status": "BEHAVIOR_MAPPED" if strength in {"REGISTRATION", "ROUTE_OR_PROTOCOL", "BEHAVIOR_TEST"} else "DISCOVERED_CANDIDATE",
+        "promotion_status": "BEHAVIOR_MAPPED" if strength in mapped_strengths else "DISCOVERED_CANDIDATE",
         "provenance": {"extractor": extractor, "source_sha256": text_hash, "matched_text": matched[:240]},
     }
 
@@ -192,14 +179,15 @@ def _extract_python(pin: UpstreamPin, path: str, text: str) -> list[dict[str, An
                     route = _literal_string(decorator.args[0]) if isinstance(decorator, ast.Call) and decorator.args else None
                     method = leaf.upper()
                     kind = "websocket_route" if leaf == "websocket" else "http_route"
-                    matched = f"@{name}({route!r})"
-                    out.append(_stable_surface(pin, path, node.lineno, kind, f"{method} {route or node.name}", {"method": method, "path": route}, "ROUTE_OR_PROTOCOL", text_hash, matched, "python-ast"))
+                    out.append(_stable_surface(pin, path, node.lineno, kind, f"{method} {route or node.name}", {"method": method, "path": route}, "ROUTE_OR_PROTOCOL", text_hash, f"@{name}({route!r})", "python-ast"))
                 elif leaf in {"command", "group", "tool", "skill"}:
                     command = _literal_string(decorator.args[0]) if isinstance(decorator, ast.Call) and decorator.args else None
                     out.append(_stable_surface(pin, path, node.lineno, "cli_command" if leaf in {"command", "group"} else "registry_registration", command or node.name, {"decorator": name}, "ROUTE_OR_PROTOCOL" if leaf in {"command", "group"} else "REGISTRATION", text_hash, f"@{name}", "python-ast"))
-            if HIGH_VALUE.search(f"{path} {node.name}"):
+            # Candidate definitions are symbol-driven, not path-driven. A file named
+            # tools.py must not turn every helper function into a product surface.
+            if HIGH_VALUE.search(node.name):
                 out.append(_stable_surface(pin, path, node.lineno, "native_action", node.name, {"callable": node.name}, "DEFINITION", text_hash, f"def {node.name}", "python-ast"))
-        elif isinstance(node, ast.ClassDef) and HIGH_VALUE.search(f"{path} {node.name}"):
+        elif isinstance(node, ast.ClassDef) and HIGH_VALUE.search(node.name):
             out.append(_stable_surface(pin, path, node.lineno, "protocol_contract" if any("Protocol" in _call_name(base) for base in node.bases) else "definition", node.name, {"class": node.name}, "DEFINITION", text_hash, f"class {node.name}", "python-ast"))
         elif isinstance(node, ast.Call):
             call_name = _call_name(node.func)
@@ -226,8 +214,7 @@ def _line_number(text: str, offset: int) -> int:
 
 
 def _first_string_after(text: str, start: int, limit: int = 280) -> str | None:
-    snippet = text[start:start + limit]
-    match = re.search(r"['\"]([^'\"\n]{1,160})['\"]", snippet)
+    match = re.search(r"['\"]([^'\"\n]{1,160})['\"]", text[start:start + limit])
     return match.group(1) if match else None
 
 
@@ -252,11 +239,11 @@ def _extract_regex(pin: UpstreamPin, path: str, text: str) -> list[dict[str, Any
             out.append(_stable_surface(pin, path, _line_number(text, match.start()), "lifecycle_hook", event, {"event": event}, "REGISTRATION", text_hash, match.group(0), "regex-event"))
     for match in PROTOCOL_RE.finditer(text):
         name = match.group(1)
-        if HIGH_VALUE.search(f"{path} {name}"):
+        if HIGH_VALUE.search(name):
             out.append(_stable_surface(pin, path, _line_number(text, match.start()), "protocol_contract", name, {"protocol": name}, "ROUTE_OR_PROTOCOL", text_hash, match.group(0), "regex-protocol"))
     for match in DECL_RE.finditer(text):
         name = match.group(1)
-        if HIGH_VALUE.search(f"{path} {name}"):
+        if HIGH_VALUE.search(name):
             kind = "native_action" if any(token in name.lower() for token in ("start", "stop", "capture", "listen", "speak", "transcri", "connect", "disconnect", "overlay", "point", "send", "receive", "pair", "sync", "reconcil")) else "definition"
             out.append(_stable_surface(pin, path, _line_number(text, match.start()), kind, name, {"symbol": name}, "DEFINITION", text_hash, match.group(0), "regex-definition"))
     return out
@@ -264,7 +251,7 @@ def _extract_regex(pin: UpstreamPin, path: str, text: str) -> list[dict[str, Any
 
 def _dedupe(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     unique: dict[str, dict[str, Any]] = {}
-    rank = {"DEFINITION": 1, "REGISTRATION": 2, "ROUTE_OR_PROTOCOL": 3, "BEHAVIOR_TEST": 4}
+    rank = {"DEFINITION": 1, "PROFILED_BOUNDARY": 2, "REGISTRATION": 3, "ROUTE_OR_PROTOCOL": 4, "BEHAVIOR_TEST": 5}
     for row in rows:
         key = row["surface_id"]
         previous = unique.get(key)
@@ -288,28 +275,29 @@ def extract_repository_surfaces(repository: str | Path, pin: UpstreamPin, max_fi
         except OSError:
             continue
         relative = path.relative_to(root).as_posix()
-        if path.suffix.lower() in {".py", ".pyi"}:
-            rows.extend(_extract_python(pin, relative, text))
-        else:
-            rows.extend(_extract_regex(pin, relative, text))
+        rows.extend(_extract_python(pin, relative, text) if path.suffix.lower() in {".py", ".pyi"} else _extract_regex(pin, relative, text))
     return _dedupe(rows)
 
 
 def surface_summary(rows: Iterable[dict[str, Any]]) -> dict[str, Any]:
     data = list(rows)
+    counters = {key: {} for key in ("repo", "family", "kind", "strength", "promotion")}
     by_repo: dict[str, int] = {}
     by_family: dict[str, int] = {}
     by_kind: dict[str, int] = {}
     by_strength: dict[str, int] = {}
+    by_promotion: dict[str, int] = {}
     for row in data:
         by_repo[row["source_repo"]] = by_repo.get(row["source_repo"], 0) + 1
         by_family[row["family"]] = by_family.get(row["family"], 0) + 1
         by_kind[row["surface_kind"]] = by_kind.get(row["surface_kind"], 0) + 1
         by_strength[row["evidence_strength"]] = by_strength.get(row["evidence_strength"], 0) + 1
+        by_promotion[row["promotion_status"]] = by_promotion.get(row["promotion_status"], 0) + 1
     return {
         "surface_count": len(data),
         "by_repo": dict(sorted(by_repo.items())),
         "by_family": dict(sorted(by_family.items())),
         "by_kind": dict(sorted(by_kind.items())),
         "by_evidence_strength": dict(sorted(by_strength.items())),
+        "by_promotion_status": dict(sorted(by_promotion.items())),
     }
