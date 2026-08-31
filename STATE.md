@@ -31,7 +31,7 @@ Do **not** implement final Rust kernel contracts before the CP01 capability deno
 - Evidence ledger: initialized
 - Capability ledger: initialized, denominator pending
 - Handoff: initialized
-- CI state validator: configured
+- Agentic Contract validation: PASS (`EVID-0001`, GitHub Actions run `33398327837`)
 
 ## Last structural decision
 

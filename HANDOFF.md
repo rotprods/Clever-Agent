@@ -22,6 +22,10 @@
 - Claude/Codex shims that route back to `AGENTS.md`.
 - Repository validation script and CI contract workflow.
 
+## Validation evidence
+
+`Agentic Contract` GitHub Actions run `33398327837`, job `99508179789`, completed with `success` against head `507d3517bd8feea8b09bb84c100edf2df4bab9c3`. Evidence record: `EVID-0001`.
+
 ## Current truth
 
 The JARVIS implementation itself has **not** advanced beyond CP01. No upstream capability is yet marked VERIFIED. The next task is not to design more architecture; it is to build the forensic acquisition/inventory compiler.
