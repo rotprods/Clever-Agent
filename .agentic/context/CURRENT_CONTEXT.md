@@ -6,15 +6,15 @@
 
 - Project: `CLEVER-JARVIS-001`
 - Checkpoint: `CP01`
-- Iteration: `I01` / `I01.2`
-- Next wave: `I01-W02 — Structural inventory`
+- Iteration: `I01` / `I01.3`
+- Next wave: `I01-W03 — Public/behavioral surface extraction`
 - Parity denominator: `NOT_GENERATED`
 - Protocol: `COS-GRAPH-ENGINE-V2-20D`
 - 20D model: `COS-20D-v2` (20 dimensions)
 
 ## Planning
 
-- First executable task: `CTX-001`
+- First executable task: `W03-001`
 - Machine task graph: `.agentic/context/NEXT_ACTIONS.json`
 - Implementation plan: `IMPLEMENTATION_PLAN.md`
 - Regression: `docs/REGRESSION_2026-08-31.md`
@@ -34,16 +34,12 @@
 
 ## Active claims
 
-- `CLAIM-I01-W02-001` → `I01-W02` · `chatgpt-gpt-5.6-sol`
-- `CLAIM-I01-W02-CTX-001` → `I01-W02-CTX` · `chatgpt-gpt-5.6-sol`
 
 ## Open / mitigating risks
 
 - `RISK-0001` · `MEDIUM` · `OPEN` · detail in `ledgers/RISK_LEDGER.ndjson`
 - `RISK-0002` · `HIGH` · `OPEN` · detail in `ledgers/RISK_LEDGER.ndjson`
 - `RISK-0003` · `HIGH` · `OPEN` · detail in `ledgers/RISK_LEDGER.ndjson`
-- `RISK-0004` · `HIGH` · `OPEN` · detail in `ledgers/RISK_LEDGER.ndjson`
-- `RISK-0005` · `HIGH` · `MITIGATING` · detail in `ledgers/RISK_LEDGER.ndjson`
 
 ## Recovery order
 

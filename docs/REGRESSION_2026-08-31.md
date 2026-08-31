@@ -2,176 +2,161 @@
 
 ## Purpose
 
-This regression reconstructs the actual engineering path from an almost-empty `Clever-Agent` repository to the current CP01 forensic/graph-control system. It separates verified facts from hypotheses, records mistakes and discarded assumptions, and defines the exact truth that future agents must inherit.
+This is the canonical engineering regression from the original “merge four agent repos” idea to the current evidence-governed JARVIS integration system. Facts are grounded in Git/state/GitHub Actions; discarded hypotheses are recorded when they materially changed the design.
 
-The source of truth for this document is Git + GitHub Actions evidence + canonical state/ledgers. Chat history is supporting context only.
+## 1. Origin: an intuitive union problem
 
-## 1. Origin
+The original mission was to unify the useful capability union of OpenJarvis, OpenClaw, Omi and Clicky inside `rotprods/Clever-Agent`.
 
-The project began with one product-level intention: create a real JARVIS by unifying the useful capability union of four upstream systems without flattening them into a lowest-common-denominator rewrite:
+The four upstreams are complementary:
 
-- OpenJarvis — local cognition, engines, agents, memory, learning, traces, scheduling.
-- OpenClaw — gateway, channels, nodes, plugins, tools, lifecycle and automation.
-- Omi — ambient perception, mobile/wearable capture, transcription, diarization and episodic context.
-- Clicky — macOS-native push-to-talk, screen perception, speech and visual pointing/overlay.
+- OpenJarvis: cognition, inference engines, typed agents/tools/memory/learning/scheduling.
+- OpenClaw: gateway, channels, nodes, plugin contributions, lifecycle, tools and automation.
+- Omi: ambient audio/screen context, transcription/diarization, conversations/memory, mobile/wearable/device runtime.
+- Clicky: macOS-native PTT, screen perception, streaming response/TTS and pointing/overlay embodiment.
 
-The key constraint became **capability preservation before consolidation**.
+The first architectural correction was to define **capability preservation before consolidation**. “100%” must mean a generated evidence-backed denominator, not feature bullets or code volume.
 
-## 2. CP00 — canonical project bootstrap
+## 2. CP00: canonical project contract
 
-The initial bootstrap established `CLEVER-JARVIS-001`, pinned exact upstream commits, defined the federated polyglot target architecture, security model, capability-parity contract, CP00–CP12 gates and durable state.
+CP00 established `CLEVER-JARVIS-001`, exact upstream pins, federated polyglot architecture, security model, parity methodology, CP00–CP12 checkpoints and durable project state.
 
-Important consequence: `100% parity` became a generated evidence ratio, not a claim based on README bullets.
+This prevented an early monolithic rewrite. Rust became the target for new canonical kernel/control surfaces, not a mandate to replace mature Python/TypeScript/Swift/Flutter/Zephyr implementations.
 
-## 3. Agentic development OS
+## 3. Agentic operating system
 
-Iteration 01 then established the repository as the durable operating system for development:
+Iteration 01 made the repository—not chat—the development operating system:
 
-- `AGENTS.md` as canonical multi-agent execution contract;
-- `/empezarproyecto` boot/recovery protocol;
-- wave/claim/lease/handoff semantics;
-- `STATE.md`, JSON state mirrors and append-only ledgers;
-- Codex/Claude shims without vendor-specific constitutions;
-- CI validation of canonical project state.
+- `AGENTS.md` is the execution authority;
+- `/empezarproyecto` restores durable state;
+- material work belongs to waves/claims;
+- state/decisions/risks/evidence are persisted;
+- Claude/Codex/ChatGPT consume one constitution rather than vendor-specific forks;
+- CI validates continuity.
 
-Operating law: **no wave, no production**.
+Rule: **no wave, no production**.
 
-## 4. W01 — exact upstream acquisition and first graph projection
+## 4. W01: exact-SHA acquisition and first graph
 
-W01 changed the source-acquisition architecture after observing upstream scale. Full worktree cloning was rejected. The accepted approach became:
+A full-checkout approach was rejected after upstream scale inspection. W01 adopted:
 
-`partial Git object store → immutable pin ref → optional source-only sparse projection`.
+`partial Git object store → immutable pinned ref → source-only sparse projection when content is needed`.
 
-This preserved exact provenance while avoiding blind download/materialization of media, models and binary assets.
+GitHub Actions run `33402789051` proved all four exact refs, provenance, sparse projection, four Graphify outputs and non-destructive COS graph construction.
 
-Verified evidence from GitHub Actions run `33402789051`:
+Raw output:
 
-1. all four exact upstream pins acquired;
-2. exact commits and expected origins verified;
-3. source-only projections materialized;
-4. pins reverified after projection;
-5. all four repositories Graphified;
-6. COS hypergraph generated;
-7. four-source provenance and non-destructive invariants passed;
-8. forensic artifact uploaded with digest `sha256:f09dbec5fd39dbb97c56e8a3c986602a6b260adefb49f34a08aed791fc8fe6bc`.
-
-The first full pass produced:
-
-- 1,179,885 source-evidence nodes;
+- 1,179,885 evidence nodes;
 - 1,181,257 edges;
-- 139 provisional COS component groups;
+- 139 provisional component groups;
 - 110 provisional cross-repository groups.
 
-### Regression lesson
+### Lesson
 
-Those numbers are **not capability counts**. The evidence graph contains declarations, files, dependencies and heuristic candidates. Treating raw symbol density as behavior would create false equivalence and destructive deduplication.
+Those are evidence nodes, **not capabilities**. A million symbols do not imply a million product behaviors. Lexical similarity cannot authorize deduplication.
 
-Result: P0 raw evidence was separated from P1 behavioral surfaces and from the future capability denominator.
+This led to explicit separation between raw evidence, behavioral surfaces, canonical capabilities and migration decisions.
 
-## 5. W02 — structural inventory compiler
+## 5. W02: structural inventory regression and repair
 
-W02 added a deterministic complete-Git-tree scanner using `git ls-tree` so structural coverage did not depend on the sparse worktree.
+W02 introduced complete-Git-tree structural inventory independent of sparse worktree materialization.
 
-The first W02 CI run `33403318373` did not logically fail. It was cancelled by the 20-minute job timeout while executing `Compile structural inventories from complete Git trees`.
+The first full run `33403318373` did not prove a logic failure. Acquisition and pin verification passed; the structural compile ran ~19m55s and was cancelled by the job's 20-minute timeout.
 
-Verified timing:
+Root cause: `git ls-tree -l` requested blob sizes against `blob:none` partial clones. That contradicted W01 by potentially forcing lazy blob resolution.
 
-- acquisition: ~17 seconds;
-- pin verification: immediate;
-- structural compile: ran ~19m55s and was cancelled;
-- assertion/evidence upload were skipped.
+Correction:
 
-### Root-cause regression
+- use `git ls-tree -r -z` tree metadata only;
+- retain mode/type/object-id/path;
+- size is explicitly `null/unknown` in CP01;
+- unit tests enforce blobless semantics.
 
-The scanner used `git ls-tree -l` against partial clones configured with `blob:none`. `-l` requests blob sizes; resolving sizes can defeat blobless acquisition by lazily resolving/fetching blob metadata/content. Blob size is not needed for CP01 capability discovery.
+Final run `33429197669`, job `99610115447`, passed every step and uploaded artifact `9771912520`, digest `sha256:71dc9e002a8874cffdb63440c9fdd0d4042ceb623ec7927b214e6a4ae0a94221`.
 
-Corrective design:
+Final structural census:
 
-- use tree metadata only: `mode`, `object type`, `object id`, `path`;
-- keep blob `size = null/unknown` in structural CP01;
-- do not trade provenance for expensive size collection;
-- measure final-head runtime before W02 closure.
+| Upstream | Tree entries | Manifests | Tests | Runtime boundaries |
+|---|---:|---:|---:|---:|
+| OpenClaw | 35,757 | 213 | 13,613 | 362 |
+| Omi | 12,731 | 141 | 3,314 | 198 |
+| OpenJarvis | 2,108 | 32 | 724 | 51 |
+| Clicky | 85 | 4 | 0 | 4 |
+| **Total** | **50,681** | **390** | **17,651** | **615** |
 
-## 6. Graphify / COSGraph V2
+W02 is therefore COMPLETE.
 
-The first Graphify/COS pass proved the need for four non-mutating planes:
+## 6. COS Graph Engine V2 / 20D
 
-- P0 `SOURCE_EVIDENCE` — exact source/test/docs/tree evidence;
-- P1 `SEMANTIC_SURFACE` — compact candidate/behavioral surfaces;
-- P2 `COS20D_DECISION` — provisional integration decisions with 20D analysis;
-- P3 `AGENT_CONTEXT` — compact deterministic recovery view.
+The graph architecture evolved into four immutable-direction planes:
 
-Derivation is one-way: `P0 → P1 → P2 → P3`. Higher planes cannot rewrite lower evidence.
+`P0 SOURCE_EVIDENCE → P1 SEMANTIC_SURFACE → P2 COS20D_DECISION → P3 AGENT_CONTEXT`.
 
-COS-20L and COS-20D are orthogonal:
+Higher planes derive from lower planes and never rewrite source evidence.
 
-- 20L answers **where responsibility executes**;
-- 20D answers **what must be understood/proven before changing it**.
+Two orthogonal coordinate systems are now explicit:
 
-The promotion ladder is:
+- **COS-20L**: where runtime responsibility executes.
+- **COS-20D**: what must be understood/proven before integration/change.
+
+20D is projected onto canonical components/decisions/waves/ContextPacks—not every raw node.
+
+Promotion ladder:
 
 `OBSERVED_SOURCE → DISCOVERED_CANDIDATE → BEHAVIOR_MAPPED → CONTRACT_MAPPED → TEST_MAPPED → VERIFIED → MIGRATION_ELIGIBLE`.
 
-Only `MIGRATION_ELIGIBLE` may authorize destructive convergence or native-state removal.
+Only `MIGRATION_ELIGIBLE` may authorize destructive convergence.
 
-## 7. Context-control regression
+## 7. Context-layer regression: memory ghosting
 
-Commit `a9d6fa0...` installed the V2 context control plane and passed Graphify/COSGraph + Agentic Contract tests, but regression inspection found a continuity defect:
+Regression inspection found `CURRENT_CONTEXT.json` referencing decisions/risks that did not yet exist in canonical ledgers. That was a real continuity defect: a derived recovery view had become more knowledgeable than the primary truth.
 
-`CURRENT_CONTEXT.json` referenced `D-0006..D-0009` and `RISK-0004`, while the canonical ledgers only contained decisions through `D-0005` and risks through `RISK-0003`.
+Correction:
 
-This is **memory ghosting**: a derived context view contained knowledge not persisted in the primary ledger.
+- decisions D-0006…D-0010 and risks RISK-0004/RISK-0005 persisted;
+- ContextPack derives from state + ledgers;
+- every referenced decision/risk/claim/evidence ID is cross-validated;
+- `NEXT_ACTIONS.json` is an acyclic executable dependency graph;
+- deterministic ContextPack rebuild is CI-enforced;
+- `GOAL_STATE.frontier`, execution state, iteration state, CONFIG and ContextPack are now cross-checked.
 
-Why existing CI missed it:
-
-- Agentic Contract ran only `scripts/validate_agentic_state.py`;
-- it did not execute `validate_context_pack.py` or `build_context_pack.py --check`;
-- context consistency existed as code but not as an enforced merge gate.
-
-Corrective rule:
-
-> A derived ContextPack may never reference a claim/risk/decision/evidence ID that does not exist in canonical ledgers, and CI must fail if rebuilding the ContextPack changes bytes.
+Agentic Contract runs on `8dded838...` passed, proving state/context/task-DAG integrity after the repair.
 
 ## 8. What is proven now
 
 Proven:
 
-- exact upstream pin strategy works;
-- source projection can avoid binary/materialized upstream payloads;
-- Graphify raw evidence generation works on all four sources;
-- COS non-destructive overlay works;
-- Graphify/COS unit/smoke gates are green on V2 head;
-- federated polyglot architecture remains the correct default;
-- OpenJarvis typed registries and OpenClaw contribution/lifecycle registries are complementary, not substitutes;
-- Omi and Clicky overlap in perception but have different temporal/platform responsibilities;
-- raw evidence must be separated from behavioral/capability truth.
+- exact upstream snapshot acquisition/provenance;
+- non-destructive source projection;
+- raw Graphify/COS operation across all four upstreams;
+- complete structural census of all four Git trees;
+- COS V2 graph-plane/20D/context contracts;
+- ledger-backed future-agent ContextPack;
+- executable task DAG and continuity CI.
 
 Not yet proven:
 
-- exhaustive W02 structural inventory on a completed final-head run;
 - exhaustive registered/executable behavioral surfaces;
-- the actual capability denominator;
-- behavioral equivalence for cross-repo overlaps;
-- baseline test/build compatibility for every upstream family;
-- complete licensing/supply-chain integration obligations;
+- actual capability denominator;
+- behavioral equivalence for apparent cross-repo overlaps;
+- upstream baseline compatibility matrix;
+- complete license/supply-chain integration obligations;
 - final CP02 canonical contracts.
 
 ## 9. Current truth
 
-- Global goal: `CLEVER-JARVIS-001` — IN_PROGRESS.
-- Checkpoint: `CP01` — open.
-- Iteration: `I01`.
-- Complete: I01.0, W01.
-- Active frontier: W02 structural inventory.
-- Support subwave: `I01-W02-CTX` for COS V2/context integrity.
+- Goal: `CLEVER-JARVIS-001` — IN_PROGRESS.
+- Global checkpoint: `CP01` — IN_PROGRESS.
+- Completed iteration gates: I01.0, I01.1, I01.2.
+- Active subcheckpoint/wave: `I01.3 / I01-W03`.
+- First executable task: `W03-001 — Behavioral surface schema`.
 - Capability denominator: `NOT_GENERATED`.
-- Clever parity: `0 VERIFIED`; upstream implementation existence is not Clever verification.
-- No final Rust kernel contract may outrun CP01 evidence.
+- Clever parity: 0 VERIFIED; upstream implementation existence is not Clever parity evidence.
 
 ## 10. Regression conclusion
 
-We have moved from “merge four assistants” to a safer and more scalable formulation:
+The project has moved from **“combine four repositories”** to a safer compiler model:
 
-**Preserve four upstream truths, compile their evidence, promote only real behavior, derive canonical contracts from proof, and converge implementation/state only after migration eligibility.**
+> Preserve source truth → extract real behavior → normalize contracts with provenance → test equivalence → integrate behind canonical contracts → migrate implementation/state only after proof.
 
-The immediate mission is not more architecture prose. It is to finish W02 quickly and reproducibly, execute W03/W04 until the capability denominator exists, then close CP01 with adversarial completeness evidence.
+The next phase is not more broad architecture. It is W03: explicit registered/executable surface extraction from each upstream.

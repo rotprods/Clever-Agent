@@ -1,264 +1,167 @@
 # IMPLEMENTATION PLAN — CLEVER-JARVIS-001
 
-## Objective
+## Current position
 
-Close CP01 with an evidence-backed capability denominator and compile a trustworthy CP02 contract frontier. This plan is executable; every phase has dependencies, outputs, gates and evidence requirements.
+- CP01: IN_PROGRESS.
+- I01.0 / I01.1 / I01.2: COMPLETE.
+- Current wave: `I01-W03 — Public/behavioral surface extraction`.
+- First executable task: `W03-001`.
+- Capability denominator: NOT_GENERATED.
 
-Machine-readable task order: `.agentic/context/NEXT_ACTIONS.json`. Human checklist: `TASKS.md`.
+Machine task authority: `.agentic/context/NEXT_ACTIONS.json`. Human checklist: `TASKS.md`.
 
-## Global execution rule
-
-For every slice:
+## Execution loop
 
 `BOOT_RECONCILE → OBSERVE → GRAPHIFY → MODEL → CROSS_LINK → PROJECT_20D → DECIDE → PLAN_COMPILE → IMPLEMENT → VERIFY → GAUNTLET → EVIDENCE → PERSIST → AUTOPROMPT_REFLECT → COMMIT_RECONCILE`.
 
-No phase advances from prose. No destructive convergence before `MIGRATION_ELIGIBLE`.
+No destructive convergence before `MIGRATION_ELIGIBLE`.
 
 ---
 
-## Phase A — Integrity + W02 recovery (P0, immediate)
+## M0 — Context/control integrity — COMPLETE
 
-### A1. Context integrity gate
+Proven:
 
-Deliverables:
+- state/context/task DAG cross-validation;
+- ledger-backed ContextPack with orphan-ID rejection;
+- deterministic rebuild CI;
+- 20D registry and graph-plane invariants;
+- GOAL/EXECUTION/iteration/CONFIG/frontier reconciliation.
 
-- persist all decisions/risks referenced by ContextPack;
-- regenerate ContextPack from ledgers;
-- validate that every claim/risk/decision/evidence ID exists;
-- validate `.agentic/CONFIG.yaml` frontier against execution state;
-- validate machine task queue dependency graph;
-- run context checks in Agentic Contract CI.
+Evidence: `EVID-0004`.
 
-Exit:
+## M1 — W02 structural census — COMPLETE
 
-`validate_agentic_state.py`, `validate_context_pack.py`, `validate_next_actions.py` and `build_context_pack.py --check` all pass from clean checkout.
+Proven:
 
-### A2. Structural scanner performance correction
+- complete blobless Git-tree scan of all four exact upstreams;
+- 50,681 entries / 390 manifests / 17,651 tests / 615 runtime boundaries;
+- no blob-size resolution;
+- final structural workflow success and artifact digest.
 
-Replace `git ls-tree -l` with blobless tree metadata. Do not resolve blob sizes in CP01.
-
-Exit:
-
-- scanner remains deterministic;
-- full tree still includes assets/unknown file types by path/object id;
-- `size` is explicitly unknown where not available;
-- unit test proves structural scan does not require blob size.
-
-### A3. Final-head W02 evidence run
-
-Run complete four-source structural inventory on the candidate HEAD.
-
-Required evidence:
-
-- exact pins reverified;
-- 4 inventory JSONs;
-- summary with tree entry counts/tree hashes;
-- runtime below CI limit;
-- artifact digest.
-
-Exit W02 only after evidence persists and state mirrors agree.
+Evidence: `EVID-0005`.
 
 ---
 
-## Phase B — W03 behavioral/public surface compiler
+## M2 — W03 behavioral surface compiler — ACTIVE
 
-Goal: transform raw structural/source evidence into explicit executable/registered surfaces.
+### W03-001 — Freeze the schema
 
-### B1. Surface schema
-
-Define fields:
+Define `behavioral_surface.schema.json` with at least:
 
 `surface_id, source_repo, source_commit, family, surface_kind, runtime_owner, source_paths, source_symbols/routes/keys, registration_evidence, protocol/interface, permissions, state_effects, lifecycle, failure_semantics, platform_constraints, evidence_strength, promotion_status`.
 
-Initial promotion: `DISCOVERED_CANDIDATE`; explicit registration/route/protocol evidence can reach `BEHAVIOR_MAPPED`, never VERIFIED during W03 alone.
+Evidence strength should distinguish at minimum:
 
-### B2. OpenJarvis extractor
+`LEXICAL_HINT < DEFINITION < REGISTRATION < ROUTE_OR_PROTOCOL < BEHAVIOR_TEST`.
 
-Prioritize typed registries and actual registrations:
+W03 may promote explicit surfaces to `BEHAVIOR_MAPPED`; it does not create Clever `VERIFIED` capabilities.
 
-- ModelRegistry / EngineRegistry / AgentRegistry / MemoryRegistry / FactStoreRegistry;
-- ToolRegistry / RouterPolicyRegistry / BenchmarkRegistry;
-- Channel/Learning/Skill/Speech/TTS/Connector/Miner registries;
-- CLI/API/MCP/scheduler/security surfaces;
-- tests that exercise registered implementations.
+### W03-002 — OpenJarvis lane
 
-### B3. OpenClaw extractor
+Extract typed registries, actual registrations, CLI/API/MCP, scheduler, security and tests. Preserve registry key → implementation → test/source edges.
 
-Prioritize contribution/lifecycle surfaces:
+### W03-003 — OpenClaw lane
 
-- registerTool, registerChannel, provider families;
-- gateway methods;
-- services/commands/session extensions/actions;
-- scheduler jobs/hooks/runtime lifecycle;
-- node host commands/security audit/trusted tool policy;
-- extension packages/plugins and their declared compatibility.
+Extract plugin contribution/lifecycle surfaces: tools, channels, provider families, gateway methods, services, commands, session actions/extensions, scheduler jobs/hooks, node host commands, security/trusted-tool/lifecycle/rollback.
 
-### B4. Omi extractor
+### W03-004 — Omi lane
 
-Prioritize:
+Extract FastAPI include-router topology/routes, listen contracts/runtime/registry, STT/TTS/diarization/speaker identity, conversations/finalization/memory/action items, reconciliation jobs, desktop/mobile/BLE/wearable/firmware/SDK boundaries.
 
-- FastAPI `include_router` topology + route definitions;
-- listen receiver/contracts/registry/runtime;
-- STT/TTS/diarization/speaker profiles;
-- conversations/finalization/memories/action-items;
-- desktop realtime/screen/frame surfaces;
-- mobile/BLE/wearable/firmware/SDK boundaries;
-- reconciliation/background workers.
+### W03-005 — Clicky lane
 
-### B5. Clicky extractor
+Extract Swift PTT/audio/screen/multi-monitor/TTS/streaming/overlay/pointing lifecycle plus worker/proxy/provider/secret boundaries.
 
-Prioritize native Swift/worker behavior:
+### W03-006 — Unified surface ledger
 
-- PTT/audio capture/transcription;
-- screen capture and multi-monitor context;
-- TTS/stream response lifecycle;
-- overlay/cursor/point localization;
-- worker/proxy provider boundaries and secret handling.
+Merge source ledgers **without behavior deduplication**. Assign evidence strength and promotion status; preserve all provenance.
 
-### B6. W03 gauntlet
+### W03-007 — Completeness gauntlet
 
-Compare extracted surfaces against:
+Cross-check against:
 
-- structural manifests/runtime boundaries;
-- raw Graphify candidates;
-- docs headings;
-- tests;
-- route/registry declarations.
+- W02 structural roots/manifests;
+- P0 raw Graphify candidates;
+- registry keys/routes/commands;
+- docs claims;
+- tests/fixtures;
+- state stores/background workers/platform roots.
 
-Every unexplained orphan becomes a defect/risk, not a silent exclusion.
+Every unexplained high-value orphan becomes a defect/risk/blocker.
+
+### W03-008 — Close W03
+
+Persist evidence and advance only after the high-value orphan gate is satisfied.
+
+Parallelism: after W03-001 schema is frozen, W03-002…005 can run in separate worktrees/agents because their write surfaces are disjoint. One owner controls the shared schema/merge code.
 
 ---
 
-## Phase C — W04 capability denominator compiler
+## M3 — W04 capability denominator
 
-### C1. Capability schema + stable IDs
+1. Capability schema and stable deterministic IDs.
+2. Contract-equivalence rules; never dedupe from names/descriptions alone.
+3. Generate `CAPABILITY_LEDGER.jsonl` with all source provenance.
+4. Compute denominator automatically.
+5. Adversarial undercount/overcount/false-equivalence gauntlet.
 
-Canonical IDs must be deterministic, human-debuggable, collision-checked and insensitive to non-semantic formatting changes.
-
-### C2. Behavior-equivalence rules
-
-Deduplicate only when contract evidence supports equivalence. Preserve all contributing upstream provenance.
-
-Not enough:
-
-- same class/function name;
-- same family label;
-- same provider name;
-- similar README description.
-
-### C3. Denominator
-
-Generate `ledgers/CAPABILITY_LEDGER.jsonl` and compute denominator from rows. No manual percentage.
-
-At W04 close, capabilities may be `DISCOVERED/MAPPED`; Clever `VERIFIED` requires adapter behavioral parity later.
+At W04 close the denominator exists, but Clever behavior is not globally VERIFIED until adapter parity tests later.
 
 ---
 
-## Phase D — W05 upstream baseline compiler
+## M4 — W05 baselines + W06 supply chain
 
-Discover and classify build/test commands:
+Run in parallel after W04 gauntlet:
 
-`RUNNABLE_HERE | PLATFORM_GATED | CREDENTIAL_GATED | HARDWARE_GATED | NETWORK_GATED | BROKEN_UPSTREAM | NOT_APPLICABLE`.
+- W05 discovers/classifies safe upstream build/test commands (`RUNNABLE_HERE`, `PLATFORM_GATED`, `CREDENTIAL_GATED`, `HARDWARE_GATED`, `NETWORK_GATED`, `BROKEN_UPSTREAM`, `NOT_APPLICABLE`) and persists exact results.
+- W06 verifies licenses/notices/lockfiles/workspaces and produces upstream attribution/supply-chain evidence.
 
-Run only safe bounded commands. Never turn NOT_RUN into PASS.
-
-Persist command, toolchain/environment summary, status and artifact/log pointer.
-
----
-
-## Phase E — W06 license + supply chain
-
-- verify pinned licenses/notices;
-- inventory lockfiles/manifests/workspaces;
-- record attribution obligations;
-- generate `licenses/UPSTREAM_NOTICES.md`;
-- surface integration constraints as risks/decisions;
-- prepare SBOM strategy for CP12.
+Never map NOT_RUN to PASS.
 
 ---
 
-## Phase F — W07 COS 20D completeness gauntlet
+## M5 — W07 COS20D completeness gauntlet
 
-Build the capability dependency graph and apply 20D to high-value components/decisions, not raw nodes.
-
-Minimum graph relations:
+Build the capability dependency graph with at least:
 
 `requires, exposes, implemented_by, registered_via, persists_to, executes_on, permissioned_by, tested_by, owned_by, emits, consumes, recovers_via`.
 
-Gauntlet:
-
-- unrepresented runtime roots;
-- registry keys with no surface;
-- routes with no capability;
-- tests with no mapped behavior;
-- docs claims with no implementation evidence;
-- state stores with no owner;
-- side effects with no policy/rollback model;
-- platform/device surfaces lost by generic normalization.
-
-Exit only when every high-value orphan is resolved or explicitly open/blocking.
+Apply COS20D to high-value components/decisions. Detect orphan runtime roots, registrations, routes, tests, state stores, side effects and platform/device behaviors.
 
 ---
 
-## Phase G — W08 CP01 close
+## M6 — W08 CP01 release gate
 
-Generate final report containing:
+Generate:
 
-- exact source pins;
-- structural counts;
-- capability denominator;
-- family/upstream distributions;
-- evidence-strength distribution;
-- baseline results;
-- license/supply-chain findings;
-- known limitations/risks;
-- COS cross-repo pressure map;
-- CP02 contract requirements derived from evidence.
+- `reports/CP01_CAPABILITY_REPORT.md`;
+- evidence-derived `reports/CP02_CONTRACT_REQUIREMENTS.md`;
+- final pin/count/denominator/evidence/baseline/license/risk/COS pressure matrix.
 
-Run all validators and gauntlets. Then and only then:
+Only after the complete validation suite passes:
 
-- CP01 → COMPLETE;
-- CP02 → IN_PROGRESS;
-- state/handoff/context/ledgers reconciled atomically.
+`CP01 COMPLETE → CP02 IN_PROGRESS`.
 
 ---
 
-## Phase H — CP02 entry compiler
+## M7 — CP02 contracts — BLOCKED UNTIL M6
 
-Do not start until CP01 closes.
+Compile versioned contracts for:
 
-Compile versioned contract candidates for:
+1. identity/device/session/goal;
+2. event envelope + provenance/correlation/causation;
+3. capability contribution registry (OpenJarvis typed primitives × OpenClaw lifecycle/rollback);
+4. policy/action/authorization/idempotency/receipt;
+5. memory provenance/retention/access;
+6. runtime health/degradation/lifecycle;
+7. trace/evidence/evaluation.
 
-1. Identity / device / session / goal IDs.
-2. Event envelope + provenance/correlation/causation.
-3. Capability contribution registry combining OpenJarvis typing with OpenClaw lifecycle/rollback semantics.
-4. Policy/action intent + authorization + idempotency + receipt.
-5. Memory candidate/record/provenance/retention/access scope.
-6. Runtime health/degradation/lifecycle.
-7. Trace/evidence/evaluation contracts.
+Generate Rust/Python/TypeScript/Swift bindings and round-trip/version-skew tests before the Rust kernel scaffold.
 
-Rust kernel implementation follows contract tests; it does not precede them.
+## Stop conditions
 
----
-
-## Parallelization policy
-
-Safe parallelism after W02:
-
-- W03 per-upstream extractors may run in parallel once the shared surface schema is frozen.
-- One agent owns shared schema/normalization files.
-- Independent gauntlet reviews each upstream extractor.
-- Security reviewer owns trust-boundary classifications.
-- Release reconciler alone advances W03/W04 state after evidence.
-
-Unsafe parallelism:
-
-- two agents editing canonical state/context files;
-- simultaneous capability ID scheme changes;
-- concurrent state-migration design before behavior mapping.
-
-## Milestone sequence
-
-`M0 Context integrity → M1 W02 structural PASS → M2 W03 behavioral surface ledger → M3 W04 denominator → M4 baselines/license → M5 20D gauntlet → M6 CP01 report → M7 CP02 contracts`.
-
-The current executable frontier is M0/M1, not CP02 implementation.
+- No W04 denominator before W03 completeness.
+- No CP02 kernel before W08 closes CP01.
+- No `MERGE_STATE`/rewrite execution from provisional COS decisions.
+- No capability exclusion simply to improve the parity percentage.

@@ -11,20 +11,7 @@
     "D-0009",
     "D-0010"
   ],
-  "active_claims": [
-    {
-      "claim_id": "CLAIM-I01-W02-001",
-      "owner": "chatgpt-gpt-5.6-sol",
-      "status": "ACTIVE",
-      "wave_id": "I01-W02"
-    },
-    {
-      "claim_id": "CLAIM-I01-W02-CTX-001",
-      "owner": "chatgpt-gpt-5.6-sol",
-      "status": "ACTIVE",
-      "wave_id": "I01-W02-CTX"
-    }
-  ],
+  "active_claims": [],
   "authority_read_order": [
     "GOAL.md",
     "SECURITY_MODEL.md",
@@ -53,20 +40,23 @@
   "evidence_ids": [
     "EVID-0001",
     "EVID-0002",
-    "EVID-0003"
+    "EVID-0003",
+    "EVID-0004",
+    "EVID-0005"
   ],
   "frontier": {
     "blocking_issues": [],
     "checkpoint": "CP01",
     "completed_waves": [
       "I01-W00",
-      "I01-W01"
+      "I01-W01",
+      "I01-W02"
     ],
     "iteration": "I01",
-    "next_wave": "I01-W02",
-    "next_wave_name": "Structural inventory",
+    "next_wave": "I01-W03",
+    "next_wave_name": "Public/behavioral surface extraction",
     "parity_denominator_status": "NOT_GENERATED",
-    "subcheckpoint": "I01.2"
+    "subcheckpoint": "I01.3"
   },
   "graph_planes": [
     {
@@ -144,21 +134,11 @@
       "risk_id": "RISK-0003",
       "severity": "HIGH",
       "status": "OPEN"
-    },
-    {
-      "risk_id": "RISK-0004",
-      "severity": "HIGH",
-      "status": "OPEN"
-    },
-    {
-      "risk_id": "RISK-0005",
-      "severity": "HIGH",
-      "status": "MITIGATING"
     }
   ],
   "planning": {
     "consciousness_act": "docs/ACTA_DE_CONSCIENCIA.md",
-    "first_executable_task": "CTX-001",
+    "first_executable_task": "W03-001",
     "implementation_plan": "IMPLEMENTATION_PLAN.md",
     "next_actions": ".agentic/context/NEXT_ACTIONS.json",
     "regression": "docs/REGRESSION_2026-08-31.md",
@@ -178,12 +158,13 @@
     "/empezarproyecto"
   ],
   "required_next_outputs": [
-    "generated complete-tree upstream structural inventories",
-    "evidence-backed public/behavioral surface extraction",
-    "generated exhaustive capability ledger",
-    "upstream baseline test report",
-    "license/NOTICE inventory",
-    "contract requirements derived from actual capability graph and completeness gauntlet"
+    "versioned behavioral-surface schema and evidence-strength model",
+    "OpenJarvis registered/executable surface ledger",
+    "OpenClaw contribution/lifecycle surface ledger",
+    "Omi route/perception/device/state surface ledger",
+    "Clicky native macOS/worker surface ledger",
+    "W03 completeness gauntlet evidence",
+    "generated exhaustive capability ledger after W03 closes"
   ],
   "schema_version": 1,
   "upstream_refs": {

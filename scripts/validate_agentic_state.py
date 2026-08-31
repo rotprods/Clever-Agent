@@ -86,15 +86,20 @@ def main() -> int:
     if execution_state.get("next_wave") != iteration_state.get("next_wave"):
         errors.append("next_wave drift between EXECUTION_STATE and iteration STATE")
 
+    next_wave = str(execution_state.get("next_wave"))
+    frontier_text = str(goal_state.get("frontier", ""))
+    if next_wave not in frontier_text:
+        errors.append(f"GOAL_STATE.frontier does not mention canonical next_wave {next_wave}")
+
     state_md = (ROOT / "STATE.md").read_text(encoding="utf-8")
-    for required_token in (str(active_checkpoint), str(active_iteration), str(execution_state.get("next_wave"))):
+    for required_token in (str(active_checkpoint), str(active_iteration), next_wave):
         if required_token not in state_md:
             errors.append(f"STATE.md does not contain canonical token {required_token!r}")
 
     config = (ROOT / ".agentic/CONFIG.yaml").read_text(encoding="utf-8")
     for token in (
         f"active_checkpoint: {active_checkpoint}", f"active_iteration: {active_iteration}",
-        f"next_wave: {execution_state.get('next_wave')}", "next_actions: .agentic/context/NEXT_ACTIONS.json",
+        f"next_wave: {next_wave}", "next_actions: .agentic/context/NEXT_ACTIONS.json",
         "plan_validator: python scripts/context/validate_next_actions.py",
     ):
         if token not in config:
@@ -108,7 +113,7 @@ def main() -> int:
         from scripts.context.validate_next_actions import validate_payload
         errors.extend(validate_context_pack(ROOT))
         plan = load_json(".agentic/context/NEXT_ACTIONS.json")
-        errors.extend(validate_payload(plan, expected_frontier=execution_state.get("next_wave")))
+        errors.extend(validate_payload(plan, expected_frontier=next_wave))
 
     if errors:
         for error in errors:
@@ -117,8 +122,7 @@ def main() -> int:
 
     print(
         "OK: agentic state/context/plan are consistent "
-        f"goal={goal_state['goal_id']} checkpoint={active_checkpoint} iteration={active_iteration} "
-        f"next_wave={execution_state.get('next_wave')}"
+        f"goal={goal_state['goal_id']} checkpoint={active_checkpoint} iteration={active_iteration} next_wave={next_wave}"
     )
     return 0
 

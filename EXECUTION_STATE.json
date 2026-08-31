@@ -2,13 +2,13 @@
   "schema_version": 1,
   "goal_id": "CLEVER-JARVIS-001",
   "branch": "main",
-  "mode": "forensic-inventory",
+  "mode": "behavioral-surface-extraction",
   "current_checkpoint": "CP01",
   "active_iteration": "I01",
-  "active_subcheckpoint": "I01.2",
-  "next_wave": "I01-W02",
-  "next_wave_name": "Structural inventory",
-  "completed_waves": ["I01-W00", "I01-W01"],
+  "active_subcheckpoint": "I01.3",
+  "next_wave": "I01-W03",
+  "next_wave_name": "Public/behavioral surface extraction",
+  "completed_waves": ["I01-W00", "I01-W01", "I01-W02"],
   "mandatory_boot_command": "/empezarproyecto",
   "next_checkpoint": "CP02",
   "upstream_snapshot_date": "2026-08-31",
@@ -22,11 +22,12 @@
   "blocking_issues": [],
   "tracking_issue": 2,
   "required_next_outputs": [
-    "generated complete-tree upstream structural inventories",
-    "evidence-backed public/behavioral surface extraction",
-    "generated exhaustive capability ledger",
-    "upstream baseline test report",
-    "license/NOTICE inventory",
-    "contract requirements derived from actual capability graph and completeness gauntlet"
+    "versioned behavioral-surface schema and evidence-strength model",
+    "OpenJarvis registered/executable surface ledger",
+    "OpenClaw contribution/lifecycle surface ledger",
+    "Omi route/perception/device/state surface ledger",
+    "Clicky native macOS/worker surface ledger",
+    "W03 completeness gauntlet evidence",
+    "generated exhaustive capability ledger after W03 closes"
   ]
 }

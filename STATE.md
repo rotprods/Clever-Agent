@@ -8,52 +8,55 @@
 - Global status: `IN_PROGRESS`
 - Active checkpoint: `CP01 — Forensic upstream inventory`
 - Active iteration: `I01 — Forensic Capability Compiler`
-- Completed iteration gates: `I01.0 — Agentic repository bootstrap`, `I01.1 — Pinned upstream acquisition`
-- Next executable wave: `I01-W02 — Structural inventory`
+- Completed iteration gates: `I01.0 — Agentic repository bootstrap`, `I01.1 — Pinned upstream acquisition`, `I01.2 — Static repository inventory compiler`
+- Next executable wave: `I01-W03 — Public/behavioral surface extraction`
+- First executable task: `W03-001 — Behavioral surface schema`
 - Parity: `0 verified / denominator not generated`
 - Blocking issues: none known
 
+## W02 closure evidence
+
+Final-head structural workflow `33429197669`, job `99610115447`, completed `success` against source head `8dded8384ae113e7a9c73b21691c33a529696b60`.
+
+Artifact `9771912520`, digest `sha256:71dc9e002a8874cffdb63440c9fdd0d4042ceb623ec7927b214e6a4ae0a94221`.
+
+Structural totals across exact pinned snapshots:
+
+- 50,681 Git tree entries;
+- 390 manifests;
+- 17,651 test files;
+- 615 runtime/service/app boundaries.
+
+Per source:
+
+- OpenClaw: 35,757 tree entries / 213 manifests / 13,613 tests / 362 runtime boundaries.
+- Omi: 12,731 / 141 / 3,314 / 198.
+- OpenJarvis: 2,108 / 32 / 724 / 51.
+- Clicky: 85 / 4 / 0 / 4.
+
+Blob-size collection is disabled by design; structural inventory uses complete Git tree identity without resolving partial-clone blobs.
+
 ## Canonical frontier
 
-Finish validation/persistence of `I01-W02`, then execute `I01-W03 — Public/behavioral surface extraction` from `iterations/01/METAPROMPT.md`.
+Execute `/empezarproyecto`, claim `I01-W03`, then freeze the behavioral-surface schema/evidence-strength model before parallel per-upstream extraction.
 
-The CP01 compiler now has two distinct evidence layers:
+W03 must promote **registered/executable behaviors**, not lexical symbols:
 
-1. complete pinned Git-tree structural inventory;
-2. sparse-source Graphify/COS semantic projection.
+- OpenJarvis typed registries + registrations + CLI/API/MCP/scheduler/security surfaces.
+- OpenClaw plugin registrars + gateway/session/lifecycle/security surfaces.
+- Omi FastAPI/router/listen/STT/TTS/conversation/memory/reconciliation/device surfaces.
+- Clicky Swift PTT/screen/TTS/overlay/pointing + worker/proxy surfaces.
 
-Do **not** treat raw Graphify symbol counts or provisional COS groups as the capability denominator. Do **not** implement final Rust kernel contracts before W03/W04 produce evidence-backed behavioral surfaces and canonical capability rows.
+Do not treat raw Graphify counts as the capability denominator. Do not implement final Rust kernel contracts before W03/W04 produce evidence-backed behavioral surfaces and canonical capability rows.
 
 ## Persistence health
 
-- Stable goal: present
-- Global checkpoint registry: present
-- Human checkpoint map: present
-- Agent execution contract: present
-- Project boot command: present
-- Iteration metaprompt: present
-- Wave/claim/run ledgers: active
-- Evidence ledger: active
-- Capability ledger: initialized, denominator pending
-- Handoff: reconciled through W01
-- W01 exact-SHA acquisition + full four-upstream forensic scan: PASS (`EVID-0002`, GitHub Actions run `33402789051`)
-- Graphify/COS contract: PASS (`EVID-0003`, GitHub Actions run `33402789018`)
-- Agentic Contract at W01 validated head: PASS (run `33402788994`)
-
-## Last structural decisions
-
-- Acquire upstreams as partial Git object stores with immutable local pin refs; materialize source-only sparse worktrees only when source content is needed.
-- `/graphify` is the evidence projection backend; `/cosgraphengine` is a non-destructive integration overlay.
-- Raw source/symbol graph nodes remain evidence candidates. Only W03/W04 may promote evidence-backed behavioral surfaces into the capability denominator.
-
-## Next expected durable outputs
-
-1. `inventory/upstreams/{openjarvis,openclaw,omi,clicky}.json` from complete pinned Git trees.
-2. W02 structural inventory evidence and deterministic rerun proof.
-3. `I01-W03` extractors for routes, commands, registries, extension points, agents, providers, channels, persistence, media/device/security surfaces and tests.
-4. `I01-W04` canonical capability rows with provenance-preserving deduplication.
-5. Baseline, license and completeness-gauntlet evidence required before CP01 can close.
+- State/context/task DAG validation: PASS on `8dded838...` (Agentic Contract runs `33429192861` / `33429197911`).
+- Graphify/COS contract: PASS on same head (`33429192877` / `33429197696`).
+- W01 full four-source forensic scan: PASS (`33402789051`).
+- W02 complete structural inventory: PASS (`33429197669`).
+- Capability ledger: denominator pending.
 
 ## Recovery instruction
 
-A fresh agent should not ask for chat context. Run `/empezarproyecto`, read `HANDOFF.md`, validate state, inspect W02 CI evidence, claim the next non-conflicting wave and continue from persisted evidence.
+A fresh agent should run the validators, execute `/empezarproyecto`, read the act/regression/implementation plan, claim `I01-W03` and begin `W03-001`.
