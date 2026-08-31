@@ -1,0 +1,711 @@
+{
+  "ci_release_files": [
+    "scripts/release.sh"
+  ],
+  "doc_files": [
+    "README.md",
+    "scripts/README.md"
+  ],
+  "docs_roots": [
+    ".",
+    "scripts"
+  ],
+  "files": [
+    {
+      "mode": "100644",
+      "object_id": "832e80a1a8499854fee0b1bcbd14100f61672773",
+      "object_type": "blob",
+      "path": ".gitignore",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "6946d44198d54bf700ad1e1b456301c15b9bce49",
+      "object_type": "blob",
+      "path": "AGENTS.md",
+      "size": null
+    },
+    {
+      "mode": "120000",
+      "object_id": "47dc3e3d863cfb5727b87d785d09abf9743c0a72",
+      "object_type": "blob",
+      "path": "CLAUDE.md",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "14b9c4b398c65006e0d6964296fff4ee84b447c1",
+      "object_type": "blob",
+      "path": "LICENSE",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "5ea1fbab8b7bb6404fc37ffd04bda633750e2aed",
+      "object_type": "blob",
+      "path": "README.md",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "60471425f0926b51d4430edaddb33ad013275d8a",
+      "object_type": "blob",
+      "path": "appcast.xml",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "55fe6b7d1d7d70a98b156c649f3103151bc3582d",
+      "object_type": "blob",
+      "path": "clicky-demo.gif",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "8a6af5171608513e1b23a0f8fe95990d50054a9c",
+      "object_type": "blob",
+      "path": "dmg-background.png",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "75e572618a820ab2af615e9dc75b60b8e185e306",
+      "object_type": "blob",
+      "path": "leanring-buddy.xcodeproj/project.pbxproj",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "919434a6254f0e9651f402737811be6634a03e9c",
+      "object_type": "blob",
+      "path": "leanring-buddy.xcodeproj/project.xcworkspace/contents.xcworkspacedata",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "d88adb2160e68c1e772f8996ac525383b6d24bbd",
+      "object_type": "blob",
+      "path": "leanring-buddy.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "6c13490a04b0bcfccf3b46cecabec279ffd315e5",
+      "object_type": "blob",
+      "path": "leanring-buddy.xcodeproj/xcuserdata/julianalvarez.xcuserdatad/xcschemes/xcschememanagement.plist",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "6c13490a04b0bcfccf3b46cecabec279ffd315e5",
+      "object_type": "blob",
+      "path": "leanring-buddy.xcodeproj/xcuserdata/thorfinn.xcuserdatad/xcschemes/xcschememanagement.plist",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "b59cb0919ec5e08def717ba598e2296d8181179f",
+      "object_type": "blob",
+      "path": "leanring-buddy/AGENTS.md",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "6fd23375773761d3f711c87e3af9ad561786812d",
+      "object_type": "blob",
+      "path": "leanring-buddy/AppBundleConfiguration.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "600594fabc2cd600fd2979be8d3abe5699cf4607",
+      "object_type": "blob",
+      "path": "leanring-buddy/AppleSpeechTranscriptionProvider.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "d21286b6596e9141c5549e1b09c4c35521c97d28",
+      "object_type": "blob",
+      "path": "leanring-buddy/AssemblyAIStreamingTranscriptionProvider.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "eb8789700816459c1e1480e0b34781d9fb78a1ca",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/AccentColor.colorset/Contents.json",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "037d7ca027142eb9026b4aeaa13798e771b63bb8",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/AppIcon.appiconset/1024-mac.png",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "c056299b2a23c939fc12208b3c1bdaa40d14bdd8",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/AppIcon.appiconset/128-mac.png",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "c6dcb7700545a31f0d64372dd783328c7c737ab1",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/AppIcon.appiconset/16-mac.png",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "cbae9774fbca28aafce5e588700c52f37ba4cdea",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/AppIcon.appiconset/256-mac.png",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "a5088ec496f327d1ad59cc29c8744443e7b450c0",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/AppIcon.appiconset/32-mac.png",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "1ca5e44611efaebd886088fd88515fe25cb00536",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/AppIcon.appiconset/512-mac.png",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "ef90c27e95ff781ceab4f6bac2b327b7112177f8",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/AppIcon.appiconset/64-mac.png",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "5177872aa892ee9bb99f7ec11c9cffedba7bead5",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/AppIcon.appiconset/Contents.json",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "73c00596a7fca3f3d4bdd64053b69d86745f9e10",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/Contents.json",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "17f6fd9482f72ee77e75819da9623db0840783db",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/add-a-project-in-codex-from-sidebar.imageset/Contents.json",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "4584882a7befe1939ad3365ded29ff7298deea45",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/add-a-project-in-codex-from-sidebar.imageset/Image.png",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "93ca50fa66fb4b1f7a92f242bb62bc10039dc3b3",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/add-a-project-in-codex.imageset/Contents.json",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "68847ce79b97523ca37787b448b1a907492c1129",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/add-a-project-in-codex.imageset/add-a-project-in-codex.png",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "37b9955ff499fa98248b7e38bb9f21e72084659c",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/codex-app-screenshot.imageset/Contents.json",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "47548b9a16fb8957a69e0752951f1a7e20e5d2f9",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/codex-app-screenshot.imageset/codex-app-screenshot.jpg",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "8b73e30b47ec27299be891602c8f849ba46a922e",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/codex-home-screen.imageset/Contents.json",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "02e74f1f2d9eb33aeee7874264320f1c1a4b090c",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/codex-home-screen.imageset/codex-home-screen.png",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "5ca6299247a9c71be9996d56c2a451b41d91e8f0",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/codex-permissions.imageset/Contents.json",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "308b542a82849bf418f7cc4eb423cad1c3b6d88f",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/codex-permissions.imageset/codex-permissions.png",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "65d8ed3e8eea9ab71718236e631ae122f630db8c",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/discord-logo.imageset/Contents.json",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "f059720929611ba610c15113d3487f90c68900cd",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/discord-logo.imageset/discord-logo.svg",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "43657ae01064cc246176a5719acd8a9818162f4f",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/git-tools-prompt.imageset/Contents.json",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "f4aa6e495883777c147cae303a55b628b22ce985",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/git-tools-prompt.imageset/git-tools-prompt.png",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "9ce91aa3f27b870e01f336d2d8c65c2920bbd2c7",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/google-logo.imageset/Contents.json",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "e102c9d655eca16612af8bc1b900c374511cf66a",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/google-logo.imageset/google-logo.svg",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "5d0d423e5f3b3a16cff8397afde088679a7e7184",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/inside-the-makesomething-project-folder.imageset/Contents.json",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "6a7ecf73580f1b59fada3905573988122cd88780",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/inside-the-makesomething-project-folder.imageset/inside-the-makesomething-project-folder.png",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "5d5d66ca80cb51ef0a4ae6acbe1dcbe0720f9a60",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/makesomething-project-folder-in-downloads.imageset/Contents.json",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "8039a7372108bdefac6388acae35f920f885cbe1",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/makesomething-project-folder-in-downloads.imageset/makesomething-project-folder-in-downloads.png",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "9cac693648cbc4460b2bb45befee509dff9ef917",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/steve.imageset/Contents.json",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "19b2d40a8f86d58ddca5a4fafa6feb66b026db09",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/steve.imageset/steve.jpg",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "19b2d40a8f86d58ddca5a4fafa6feb66b026db09",
+      "object_type": "blob",
+      "path": "leanring-buddy/Assets.xcassets/steve.jpg",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "02623c6af1d049d226576502a5e6a77fcdbfef37",
+      "object_type": "blob",
+      "path": "leanring-buddy/BuddyAudioConversionSupport.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "5bca26779589b215cf55ce4c35250d76a92071a4",
+      "object_type": "blob",
+      "path": "leanring-buddy/BuddyDictationManager.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "0a75715d76eb8f277109fdc793d40bcf5fa357a7",
+      "object_type": "blob",
+      "path": "leanring-buddy/BuddyTranscriptionProvider.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "0c7070b56f5364f5fbbaa22062a62fb78240c40f",
+      "object_type": "blob",
+      "path": "leanring-buddy/ClaudeAPI.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "29e26138e6ffa0ae5ddd7ba6d1de2a8ac3852b24",
+      "object_type": "blob",
+      "path": "leanring-buddy/ClickyAnalytics.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "0234cf19f042332d5e84c0bb3cd9581a13cda759",
+      "object_type": "blob",
+      "path": "leanring-buddy/CompanionManager.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "76789b4c686bc72bba3da707de36a084616bc15e",
+      "object_type": "blob",
+      "path": "leanring-buddy/CompanionPanelView.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "a11c6240ff6489cc8d4b5d8cf5aa926926f0ea3c",
+      "object_type": "blob",
+      "path": "leanring-buddy/CompanionResponseOverlay.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "797841783af0a670c8fbb8cdc592eec17bab140d",
+      "object_type": "blob",
+      "path": "leanring-buddy/CompanionScreenCaptureUtility.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "d77e12a418e4a9374c2b051ace35ace6450c9951",
+      "object_type": "blob",
+      "path": "leanring-buddy/DesignSystem.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "47072b112af98f505c26b162bf5db55afc741ec5",
+      "object_type": "blob",
+      "path": "leanring-buddy/ElementLocationDetector.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "35545c9d4d0ca1d43ed90850b85fd5c25bae1f33",
+      "object_type": "blob",
+      "path": "leanring-buddy/ElevenLabsTTSClient.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "8020269b4487ccf09e98062b3063952e9c62715d",
+      "object_type": "blob",
+      "path": "leanring-buddy/GlobalPushToTalkShortcutMonitor.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "e3d2b455a11a48279dc6f99546b86dd57877d025",
+      "object_type": "blob",
+      "path": "leanring-buddy/Info.plist",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "e5eb98de70e88d4931551186fba851598ce890a2",
+      "object_type": "blob",
+      "path": "leanring-buddy/MenuBarPanelManager.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "d0c3f2ae3dbfd6503824d92aba0d3d681521db08",
+      "object_type": "blob",
+      "path": "leanring-buddy/OpenAIAPI.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "7509209221605731f5307a39ef99475820d39c52",
+      "object_type": "blob",
+      "path": "leanring-buddy/OpenAIAudioTranscriptionProvider.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "884ebcbfbee7c4a9708c922dc50a196c086bac7c",
+      "object_type": "blob",
+      "path": "leanring-buddy/OverlayWindow.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "8f6edf650d086f963ff86db773b85344f9e78817",
+      "object_type": "blob",
+      "path": "leanring-buddy/WindowPositionManager.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "a5222d0372031b1c8a343aea75a16a633cd043a5",
+      "object_type": "blob",
+      "path": "leanring-buddy/codex-add-project.png",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "e8185a509acc068a30062f6d7644fc05f7e3ac3d",
+      "object_type": "blob",
+      "path": "leanring-buddy/enter.mp3",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "0abd14e4f800728dd1d22a5b933a75921e716c10",
+      "object_type": "blob",
+      "path": "leanring-buddy/eshop.mp3",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "a7cf86dd0daab6e431679d64716a45d3eae61378",
+      "object_type": "blob",
+      "path": "leanring-buddy/ff.mp3",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "48d74a4be2656896f27fc9cb10e70bad16ff325b",
+      "object_type": "blob",
+      "path": "leanring-buddy/leanring-buddy.entitlements",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "b004a89600d9dc2d1314defd679133a18cd76087",
+      "object_type": "blob",
+      "path": "leanring-buddy/leanring_buddyApp.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "19b2d40a8f86d58ddca5a4fafa6feb66b026db09",
+      "object_type": "blob",
+      "path": "leanring-buddy/steve.jpg",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "188fe7ae05d9e2943add026db4ddd8ac37c70c6a",
+      "object_type": "blob",
+      "path": "leanring-buddyTests/leanring_buddyTests.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "844e6b92a6b00f88b5933f07d451eb5d7f4f76d7",
+      "object_type": "blob",
+      "path": "leanring-buddyUITests/leanring_buddyUITests.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "5fe330b1c1b5b4fce95317a2c9ec85aceb4d3356",
+      "object_type": "blob",
+      "path": "leanring-buddyUITests/leanring_buddyUITestsLaunchTests.swift",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "9b2f0b348e8e7fe3d27bcdb9e02f7e01ed5a2944",
+      "object_type": "blob",
+      "path": "scripts/README.md",
+      "size": null
+    },
+    {
+      "mode": "100755",
+      "object_id": "da7f31daf200d046f4c9bb98d57aa9eda8ee62a2",
+      "object_type": "blob",
+      "path": "scripts/release.sh",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "c2383cc17cff293d52302db3d071c0ecb3934d88",
+      "object_type": "blob",
+      "path": "worker/package-lock.json",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "445d90a6052e4cc6944db65b6210de9eed0201d0",
+      "object_type": "blob",
+      "path": "worker/package.json",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "2e3e93457f9e3ee54fbd41dff4a5e2f95c3ce365",
+      "object_type": "blob",
+      "path": "worker/src/index.ts",
+      "size": null
+    },
+    {
+      "mode": "100644",
+      "object_id": "b4bdbf384217ce1276272dc5bf799e67d08f2450",
+      "object_type": "blob",
+      "path": "worker/wrangler.toml",
+      "size": null
+    }
+  ],
+  "inventory_type": "structural_repository_inventory",
+  "license_notice_files": [
+    "LICENSE"
+  ],
+  "manifests": [
+    "leanring-buddy.xcodeproj/project.pbxproj",
+    "leanring-buddy.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved",
+    "worker/package.json",
+    "worker/wrangler.toml"
+  ],
+  "package_workspace_roots": [
+    "leanring-buddy.xcodeproj",
+    "leanring-buddy.xcodeproj/project.xcworkspace/xcshareddata/swiftpm",
+    "worker"
+  ],
+  "repository": "farzaa/clicky",
+  "runtime_service_app_boundaries": [
+    {
+      "path": "leanring-buddy.xcodeproj",
+      "signals": [
+        "manifest:project.pbxproj"
+      ]
+    },
+    {
+      "path": "leanring-buddy.xcodeproj/project.xcworkspace/xcshareddata/swiftpm",
+      "signals": [
+        "manifest:Package.resolved"
+      ]
+    },
+    {
+      "path": "worker",
+      "signals": [
+        "manifest:package.json",
+        "manifest:wrangler.toml",
+        "runtime-marker:worker"
+      ]
+    },
+    {
+      "path": "worker/src",
+      "signals": [
+        "runtime-marker:src"
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "source_commit": "a80fa80721a8aebe51a170a7780705024ebc6e46",
+  "source_repo": "clicky",
+  "summary": {
+    "blob_sizes_collected": false,
+    "extensions": {
+      ".entitlements": 1,
+      ".gif": 1,
+      ".jpg": 4,
+      ".json": 16,
+      ".md": 5,
+      ".mp3": 3,
+      ".pbxproj": 1,
+      ".plist": 3,
+      ".png": 16,
+      ".resolved": 1,
+      ".sh": 1,
+      ".svg": 2,
+      ".swift": 25,
+      ".toml": 1,
+      ".ts": 1,
+      ".xcworkspacedata": 1,
+      ".xml": 1,
+      "<none>": 2
+    },
+    "languages": {
+      "shell": 1,
+      "swift": 25,
+      "typescript": 1
+    },
+    "objects_by_type": {
+      "blob": 85
+    },
+    "top_level_entry_counts": {
+      ".gitignore": 1,
+      "AGENTS.md": 1,
+      "CLAUDE.md": 1,
+      "LICENSE": 1,
+      "README.md": 1,
+      "appcast.xml": 1,
+      "clicky-demo.gif": 1,
+      "dmg-background.png": 1,
+      "leanring-buddy": 63,
+      "leanring-buddy.xcodeproj": 5,
+      "leanring-buddyTests": 1,
+      "leanring-buddyUITests": 2,
+      "scripts": 2,
+      "worker": 4
+    },
+    "total_bytes_known": 0,
+    "unknown_size_objects": 85
+  },
+  "test_files": [],
+  "test_roots": [],
+  "tree_entry_count": 85,
+  "tree_ref": "refs/clever-agent/pinned/clicky",
+  "tree_sha256": "4ceef3121ac9b510bdcfb777afa36fc5dd2d3896764c1612e89eb135461e4594"
+}

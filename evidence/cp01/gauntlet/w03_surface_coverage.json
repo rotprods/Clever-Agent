@@ -1,0 +1,29 @@
+{
+  "behavior_mapped_count": 7565,
+  "candidate_definition_count": 68718,
+  "errors": [],
+  "invariants": {
+    "all_source_provenance_preserved": true,
+    "cross_repo_behavior_dedupe_performed": false,
+    "definition_is_not_verified": true,
+    "generic_plus_profile_extraction": true,
+    "profiled_boundary_is_behavior_mapped": true,
+    "tests_are_not_product_surfaces": true
+  },
+  "phase": "I01-W03",
+  "schema_version": 1,
+  "source_counts": {
+    "clicky": 224,
+    "omi": 21527,
+    "openclaw": 51698,
+    "openjarvis": 2834
+  },
+  "status": "PASS",
+  "surface_count": 76283,
+  "warnings": [
+    "clicky: 2 manifest-backed boundaries have no direct surface; retained as explained structural-orphan candidates",
+    "omi: 22 manifest-backed boundaries have no direct surface; retained as explained structural-orphan candidates",
+    "openclaw: 19 manifest-backed boundaries have no direct surface; retained as explained structural-orphan candidates",
+    "openjarvis: 4 manifest-backed boundaries have no direct surface; retained as explained structural-orphan candidates"
+  ]
+}

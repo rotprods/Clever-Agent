@@ -7,8 +7,8 @@
 | ID | Checkpoint | Status | Exit gate |
 |---|---|---|---|
 | CP00 | Canonical bootstrap | COMPLETE | Stable goal, architecture, security, upstream ledger, parity method and durable state exist. |
-| CP01 | Forensic upstream inventory | IN_PROGRESS | All four pinned upstreams inventoried; exhaustive capability denominator, baseline test evidence and license inventory exist. |
-| CP02 | Canonical contracts + Rust kernel scaffold | PENDING | Versioned contracts compile across target runtimes; core identity/event/capability/policy skeleton passes contract tests. |
+| CP01 | Forensic upstream inventory | COMPLETE | All four pinned upstreams inventoried; exhaustive capability denominator, baseline test evidence and license inventory exist. |
+| CP02 | Canonical contracts + Rust kernel scaffold | IN_PROGRESS | Versioned contracts compile across target runtimes; core identity/event/capability/policy skeleton passes contract tests. |
 | CP03 | OpenJarvis cognitive adapter | PENDING | OpenJarvis capability families parity-tested through canonical contracts. |
 | CP04 | OpenClaw gateway adapter | PENDING | Gateway/channel/node/provider/tool/plugin/automation families parity-tested. |
 | CP05 | Omi perception + episodic adapter | PENDING | Capture/STT/diarization/conversation/mobile/wearable/SDK families parity-tested. |
@@ -128,3 +128,7 @@ Exit:
 ## Checkpoint advancement rule
 
 A subcheckpoint/checkpoint advances only when its exit condition is represented by persisted evidence. A future plan, generated documentation or an agent statement is not evidence of completion.
+
+## CP01 release — COMPLETE
+
+CP01 closed from exact-source release evidence. The generated denominator is a behavior-mapped integration denominator, not a claim of Clever adapter parity. CP02 is now active.

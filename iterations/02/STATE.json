@@ -1,15 +1,17 @@
 {
-  "schema_version": 1,
-  "iteration_id": "I02",
-  "goal_id": "CLEVER-JARVIS-001",
-  "checkpoint_id": "CP02",
-  "name": "Canonical Contracts + Rust Kernel Scaffold",
-  "status": "PENDING",
-  "completed_subcheckpoints": [],
   "active_subcheckpoint": "I02.1",
+  "blocking_issues": [],
+  "checkpoint_id": "CP02",
+  "completed_subcheckpoints": [
+    "I02.0"
+  ],
+  "goal_id": "CLEVER-JARVIS-001",
+  "iteration_id": "I02",
+  "last_updated_date": "2026-09-01",
+  "name": "Canonical Contracts + Rust Kernel Scaffold",
   "next_wave": "CP02-W01",
   "next_wave_name": "Canonical contract schemas",
-  "blocking_issues": [],
   "parity_denominator_status": "GENERATED_UNVERIFIED",
-  "last_updated_date": "2026-09-01"
+  "schema_version": 1,
+  "status": "IN_PROGRESS"
 }

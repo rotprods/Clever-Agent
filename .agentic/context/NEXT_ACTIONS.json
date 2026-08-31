@@ -1,35 +1,555 @@
 {
-  "schema_version": 1,
+  "checkpoint": "CP02",
+  "first_executable_task": "CP02-001",
+  "frontier_wave": "CP02-W01",
+  "iteration": "I02",
   "project_id": "CLEVER-JARVIS-001",
-  "checkpoint": "CP01",
-  "iteration": "I01",
-  "frontier_wave": "I01-W03",
-  "first_executable_task": "W03-001",
-  "status_model": ["READY", "BLOCKED", "IN_PROGRESS", "COMPLETE"],
+  "schema_version": 1,
+  "status_model": [
+    "READY",
+    "BLOCKED",
+    "IN_PROGRESS",
+    "COMPLETE"
+  ],
   "tasks": [
-    {"id":"CTX-001","priority":"P0","wave":"I01-W02-CTX","status":"COMPLETE","depends_on":[],"owner_role":"orchestrator","objective":"Reconcile ContextPack IDs with canonical decision/risk/evidence/claim ledgers and regenerate deterministic context.","outputs":["ledgers/DECISION_LEDGER.ndjson","ledgers/RISK_LEDGER.ndjson",".agentic/context/CURRENT_CONTEXT.json",".agentic/context/CURRENT_CONTEXT.md"],"gates":["no orphan IDs","build_context_pack.py --check"]},
-    {"id":"CTX-002","priority":"P0","wave":"I01-W02-CTX","status":"COMPLETE","depends_on":["CTX-001"],"owner_role":"builder","objective":"Make context and plan integrity merge-blocking CI.","outputs":[".github/workflows/agentic-contract.yml"],"gates":["state validator pass","context validator pass","task graph validator pass"]},
-    {"id":"CTX-003","priority":"P0","wave":"I01-W02-CTX","status":"COMPLETE","depends_on":["CTX-001"],"owner_role":"builder","objective":"Validate unique task IDs, dependency references, acyclicity and frontier consistency.","outputs":["scripts/context/validate_next_actions.py","inventory/schemas/next_actions.schema.json"],"gates":["unit tests pass"]},
-    {"id":"W02-001","priority":"P0","wave":"I01-W02","status":"COMPLETE","depends_on":[],"owner_role":"builder","objective":"Make structural inventory blobless by removing git ls-tree size resolution.","outputs":["scripts/inventory/scan_repository.py","tests/test_inventory.py"],"gates":["all tree entries retained","blob sizes remain unknown","unit tests pass"]},
-    {"id":"W02-002","priority":"P0","wave":"I01-W02","status":"COMPLETE","depends_on":["W02-001","CTX-002"],"owner_role":"release_reconciler","objective":"Run complete structural inventory for all four exact upstream pins on final candidate HEAD.","outputs":["inventory/upstreams/*.json","reports/cp01/structural_inventory_summary.json"],"gates":["4 sources","exact pins","workflow success","artifact uploaded"]},
-    {"id":"W02-003","priority":"P0","wave":"I01-W02","status":"COMPLETE","depends_on":["W02-002"],"owner_role":"release_reconciler","objective":"Persist W02 run/job/artifact digest and structural counts.","outputs":["ledgers/EVIDENCE_LEDGER.ndjson","HANDOFF.md"],"gates":["evidence references successful final-head run"]},
-    {"id":"W02-004","priority":"P0","wave":"I01-W02","status":"COMPLETE","depends_on":["W02-003"],"owner_role":"release_reconciler","objective":"Close I01.2 and advance the durable frontier to W03.","outputs":["STATE.md","EXECUTION_STATE.json","iterations/01/STATE.json",".agentic/context/CURRENT_CONTEXT.json"],"gates":["all state mirrors agree","W02 claim released"]},
-    {"id":"W03-001","priority":"P1","wave":"I01-W03","status":"READY","depends_on":["W02-004"],"owner_role":"orchestrator","objective":"Freeze behavioral surface schema and evidence-strength model.","outputs":["inventory/schemas/behavioral_surface.schema.json"],"gates":["schema tests","promotion semantics documented"]},
-    {"id":"W03-002","priority":"P1","wave":"I01-W03","status":"BLOCKED","depends_on":["W03-001"],"owner_role":"forensic_researcher","objective":"Extract OpenJarvis registered cognitive/runtime surfaces.","outputs":["inventory/surfaces/openjarvis.jsonl"],"gates":["registry keys traced to source","tests/routes/CLI linked where present"]},
-    {"id":"W03-003","priority":"P1","wave":"I01-W03","status":"BLOCKED","depends_on":["W03-001"],"owner_role":"forensic_researcher","objective":"Extract OpenClaw contribution/lifecycle surfaces.","outputs":["inventory/surfaces/openclaw.jsonl"],"gates":["registrars/gateway/session/hooks/lifecycle traced"]},
-    {"id":"W03-004","priority":"P1","wave":"I01-W03","status":"BLOCKED","depends_on":["W03-001"],"owner_role":"forensic_researcher","objective":"Extract Omi backend/perception/device/state surfaces.","outputs":["inventory/surfaces/omi.jsonl"],"gates":["routers/routes/listen/device/reconciliation traced"]},
-    {"id":"W03-005","priority":"P1","wave":"I01-W03","status":"BLOCKED","depends_on":["W03-001"],"owner_role":"forensic_researcher","objective":"Extract Clicky native macOS/worker surfaces.","outputs":["inventory/surfaces/clicky.jsonl"],"gates":["PTT/screen/TTS/overlay/pointing/proxy traced"]},
-    {"id":"W03-006","priority":"P1","wave":"I01-W03","status":"BLOCKED","depends_on":["W03-002","W03-003","W03-004","W03-005"],"owner_role":"builder","objective":"Merge surface ledgers without behavior deduplication and assign evidence strength/promotion state.","outputs":["inventory/surfaces/all.jsonl"],"gates":["all source provenance preserved","no lexical-only VERIFIED surfaces"]},
-    {"id":"W03-007","priority":"P1","wave":"I01-W03","status":"BLOCKED","depends_on":["W03-006"],"owner_role":"reviewer_gauntlet","objective":"Run W03 completeness gauntlet against structural roots, raw graph, docs, tests and registries.","outputs":["evidence/cp01/gauntlet/w03_surface_coverage.json"],"gates":["critical orphans resolved or blocking"]},
-    {"id":"W03-008","priority":"P1","wave":"I01-W03","status":"BLOCKED","depends_on":["W03-007"],"owner_role":"release_reconciler","objective":"Close W03 and advance to capability normalization.","outputs":["STATE.md","EXECUTION_STATE.json","HANDOFF.md"],"gates":["W03 evidence persisted"]},
-    {"id":"W04-001","priority":"P1","wave":"I01-W04","status":"BLOCKED","depends_on":["W03-008"],"owner_role":"builder","objective":"Define capability schema, stable IDs and equivalence rules.","outputs":["inventory/schemas/capability.schema.json"],"gates":["ID stability","collision tests","equivalence proof requirements"]},
-    {"id":"W04-002","priority":"P1","wave":"I01-W04","status":"BLOCKED","depends_on":["W04-001"],"owner_role":"builder","objective":"Compile deterministic capability ledger and denominator with provenance-preserving canonicalization.","outputs":["ledgers/CAPABILITY_LEDGER.jsonl","reports/cp01/capability_denominator.json"],"gates":["no manual percentage","all rows source-backed"]},
-    {"id":"W04-003","priority":"P1","wave":"I01-W04","status":"BLOCKED","depends_on":["W04-002"],"owner_role":"reviewer_gauntlet","objective":"Adversarially test denominator for undercount, overcount and false equivalence.","outputs":["evidence/cp01/gauntlet/w04_denominator.json"],"gates":["critical denominator defects resolved"]},
-    {"id":"W05-001","priority":"P2","wave":"I01-W05","status":"BLOCKED","depends_on":["W04-003"],"owner_role":"test_architect","objective":"Discover/classify and execute safe upstream build/test baselines.","outputs":["evidence/cp01/baselines/baseline_matrix.json"],"gates":["NOT_RUN never PASS","gating reasons explicit"]},
-    {"id":"W06-001","priority":"P2","wave":"I01-W06","status":"BLOCKED","depends_on":["W04-003"],"owner_role":"security_reviewer","objective":"Compile license/NOTICE/lockfile/supply-chain inventory.","outputs":["licenses/UPSTREAM_NOTICES.md","evidence/cp01/supply_chain.json"],"gates":["all four pinned sources covered"]},
-    {"id":"W07-001","priority":"P2","wave":"I01-W07","status":"BLOCKED","depends_on":["W05-001","W06-001"],"owner_role":"reviewer_gauntlet","objective":"Build capability dependency graph, apply COS20D to high-value decisions and run completeness/orphan gauntlet.","outputs":["graphs/capability_graph.json","evidence/cp01/gauntlet/w07_complete.json"],"gates":["critical orphans resolved or explicit blocker"]},
-    {"id":"W08-001","priority":"P3","wave":"I01-W08","status":"BLOCKED","depends_on":["W07-001"],"owner_role":"release_reconciler","objective":"Generate CP01 report and evidence-derived CP02 contract requirements.","outputs":["reports/CP01_CAPABILITY_REPORT.md","reports/CP02_CONTRACT_REQUIREMENTS.md"],"gates":["report counts match machine ledgers"]},
-    {"id":"W08-002","priority":"P3","wave":"I01-W08","status":"BLOCKED","depends_on":["W08-001"],"owner_role":"release_reconciler","objective":"Run full CP01 validation and atomically transition CP01 to COMPLETE / CP02 to IN_PROGRESS.","outputs":["CHECKPOINT_REGISTRY.json","STATE.md","EXECUTION_STATE.json","HANDOFF.md",".agentic/context/CURRENT_CONTEXT.json"],"gates":["all CP01 exit criteria proven"]},
-    {"id":"CP02-001","priority":"P4","wave":"CP02","status":"BLOCKED","depends_on":["W08-002"],"owner_role":"principal_architect","objective":"Compile versioned identity/event/capability/policy/action/memory/health/trace contracts from CP01 graph evidence.","outputs":["contracts/proto/**","contracts/jsonschema/**"],"gates":["round-trip contract tests before kernel scaffold"]}
+    {
+      "depends_on": [],
+      "gates": [
+        "no orphan IDs",
+        "build_context_pack.py --check"
+      ],
+      "id": "CTX-001",
+      "objective": "Reconcile ContextPack IDs with canonical decision/risk/evidence/claim ledgers and regenerate deterministic context.",
+      "outputs": [
+        "ledgers/DECISION_LEDGER.ndjson",
+        "ledgers/RISK_LEDGER.ndjson",
+        ".agentic/context/CURRENT_CONTEXT.json",
+        ".agentic/context/CURRENT_CONTEXT.md"
+      ],
+      "owner_role": "orchestrator",
+      "priority": "P0",
+      "status": "COMPLETE",
+      "wave": "I01-W02-CTX"
+    },
+    {
+      "depends_on": [
+        "CTX-001"
+      ],
+      "gates": [
+        "state validator pass",
+        "context validator pass",
+        "task graph validator pass"
+      ],
+      "id": "CTX-002",
+      "objective": "Make context and plan integrity merge-blocking CI.",
+      "outputs": [
+        ".github/workflows/agentic-contract.yml"
+      ],
+      "owner_role": "builder",
+      "priority": "P0",
+      "status": "COMPLETE",
+      "wave": "I01-W02-CTX"
+    },
+    {
+      "depends_on": [
+        "CTX-001"
+      ],
+      "gates": [
+        "unit tests pass"
+      ],
+      "id": "CTX-003",
+      "objective": "Validate unique task IDs, dependency references, acyclicity and frontier consistency.",
+      "outputs": [
+        "scripts/context/validate_next_actions.py",
+        "inventory/schemas/next_actions.schema.json"
+      ],
+      "owner_role": "builder",
+      "priority": "P0",
+      "status": "COMPLETE",
+      "wave": "I01-W02-CTX"
+    },
+    {
+      "depends_on": [],
+      "gates": [
+        "all tree entries retained",
+        "blob sizes remain unknown",
+        "unit tests pass"
+      ],
+      "id": "W02-001",
+      "objective": "Make structural inventory blobless by removing git ls-tree size resolution.",
+      "outputs": [
+        "scripts/inventory/scan_repository.py",
+        "tests/test_inventory.py"
+      ],
+      "owner_role": "builder",
+      "priority": "P0",
+      "status": "COMPLETE",
+      "wave": "I01-W02"
+    },
+    {
+      "depends_on": [
+        "W02-001",
+        "CTX-002"
+      ],
+      "gates": [
+        "4 sources",
+        "exact pins",
+        "workflow success",
+        "artifact uploaded"
+      ],
+      "id": "W02-002",
+      "objective": "Run complete structural inventory for all four exact upstream pins on final candidate HEAD.",
+      "outputs": [
+        "inventory/upstreams/*.json",
+        "reports/cp01/structural_inventory_summary.json"
+      ],
+      "owner_role": "release_reconciler",
+      "priority": "P0",
+      "status": "COMPLETE",
+      "wave": "I01-W02"
+    },
+    {
+      "depends_on": [
+        "W02-002"
+      ],
+      "gates": [
+        "evidence references successful final-head run"
+      ],
+      "id": "W02-003",
+      "objective": "Persist W02 run/job/artifact digest and structural counts.",
+      "outputs": [
+        "ledgers/EVIDENCE_LEDGER.ndjson",
+        "HANDOFF.md"
+      ],
+      "owner_role": "release_reconciler",
+      "priority": "P0",
+      "status": "COMPLETE",
+      "wave": "I01-W02"
+    },
+    {
+      "depends_on": [
+        "W02-003"
+      ],
+      "gates": [
+        "all state mirrors agree",
+        "W02 claim released"
+      ],
+      "id": "W02-004",
+      "objective": "Close I01.2 and advance the durable frontier to W03.",
+      "outputs": [
+        "STATE.md",
+        "EXECUTION_STATE.json",
+        "iterations/01/STATE.json",
+        ".agentic/context/CURRENT_CONTEXT.json"
+      ],
+      "owner_role": "release_reconciler",
+      "priority": "P0",
+      "status": "COMPLETE",
+      "wave": "I01-W02"
+    },
+    {
+      "depends_on": [
+        "W02-004"
+      ],
+      "gates": [
+        "schema tests",
+        "promotion semantics documented"
+      ],
+      "id": "W03-001",
+      "objective": "Freeze behavioral surface schema and evidence-strength model.",
+      "outputs": [
+        "inventory/schemas/behavioral_surface.schema.json"
+      ],
+      "owner_role": "orchestrator",
+      "priority": "P1",
+      "status": "COMPLETE",
+      "wave": "I01-W03"
+    },
+    {
+      "depends_on": [
+        "W03-001"
+      ],
+      "gates": [
+        "registry keys traced to source",
+        "tests/routes/CLI linked where present"
+      ],
+      "id": "W03-002",
+      "objective": "Extract OpenJarvis registered cognitive/runtime surfaces.",
+      "outputs": [
+        "inventory/surfaces/openjarvis.jsonl"
+      ],
+      "owner_role": "forensic_researcher",
+      "priority": "P1",
+      "status": "COMPLETE",
+      "wave": "I01-W03"
+    },
+    {
+      "depends_on": [
+        "W03-001"
+      ],
+      "gates": [
+        "registrars/gateway/session/hooks/lifecycle traced"
+      ],
+      "id": "W03-003",
+      "objective": "Extract OpenClaw contribution/lifecycle surfaces.",
+      "outputs": [
+        "inventory/surfaces/openclaw.jsonl"
+      ],
+      "owner_role": "forensic_researcher",
+      "priority": "P1",
+      "status": "COMPLETE",
+      "wave": "I01-W03"
+    },
+    {
+      "depends_on": [
+        "W03-001"
+      ],
+      "gates": [
+        "routers/routes/listen/device/reconciliation traced"
+      ],
+      "id": "W03-004",
+      "objective": "Extract Omi backend/perception/device/state surfaces.",
+      "outputs": [
+        "inventory/surfaces/omi.jsonl"
+      ],
+      "owner_role": "forensic_researcher",
+      "priority": "P1",
+      "status": "COMPLETE",
+      "wave": "I01-W03"
+    },
+    {
+      "depends_on": [
+        "W03-001"
+      ],
+      "gates": [
+        "PTT/screen/TTS/overlay/pointing/proxy traced"
+      ],
+      "id": "W03-005",
+      "objective": "Extract Clicky native macOS/worker surfaces.",
+      "outputs": [
+        "inventory/surfaces/clicky.jsonl"
+      ],
+      "owner_role": "forensic_researcher",
+      "priority": "P1",
+      "status": "COMPLETE",
+      "wave": "I01-W03"
+    },
+    {
+      "depends_on": [
+        "W03-002",
+        "W03-003",
+        "W03-004",
+        "W03-005"
+      ],
+      "gates": [
+        "all source provenance preserved",
+        "no lexical-only VERIFIED surfaces"
+      ],
+      "id": "W03-006",
+      "objective": "Merge surface ledgers without behavior deduplication and assign evidence strength/promotion state.",
+      "outputs": [
+        "inventory/surfaces/all.jsonl"
+      ],
+      "owner_role": "builder",
+      "priority": "P1",
+      "status": "COMPLETE",
+      "wave": "I01-W03"
+    },
+    {
+      "depends_on": [
+        "W03-006"
+      ],
+      "gates": [
+        "critical orphans resolved or blocking"
+      ],
+      "id": "W03-007",
+      "objective": "Run W03 completeness gauntlet against structural roots, raw graph, docs, tests and registries.",
+      "outputs": [
+        "evidence/cp01/gauntlet/w03_surface_coverage.json"
+      ],
+      "owner_role": "reviewer_gauntlet",
+      "priority": "P1",
+      "status": "COMPLETE",
+      "wave": "I01-W03"
+    },
+    {
+      "depends_on": [
+        "W03-007"
+      ],
+      "gates": [
+        "W03 evidence persisted"
+      ],
+      "id": "W03-008",
+      "objective": "Close W03 and advance to capability normalization.",
+      "outputs": [
+        "STATE.md",
+        "EXECUTION_STATE.json",
+        "HANDOFF.md"
+      ],
+      "owner_role": "release_reconciler",
+      "priority": "P1",
+      "status": "COMPLETE",
+      "wave": "I01-W03"
+    },
+    {
+      "depends_on": [
+        "W03-008"
+      ],
+      "gates": [
+        "ID stability",
+        "collision tests",
+        "equivalence proof requirements"
+      ],
+      "id": "W04-001",
+      "objective": "Define capability schema, stable IDs and equivalence rules.",
+      "outputs": [
+        "inventory/schemas/capability.schema.json"
+      ],
+      "owner_role": "builder",
+      "priority": "P1",
+      "status": "COMPLETE",
+      "wave": "I01-W04"
+    },
+    {
+      "depends_on": [
+        "W04-001"
+      ],
+      "gates": [
+        "no manual percentage",
+        "all rows source-backed"
+      ],
+      "id": "W04-002",
+      "objective": "Compile deterministic capability ledger and denominator with provenance-preserving canonicalization.",
+      "outputs": [
+        "ledgers/CAPABILITY_LEDGER.jsonl",
+        "reports/cp01/capability_denominator.json"
+      ],
+      "owner_role": "builder",
+      "priority": "P1",
+      "status": "COMPLETE",
+      "wave": "I01-W04"
+    },
+    {
+      "depends_on": [
+        "W04-002"
+      ],
+      "gates": [
+        "critical denominator defects resolved"
+      ],
+      "id": "W04-003",
+      "objective": "Adversarially test denominator for undercount, overcount and false equivalence.",
+      "outputs": [
+        "evidence/cp01/gauntlet/w04_denominator.json"
+      ],
+      "owner_role": "reviewer_gauntlet",
+      "priority": "P1",
+      "status": "COMPLETE",
+      "wave": "I01-W04"
+    },
+    {
+      "depends_on": [
+        "W04-003"
+      ],
+      "gates": [
+        "NOT_RUN never PASS",
+        "gating reasons explicit"
+      ],
+      "id": "W05-001",
+      "objective": "Discover/classify and execute safe upstream build/test baselines.",
+      "outputs": [
+        "evidence/cp01/baselines/baseline_matrix.json"
+      ],
+      "owner_role": "test_architect",
+      "priority": "P2",
+      "status": "COMPLETE",
+      "wave": "I01-W05"
+    },
+    {
+      "depends_on": [
+        "W04-003"
+      ],
+      "gates": [
+        "all four pinned sources covered"
+      ],
+      "id": "W06-001",
+      "objective": "Compile license/NOTICE/lockfile/supply-chain inventory.",
+      "outputs": [
+        "licenses/UPSTREAM_NOTICES.md",
+        "evidence/cp01/supply_chain.json"
+      ],
+      "owner_role": "security_reviewer",
+      "priority": "P2",
+      "status": "COMPLETE",
+      "wave": "I01-W06"
+    },
+    {
+      "depends_on": [
+        "W05-001",
+        "W06-001"
+      ],
+      "gates": [
+        "critical orphans resolved or explicit blocker"
+      ],
+      "id": "W07-001",
+      "objective": "Build capability dependency graph, apply COS20D to high-value decisions and run completeness/orphan gauntlet.",
+      "outputs": [
+        "graphs/capability_graph.json",
+        "evidence/cp01/gauntlet/w07_complete.json"
+      ],
+      "owner_role": "reviewer_gauntlet",
+      "priority": "P2",
+      "status": "COMPLETE",
+      "wave": "I01-W07"
+    },
+    {
+      "depends_on": [
+        "W07-001"
+      ],
+      "gates": [
+        "report counts match machine ledgers"
+      ],
+      "id": "W08-001",
+      "objective": "Generate CP01 report and evidence-derived CP02 contract requirements.",
+      "outputs": [
+        "reports/CP01_CAPABILITY_REPORT.md",
+        "reports/CP02_CONTRACT_REQUIREMENTS.md"
+      ],
+      "owner_role": "release_reconciler",
+      "priority": "P3",
+      "status": "COMPLETE",
+      "wave": "I01-W08"
+    },
+    {
+      "depends_on": [
+        "W08-001"
+      ],
+      "gates": [
+        "all CP01 exit criteria proven"
+      ],
+      "id": "W08-002",
+      "objective": "Run full CP01 validation and atomically transition CP01 to COMPLETE / CP02 to IN_PROGRESS.",
+      "outputs": [
+        "CHECKPOINT_REGISTRY.json",
+        "STATE.md",
+        "EXECUTION_STATE.json",
+        "HANDOFF.md",
+        ".agentic/context/CURRENT_CONTEXT.json"
+      ],
+      "owner_role": "release_reconciler",
+      "priority": "P3",
+      "status": "COMPLETE",
+      "wave": "I01-W08"
+    },
+    {
+      "depends_on": [
+        "W08-002"
+      ],
+      "gates": [
+        "round-trip contract tests before kernel scaffold"
+      ],
+      "id": "CP02-001",
+      "objective": "Compile versioned identity/event/capability/policy/action/memory/health/trace contracts from CP01 graph evidence.",
+      "outputs": [
+        "contracts/proto/**",
+        "contracts/jsonschema/**"
+      ],
+      "owner_role": "principal_architect",
+      "priority": "P4",
+      "status": "READY",
+      "wave": "CP02-W01"
+    },
+    {
+      "depends_on": [
+        "CP02-001"
+      ],
+      "gates": [
+        "round-trip",
+        "unknown-version fail-safe",
+        "version-skew tests"
+      ],
+      "id": "CP02-002",
+      "objective": "Create cross-runtime canonical fixtures/binding strategy and round-trip/version-skew tests.",
+      "outputs": [
+        "contracts/fixtures/**",
+        "tests/contracts/**"
+      ],
+      "owner_role": "protocol_engineer",
+      "priority": "P4",
+      "status": "BLOCKED",
+      "wave": "CP02-W02"
+    },
+    {
+      "depends_on": [
+        "CP02-002"
+      ],
+      "gates": [
+        "cargo test",
+        "no provider-specific kernel coupling"
+      ],
+      "id": "CP02-003",
+      "objective": "Scaffold Rust kernel identity/event/capability/policy primitives behind canonical contracts.",
+      "outputs": [
+        "kernel/Cargo.toml",
+        "kernel/crates/**"
+      ],
+      "owner_role": "rust_lead",
+      "priority": "P4",
+      "status": "BLOCKED",
+      "wave": "CP02-W03"
+    },
+    {
+      "depends_on": [
+        "CP02-003"
+      ],
+      "gates": [
+        "replay/idempotency tests",
+        "false-green health tests"
+      ],
+      "id": "CP02-004",
+      "objective": "Implement action receipts/idempotency, lifecycle health and append-only audit primitives.",
+      "outputs": [
+        "kernel/crates/**"
+      ],
+      "owner_role": "rust_lead",
+      "priority": "P4",
+      "status": "BLOCKED",
+      "wave": "CP02-W04"
+    },
+    {
+      "depends_on": [
+        "CP02-004"
+      ],
+      "gates": [
+        "no critical contract/security/recovery defect"
+      ],
+      "id": "CP02-005",
+      "objective": "Run contract/kernel security, malformed-input, version-skew and recovery gauntlet.",
+      "outputs": [
+        "evidence/cp02/gauntlet/**"
+      ],
+      "owner_role": "reviewer_gauntlet",
+      "priority": "P4",
+      "status": "BLOCKED",
+      "wave": "CP02-W05"
+    },
+    {
+      "depends_on": [
+        "CP02-005"
+      ],
+      "gates": [
+        "CP02 exit criteria proven"
+      ],
+      "id": "CP02-006",
+      "objective": "Reconcile CP02 evidence and advance to CP03 only if checkpoint exit criteria pass.",
+      "outputs": [
+        "CHECKPOINT_REGISTRY.json",
+        "STATE.md",
+        "HANDOFF.md"
+      ],
+      "owner_role": "release_reconciler",
+      "priority": "P4",
+      "status": "BLOCKED",
+      "wave": "CP02-W06"
+    }
   ]
 }

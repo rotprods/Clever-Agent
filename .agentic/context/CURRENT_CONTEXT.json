@@ -9,7 +9,8 @@
     "D-0007",
     "D-0008",
     "D-0009",
-    "D-0010"
+    "D-0010",
+    "D-0011"
   ],
   "active_claims": [],
   "authority_read_order": [
@@ -25,7 +26,7 @@
     "STATE.md",
     "GOAL_STATE.json",
     "EXECUTION_STATE.json",
-    "iterations/01/STATE.json",
+    "iterations/02/STATE.json",
     "IMPLEMENTATION_PLAN.md",
     "TASKS.md",
     ".agentic/context/NEXT_ACTIONS.json",
@@ -42,21 +43,28 @@
     "EVID-0002",
     "EVID-0003",
     "EVID-0004",
-    "EVID-0005"
+    "EVID-0005",
+    "EVID-0006"
   ],
   "frontier": {
     "blocking_issues": [],
-    "checkpoint": "CP01",
+    "checkpoint": "CP02",
     "completed_waves": [
       "I01-W00",
       "I01-W01",
-      "I01-W02"
+      "I01-W02",
+      "I01-W03",
+      "I01-W04",
+      "I01-W05",
+      "I01-W06",
+      "I01-W07",
+      "I01-W08"
     ],
-    "iteration": "I01",
-    "next_wave": "I01-W03",
-    "next_wave_name": "Public/behavioral surface extraction",
-    "parity_denominator_status": "NOT_GENERATED",
-    "subcheckpoint": "I01.3"
+    "iteration": "I02",
+    "next_wave": "CP02-W01",
+    "next_wave_name": "Canonical contract schemas",
+    "parity_denominator_status": "GENERATED_UNVERIFIED",
+    "subcheckpoint": "I02.1"
   },
   "graph_planes": [
     {
@@ -76,7 +84,7 @@
       "mutable_by_higher_planes": false,
       "products": [
         "Graphify V2 semantic_surface_projection",
-        "W03 registered/executable behavioral surfaces"
+        "registered/executable behavioral surfaces"
       ]
     },
     {
@@ -137,12 +145,13 @@
     }
   ],
   "planning": {
+    "active_iteration_state": "iterations/02/STATE.json",
     "consciousness_act": "docs/ACTA_DE_CONSCIENCIA.md",
-    "first_executable_task": "W03-001",
+    "first_executable_task": "CP02-001",
     "implementation_plan": "IMPLEMENTATION_PLAN.md",
     "next_actions": ".agentic/context/NEXT_ACTIONS.json",
     "regression": "docs/REGRESSION_2026-08-31.md",
-    "task_count": 24,
+    "task_count": 29,
     "tasks": "TASKS.md"
   },
   "project": {
@@ -158,13 +167,11 @@
     "/empezarproyecto"
   ],
   "required_next_outputs": [
-    "versioned behavioral-surface schema and evidence-strength model",
-    "OpenJarvis registered/executable surface ledger",
-    "OpenClaw contribution/lifecycle surface ledger",
-    "Omi route/perception/device/state surface ledger",
-    "Clicky native macOS/worker surface ledger",
-    "W03 completeness gauntlet evidence",
-    "generated exhaustive capability ledger after W03 closes"
+    "versioned canonical Protobuf and JSON Schema contracts",
+    "canonical cross-runtime fixtures",
+    "Rust/Python/TypeScript/Swift compatibility strategy",
+    "round-trip and version-skew tests",
+    "Rust kernel identity/event/capability/policy scaffold"
   ],
   "schema_version": 1,
   "upstream_refs": {

@@ -1,0 +1,109 @@
+{
+  "inventory_type": "cp01_structural_inventory_summary",
+  "schema_version": 1,
+  "sources": [
+    {
+      "ci_release_file_count": 1,
+      "doc_file_count": 2,
+      "id": "clicky",
+      "languages": {
+        "shell": 1,
+        "swift": 25,
+        "typescript": 1
+      },
+      "license_notice_file_count": 1,
+      "manifest_count": 4,
+      "package_workspace_root_count": 3,
+      "runtime_boundary_count": 4,
+      "source_commit": "a80fa80721a8aebe51a170a7780705024ebc6e46",
+      "test_file_count": 0,
+      "tree_entry_count": 85,
+      "tree_sha256": "4ceef3121ac9b510bdcfb777afa36fc5dd2d3896764c1612e89eb135461e4594"
+    },
+    {
+      "ci_release_file_count": 357,
+      "doc_file_count": 478,
+      "id": "omi",
+      "languages": {
+        "c": 488,
+        "c-header": 463,
+        "cpp": 40,
+        "cpp-header": 3,
+        "csharp": 3,
+        "css": 13,
+        "dart": 857,
+        "go": 8,
+        "html": 35,
+        "java": 1,
+        "javascript": 195,
+        "kotlin": 38,
+        "objective-c": 3,
+        "objective-cpp": 1,
+        "python": 2553,
+        "ruby": 6,
+        "rust": 6,
+        "shell": 222,
+        "swift": 1830,
+        "typescript": 2328
+      },
+      "license_notice_file_count": 29,
+      "manifest_count": 141,
+      "package_workspace_root_count": 101,
+      "runtime_boundary_count": 198,
+      "source_commit": "e1eca38ff28758d58cde43045691c8ba479063e9",
+      "test_file_count": 3314,
+      "tree_entry_count": 12731,
+      "tree_sha256": "5c6f2cd63263c4f678724a049a73e82e4fc3784f603dee68aac0c6f5dcd9a78d"
+    },
+    {
+      "ci_release_file_count": 171,
+      "doc_file_count": 989,
+      "id": "openclaw",
+      "languages": {
+        "c-header": 1,
+        "css": 92,
+        "go": 29,
+        "html": 8,
+        "javascript": 386,
+        "kotlin": 448,
+        "objective-c": 1,
+        "python": 23,
+        "rust": 21,
+        "shell": 232,
+        "sql": 2,
+        "swift": 1156,
+        "typescript": 29642
+      },
+      "license_notice_file_count": 38,
+      "manifest_count": 213,
+      "package_workspace_root_count": 200,
+      "runtime_boundary_count": 362,
+      "source_commit": "3ee32fb9c10dcf9d5713c0c4891e55227f5b1f0d",
+      "test_file_count": 13613,
+      "tree_entry_count": 35757,
+      "tree_sha256": "5402de1722706b0e8f4ec8ef7fca38da7dbf3acda5f6bdb49ca65b3c042de01c"
+    },
+    {
+      "ci_release_file_count": 13,
+      "doc_file_count": 120,
+      "id": "openjarvis",
+      "languages": {
+        "css": 2,
+        "html": 4,
+        "javascript": 5,
+        "python": 1370,
+        "rust": 127,
+        "shell": 14,
+        "typescript": 85
+      },
+      "license_notice_file_count": 2,
+      "manifest_count": 32,
+      "package_workspace_root_count": 24,
+      "runtime_boundary_count": 51,
+      "source_commit": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5",
+      "test_file_count": 724,
+      "tree_entry_count": 2108,
+      "tree_sha256": "d3b7ed7e803a046274c317efd9742ec60e595822064ec053d9e264af465d1a3a"
+    }
+  ]
+}

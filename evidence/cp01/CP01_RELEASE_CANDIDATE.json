@@ -1,0 +1,35 @@
+{
+  "candidate_sha": "6d0bcd2f2b5cbfd7a4b6620c0ce89de5a31a7a74",
+  "contract_requirement_ids": [
+    "C02-IDENTITY",
+    "C02-EVENT",
+    "C02-CAPABILITY",
+    "C02-ACTION",
+    "C02-MEMORY",
+    "C02-RUNTIME",
+    "C02-TRACE",
+    "C02-EMBODIMENT"
+  ],
+  "cp01_ready_for_state_transition": true,
+  "deferred_candidate_surface_count": 68718,
+  "denominator": 7565,
+  "errors": [],
+  "hard_invariants": {
+    "candidate_definition_is_not_capability": true,
+    "cp01_parity_claimed_complete": false,
+    "cross_repo_auto_dedupe": false,
+    "migration_authorized": false,
+    "not_run_is_not_pass": true
+  },
+  "phase": "I01-W08",
+  "schema_version": 1,
+  "source_counts": {
+    "clicky": 80,
+    "omi": 3790,
+    "openclaw": 3049,
+    "openjarvis": 646
+  },
+  "source_surface_count": 76283,
+  "status": "PASS",
+  "verified": 0
+}

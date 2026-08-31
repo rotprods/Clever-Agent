@@ -1,33 +1,41 @@
 {
-  "schema_version": 1,
-  "goal_id": "CLEVER-JARVIS-001",
-  "branch": "main",
-  "mode": "behavioral-surface-extraction",
-  "current_checkpoint": "CP01",
-  "active_iteration": "I01",
-  "active_subcheckpoint": "I01.3",
-  "next_wave": "I01-W03",
-  "next_wave_name": "Public/behavioral surface extraction",
-  "completed_waves": ["I01-W00", "I01-W01", "I01-W02"],
-  "mandatory_boot_command": "/empezarproyecto",
-  "next_checkpoint": "CP02",
-  "upstream_snapshot_date": "2026-08-31",
-  "upstream_refs": {
-    "openjarvis": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5",
-    "openclaw": "3ee32fb9c10dcf9d5713c0c4891e55227f5b1f0d",
-    "omi": "e1eca38ff28758d58cde43045691c8ba479063e9",
-    "clicky": "a80fa80721a8aebe51a170a7780705024ebc6e46"
-  },
-  "implementation_started": true,
+  "active_iteration": "I02",
+  "active_subcheckpoint": "I02.1",
   "blocking_issues": [],
-  "tracking_issue": 2,
+  "branch": "main",
+  "completed_waves": [
+    "I01-W00",
+    "I01-W01",
+    "I01-W02",
+    "I01-W03",
+    "I01-W04",
+    "I01-W05",
+    "I01-W06",
+    "I01-W07",
+    "I01-W08"
+  ],
+  "current_checkpoint": "CP02",
+  "goal_id": "CLEVER-JARVIS-001",
+  "implementation_started": true,
+  "mandatory_boot_command": "/empezarproyecto",
+  "mode": "canonical-contracts",
+  "next_checkpoint": "CP03",
+  "next_wave": "CP02-W01",
+  "next_wave_name": "Canonical contract schemas",
   "required_next_outputs": [
-    "versioned behavioral-surface schema and evidence-strength model",
-    "OpenJarvis registered/executable surface ledger",
-    "OpenClaw contribution/lifecycle surface ledger",
-    "Omi route/perception/device/state surface ledger",
-    "Clicky native macOS/worker surface ledger",
-    "W03 completeness gauntlet evidence",
-    "generated exhaustive capability ledger after W03 closes"
-  ]
+    "versioned canonical Protobuf and JSON Schema contracts",
+    "canonical cross-runtime fixtures",
+    "Rust/Python/TypeScript/Swift compatibility strategy",
+    "round-trip and version-skew tests",
+    "Rust kernel identity/event/capability/policy scaffold"
+  ],
+  "schema_version": 1,
+  "tracking_issue": 2,
+  "upstream_refs": {
+    "clicky": "a80fa80721a8aebe51a170a7780705024ebc6e46",
+    "omi": "e1eca38ff28758d58cde43045691c8ba479063e9",
+    "openclaw": "3ee32fb9c10dcf9d5713c0c4891e55227f5b1f0d",
+    "openjarvis": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5"
+  },
+  "upstream_snapshot_date": "2026-08-31"
 }

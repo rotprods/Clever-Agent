@@ -6,3 +6,10 @@
 {"schema_version":1,"date":"2026-08-31","wave_id":"I01-W02-CTX","event":"VERIFICATION","status":"COMPLETE","evidence_id":"EVID-0004","github_actions_run_id":33429197911,"next_wave":"I01-W03"}
 {"schema_version":1,"date":"2026-08-31","wave_id":"I01-W02","event":"VERIFICATION","status":"COMPLETE","evidence_id":"EVID-0005","github_actions_run_id":33429197669,"job_id":99610115447,"next_wave":"I01-W03"}
 {"schema_version":1,"date":"2026-08-31","wave_id":"I01-W02","iteration":"I01","checkpoint":"CP01","status":"COMPLETE","evidence_ids":["EVID-0004","EVID-0005"],"next_wave":"I01-W03"}
+{"date":"2026-09-01","event":"RELEASE_RECONCILIATION","evidence_id":"EVID-0006","schema_version":1,"status":"COMPLETE","wave_id":"I01-W03"}
+{"date":"2026-09-01","event":"RELEASE_RECONCILIATION","evidence_id":"EVID-0006","schema_version":1,"status":"COMPLETE","wave_id":"I01-W04"}
+{"date":"2026-09-01","event":"RELEASE_RECONCILIATION","evidence_id":"EVID-0006","schema_version":1,"status":"COMPLETE","wave_id":"I01-W05"}
+{"date":"2026-09-01","event":"RELEASE_RECONCILIATION","evidence_id":"EVID-0006","schema_version":1,"status":"COMPLETE","wave_id":"I01-W06"}
+{"date":"2026-09-01","event":"RELEASE_RECONCILIATION","evidence_id":"EVID-0006","schema_version":1,"status":"COMPLETE","wave_id":"I01-W07"}
+{"date":"2026-09-01","event":"RELEASE_RECONCILIATION","evidence_id":"EVID-0006","schema_version":1,"status":"COMPLETE","wave_id":"I01-W08"}
+{"checkpoint":"CP02","date":"2026-09-01","iteration":"I02","objective":"Compile versioned canonical contracts from CP01 evidence.","schema_version":1,"status":"PROPOSED","wave_id":"CP02-W01"}

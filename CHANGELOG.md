@@ -45,3 +45,9 @@ All notable project-control and implementation changes are recorded here. Eviden
 ### Canonical project bootstrap
 
 - Defined `CLEVER-JARVIS-001`, pinned four upstream snapshots, established federated polyglot architecture, parity/security contracts and CP00–CP12 roadmap.
+
+### CP01 forensic compiler release
+
+- W03-W08 full compiler passed from exact source `6d0bcd2f2b5cbfd7a4b6620c0ce89de5a31a7a74`.
+- Persisted `7565`-row behavior-mapped capability denominator; Clever VERIFIED parity remains 0.
+- Closed CP01 and opened CP02 / I02 with contract-first Rust-kernel frontier.

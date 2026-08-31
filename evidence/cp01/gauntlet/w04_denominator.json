@@ -1,0 +1,17 @@
+{
+  "capability_count": 7565,
+  "deferred_candidate_surface_count": 68718,
+  "eligible_surface_count": 7565,
+  "errors": [],
+  "invariants": {
+    "all_surfaces_accounted_for": true,
+    "candidate_definition_is_not_capability": true,
+    "no_cross_repo_auto_dedupe": true,
+    "no_eligible_capability_loss": true,
+    "no_manual_parity_percentage": true
+  },
+  "phase": "I01-W04",
+  "schema_version": 1,
+  "source_surface_count": 76283,
+  "status": "PASS"
+}

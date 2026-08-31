@@ -5,16 +5,17 @@
 ## Frontier
 
 - Project: `CLEVER-JARVIS-001`
-- Checkpoint: `CP01`
-- Iteration: `I01` / `I01.3`
-- Next wave: `I01-W03 — Public/behavioral surface extraction`
-- Parity denominator: `NOT_GENERATED`
+- Checkpoint: `CP02`
+- Iteration: `I02` / `I02.1`
+- Next wave: `CP02-W01 — Canonical contract schemas`
+- Parity denominator: `GENERATED_UNVERIFIED`
 - Protocol: `COS-GRAPH-ENGINE-V2-20D`
 - 20D model: `COS-20D-v2` (20 dimensions)
 
 ## Planning
 
-- First executable task: `W03-001`
+- First executable task: `CP02-001`
+- Active iteration state: `iterations/02/STATE.json`
 - Machine task graph: `.agentic/context/NEXT_ACTIONS.json`
 - Implementation plan: `IMPLEMENTATION_PLAN.md`
 - Regression: `docs/REGRESSION_2026-08-31.md`
@@ -55,7 +56,7 @@
 10. `STATE.md`
 11. `GOAL_STATE.json`
 12. `EXECUTION_STATE.json`
-13. `iterations/01/STATE.json`
+13. `iterations/02/STATE.json`
 14. `IMPLEMENTATION_PLAN.md`
 15. `TASKS.md`
 16. `.agentic/context/NEXT_ACTIONS.json`

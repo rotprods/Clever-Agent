@@ -3,8 +3,8 @@ project:
   id: CLEVER-JARVIS-001
   repository: rotprods/Clever-Agent
   default_branch: main
-  active_iteration: I01
-  active_checkpoint: CP01
+  active_iteration: I02
+  active_checkpoint: CP02
 
 authority:
   execution: AGENTS.md
@@ -156,8 +156,8 @@ tool_integrations:
     context_manifest: .agentic/context/CURRENT_CONTEXT.json
 
 current_iteration:
-  id: I01
-  metaprompt: iterations/01/METAPROMPT.md
-  plan: iterations/01/ITERATION.md
-  state: iterations/01/STATE.json
-  next_wave: I01-W03
+  id: I02
+  metaprompt: iterations/02/METAPROMPT.md
+  plan: iterations/02/ITERATION.md
+  state: iterations/02/STATE.json
+  next_wave: CP02-W01

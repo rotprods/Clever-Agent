@@ -1,0 +1,1156 @@
+{
+  "by_evidence_strength": {
+    "PROFILED_BOUNDARY": 76,
+    "REGISTRATION": 2372,
+    "ROUTE_OR_PROTOCOL": 5117
+  },
+  "by_family": {
+    "agent": 103,
+    "api_protocol": 655,
+    "capture_perception": 142,
+    "channel_gateway": 710,
+    "device_wearable": 126,
+    "embodiment": 846,
+    "inference": 437,
+    "learning_evaluation": 31,
+    "memory_persistence": 851,
+    "plugin_extension": 1283,
+    "scheduler_automation": 232,
+    "security_policy": 279,
+    "session_identity": 771,
+    "speech_audio": 268,
+    "tool": 736,
+    "worker_service": 95
+  },
+  "by_promotion_status": {
+    "BEHAVIOR_MAPPED": 7565
+  },
+  "by_repo": {
+    "clicky": 80,
+    "omi": 3790,
+    "openclaw": 3049,
+    "openjarvis": 646
+  },
+  "cross_repo_equivalence_candidates": [
+    {
+      "equivalence_candidate_key": "07250c177efbab22ade07337136d555dead67aa41c4b59fc34c878c827794bb3",
+      "members": [
+        {
+          "capability_id": "cap_06b3bf005198fb9f6ff8fc34",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_0d7592f4305d8ae4b3d9e5f6",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_277598b30178d422fc4ac958",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_35932239e26dcb9f8236bb79",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_41cbd7d2124feec6760049d0",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_43ce94557845765bdde99179",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_5cc644ceb58328bd08aec1f8",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_6205067dd86da0c6cc7df2f6",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_667dd12f54f6b3b44cc2f542",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_79074b9baaf8ad7e1e5f1090",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_7e3618839ba34e1963cb4374",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_7eabdeb11469a4a995baba24",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_8ab7c8d8f3ef319cebe10604",
+          "name": "error",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_9cca84a19194c940b2bc910a",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_afb2a7779d600c851d951237",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_bc39c37d6d6d6e73488ac1ed",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_c34b0b05f80aea44b8785181",
+          "name": "error",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_d2a54c04c43ff73a1819211f",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_d3339137f1eb52cccda53a2f",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_d3ef698c3aa3b9218a2edc00",
+          "name": "error",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_e5ef4473c67a07ddafe003d9",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_ef1830ded26920fc98437c78",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_f0f3ee04be5a3a83a8dd44f8",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_f1cc1629a2d4dbb3bfdf1e09",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_f42ff491a4f167460cb93751",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_fd6a43fec6a3d33d5fc034c1",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_fec774e53ead3b3a4db5ea4b",
+          "name": "error",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_ff5ea4f02bd1536aa1f8428b",
+          "name": "error",
+          "source_repo": "openclaw"
+        }
+      ],
+      "repositories": [
+        "omi",
+        "openclaw"
+      ]
+    },
+    {
+      "equivalence_candidate_key": "0b4919d5c6d51698482016dfb6c5f3b47463c146e3bb470c135db6984a23954a",
+      "members": [
+        {
+          "capability_id": "cap_0c0ba2b44c40ee831be580e6",
+          "name": "Conversation",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_70b65189cde0184b82a30d2f",
+          "name": "Conversation",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_81f23b1b81b51eb5f27dae3b",
+          "name": "Conversation",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_902958c70b6b1af85106564d",
+          "name": "Conversation",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_a8a7042cce2fe562463de0a9",
+          "name": "Conversation",
+          "source_repo": "openjarvis"
+        }
+      ],
+      "repositories": [
+        "omi",
+        "openjarvis"
+      ]
+    },
+    {
+      "equivalence_candidate_key": "0fc39a55a53972edbc24de563b79e3c3a6344c97181ef99e17a97e3ff02ba107",
+      "members": [
+        {
+          "capability_id": "cap_2347faf58354b5a204c1aee7",
+          "name": "end",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_a08ae3a40406dfd9a052d14d",
+          "name": "end",
+          "source_repo": "omi"
+        }
+      ],
+      "repositories": [
+        "omi",
+        "openclaw"
+      ]
+    },
+    {
+      "equivalence_candidate_key": "639aeaecdf3a7823c9ce65a9d992261e6f631a86f415e53179af8f7440e93371",
+      "members": [
+        {
+          "capability_id": "cap_191eaa1bb3e5c228e6a6e181",
+          "name": "main",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_4cd1cc879ff1131b1d889cd7",
+          "name": "main",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_dd564e91f545c3e6ec2de2bf",
+          "name": "main",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_e9e96750ea67655dd8ad1ae3",
+          "name": "main",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_f2eb6c1d2003fe994a3cf684",
+          "name": "main",
+          "source_repo": "openjarvis"
+        }
+      ],
+      "repositories": [
+        "omi",
+        "openjarvis"
+      ]
+    },
+    {
+      "equivalence_candidate_key": "6460d61f3e3d88d55189aee6bc00736eee5bc72e6298645b6e731f6545aa29e2",
+      "members": [
+        {
+          "capability_id": "cap_01b1c1745445ce7a6ffb8fa2",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_05e4bfc56601152711663f21",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_0df7c7565150d0cfc2259751",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_11b92bdc7e82d9d2ca50f75b",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_1fe4ef6d235b39a0945cd9b9",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_26367c6fdf914afc1e4d6068",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_2843787f638c27168ebf70c6",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_2d3ec5e046a49c3dc442e2fa",
+          "name": "GET /",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_35ed3ab9b52b62b6e3bfa79f",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_3cef69a8e447f437a31de974",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_4c1c9de1267094657d119df4",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_4e582c9d64dfdea13cb7ce5f",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_75460183f6161659741fe8a8",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_75ae844241c8e001a05f6dd3",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_76bcece25ab98bea9be5befa",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_781207d4a54bc6828f2f8800",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_785ace734858aa01ad519dd2",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_7d64bdeeb1360b5015837cba",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_8de77eee873fe4cf720709bd",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_a043afe476e466ab79dd6264",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_a64f6a7ad0425711e40368f9",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_c36e2ed024a9737d1ad6e5e5",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_c6c261538227b4acd231ad73",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_c9b130cd90f9dab284774183",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_d940365960577d9ef45f5dcd",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_da8f91ce8e8e73bc16d290fd",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_dc706b91d3db2b1c5d61812e",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_dd9c7faa566c570c34593ab6",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_e812c626c7d63383885f777d",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_f124bf46c320e2afb272f404",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_f1f2d1327defb217e0329207",
+          "name": "GET /",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_f31fe489c618b39c9c0c7bd6",
+          "name": "GET /",
+          "source_repo": "omi"
+        }
+      ],
+      "repositories": [
+        "omi",
+        "openclaw"
+      ]
+    },
+    {
+      "equivalence_candidate_key": "6b304bc169aaab68e81f5c8718b929d1b6a02564ebe9283c86f7ef026fa97913",
+      "members": [
+        {
+          "capability_id": "cap_1d7278ece71eb4d4b8388a92",
+          "name": "data",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_3582dd905edf7a62cc3684d0",
+          "name": "data",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_47ac1cb88a335717c460f73c",
+          "name": "data",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_6bcc40c0c3fd741801903a0b",
+          "name": "data",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_9411f0e5a0dff122839e9278",
+          "name": "data",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_9f2760583301a45034c0b910",
+          "name": "data",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_a3e244da1d9a2816e7ac7a3f",
+          "name": "data",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_ca244b9d0d81fd9240e61b99",
+          "name": "data",
+          "source_repo": "openclaw"
+        }
+      ],
+      "repositories": [
+        "omi",
+        "openclaw"
+      ]
+    },
+    {
+      "equivalence_candidate_key": "82bf2923fcee6bc45c60d3ebaaf222523c9ced6f92d89a1712b401c510d7bfec",
+      "members": [
+        {
+          "capability_id": "cap_0d94e426c1e61e0a6717ebd3",
+          "name": "ChatMessage",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_95c3045d972a3b35066d7e5d",
+          "name": "ChatMessage",
+          "source_repo": "openjarvis"
+        }
+      ],
+      "repositories": [
+        "omi",
+        "openjarvis"
+      ]
+    },
+    {
+      "equivalence_candidate_key": "9a228238167869f90314639e68e9aae063776f030a4db45f35ca30a488f3cc1f",
+      "members": [
+        {
+          "capability_id": "cap_47d2577d13325562c921f726",
+          "name": "response",
+          "source_repo": "openclaw"
+        },
+        {
+          "capability_id": "cap_bdc0ee0acc305b88ebd99fe9",
+          "name": "response",
+          "source_repo": "omi"
+        }
+      ],
+      "repositories": [
+        "omi",
+        "openclaw"
+      ]
+    },
+    {
+      "equivalence_candidate_key": "c3bdb377218b9cff275e579f392c8ea61fb5d908cf2274eaac51a7ffd1e88bed",
+      "members": [
+        {
+          "capability_id": "cap_23348492140c5288806dbb31",
+          "name": "GET /health",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_575541e84f43f012a9239ad2",
+          "name": "GET /health",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_5a5bb1b56af4a72c7bc979b5",
+          "name": "GET /health",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_6922ee952b9469621f56a366",
+          "name": "GET /health",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_be1bf45ed382f26348cabe65",
+          "name": "GET /health",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_e4fa34b92a12c35ab9daeee4",
+          "name": "GET /health",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_e82139427b06fbb937fc86b1",
+          "name": "GET /health",
+          "source_repo": "omi"
+        }
+      ],
+      "repositories": [
+        "omi",
+        "openjarvis"
+      ]
+    },
+    {
+      "equivalence_candidate_key": "d99340b21f5f13a83d8f28a67cfdbe8abde1dad89dcdca112dda9fe4cf21669a",
+      "members": [
+        {
+          "capability_id": "cap_055667af4809fb591520bd76",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_0dc7a2d09a322c963fc06dca",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_115579e5163cf28398e10c4c",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_161a18eb50c66118646982d3",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_16c7c04df0d96388e342e27a",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_1cafabe9c5f6fd089fadbbf5",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_1ed6bb1f25d168b5409dea29",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_209da72789ac6e693877e3ef",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_211e010cebd97f96a5912de2",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_21b3d4fcadc37decb7c44642",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_21e74bd335b9db6e37998c79",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_234c34f7f3dc1868a2b5bc0d",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_25c2544ad4b395c48b49d8d1",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_27524a93bce3db9f474f4a03",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_289c0a57c080635424696f34",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_2a0fa5b67a918c2773957dcc",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_311145cd11827a800b473fc9",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_353ee555b1b72b44a51a6caf",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_39981ade2fa0db54e25bb815",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_3e8179b115f6b99fa926c5fd",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_3fb1db2de0918aad343d07fa",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_40364567d17f59371357cf3b",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_40b0afdb3031edba4ecab1ca",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_458dbccfe7a9c7148874f7be",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_4af6d79a2e7dbc42a12a575d",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_4b885d5b9279ea269b85e7d1",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_4cd95ce0036c360e579acda9",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_4e14cede3a55fee1247a8d88",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_53a89c1a27c502907f59ca2f",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_54b642fabdee974df4bf95f8",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_5625f3c9f307f1f2ccc56bf9",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_5703138586f895d9a94bc345",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_571caa628269eab774ae4cda",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_58c7dda982d60fd88083bc4a",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_5afb9832bfa81e7cf89ad47b",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_5c40509892db46659536d412",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_5d77bace93d9a84515757e73",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_5dd2cbcef546e1b5b53375ad",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_5ff7e1cc68c39608b2543aca",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_60a4f3bb717a257f6ee668f8",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_63c559a72b9a3069de6a5738",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_664e47ba7e75b49b2e5374c1",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_67523493f4bc622bcb5d2f1b",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_6793f3b7476b328f52a3122d",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_6a3d36e27f2807d060cc4592",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_6bb729c89f69db2eedde0ea0",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_6c74e368676e6512947dc015",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_742be1709ab755561a85d5cf",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_74f99c0adb94b60aa8c029c6",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_76b4c3ea6adb051fd4caf9d1",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_7712413e2d513e885ec95474",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_7861462d56c896589eb2c323",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_7dc90f879eba2dbde11041e4",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_7de37766b90c06b6aa15a64a",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_7e6b03106840af7c9fe07eab",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_81564939e2f229b018942e4b",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_82f838cc8dda511e5c2bde80",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_86c7d916dc6801fbffebf70f",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_895476ca8663863a4b73630f",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_8ac0b4336a1f5630c1b4688e",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_8ba9d44eab5e11e8358b9ae1",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_8e7b5ef22dbd7242ac77c229",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_90497ff2cfbf930b17e35d7f",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_941a0034d592e703b89acbb1",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_959bcbb80e0e6ffe7955134e",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_99af3bb4fbd162c50fd2bcc1",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_9d61747e63fe6922d3404b94",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_9fee91dd3e9a79ffc9e95b89",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_a16dd02331e9a3d590feabd9",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_a1cd51ef003c1746c6be6ea3",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_a429225f9c12db1ef19b683a",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_a4aa0918db7bc35b9794cc5d",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_a55300fd41aeb432f8f9c171",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_a767b1e67e0e71cfae3a4fde",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_ab817496c41380c691041624",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_af06f7eda601269bd0df72bf",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_b573ce418cbf5b7fa66200d3",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_bb269c7c4cf253a247ead62f",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_bb44419f5d1efa82161f854d",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_bdf490dec3264e95da3d8c2e",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_c0341557d004c5b40d31b47b",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_c08f3c8de6da3dbd1827b8b7",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_c32585239865699b3d566803",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_c691fb025cc79d3046f9b717",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_cc781cf0fb2d0c398afd64e0",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_d1f16a5322b7442a98c3180b",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_d3180e11e78771ef460cd59a",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_d328895fdb3a57bb58cebbc4",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_d64ed1a947d32931888b9fa2",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_d6c3eed083f83bbde98f48b7",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_d7110096eaa4e3c6842a6573",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_d80fbc783f0107fe47295ea0",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_d926f6836c8a9b7295c5412d",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_e2bcbb58904fdd99ed7b21b1",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_e8b4288e2ddd4e6c47ccd56a",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_e96f5601fbc8bcd89fc9b3bb",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_e9b6d1a34eb7333e2e6f3009",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_eba75ff81b87634c4a1d131b",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_ebf7f0f99615bf3caa9c235c",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_edc98a9417185875efc6da6d",
+          "name": "app.include_router",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_ee8dfa4a30f552651cbd1ee7",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_f18826ff7049ae30a4aedb9f",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_f41681fbc1a3d4409eb13a33",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_f5b3ab324077ef4b71cccc6b",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_f8fdd381cc291dc697e2cada",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_fa7bb5909213585f4ad19f82",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_fb598579038925efc7a60d3d",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        },
+        {
+          "capability_id": "cap_fcbb9558873cadef7b733976",
+          "name": "app.include_router",
+          "source_repo": "omi"
+        }
+      ],
+      "repositories": [
+        "omi",
+        "openjarvis"
+      ]
+    },
+    {
+      "equivalence_candidate_key": "eaedd5ad2780ad806fe92498b0e026caa8c4eee12c8f0106bbeef86aadf0ddc7",
+      "members": [
+        {
+          "capability_id": "cap_02376cb1fd3b7ba6465e2b61",
+          "name": "GET /metrics",
+          "source_repo": "openjarvis"
+        },
+        {
+          "capability_id": "cap_39a6986b9e5ae6009b915751",
+          "name": "GET /metrics",
+          "source_repo": "omi"
+        }
+      ],
+      "repositories": [
+        "omi",
+        "openjarvis"
+      ]
+    }
+  ],
+  "deferred_candidate_surface_count": 68718,
+  "denominator": 7565,
+  "denominator_eligible_surface_count": 7565,
+  "denominator_status": "GENERATED_UNVERIFIED",
+  "parity_ratio": 0.0,
+  "phase": "I01-W04",
+  "rules": {
+    "all_capabilities_unverified_at_cp01": true,
+    "candidate_definition_is_not_capability": true,
+    "candidate_equivalence_does_not_change_denominator": true,
+    "cross_repo_auto_dedupe": false,
+    "name_only_equivalence_forbidden": true
+  },
+  "schema_version": 1,
+  "source_surface_count": 76283,
+  "verified": 0
+}

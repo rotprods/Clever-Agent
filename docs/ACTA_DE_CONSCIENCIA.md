@@ -126,3 +126,7 @@ Si no puede contestarlas desde Git/state/ledgers/ContextPack, entra en `RECONCIL
 ## Frase canónica
 
 > No estamos juntando código. Estamos compilando evidencia en comportamiento, comportamiento en contratos, contratos en integración y únicamente integración verificada en convergencia.
+
+## CP01 cerrado — 2026-09-01
+
+El compilador W01–W08 pasó sobre `6d0bcd2f2b5cbfd7a4b6620c0ce89de5a31a7a74` y produjo un denominador behavior-mapped de `7565` capacidades. Esto **no** significa 100% de parity implementada en Clever-Agent: `VERIFIED=0` al entrar en CP02. La siguiente misión es convertir la presión real del corpus en contratos canónicos antes del kernel Rust.

@@ -1,0 +1,55 @@
+{
+  "counts": {
+    "behavior_mapped_surfaces": 7565,
+    "candidate_surfaces": 68718,
+    "capabilities": 7565,
+    "edges": 118927,
+    "nodes": 84688,
+    "relations": {
+      "classified_as": 7565,
+      "consumes": 483,
+      "described_by_supply_chain": 4,
+      "executes_on": 4774,
+      "exposes": 7565,
+      "has_baseline_candidate": 522,
+      "implemented_by": 7565,
+      "owned_by": 7565,
+      "permissioned_by": 289,
+      "persists_to": 1704,
+      "recovers_via": 10,
+      "registered_via": 4598,
+      "sourced_from": 76283
+    },
+    "surfaces": 76283
+  },
+  "errors": [],
+  "invariants": {
+    "all_capabilities_unverified": true,
+    "candidate_surfaces_retained_without_capability_invention": true,
+    "cross_repo_capability_merge_performed": false,
+    "provisional_decisions_cannot_authorize_migration": true,
+    "registered_via_requires_registration_surface": true,
+    "source_evidence_immutable": true
+  },
+  "phase": "I01-W07",
+  "schema_version": 1,
+  "status": "PASS",
+  "supported_edge_types": [
+    "requires",
+    "exposes",
+    "implemented_by",
+    "registered_via",
+    "persists_to",
+    "executes_on",
+    "permissioned_by",
+    "tested_by",
+    "owned_by",
+    "emits",
+    "consumes",
+    "recovers_via",
+    "sourced_from",
+    "classified_as",
+    "has_baseline_candidate",
+    "described_by_supply_chain"
+  ]
+}
