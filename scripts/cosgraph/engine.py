@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from typing import Any, Iterable
 
 from scripts.cosgraph.model import COSLayer, IntegrationDecision
@@ -24,23 +23,24 @@ def _tokens(node: dict[str, Any]) -> str:
 def classify_family(node: dict[str, Any]) -> str:
     text = _tokens(node)
     kind = str(node.get("kind", ""))
-    if any(token in text for token in ("memory", "vector", "embedding", "knowledge", "qdrant", "neo4j", "faiss")):
-        return "memory"
-    if kind == "persistence" or any(token in text for token in ("database", "sqlite", "redis", "firestore", "store", "repository")):
+
+    # Explicit extractor types outrank lexical hints. This matters for state
+    # convergence: a MemoryStore explicitly classified as persistence must not
+    # be split away from a SessionStore merely because its name contains
+    # "memory".
+    if kind == "persistence":
         return "persistence"
-    if kind in {"channel"} or any(token in text for token in ("gateway", "channel", "discord", "slack", "telegram", "whatsapp", "websocket")):
+    if kind == "channel":
         return "gateway_channel"
-    if kind == "agent" or any(token in text for token in ("agent", "orchestrator", "planner", "react")):
+    if kind == "agent":
         return "agent_orchestration"
-    if kind == "provider" or any(token in text for token in ("inference", "provider", "model", "llm")):
+    if kind == "provider":
         return "inference"
-    if kind in {"device"} or any(token in text for token in ("firmware", "bluetooth", "ble", "wearable", "esp32", "zephyr")):
+    if kind == "device":
         return "device"
-    if kind == "media" or any(token in text for token in ("audio", "speech", "voice", "capture", "transcri", "tts", "microphone")):
+    if kind == "media":
         return "capture_voice"
-    if any(token in text for token in ("swiftui", "appkit", "overlay", "cursor", "screen", "desktop")):
-        return "embodiment"
-    if kind == "security" or any(token in text for token in ("auth", "permission", "sandbox", "policy", "security", "pairing")):
+    if kind == "security":
         return "security"
     if kind in {"tool", "plugin", "command", "registry"}:
         return "extension_tooling"
@@ -50,6 +50,25 @@ def classify_family(node: dict[str, Any]) -> str:
         return "dependency"
     if kind == "manifest":
         return "build_workspace"
+
+    if any(token in text for token in ("memory", "vector", "embedding", "knowledge", "qdrant", "neo4j", "faiss")):
+        return "memory"
+    if any(token in text for token in ("database", "sqlite", "redis", "firestore", "store", "repository")):
+        return "persistence"
+    if any(token in text for token in ("gateway", "channel", "discord", "slack", "telegram", "whatsapp", "websocket")):
+        return "gateway_channel"
+    if any(token in text for token in ("agent", "orchestrator", "planner", "react")):
+        return "agent_orchestration"
+    if any(token in text for token in ("inference", "provider", "model", "llm")):
+        return "inference"
+    if any(token in text for token in ("firmware", "bluetooth", "ble", "wearable", "esp32", "zephyr")):
+        return "device"
+    if any(token in text for token in ("audio", "speech", "voice", "capture", "transcri", "tts", "microphone")):
+        return "capture_voice"
+    if any(token in text for token in ("swiftui", "appkit", "overlay", "cursor", "screen", "desktop")):
+        return "embodiment"
+    if any(token in text for token in ("auth", "permission", "sandbox", "policy", "security", "pairing")):
+        return "security"
     return "structural"
 
 

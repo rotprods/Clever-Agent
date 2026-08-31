@@ -48,6 +48,30 @@ class GraphifyTests(unittest.TestCase):
             self.assertIn("agent", kinds)
             self.assertIn("route", kinds)
 
+    def test_shared_workspace_dependency_is_one_node_with_multiple_edges(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name in ("one", "two"):
+                package = root / name
+                package.mkdir()
+                (package / "package.json").write_text(
+                    json.dumps({"dependencies": {"shared-lib": "1.0.0"}}),
+                    encoding="utf-8",
+                )
+            graph = graphify_repository(root, "workspace", "d" * 40).to_dict()
+            dependencies = [
+                node
+                for node in graph["nodes"]
+                if node["kind"] == "dependency" and node["name"] == "shared-lib"
+            ]
+            self.assertEqual(len(dependencies), 1)
+            requires = [
+                edge
+                for edge in graph["edges"]
+                if edge["relation"] == "requires" and edge["target"] == dependencies[0]["id"]
+            ]
+            self.assertEqual(len(requires), 2)
+
     def test_stable_id_changes_when_semantic_identity_changes(self) -> None:
         self.assertEqual(stable_id("x", "a"), stable_id("x", "a"))
         self.assertNotEqual(stable_id("x", "a"), stable_id("x", "b"))
@@ -80,8 +104,13 @@ class COSGraphTests(unittest.TestCase):
         g1 = self._graph("a", "persistence", "MemoryStore")
         g2 = self._graph("b", "persistence", "SessionStore")
         result = build_cos_hypergraph([g1, g2])
-        component = next(item for item in result["canonical_components"] if item["family"] in {"memory", "persistence"})
+        component = next(
+            item
+            for item in result["canonical_components"]
+            if item["family"] == "persistence"
+        )
         self.assertEqual(component["decision"], "MERGE_STATE")
+        self.assertEqual(component["source_repositories"], ["a", "b"])
         self.assertFalse(component["rewrite_allowed"])
 
 

@@ -172,13 +172,15 @@ def graphify_repository(root: str | Path, repo_id: str, source_commit: str) -> R
 
         if file_kind == "manifest":
             for dependency in _manifest_dependencies(path, text):
+                # A dependency is canonical per pinned repository snapshot, not
+                # per manifest. Multiple workspace manifests may point at the
+                # same dependency node through independent `requires` edges.
                 dep_node = Node(
-                    id=stable_id("dependency", dependency),
+                    id=stable_id("dependency", repo_id, source_commit, dependency),
                     kind="dependency",
                     name=dependency,
                     source_repo=repo_id,
                     source_commit=source_commit,
-                    path=rel,
                 )
                 graph.add_node(dep_node)
                 graph.add_edge("requires", file_node.id, dep_node.id, path=rel)
