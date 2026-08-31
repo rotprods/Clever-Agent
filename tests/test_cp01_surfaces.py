@@ -4,6 +4,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
+from scripts.cp01.profiles import supplement_repository_surfaces
 from scripts.cp01.surfaces import extract_repository_surfaces, surface_summary
 from scripts.upstream.ledger import UpstreamPin
 
@@ -52,7 +53,7 @@ class CP01BehavioralSurfaceTests(unittest.TestCase):
             self.assertTrue(all(row["promotion_status"] == "BEHAVIOR_MAPPED" for row in registered))
             self.assertTrue(any(row["runtime_owner"] == "openclaw:extensions:demo" for row in registered))
 
-    def test_swift_native_actions_remain_candidates(self) -> None:
+    def test_clicky_profile_completes_native_boundary_actions(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             path = root / "leanring-buddy/CompanionManager.swift"
@@ -66,11 +67,12 @@ class CP01BehavioralSurfaceTests(unittest.TestCase):
                 "}\n",
                 encoding="utf-8",
             )
-            rows = extract_repository_surfaces(root, self._pin("clicky"))
-            actions = [row for row in rows if row["surface_kind"] == "native_action"]
-            self.assertGreaterEqual(len(actions), 4)
-            self.assertTrue(all(row["evidence_strength"] == "DEFINITION" for row in actions))
-            self.assertTrue(all(row["promotion_status"] == "DISCOVERED_CANDIDATE" for row in actions))
+            generic = extract_repository_surfaces(root, self._pin("clicky"))
+            profiled = supplement_repository_surfaces(root, self._pin("clicky"))
+            self.assertGreaterEqual(len([row for row in generic if row["surface_kind"] == "native_action"]), 3)
+            names = {row["name"] for row in profiled if row["surface_kind"] == "native_action"}
+            self.assertTrue({"startListening", "captureScreen", "speakResponse", "pointAtTarget"}.issubset(names))
+            self.assertTrue(all(row["promotion_status"] == "DISCOVERED_CANDIDATE" for row in profiled))
 
     def test_test_files_are_not_product_surfaces(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
