@@ -6,15 +6,15 @@
 
 - Project: `CLEVER-JARVIS-001`
 - Checkpoint: `CP02`
-- Iteration: `I02` / `I02.5`
-- Next wave: `CP02-W05 — Contract kernel security recovery and version skew gauntlet`
+- Iteration: `I02` / `I02.6`
+- Next wave: `CP02-W06 — CP02 release reconciliation and CP03 handoff`
 - Parity denominator: `GENERATED_UNVERIFIED`
 - Protocol: `COS-GRAPH-ENGINE-V2-20D`
 - 20D model: `COS-20D-v2` (20 dimensions)
 
 ## Planning
 
-- First executable task: `CP02-005`
+- First executable task: `CP02-006`
 - Active iteration state: `iterations/02/STATE.json`
 - Machine task graph: `.agentic/context/NEXT_ACTIONS.json`
 - Implementation plan: `IMPLEMENTATION_PLAN.md`

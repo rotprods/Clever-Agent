@@ -48,7 +48,8 @@
     "EVID-0007",
     "EVID-0008",
     "EVID-0009",
-    "EVID-0010"
+    "EVID-0010",
+    "EVID-0011"
   ],
   "frontier": {
     "blocking_issues": [],
@@ -66,13 +67,14 @@
       "CP02-W01",
       "CP02-W02",
       "CP02-W03",
-      "CP02-W04"
+      "CP02-W04",
+      "CP02-W05"
     ],
     "iteration": "I02",
-    "next_wave": "CP02-W05",
-    "next_wave_name": "Contract kernel security recovery and version skew gauntlet",
+    "next_wave": "CP02-W06",
+    "next_wave_name": "CP02 release reconciliation and CP03 handoff",
     "parity_denominator_status": "GENERATED_UNVERIFIED",
-    "subcheckpoint": "I02.5"
+    "subcheckpoint": "I02.6"
   },
   "graph_planes": [
     {
@@ -155,7 +157,7 @@
   "planning": {
     "active_iteration_state": "iterations/02/STATE.json",
     "consciousness_act": "docs/ACTA_DE_CONSCIENCIA.md",
-    "first_executable_task": "CP02-005",
+    "first_executable_task": "CP02-006",
     "implementation_plan": "IMPLEMENTATION_PLAN.md",
     "next_actions": ".agentic/context/NEXT_ACTIONS.json",
     "regression": "docs/REGRESSION_2026-08-31.md",
