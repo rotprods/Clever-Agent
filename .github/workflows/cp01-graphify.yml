@@ -1,17 +1,7 @@
-name: CP01 Graphify COSGraph
+name: CP01 Graphify COSGraph Replay
 
 on:
-  push:
-    paths:
-      - 'scripts/**'
-      - 'tests/**'
-      - 'inventory/schemas/**'
-      - '.github/workflows/cp01-graphify.yml'
-  pull_request:
-    paths:
-      - 'scripts/**'
-      - 'tests/**'
-      - 'inventory/schemas/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
