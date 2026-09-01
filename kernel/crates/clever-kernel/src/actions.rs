@@ -7,11 +7,8 @@ use clever_contracts::{
 use prost_types::Timestamp;
 
 use crate::{
-    audit::AuditLog,
-    error::KernelError,
-    identity::validate_principal,
-    policy::validate_policy_decision,
-    version::validate_contract_version,
+    audit::AuditLog, error::KernelError, identity::validate_principal,
+    policy::validate_policy_decision, version::validate_contract_version,
 };
 
 #[derive(Debug, Clone)]
@@ -45,7 +42,9 @@ impl ActionStore {
         validate_intent(&intent)?;
         validate_policy_decision(decision)?;
         if intent.policy_decision_id != decision.decision_id {
-            return Err(KernelError::PolicyDenied("policy decision id mismatch".to_owned()));
+            return Err(KernelError::PolicyDenied(
+                "policy decision id mismatch".to_owned(),
+            ));
         }
         let decision_kind = PolicyDecisionKind::try_from(decision.decision).map_err(|_| {
             KernelError::InvalidEnum {
@@ -63,7 +62,9 @@ impl ActionStore {
             if existing.intent == intent {
                 let mut duplicate = existing.receipt.clone();
                 duplicate.status = ActionReceiptStatus::Duplicate as i32;
-                duplicate.verification_codes.push("IDEMPOTENT_REPLAY".to_owned());
+                duplicate
+                    .verification_codes
+                    .push("IDEMPOTENT_REPLAY".to_owned());
                 audit.append("action.duplicate", &intent.action_id);
                 return Ok(duplicate);
             }
@@ -201,8 +202,14 @@ fn transition_allowed(from: ActionReceiptStatus, to: ActionReceiptStatus) -> boo
             | (ActionReceiptStatus::Accepted, ActionReceiptStatus::Failed)
             | (ActionReceiptStatus::Running, ActionReceiptStatus::Succeeded)
             | (ActionReceiptStatus::Running, ActionReceiptStatus::Failed)
-            | (ActionReceiptStatus::Running, ActionReceiptStatus::RolledBack)
-            | (ActionReceiptStatus::Succeeded, ActionReceiptStatus::RolledBack)
+            | (
+                ActionReceiptStatus::Running,
+                ActionReceiptStatus::RolledBack
+            )
+            | (
+                ActionReceiptStatus::Succeeded,
+                ActionReceiptStatus::RolledBack
+            )
     )
 }
 

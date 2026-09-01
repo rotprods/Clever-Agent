@@ -22,12 +22,11 @@ impl RuntimeHealthTracker {
         if health.observed_at.is_none() {
             return Err(KernelError::MissingField("runtime.observed_at"));
         }
-        let status = RuntimeHealthStatus::try_from(health.status).map_err(|_| {
-            KernelError::InvalidEnum {
+        let status =
+            RuntimeHealthStatus::try_from(health.status).map_err(|_| KernelError::InvalidEnum {
                 field: "runtime.status",
                 value: health.status,
-            }
-        })?;
+            })?;
         if status == RuntimeHealthStatus::Unspecified {
             return Err(KernelError::InvalidEnum {
                 field: "runtime.status",
@@ -62,7 +61,10 @@ impl RuntimeHealthTracker {
                 });
             }
         }
-        audit.append(format!("runtime.{}", status_name(status)), &health.runtime_id);
+        audit.append(
+            format!("runtime.{}", status_name(status)),
+            &health.runtime_id,
+        );
         self.health.insert(health.runtime_id.clone(), health);
         Ok(())
     }
@@ -89,16 +91,28 @@ fn transition_allowed(from: RuntimeHealthStatus, to: RuntimeHealthStatus) -> boo
             (from, to),
             (RuntimeHealthStatus::Starting, RuntimeHealthStatus::Ready)
                 | (RuntimeHealthStatus::Starting, RuntimeHealthStatus::Degraded)
-                | (RuntimeHealthStatus::Starting, RuntimeHealthStatus::Unavailable)
+                | (
+                    RuntimeHealthStatus::Starting,
+                    RuntimeHealthStatus::Unavailable
+                )
                 | (RuntimeHealthStatus::Starting, RuntimeHealthStatus::Stopping)
                 | (RuntimeHealthStatus::Ready, RuntimeHealthStatus::Degraded)
                 | (RuntimeHealthStatus::Ready, RuntimeHealthStatus::Unavailable)
                 | (RuntimeHealthStatus::Ready, RuntimeHealthStatus::Stopping)
                 | (RuntimeHealthStatus::Degraded, RuntimeHealthStatus::Ready)
-                | (RuntimeHealthStatus::Degraded, RuntimeHealthStatus::Unavailable)
+                | (
+                    RuntimeHealthStatus::Degraded,
+                    RuntimeHealthStatus::Unavailable
+                )
                 | (RuntimeHealthStatus::Degraded, RuntimeHealthStatus::Stopping)
-                | (RuntimeHealthStatus::Unavailable, RuntimeHealthStatus::Starting)
-                | (RuntimeHealthStatus::Unavailable, RuntimeHealthStatus::Stopping)
+                | (
+                    RuntimeHealthStatus::Unavailable,
+                    RuntimeHealthStatus::Starting
+                )
+                | (
+                    RuntimeHealthStatus::Unavailable,
+                    RuntimeHealthStatus::Stopping
+                )
         )
 }
 

@@ -17,7 +17,11 @@ pub struct AuditLog {
 }
 
 impl AuditLog {
-    pub fn append(&mut self, event_type: impl Into<String>, subject_id: impl Into<String>) -> &AuditEntry {
+    pub fn append(
+        &mut self,
+        event_type: impl Into<String>,
+        subject_id: impl Into<String>,
+    ) -> &AuditEntry {
         let event_type = event_type.into();
         let subject_id = subject_id.into();
         let sequence = self.entries.len() as u64 + 1;
@@ -40,8 +44,16 @@ impl AuditLog {
         let mut previous_hash = String::new();
         for (index, entry) in self.entries.iter().enumerate() {
             let sequence = index as u64 + 1;
-            let expected = entry_hash(sequence, &entry.event_type, &entry.subject_id, &previous_hash);
-            if entry.sequence != sequence || entry.previous_hash != previous_hash || entry.hash != expected {
+            let expected = entry_hash(
+                sequence,
+                &entry.event_type,
+                &entry.subject_id,
+                &previous_hash,
+            );
+            if entry.sequence != sequence
+                || entry.previous_hash != previous_hash
+                || entry.hash != expected
+            {
                 return Err(KernelError::AuditIntegrity { sequence });
             }
             previous_hash.clone_from(&entry.hash);
