@@ -51,3 +51,9 @@ All notable project-control and implementation changes are recorded here. Eviden
 - W03-W08 full compiler passed from exact source `6d0bcd2f2b5cbfd7a4b6620c0ce89de5a31a7a74`.
 - Persisted `7565`-row behavior-mapped capability denominator; Clever VERIFIED parity remains 0.
 - Closed CP01 and opened CP02 / I02 with contract-first Rust-kernel frontier.
+
+## 2026-09-01 — CP02 release / CP03 entry
+
+- Closed CP02 from EVID-0007..EVID-0012.
+- Froze 646 OpenJarvis obligations without changing the global 7565 denominator.
+- Added append-only parity overlay and entered I03 at CP03-W00 hermetic baseline.

@@ -1,18 +1,17 @@
 # STATE — Clever-Agent live pointer
 
-> Machine mirrors and evidence outrank this human-readable pointer if drift is detected.
-
 ## Current
 
 - Goal: `CLEVER-JARVIS-001`
 - Global status: `IN_PROGRESS`
-- Active checkpoint: `CP02 — Canonical contracts and Rust kernel scaffold`
-- Active iteration: `I02 — Canonical Contracts + Rust Kernel Scaffold`
-- Active subcheckpoint: `I02.6`
-- Next executable wave: `CP02-W06 — CP02 release reconciliation and CP03 handoff`
+- Active checkpoint: `CP03 — OpenJarvis cognitive adapter`
+- Active iteration: `I03 — OpenJarvis Cognitive Adapter`
+- Active subcheckpoint: `I03.0`
+- Next executable wave: `CP03-W00 — Hermetic OpenJarvis baseline`
 - Capability denominator: `7565`
+- OpenJarvis obligations: `646`
 - Clever VERIFIED parity: `0 / 7565`
 
 ## Canonical frontier
 
-Execute `/empezarproyecto`, claim `CP02-W06`, and follow `iterations/02/METAPROMPT.md`. Contracts remain authoritative over kernel implementation.
+Run `/empezarproyecto`, claim `CP03-W00`, establish executable upstream truth in a hermetic sandbox, then continue `iterations/03/METAPROMPT.md`.

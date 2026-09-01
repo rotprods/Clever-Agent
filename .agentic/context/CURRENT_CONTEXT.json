@@ -26,7 +26,7 @@
     "STATE.md",
     "GOAL_STATE.json",
     "EXECUTION_STATE.json",
-    "iterations/02/STATE.json",
+    "iterations/03/STATE.json",
     "IMPLEMENTATION_PLAN.md",
     "TASKS.md",
     ".agentic/context/NEXT_ACTIONS.json",
@@ -49,11 +49,12 @@
     "EVID-0008",
     "EVID-0009",
     "EVID-0010",
-    "EVID-0011"
+    "EVID-0011",
+    "EVID-0012"
   ],
   "frontier": {
     "blocking_issues": [],
-    "checkpoint": "CP02",
+    "checkpoint": "CP03",
     "completed_waves": [
       "I01-W00",
       "I01-W01",
@@ -68,13 +69,14 @@
       "CP02-W02",
       "CP02-W03",
       "CP02-W04",
-      "CP02-W05"
+      "CP02-W05",
+      "CP02-W06"
     ],
-    "iteration": "I02",
-    "next_wave": "CP02-W06",
-    "next_wave_name": "CP02 release reconciliation and CP03 handoff",
+    "iteration": "I03",
+    "next_wave": "CP03-W00",
+    "next_wave_name": "Hermetic OpenJarvis baseline",
     "parity_denominator_status": "GENERATED_UNVERIFIED",
-    "subcheckpoint": "I02.6"
+    "subcheckpoint": "I03.0"
   },
   "graph_planes": [
     {
@@ -155,13 +157,13 @@
     }
   ],
   "planning": {
-    "active_iteration_state": "iterations/02/STATE.json",
+    "active_iteration_state": "iterations/03/STATE.json",
     "consciousness_act": "docs/ACTA_DE_CONSCIENCIA.md",
-    "first_executable_task": "CP02-006",
+    "first_executable_task": "CP03-000",
     "implementation_plan": "IMPLEMENTATION_PLAN.md",
     "next_actions": ".agentic/context/NEXT_ACTIONS.json",
     "regression": "docs/REGRESSION_2026-08-31.md",
-    "task_count": 29,
+    "task_count": 11,
     "tasks": "TASKS.md"
   },
   "project": {
@@ -177,11 +179,11 @@
     "/empezarproyecto"
   ],
   "required_next_outputs": [
-    "versioned canonical Protobuf and JSON Schema contracts",
-    "canonical cross-runtime fixtures",
-    "Rust/Python/TypeScript/Swift compatibility strategy",
-    "round-trip and version-skew tests",
-    "Rust kernel identity/event/capability/policy scaffold"
+    "hermetic OpenJarvis baseline",
+    "646-capability OpenJarvis obligation manifest",
+    "supervised adapter transport and registry bridge",
+    "behavioral parity evidence overlay",
+    "OpenJarvis security/recovery gauntlet"
   ],
   "schema_version": 1,
   "upstream_refs": {

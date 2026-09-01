@@ -1,0 +1,27 @@
+{
+  "by_family": {
+    "agent": 69,
+    "api_protocol": 32,
+    "capture_perception": 1,
+    "channel_gateway": 68,
+    "device_wearable": 3,
+    "embodiment": 29,
+    "inference": 64,
+    "learning_evaluation": 22,
+    "memory_persistence": 28,
+    "plugin_extension": 5,
+    "scheduler_automation": 21,
+    "security_policy": 16,
+    "session_identity": 8,
+    "speech_audio": 13,
+    "tool": 226,
+    "worker_service": 41
+  },
+  "candidate_definition_count": 2188,
+  "denominator_mutation_authorized": false,
+  "initial_verified": 0,
+  "obligation_count": 646,
+  "schema_version": 1,
+  "source_commit": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5",
+  "source_repo": "openjarvis"
+}

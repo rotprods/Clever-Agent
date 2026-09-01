@@ -8,8 +8,8 @@
 |---|---|---|---|
 | CP00 | Canonical bootstrap | COMPLETE | Stable goal, architecture, security, upstream ledger, parity method and durable state exist. |
 | CP01 | Forensic upstream inventory | COMPLETE | All four pinned upstreams inventoried; exhaustive capability denominator, baseline test evidence and license inventory exist. |
-| CP02 | Canonical contracts + Rust kernel scaffold | IN_PROGRESS | Versioned contracts compile across target runtimes; core identity/event/capability/policy skeleton passes contract tests. |
-| CP03 | OpenJarvis cognitive adapter | PENDING | OpenJarvis capability families parity-tested through canonical contracts. |
+| CP02 | Canonical contracts + Rust kernel scaffold | COMPLETE | Versioned contracts compile across target runtimes; core identity/event/capability/policy skeleton passes contract tests. |
+| CP03 | OpenJarvis cognitive adapter | IN_PROGRESS | OpenJarvis capability families parity-tested through canonical contracts. |
 | CP04 | OpenClaw gateway adapter | PENDING | Gateway/channel/node/provider/tool/plugin/automation families parity-tested. |
 | CP05 | Omi perception + episodic adapter | PENDING | Capture/STT/diarization/conversation/mobile/wearable/SDK families parity-tested. |
 | CP06 | Clicky macOS embodiment | PENDING | PTT/screen/TTS/STT/overlay/pointing behavior parity-tested through shared identity/session contracts. |

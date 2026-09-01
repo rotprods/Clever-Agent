@@ -2,13 +2,18 @@
 
 Machine authority: `.agentic/context/NEXT_ACTIONS.json`.
 
-## CP02
+## CP03 — OpenJarvis cognitive adapter
 
-- [x] **CP02-001 / CP02-W01 — Compile versioned identity/event/capability/policy/action/memory/health/trace contracts from CP01 graph evidence.** Status: `COMPLETE`.
-- [x] **CP02-002 / CP02-W02 — Create cross-runtime canonical fixtures/binding strategy and round-trip/version-skew tests.** Status: `COMPLETE`.
-- [x] **CP02-003 / CP02-W03 — Scaffold Rust kernel identity/event/capability/policy primitives behind canonical contracts.** Status: `COMPLETE`.
-- [x] **CP02-004 / CP02-W04 — Implement action receipts/idempotency, lifecycle health and append-only audit primitives.** Status: `COMPLETE`.
-- [x] **CP02-005 / CP02-W05 — Run contract/kernel security, malformed-input, version-skew and recovery gauntlet.** Status: `COMPLETE`.
-- [ ] **CP02-006 / CP02-W06 — Reconcile CP02 evidence and advance to CP03 only if checkpoint exit criteria pass.** Status: `READY`.
+- [ ] **CP03-000 / CP03-W00 — Run hermetic pinned OpenJarvis baseline and classify gated tests.** Status: `READY`.
+- [ ] **CP03-001 / CP03-W01 — Implement supervised adapter transport, lifecycle and typed registry bridge.** Status: `BLOCKED`.
+- [ ] **CP03-002 / CP03-W02 — Map models, engines and inference behavior through canonical contracts.** Status: `BLOCKED`.
+- [ ] **CP03-003 / CP03-W03 — Map agents, tools and MCP while enforcing Clever action authority.** Status: `BLOCKED`.
+- [ ] **CP03-004 / CP03-W04 — Map memory/retrieval with principal-scoped ownership and provenance.** Status: `BLOCKED`.
+- [ ] **CP03-005 / CP03-W05 — Map traces, telemetry, evals and proposal-only learning signals.** Status: `BLOCKED`.
+- [ ] **CP03-006 / CP03-W06 — Map scheduler/proactive/persistent operative semantics with replay safety.** Status: `BLOCKED`.
+- [ ] **CP03-007 / CP03-W07 — Reconcile OpenJarvis defense-in-depth security under Clever T0 policy.** Status: `BLOCKED`.
+- [ ] **CP03-008 / CP03-W08 — Compile and burn down parity for all 646 OpenJarvis obligations.** Status: `BLOCKED`.
+- [ ] **CP03-009 / CP03-W09 — Run adversarial recovery and performance gauntlet.** Status: `BLOCKED`.
+- [ ] **CP03-010 / CP03-W10 — Reconcile CP03 release evidence and hand off to CP04.** Status: `BLOCKED`.
 
-No native upstream implementation is removed in CP02.
+Frozen OpenJarvis obligation set: **646**. Global denominator: **7565**. Native state deletion/migration is forbidden in CP03.

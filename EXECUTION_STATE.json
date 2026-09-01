@@ -1,6 +1,6 @@
 {
-  "active_iteration": "I02",
-  "active_subcheckpoint": "I02.6",
+  "active_iteration": "I03",
+  "active_subcheckpoint": "I03.0",
   "blocking_issues": [],
   "branch": "main",
   "completed_waves": [
@@ -17,22 +17,23 @@
     "CP02-W02",
     "CP02-W03",
     "CP02-W04",
-    "CP02-W05"
+    "CP02-W05",
+    "CP02-W06"
   ],
-  "current_checkpoint": "CP02",
+  "current_checkpoint": "CP03",
   "goal_id": "CLEVER-JARVIS-001",
   "implementation_started": true,
   "mandatory_boot_command": "/empezarproyecto",
-  "mode": "canonical-contracts",
-  "next_checkpoint": "CP03",
-  "next_wave": "CP02-W06",
-  "next_wave_name": "CP02 release reconciliation and CP03 handoff",
+  "mode": "openjarvis-adapter",
+  "next_checkpoint": "CP04",
+  "next_wave": "CP03-W00",
+  "next_wave_name": "Hermetic OpenJarvis baseline",
   "required_next_outputs": [
-    "versioned canonical Protobuf and JSON Schema contracts",
-    "canonical cross-runtime fixtures",
-    "Rust/Python/TypeScript/Swift compatibility strategy",
-    "round-trip and version-skew tests",
-    "Rust kernel identity/event/capability/policy scaffold"
+    "hermetic OpenJarvis baseline",
+    "646-capability OpenJarvis obligation manifest",
+    "supervised adapter transport and registry bridge",
+    "behavioral parity evidence overlay",
+    "OpenJarvis security/recovery gauntlet"
   ],
   "schema_version": 1,
   "tracking_issue": 2,

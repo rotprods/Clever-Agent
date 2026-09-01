@@ -22,7 +22,7 @@
       "exit": "Versioned schemas compile for Rust/Python/TypeScript/Swift; kernel identity/event/capability/policy skeleton passes contract tests.",
       "id": "CP02",
       "name": "Canonical contracts and Rust kernel scaffold",
-      "status": "IN_PROGRESS"
+      "status": "COMPLETE"
     },
     {
       "depends_on": [
@@ -31,7 +31,7 @@
       "exit": "OpenJarvis engine/agent/memory/trace/learning/tool/scheduler/security capabilities are mapped and parity-tested through canonical contracts.",
       "id": "CP03",
       "name": "OpenJarvis cognitive adapter",
-      "status": "PENDING"
+      "status": "IN_PROGRESS"
     },
     {
       "depends_on": [
