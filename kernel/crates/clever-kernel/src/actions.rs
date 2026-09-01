@@ -78,13 +78,13 @@ impl ActionStore {
         }
 
         let receipt = ActionReceipt {
-            contract_version: intent.contract_version.clone(),
+            contract_version: intent.contract_version,
             receipt_id: format!("receipt:{}", intent.action_id),
             action_id: intent.action_id.clone(),
             idempotency_key: intent.idempotency_key.clone(),
             status: ActionReceiptStatus::Accepted as i32,
             attempt: 1,
-            started_at: intent.requested_at.clone(),
+            started_at: intent.requested_at,
             completed_at: None,
             result: None,
             verification_codes: Vec::new(),
