@@ -1,0 +1,42 @@
+name: CP02 Codegen Probe
+
+on:
+  push:
+    branches:
+      - wave/cp02/canonical-contracts-kernel
+    paths:
+      - 'buf.gen.yaml'
+      - 'contracts/toolchain.lock.json'
+      - '.github/workflows/cp02-codegen-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bufbuild/buf-setup-action@v1
+        with:
+          version: '1.72.0'
+      - name: Generate all pinned language bindings
+        run: buf generate
+      - name: Assert four generated trees are non-empty
+        shell: bash
+        run: |
+          set -euo pipefail
+          for lang in python typescript swift rust; do
+            echo "=== $lang ==="
+            test -d "contracts/generated/$lang"
+            find "contracts/generated/$lang" -type f -print | sort
+            test "$(find "contracts/generated/$lang" -type f | wc -l)" -gt 0
+          done
+      - name: Upload generated binding probe
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp02-codegen-probe-${{ github.sha }}
+          retention-days: 7
+          if-no-files-found: error
+          path: contracts/generated/
