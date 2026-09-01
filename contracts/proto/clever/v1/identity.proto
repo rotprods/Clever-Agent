@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package clever.v1;
+
+import "google/protobuf/timestamp.proto";
+import "clever/v1/common.proto";
+
+message PrincipalRef {
+  string user_id = 1;
+  string device_id = 2;
+  string channel_id = 3;
+  string tenant_id = 4;
+}
+
+message SessionRef {
+  ContractVersion contract_version = 1;
+  string session_id = 2;
+  PrincipalRef principal = 3;
+  string workspace_id = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message GoalRef {
+  ContractVersion contract_version = 1;
+  string goal_id = 2;
+  string parent_goal_id = 3;
+  string owner_user_id = 4;
+  string scope_id = 5;
+}

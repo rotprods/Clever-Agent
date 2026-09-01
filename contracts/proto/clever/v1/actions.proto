@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package clever.v1;
+
+import "google/protobuf/timestamp.proto";
+import "clever/v1/common.proto";
+import "clever/v1/identity.proto";
+
+enum SideEffectClass {
+  SIDE_EFFECT_CLASS_UNSPECIFIED = 0;
+  SIDE_EFFECT_CLASS_READ_ONLY = 1;
+  SIDE_EFFECT_CLASS_REVERSIBLE_LOCAL = 2;
+  SIDE_EFFECT_CLASS_EXTERNAL_MUTATION = 3;
+  SIDE_EFFECT_CLASS_DESTRUCTIVE = 4;
+}
+
+enum ActionReceiptStatus {
+  ACTION_RECEIPT_STATUS_UNSPECIFIED = 0;
+  ACTION_RECEIPT_STATUS_ACCEPTED = 1;
+  ACTION_RECEIPT_STATUS_RUNNING = 2;
+  ACTION_RECEIPT_STATUS_SUCCEEDED = 3;
+  ACTION_RECEIPT_STATUS_FAILED = 4;
+  ACTION_RECEIPT_STATUS_DENIED = 5;
+  ACTION_RECEIPT_STATUS_DUPLICATE = 6;
+  ACTION_RECEIPT_STATUS_ROLLED_BACK = 7;
+}
+
+message ActionIntent {
+  ContractVersion contract_version = 1;
+  string action_id = 2;
+  string idempotency_key = 3;
+  PrincipalRef principal = 4;
+  string session_id = 5;
+  string goal_id = 6;
+  string capability_id = 7;
+  string operation = 8;
+  SideEffectClass side_effect_class = 9;
+  string policy_decision_id = 10;
+  Payload payload = 11;
+  google.protobuf.Timestamp requested_at = 12;
+}
+
+message ActionReceipt {
+  ContractVersion contract_version = 1;
+  string receipt_id = 2;
+  string action_id = 3;
+  string idempotency_key = 4;
+  ActionReceiptStatus status = 5;
+  uint32 attempt = 6;
+  google.protobuf.Timestamp started_at = 7;
+  google.protobuf.Timestamp completed_at = 8;
+  Payload result = 9;
+  repeated string verification_codes = 10;
+  string error_code = 11;
+  string error_message = 12;
+  string audit_ref = 13;
+}

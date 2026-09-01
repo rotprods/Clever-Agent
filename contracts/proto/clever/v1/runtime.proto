@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package clever.v1;
+
+import "google/protobuf/timestamp.proto";
+import "clever/v1/common.proto";
+
+enum RuntimeHealthStatus {
+  RUNTIME_HEALTH_STATUS_UNSPECIFIED = 0;
+  RUNTIME_HEALTH_STATUS_STARTING = 1;
+  RUNTIME_HEALTH_STATUS_READY = 2;
+  RUNTIME_HEALTH_STATUS_DEGRADED = 3;
+  RUNTIME_HEALTH_STATUS_UNAVAILABLE = 4;
+  RUNTIME_HEALTH_STATUS_STOPPING = 5;
+}
+
+message RuntimeDescriptor {
+  ContractVersion contract_version = 1;
+  string runtime_id = 2;
+  string runtime_kind = 3;
+  string implementation_version = 4;
+  string process_id = 5;
+  string device_id = 6;
+  repeated string capability_ids = 7;
+  repeated PlatformConstraint platform_constraints = 8;
+}
+
+message RuntimeHealth {
+  ContractVersion contract_version = 1;
+  string runtime_id = 2;
+  RuntimeHealthStatus status = 3;
+  repeated string degradation_reasons = 4;
+  google.protobuf.Timestamp observed_at = 5;
+  uint64 dropped_event_count = 6;
+  uint64 failed_action_count = 7;
+  string recovery_hint = 8;
+}

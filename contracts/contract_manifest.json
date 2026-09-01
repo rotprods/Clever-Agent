@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "contract_namespace": "clever.v1",
+  "wire_version": {"major": 1, "minor": 0},
+  "contracts": [
+    {"id":"identity","proto":"clever/v1/identity.proto","message":"clever.v1.SessionRef","json_schema":"contracts/jsonschema/identity.schema.json","fixture":"contracts/fixtures/identity.json"},
+    {"id":"event","proto":"clever/v1/events.proto","message":"clever.v1.EventEnvelope","json_schema":"contracts/jsonschema/event.schema.json","fixture":"contracts/fixtures/event.json"},
+    {"id":"capability","proto":"clever/v1/capabilities.proto","message":"clever.v1.CapabilityDescriptor","json_schema":"contracts/jsonschema/capability.schema.json","fixture":"contracts/fixtures/capability.json"},
+    {"id":"policy","proto":"clever/v1/policy.proto","message":"clever.v1.PolicyDecision","json_schema":"contracts/jsonschema/policy.schema.json","fixture":"contracts/fixtures/policy.json"},
+    {"id":"action_intent","proto":"clever/v1/actions.proto","message":"clever.v1.ActionIntent","json_schema":"contracts/jsonschema/action-intent.schema.json","fixture":"contracts/fixtures/action-intent.json"},
+    {"id":"action_receipt","proto":"clever/v1/actions.proto","message":"clever.v1.ActionReceipt","json_schema":"contracts/jsonschema/action-receipt.schema.json","fixture":"contracts/fixtures/action-receipt.json"},
+    {"id":"memory","proto":"clever/v1/memory.proto","message":"clever.v1.MemoryRecord","json_schema":"contracts/jsonschema/memory.schema.json","fixture":"contracts/fixtures/memory.json"},
+    {"id":"runtime","proto":"clever/v1/runtime.proto","message":"clever.v1.RuntimeHealth","json_schema":"contracts/jsonschema/runtime.schema.json","fixture":"contracts/fixtures/runtime.json"},
+    {"id":"trace","proto":"clever/v1/traces.proto","message":"clever.v1.TraceSpan","json_schema":"contracts/jsonschema/trace.schema.json","fixture":"contracts/fixtures/trace.json"},
+    {"id":"perception","proto":"clever/v1/perception.proto","message":"clever.v1.PerceptionObservation","json_schema":"contracts/jsonschema/perception.schema.json","fixture":"contracts/fixtures/perception.json"}
+  ],
+  "security_invariants": [
+    "extension metadata cannot grant permissions",
+    "action side effects require an external policy decision",
+    "idempotency keys are first-class for retryable actions",
+    "memory access scope and retention are explicit",
+    "perception carries consent and permission grant state",
+    "unknown contract major versions fail closed"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://schemas.rotprods.dev/clever/v1/common.schema.json",
+  "$defs":{
+    "contractVersion":{"type":"object","additionalProperties":false,"required":["major","minor"],"properties":{"major":{"type":"integer","minimum":1},"minor":{"type":"integer","minimum":0}}},
+    "principalRef":{"type":"object","additionalProperties":false,"required":["userId"],"properties":{"userId":{"type":"string","minLength":1},"deviceId":{"type":"string"},"channelId":{"type":"string"},"tenantId":{"type":"string"}}},
+    "runtimeOwner":{"type":"object","additionalProperties":false,"required":["runtimeId"],"properties":{"runtimeId":{"type":"string","minLength":1},"adapterId":{"type":"string"},"deviceId":{"type":"string"},"processId":{"type":"string"}}},
+    "classification":{"type":"string","enum":["DATA_CLASSIFICATION_PUBLIC","DATA_CLASSIFICATION_INTERNAL","DATA_CLASSIFICATION_SENSITIVE","DATA_CLASSIFICATION_RESTRICTED"]},
+    "evidenceRef":{"type":"object","additionalProperties":false,"required":["evidenceId"],"properties":{"evidenceId":{"type":"string","minLength":1},"uri":{"type":"string"},"digest":{"type":"string"}}},
+    "provenanceRef":{"type":"object","additionalProperties":false,"required":["sourceRepo","sourceCommit"],"properties":{"sourceRepo":{"type":"string","minLength":1},"sourceCommit":{"type":"string","minLength":1},"sourcePath":{"type":"string"},"sourceSymbol":{"type":"string"}}},
+    "payload":{"type":"object","additionalProperties":false,"required":["schemaUri","contentType","data"],"properties":{"schemaUri":{"type":"string","minLength":1},"contentType":{"type":"string","minLength":1},"data":{"type":"string","contentEncoding":"base64"}}},
+    "platformConstraint":{"type":"object","additionalProperties":false,"required":["platform"],"properties":{"platform":{"type":"string","minLength":1},"minimumVersion":{"type":"string"},"requiredFeatures":{"type":"array","items":{"type":"string"},"uniqueItems":true}}},
+    "timestamp":{"type":"string","format":"date-time"}
+  }
+}

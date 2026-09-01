@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package clever.v1;
+
+import "google/protobuf/timestamp.proto";
+import "clever/v1/common.proto";
+import "clever/v1/identity.proto";
+
+enum MemoryKind {
+  MEMORY_KIND_UNSPECIFIED = 0;
+  MEMORY_KIND_WORKING = 1;
+  MEMORY_KIND_EPISODIC = 2;
+  MEMORY_KIND_SEMANTIC = 3;
+  MEMORY_KIND_PROCEDURAL = 4;
+  MEMORY_KIND_PROFILE = 5;
+  MEMORY_KIND_EVIDENCE = 6;
+}
+
+enum RetentionClass {
+  RETENTION_CLASS_UNSPECIFIED = 0;
+  RETENTION_CLASS_TRANSIENT = 1;
+  RETENTION_CLASS_SESSION = 2;
+  RETENTION_CLASS_USER_MANAGED = 3;
+  RETENTION_CLASS_DURABLE = 4;
+}
+
+message MemoryRecord {
+  ContractVersion contract_version = 1;
+  string memory_id = 2;
+  MemoryKind kind = 3;
+  PrincipalRef owner = 4;
+  string access_scope = 5;
+  DataClassification classification = 6;
+  RetentionClass retention = 7;
+  Payload content = 8;
+  double confidence = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp derived_at = 11;
+  repeated ProvenanceRef provenance = 12;
+  repeated EvidenceRef evidence = 13;
+  string native_owner_runtime = 14;
+  string migration_state = 15;
+}
