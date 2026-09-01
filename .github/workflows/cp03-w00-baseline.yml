@@ -82,8 +82,8 @@ jobs:
           set -euo pipefail
           mkdir -p evidence/cp03/baseline
           mapfile -t selected < /tmp/selected-tests
-          set +e
-          docker run --rm \
+          container="cp03-w00-${GITHUB_RUN_ID}"
+          docker create --name "$container" \
             --network none \
             --read-only \
             --cap-drop ALL \
@@ -92,7 +92,6 @@ jobs:
             --memory 4g \
             --cpus 2 \
             --tmpfs /tmp:rw,noexec,nosuid,size=512m \
-            -v "$GITHUB_WORKSPACE/evidence/cp03/baseline:/evidence:rw" \
             -e HOME=/tmp/home \
             -e XDG_CONFIG_HOME=/tmp/config \
             -e XDG_DATA_HOME=/tmp/data \
@@ -100,12 +99,15 @@ jobs:
             -e PYTHONPATH=/src/src \
             -e MARKERS="$MARKERS" \
             "clever-openjarvis-baseline:$SOURCE_SHA" \
-            'mkdir -p "$HOME" "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" && /src/.venv/bin/python -m pytest "$@" -p no:cacheprovider -q --tb=short -m "$MARKERS" --junitxml=/evidence/junit.xml' sh "${selected[@]}"
+            'mkdir -p "$HOME" "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" && /src/.venv/bin/python -m pytest "$@" -p no:cacheprovider -q --tb=short -m "$MARKERS" --junitxml=/tmp/junit.xml' sh "${selected[@]}" >/tmp/container-id
+          set +e
+          docker start -a "$container"
           rc=$?
           set -e
+          docker cp "$container:/tmp/junit.xml" evidence/cp03/baseline/junit.xml 2>/dev/null || true
+          docker rm -f "$container" >/dev/null
           echo "$rc" > evidence/cp03/baseline/pytest-exit-code.txt
           printf '%s\n' "${selected[@]}" > evidence/cp03/baseline/selected-tests.txt
-          exit 0
       - name: Compile hermetic baseline evidence
         shell: bash
         run: |
