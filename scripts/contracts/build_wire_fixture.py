@@ -5,9 +5,9 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-SDK = ROOT / "contracts/sdk/python"
-if str(SDK) not in sys.path:
-    sys.path.insert(0, str(SDK))
+GENERATED = ROOT / "contracts/sdk/python/gen"
+if str(GENERATED) not in sys.path:
+    sys.path.insert(0, str(GENERATED))
 
 from google.protobuf.json_format import MessageToDict
 from clever.v1 import common_pb2, events_pb2, identity_pb2

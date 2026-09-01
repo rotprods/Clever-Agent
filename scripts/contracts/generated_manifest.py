@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 OUTPUTS = [
-    Path("contracts/sdk/python/clever"),
+    Path("contracts/sdk/python/gen/clever"),
     Path("contracts/sdk/typescript/src/gen"),
     Path("contracts/sdk/swift/Sources/CleverContracts/Gen"),
     Path("contracts/sdk/rust/src/gen"),
