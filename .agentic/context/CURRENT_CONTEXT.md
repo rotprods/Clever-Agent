@@ -6,15 +6,15 @@
 
 - Project: `CLEVER-JARVIS-001`
 - Checkpoint: `CP02`
-- Iteration: `I02` / `I02.1`
-- Next wave: `CP02-W01 — Canonical contract schemas`
+- Iteration: `I02` / `I02.2`
+- Next wave: `CP02-W02 — Cross-runtime bindings and compatibility`
 - Parity denominator: `GENERATED_UNVERIFIED`
 - Protocol: `COS-GRAPH-ENGINE-V2-20D`
 - 20D model: `COS-20D-v2` (20 dimensions)
 
 ## Planning
 
-- First executable task: `CP02-001`
+- First executable task: `CP02-002`
 - Active iteration state: `iterations/02/STATE.json`
 - Machine task graph: `.agentic/context/NEXT_ACTIONS.json`
 - Implementation plan: `IMPLEMENTATION_PLAN.md`

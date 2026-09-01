@@ -1,24 +1,21 @@
 # HANDOFF — Clever-Agent
 
-## Transition
+## Current
 
-- Source checkpoint: `CP01` — COMPLETE
-- Active checkpoint: `CP02` — IN_PROGRESS
+- Goal: `CLEVER-JARVIS-001`
+- Checkpoint: `CP02`
 - Iteration: `I02`
-- Next wave: `CP02-W01`
-- First task: `CP02-001`
-- CP01 source SHA: `6d0bcd2f2b5cbfd7a4b6620c0ce89de5a31a7a74`
-- Denominator: `7565` behavior-mapped capabilities
-- Clever VERIFIED: `0`
+- Completed task: `CP02-001`
+- Evidence: `EVID-0007`
+- Next task: `CP02-002`
+- Next wave: `CP02-W02`
 
-## What CP01 proved
-
-Exact-source acquisition, structural census, behavioral-surface extraction, denominator generation, baseline classification, supply-chain inventory, capability graph/COS20D gauntlet and evidence-derived CP02 requirements all passed. CP01 did not claim adapter parity or authorize migration.
-
-## Next action
+## Recovery
 
 1. `/empezarproyecto`.
-2. Read `iterations/02/METAPROMPT.md`.
-3. Claim `CP02-W01`.
-4. Read `reports/CP02_CONTRACT_REQUIREMENTS.md` and the CP01 capability report.
-5. Implement versioned Protobuf + JSON Schema contracts and contract fixtures before the Rust kernel scaffold.
+2. Validate state/context/task DAG.
+3. Read `iterations/02/METAPROMPT.md`.
+4. Claim `CP02-W02`.
+5. Execute `CP02-002` and persist evidence before advancing again.
+
+CP01 denominator remains an integration obligation, not VERIFIED adapter parity. No native upstream implementation may be removed during CP02.

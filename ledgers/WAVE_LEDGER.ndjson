@@ -13,3 +13,5 @@
 {"date":"2026-09-01","event":"RELEASE_RECONCILIATION","evidence_id":"EVID-0006","schema_version":1,"status":"COMPLETE","wave_id":"I01-W07"}
 {"date":"2026-09-01","event":"RELEASE_RECONCILIATION","evidence_id":"EVID-0006","schema_version":1,"status":"COMPLETE","wave_id":"I01-W08"}
 {"checkpoint":"CP02","date":"2026-09-01","iteration":"I02","objective":"Compile versioned canonical contracts from CP01 evidence.","schema_version":1,"status":"PROPOSED","wave_id":"CP02-W01"}
+{"date":"2026-09-01","event":"VERIFICATION","evidence_id":"EVID-0007","next_wave":"CP02-W02","schema_version":1,"status":"COMPLETE","wave_id":"CP02-W01"}
+{"checkpoint":"CP02","date":"2026-09-01","iteration":"I02","objective":"Create cross-runtime canonical fixtures/binding strategy and round-trip/version-skew tests.","schema_version":1,"status":"PROPOSED","wave_id":"CP02-W02"}

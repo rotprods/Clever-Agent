@@ -44,7 +44,8 @@
     "EVID-0003",
     "EVID-0004",
     "EVID-0005",
-    "EVID-0006"
+    "EVID-0006",
+    "EVID-0007"
   ],
   "frontier": {
     "blocking_issues": [],
@@ -58,13 +59,14 @@
       "I01-W05",
       "I01-W06",
       "I01-W07",
-      "I01-W08"
+      "I01-W08",
+      "CP02-W01"
     ],
     "iteration": "I02",
-    "next_wave": "CP02-W01",
-    "next_wave_name": "Canonical contract schemas",
+    "next_wave": "CP02-W02",
+    "next_wave_name": "Cross-runtime bindings and compatibility",
     "parity_denominator_status": "GENERATED_UNVERIFIED",
-    "subcheckpoint": "I02.1"
+    "subcheckpoint": "I02.2"
   },
   "graph_planes": [
     {
@@ -147,7 +149,7 @@
   "planning": {
     "active_iteration_state": "iterations/02/STATE.json",
     "consciousness_act": "docs/ACTA_DE_CONSCIENCIA.md",
-    "first_executable_task": "CP02-001",
+    "first_executable_task": "CP02-002",
     "implementation_plan": "IMPLEMENTATION_PLAN.md",
     "next_actions": ".agentic/context/NEXT_ACTIONS.json",
     "regression": "docs/REGRESSION_2026-08-31.md",

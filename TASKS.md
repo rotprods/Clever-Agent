@@ -2,22 +2,13 @@
 
 Machine authority: `.agentic/context/NEXT_ACTIONS.json`.
 
-## CP01 — COMPLETE
+## CP02
 
-- [x] W03 behavioral surfaces
-- [x] W04 capability denominator
-- [x] W05 baseline classification
-- [x] W06 supply-chain/license inventory
-- [x] W07 capability graph + COS20D gauntlet
-- [x] W08 release candidate + CP02 requirements
-
-## CP02 — ACTIVE
-
-- [ ] **CP02-001 / CP02-W01 — Canonical schema contracts.**
-- [ ] **CP02-002 / CP02-W02 — Cross-runtime fixtures/bindings + round-trip/version-skew tests.**
-- [ ] **CP02-003 / CP02-W03 — Rust kernel identity/event/capability/policy scaffold.**
-- [ ] **CP02-004 / CP02-W04 — Action receipts/idempotency/lifecycle/audit.**
-- [ ] **CP02-005 / CP02-W05 — Security/recovery/version-skew gauntlet.**
-- [ ] **CP02-006 / CP02-W06 — Reconcile and close CP02.**
+- [x] **CP02-001 / CP02-W01 — Compile versioned identity/event/capability/policy/action/memory/health/trace contracts from CP01 graph evidence.** Status: `COMPLETE`.
+- [ ] **CP02-002 / CP02-W02 — Create cross-runtime canonical fixtures/binding strategy and round-trip/version-skew tests.** Status: `READY`.
+- [ ] **CP02-003 / CP02-W03 — Scaffold Rust kernel identity/event/capability/policy primitives behind canonical contracts.** Status: `BLOCKED`.
+- [ ] **CP02-004 / CP02-W04 — Implement action receipts/idempotency, lifecycle health and append-only audit primitives.** Status: `BLOCKED`.
+- [ ] **CP02-005 / CP02-W05 — Run contract/kernel security, malformed-input, version-skew and recovery gauntlet.** Status: `BLOCKED`.
+- [ ] **CP02-006 / CP02-W06 — Reconcile CP02 evidence and advance to CP03 only if checkpoint exit criteria pass.** Status: `BLOCKED`.
 
 No native upstream implementation is removed in CP02.
