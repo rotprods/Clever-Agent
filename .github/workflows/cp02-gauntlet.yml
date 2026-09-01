@@ -6,9 +6,12 @@ on:
       - wave/cp02/canonical-contracts-kernel
     paths:
       - 'contracts/jsonschema/common.schema.json'
+      - 'contracts/generated_manifest.json'
       - 'scripts/contracts/validate_manifest.py'
+      - 'scripts/contracts/generated_manifest.py'
       - 'kernel/**'
       - 'tests/test_cp02_gauntlet.py'
+      - 'tests/test_generated_manifest.py'
       - 'scripts/cp02/**'
       - '.github/workflows/cp02-gauntlet.yml'
   workflow_dispatch:
@@ -44,6 +47,7 @@ jobs:
           python -m scripts.contracts.validate_fixtures
           python -m unittest discover -s tests -p 'test_contract_versioning.py' -v
           python -m unittest discover -s tests -p 'test_cp02_gauntlet.py' -v
+          python -m unittest discover -s tests -p 'test_generated_manifest.py' -v
           buf format -d --exit-code
           buf lint
           buf build -o /tmp/clever-contracts.binpb
@@ -67,7 +71,7 @@ jobs:
             --next-wave-name 'CP02 release reconciliation and CP03 handoff' \
             --next-subcheckpoint I02.6 \
             --evidence-id EVID-0011 \
-            --evidence-claim 'CP02 contracts and kernel withstand unknown-major malformed-identity self-escalation R4 policy replay idempotency receipt lifecycle false-green health audit-tamper and cross-user-memory adversarial cases.' \
+            --evidence-claim 'CP02 contracts and kernel withstand unknown-major malformed-identity self-escalation R4 policy replay idempotency receipt lifecycle false-green health audit-tamper cross-user-memory and transient-generated-artifact adversarial cases.' \
             --run-id "$GITHUB_RUN_ID" \
             --head-sha "$SOURCE_SHA"
       - name: Validate post-transition state

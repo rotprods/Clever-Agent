@@ -1,0 +1,52 @@
+name: CP02 Generated Manifest Repair
+
+on:
+  push:
+    branches:
+      - wave/cp02/canonical-contracts-kernel
+    paths:
+      - 'scripts/contracts/generated_manifest.py'
+      - 'tests/test_generated_manifest.py'
+      - '.github/workflows/cp02-generated-manifest-repair.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prove transient-filter contract
+        run: python -m unittest discover -s tests -p 'test_generated_manifest.py' -v
+      - name: Rebuild canonical generated manifest
+        run: python -m scripts.contracts.generated_manifest
+      - name: Assert repair touches manifest only
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only)"
+          test "$changed" = 'contracts/generated_manifest.json'
+          python -m scripts.contracts.generated_manifest --check
+          grep -q '__pycache__' contracts/generated_manifest.json && exit 1 || true
+          grep -q '\.pyc"' contracts/generated_manifest.json && exit 1 || true
+      - name: Persist deterministic manifest repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_head="$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)"
+          test "$remote_head" = "$SOURCE_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add contracts/generated_manifest.json
+          git commit -m 'fix(cp02): exclude transient caches from generated manifest'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
