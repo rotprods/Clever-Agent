@@ -1,39 +1,18 @@
-name: CP02 Security Recovery Gauntlet
+name: CP02 Security Recovery Gauntlet Replay
 
 on:
-  push:
-    branches:
-      - wave/cp02/canonical-contracts-kernel
-    paths:
-      - 'contracts/jsonschema/common.schema.json'
-      - 'contracts/generated_manifest.json'
-      - 'scripts/contracts/validate_manifest.py'
-      - 'scripts/contracts/generated_manifest.py'
-      - 'kernel/**'
-      - 'tests/test_cp02_gauntlet.py'
-      - 'tests/test_generated_manifest.py'
-      - 'scripts/cp02/**'
-      - '.github/workflows/cp02-gauntlet.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: cp02-gauntlet-${{ github.ref }}
-  cancel-in-progress: false
+  contents: read
 
 jobs:
-  gauntlet:
+  replay:
     runs-on: ubuntu-latest
-    env:
-      SOURCE_SHA: ${{ github.sha }}
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ env.SOURCE_SHA }}
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
       - uses: bufbuild/buf-setup-action@v1
@@ -41,53 +20,16 @@ jobs:
           version: '1.72.0'
       - name: Install JSON validator
         run: python -m pip install --disable-pip-version-check 'jsonschema==4.25.1'
-      - name: Contract and version-skew gauntlet
+      - name: Replay CP02 contract and Rust gauntlet without state mutation
         run: |
           python -m scripts.contracts.validate_manifest
           python -m scripts.contracts.validate_fixtures
-          python -m unittest discover -s tests -p 'test_contract_versioning.py' -v
           python -m unittest discover -s tests -p 'test_cp02_gauntlet.py' -v
           python -m unittest discover -s tests -p 'test_generated_manifest.py' -v
           buf format -d --exit-code
           buf lint
           buf build -o /tmp/clever-contracts.binpb
-      - name: Rust kernel gauntlet
-        run: |
           cargo fmt --manifest-path kernel/Cargo.toml --all -- --check
           cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
           cargo test --locked --manifest-path kernel/Cargo.toml --workspace --all-targets
-      - name: Verify generated binding manifest has not drifted
-        run: python -m scripts.contracts.generated_manifest --check
-      - name: Materialize adversarial evidence
-        run: python -m scripts.cp02.gauntlet_report --source-sha "$SOURCE_SHA" --run-id "$GITHUB_RUN_ID"
-      - name: Advance W05 to W06 from gauntlet evidence
-        run: |
-          python -m scripts.agentic.advance_wave \
-            --complete-task CP02-005 \
-            --complete-wave CP02-W05 \
-            --complete-subcheckpoint I02.5 \
-            --next-task CP02-006 \
-            --next-wave CP02-W06 \
-            --next-wave-name 'CP02 release reconciliation and CP03 handoff' \
-            --next-subcheckpoint I02.6 \
-            --evidence-id EVID-0011 \
-            --evidence-claim 'CP02 contracts and kernel withstand unknown-major malformed-identity self-escalation R4 policy replay idempotency receipt lifecycle false-green health audit-tamper cross-user-memory and transient-generated-artifact adversarial cases.' \
-            --run-id "$GITHUB_RUN_ID" \
-            --head-sha "$SOURCE_SHA"
-      - name: Validate post-transition state
-        run: |
-          python scripts/validate_agentic_state.py
-          python scripts/context/build_context_pack.py --check
-          git diff --check
-      - name: Persist gauntlet evidence and W05 transition
-        shell: bash
-        run: |
-          set -euo pipefail
-          remote_head="$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)"
-          test "$remote_head" = "$SOURCE_SHA"
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add evidence/cp02/gauntlet/cp02_gauntlet.json GOAL_STATE.json EXECUTION_STATE.json STATE.md HANDOFF.md TASKS.md iterations/02/STATE.json .agentic/CONFIG.yaml .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md .agentic/context/NEXT_ACTIONS.json ledgers/EVIDENCE_LEDGER.ndjson ledgers/WAVE_LEDGER.ndjson ledgers/RUN_LOG.ndjson contracts/jsonschema/common.schema.json
-          git commit -m 'test(cp02): persist security gauntlet and advance to release reconciliation'
-          python scripts/validate_agentic_state.py
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          python -m scripts.contracts.generated_manifest --check

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "iteration_id": "I03",
+  "goal_id": "CLEVER-JARVIS-001",
+  "checkpoint_id": "CP03",
+  "name": "OpenJarvis Cognitive Adapter",
+  "status": "PENDING",
+  "completed_subcheckpoints": [],
+  "active_subcheckpoint": "I03.0",
+  "next_wave": "CP03-W00",
+  "next_wave_name": "Hermetic OpenJarvis baseline",
+  "blocking_issues": [],
+  "parity_denominator_status": "GENERATED_UNVERIFIED",
+  "last_updated_date": "2026-09-01"
+}

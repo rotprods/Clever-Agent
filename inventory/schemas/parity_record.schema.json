@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://clever-agent.local/schemas/parity_record.schema.json",
+  "title": "Clever parity ledger record",
+  "type": "object",
+  "required": ["schema_version", "capability_id", "state", "upstream_commit"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "capability_id": {"type": "string", "pattern": "^cap_[0-9a-f]{24}$"},
+    "state": {"enum": ["MAPPED", "IMPLEMENTED", "TESTED", "VERIFIED", "BLOCKED", "OUT_OF_SCOPE_WITH_WAIVER", "UPSTREAM_DEAD"]},
+    "upstream_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "adapter_mapping": {"type": "string", "minLength": 1},
+    "canonical_contract": {"type": "string", "minLength": 1},
+    "parity_test_id": {"type": "string", "minLength": 1},
+    "test_result": {"type": "string", "minLength": 1},
+    "evidence_id": {"type": "string", "minLength": 1},
+    "availability_semantics": {"type": "string", "minLength": 1},
+    "degradation_semantics": {"type": "string", "minLength": 1},
+    "platform": {"type": "string", "minLength": 1},
+    "observed_at": {"type": "string", "minLength": 1},
+    "reason": {"type": "string"},
+    "waiver_id": {"type": "string"}
+  },
+  "additionalProperties": true
+}
