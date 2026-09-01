@@ -1,17 +1,18 @@
 {
-  "active_subcheckpoint": "I02.2",
+  "active_subcheckpoint": "I02.3",
   "blocking_issues": [],
   "checkpoint_id": "CP02",
   "completed_subcheckpoints": [
     "I02.0",
-    "I02.1"
+    "I02.1",
+    "I02.2"
   ],
   "goal_id": "CLEVER-JARVIS-001",
   "iteration_id": "I02",
   "last_updated_date": "2026-09-01",
   "name": "Canonical Contracts + Rust Kernel Scaffold",
-  "next_wave": "CP02-W02",
-  "next_wave_name": "Cross-runtime bindings and compatibility",
+  "next_wave": "CP02-W03",
+  "next_wave_name": "Rust kernel identity event capability policy scaffold",
   "parity_denominator_status": "GENERATED_UNVERIFIED",
   "schema_version": 1,
   "status": "IN_PROGRESS"

@@ -1,6 +1,6 @@
 {
   "active_iteration": "I02",
-  "active_subcheckpoint": "I02.2",
+  "active_subcheckpoint": "I02.3",
   "blocking_issues": [],
   "branch": "main",
   "completed_waves": [
@@ -13,7 +13,8 @@
     "I01-W06",
     "I01-W07",
     "I01-W08",
-    "CP02-W01"
+    "CP02-W01",
+    "CP02-W02"
   ],
   "current_checkpoint": "CP02",
   "goal_id": "CLEVER-JARVIS-001",
@@ -21,8 +22,8 @@
   "mandatory_boot_command": "/empezarproyecto",
   "mode": "canonical-contracts",
   "next_checkpoint": "CP03",
-  "next_wave": "CP02-W02",
-  "next_wave_name": "Cross-runtime bindings and compatibility",
+  "next_wave": "CP02-W03",
+  "next_wave_name": "Rust kernel identity event capability policy scaffold",
   "required_next_outputs": [
     "versioned canonical Protobuf and JSON Schema contracts",
     "canonical cross-runtime fixtures",

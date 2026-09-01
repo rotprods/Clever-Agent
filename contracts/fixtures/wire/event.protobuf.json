@@ -1,0 +1,25 @@
+{
+  "causationId": "root_cross_runtime",
+  "classification": "DATA_CLASSIFICATION_INTERNAL",
+  "contractVersion": {
+    "major": 1
+  },
+  "correlationId": "corr_cross_runtime",
+  "eventType": "contract.cross_runtime",
+  "goalId": "goal_demo",
+  "messageId": "evt_cross_runtime",
+  "payload": {
+    "contentType": "application/json",
+    "data": "e30=",
+    "schemaUri": "clever://fixtures/cross-runtime/v1"
+  },
+  "principal": {
+    "deviceId": "device_demo",
+    "userId": "user_demo"
+  },
+  "producer": {
+    "adapterId": "cp02",
+    "runtimeId": "contract-fixture"
+  },
+  "sessionId": "ses_demo"
+}

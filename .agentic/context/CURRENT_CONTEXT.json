@@ -45,7 +45,8 @@
     "EVID-0004",
     "EVID-0005",
     "EVID-0006",
-    "EVID-0007"
+    "EVID-0007",
+    "EVID-0008"
   ],
   "frontier": {
     "blocking_issues": [],
@@ -60,13 +61,14 @@
       "I01-W06",
       "I01-W07",
       "I01-W08",
-      "CP02-W01"
+      "CP02-W01",
+      "CP02-W02"
     ],
     "iteration": "I02",
-    "next_wave": "CP02-W02",
-    "next_wave_name": "Cross-runtime bindings and compatibility",
+    "next_wave": "CP02-W03",
+    "next_wave_name": "Rust kernel identity event capability policy scaffold",
     "parity_denominator_status": "GENERATED_UNVERIFIED",
-    "subcheckpoint": "I02.2"
+    "subcheckpoint": "I02.3"
   },
   "graph_planes": [
     {
@@ -149,7 +151,7 @@
   "planning": {
     "active_iteration_state": "iterations/02/STATE.json",
     "consciousness_act": "docs/ACTA_DE_CONSCIENCIA.md",
-    "first_executable_task": "CP02-002",
+    "first_executable_task": "CP02-003",
     "implementation_plan": "IMPLEMENTATION_PLAN.md",
     "next_actions": ".agentic/context/NEXT_ACTIONS.json",
     "regression": "docs/REGRESSION_2026-08-31.md",

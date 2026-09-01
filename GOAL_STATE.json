@@ -1,7 +1,7 @@
 {
   "active_checkpoint": "CP02",
   "active_iteration": "I02",
-  "frontier": "Execute /empezarproyecto at CP02-W02 and execute CP02-002 before advancing the CP02 kernel frontier.",
+  "frontier": "Execute /empezarproyecto at CP02-W03 and execute CP02-003 before advancing the CP02 kernel frontier.",
   "goal_id": "CLEVER-JARVIS-001",
   "invariants_locked": true,
   "last_updated_date": "2026-09-01",
