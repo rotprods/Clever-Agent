@@ -60,3 +60,10 @@ pub fn validate_policy_decision(decision: &PolicyDecision) -> Result<(), KernelE
     }
     Ok(())
 }
+
+fn require_text(value: &str, field: &'static str) -> Result<(), KernelError> {
+    if value.trim().is_empty() {
+        return Err(KernelError::EmptyField(field));
+    }
+    Ok(())
+}
