@@ -8,7 +8,14 @@ pub enum KernelError {
     InvalidEnum { field: &'static str, value: i32 },
     DuplicateId { kind: &'static str, id: String },
     UnknownCapability(String),
+    UnknownAction(String),
     ReservedExtensionKey(String),
+    IdempotencyConflict(String),
+    PolicyDenied(String),
+    InvalidActionTransition { from: i32, to: i32 },
+    FalseGreenHealth(String),
+    InvalidRuntimeTransition { from: i32, to: i32 },
+    AuditIntegrity { sequence: u64 },
 }
 
 impl Display for KernelError {
@@ -27,11 +34,28 @@ impl Display for KernelError {
             }
             Self::DuplicateId { kind, id } => write!(formatter, "duplicate {kind} id: {id}"),
             Self::UnknownCapability(id) => write!(formatter, "unknown capability: {id}"),
+            Self::UnknownAction(id) => write!(formatter, "unknown action: {id}"),
             Self::ReservedExtensionKey(key) => {
                 write!(
                     formatter,
                     "extension metadata key is security-reserved: {key}"
                 )
+            }
+            Self::IdempotencyConflict(key) => {
+                write!(formatter, "idempotency key conflicts with prior action: {key}")
+            }
+            Self::PolicyDenied(reason) => write!(formatter, "policy did not authorize action: {reason}"),
+            Self::InvalidActionTransition { from, to } => {
+                write!(formatter, "invalid action receipt transition: {from} -> {to}")
+            }
+            Self::FalseGreenHealth(runtime) => {
+                write!(formatter, "runtime reported false-green READY health: {runtime}")
+            }
+            Self::InvalidRuntimeTransition { from, to } => {
+                write!(formatter, "invalid runtime health transition: {from} -> {to}")
+            }
+            Self::AuditIntegrity { sequence } => {
+                write!(formatter, "audit hash-chain integrity failure at sequence {sequence}")
             }
         }
     }

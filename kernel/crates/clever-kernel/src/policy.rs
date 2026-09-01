@@ -33,6 +33,33 @@ impl PolicyBroker for DenyByDefaultPolicyBroker {
     }
 }
 
+pub fn validate_policy_decision(decision: &PolicyDecision) -> Result<(), KernelError> {
+    validate_contract_version(decision.contract_version.as_ref())?;
+    require_text(&decision.decision_id, "policy.decision_id")?;
+    require_text(&decision.evaluation_id, "policy.evaluation_id")?;
+    let kind = PolicyDecisionKind::try_from(decision.decision).map_err(|_| KernelError::InvalidEnum {
+        field: "policy.decision",
+        value: decision.decision,
+    })?;
+    if kind == PolicyDecisionKind::Unspecified {
+        return Err(KernelError::InvalidEnum {
+            field: "policy.decision",
+            value: decision.decision,
+        });
+    }
+    let risk = RiskClass::try_from(decision.risk_class).map_err(|_| KernelError::InvalidEnum {
+        field: "policy.risk_class",
+        value: decision.risk_class,
+    })?;
+    if risk == RiskClass::Unspecified {
+        return Err(KernelError::InvalidEnum {
+            field: "policy.risk_class",
+            value: decision.risk_class,
+        });
+    }
+    Ok(())
+}
+
 fn require_text(value: &str, field: &'static str) -> Result<(), KernelError> {
     if value.trim().is_empty() {
         return Err(KernelError::EmptyField(field));

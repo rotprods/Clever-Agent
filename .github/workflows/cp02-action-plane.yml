@@ -1,0 +1,74 @@
+name: CP02 Action Lifecycle Audit
+
+on:
+  push:
+    branches:
+      - wave/cp02/canonical-contracts-kernel
+    paths:
+      - 'kernel/crates/clever-kernel/src/actions.rs'
+      - 'kernel/crates/clever-kernel/src/audit.rs'
+      - 'kernel/crates/clever-kernel/src/lifecycle.rs'
+      - 'kernel/crates/clever-kernel/src/policy.rs'
+      - 'kernel/crates/clever-kernel/src/error.rs'
+      - 'kernel/crates/clever-kernel/src/lib.rs'
+      - 'kernel/crates/clever-kernel/tests/action_plane.rs'
+      - 'kernel/crates/clever-kernel/Cargo.toml'
+      - '.github/workflows/cp02-action-plane.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cp02-action-plane-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  action-plane-gate:
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - name: Regenerate dependency lock
+        run: cargo generate-lockfile --manifest-path kernel/Cargo.toml
+      - name: Rust format and clippy
+        run: |
+          cargo fmt --manifest-path kernel/Cargo.toml --all -- --check
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+      - name: Kernel action/lifecycle/audit tests
+        run: cargo test --locked --manifest-path kernel/Cargo.toml --workspace --all-targets
+      - name: Advance W04 to W05 from action-plane evidence
+        run: |
+          python -m scripts.agentic.advance_wave \
+            --complete-task CP02-004 \
+            --complete-wave CP02-W04 \
+            --complete-subcheckpoint I02.4 \
+            --next-task CP02-005 \
+            --next-wave CP02-W05 \
+            --next-wave-name 'Contract kernel security recovery and version skew gauntlet' \
+            --next-subcheckpoint I02.5 \
+            --evidence-id EVID-0010 \
+            --evidence-claim 'Kernel action plane enforces policy allow decisions idempotency replay/conflict semantics valid receipt transitions tamper-evident audit chains and rejects false-green runtime health.' \
+            --run-id "$GITHUB_RUN_ID" \
+            --head-sha "$SOURCE_SHA"
+      - name: Validate post-transition state
+        run: |
+          python scripts/validate_agentic_state.py
+          python scripts/context/build_context_pack.py --check
+          git diff --check
+      - name: Persist lock and W04 transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_head="$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)"
+          test "$remote_head" = "$SOURCE_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add kernel/Cargo.lock GOAL_STATE.json EXECUTION_STATE.json STATE.md HANDOFF.md TASKS.md iterations/02/STATE.json .agentic/CONFIG.yaml .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md .agentic/context/NEXT_ACTIONS.json ledgers/EVIDENCE_LEDGER.ndjson ledgers/WAVE_LEDGER.ndjson ledgers/RUN_LOG.ndjson
+          git commit -m 'feat(cp02): persist action plane and advance to gauntlet'
+          python scripts/validate_agentic_state.py
+          git push origin "HEAD:${GITHUB_REF_NAME}"
