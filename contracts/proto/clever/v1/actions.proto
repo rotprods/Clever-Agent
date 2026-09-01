@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package clever.v1;
 
-import "google/protobuf/timestamp.proto";
 import "clever/v1/common.proto";
 import "clever/v1/identity.proto";
+import "google/protobuf/timestamp.proto";
 
 enum SideEffectClass {
   SIDE_EFFECT_CLASS_UNSPECIFIED = 0;

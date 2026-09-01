@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package clever.v1;
 
-import "google/protobuf/timestamp.proto";
 import "clever/v1/common.proto";
+import "google/protobuf/timestamp.proto";
 
 message PrincipalRef {
   string user_id = 1;
