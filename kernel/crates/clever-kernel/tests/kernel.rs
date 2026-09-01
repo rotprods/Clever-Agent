@@ -30,7 +30,10 @@ fn event(message_id: &str) -> EventEnvelope {
         message_id: message_id.into(),
         correlation_id: "corr_demo".into(),
         causation_id: "root_demo".into(),
-        occurred_at: None,
+        occurred_at: Some(prost_types::Timestamp {
+            seconds: 1,
+            nanos: 0,
+        }),
         producer: Some(RuntimeOwner {
             runtime_id: "clicky-macos".into(),
             adapter_id: "clicky".into(),
