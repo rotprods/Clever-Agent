@@ -1,4 +1,4 @@
-name: CP02 Codegen Probe
+name: CP02 Codegen Compatibility
 
 on:
   push:
@@ -7,36 +7,158 @@ on:
     paths:
       - 'buf.gen.yaml'
       - 'contracts/toolchain.lock.json'
+      - 'contracts/sdk/**/package.json'
+      - 'contracts/sdk/**/Package.swift'
+      - 'contracts/sdk/**/Cargo.toml'
+      - 'contracts/sdk/**/requirements.txt'
+      - 'contracts/sdk/**/test/**'
+      - 'contracts/sdk/**/Tests/**'
+      - 'contracts/sdk/rust/src/lib.rs'
+      - 'contracts/sdk/rust/tests/**'
+      - 'scripts/contracts/build_wire_fixture.py'
+      - 'scripts/contracts/generated_manifest.py'
+      - 'scripts/contracts/versioning.py'
+      - 'tests/test_contract_versioning.py'
       - '.github/workflows/cp02-codegen-probe.yml'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: cp02-codegen-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  generate:
+  generate-linux:
     runs-on: ubuntu-latest
+    env:
+      SOURCE_SHA: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - uses: bufbuild/buf-setup-action@v1
         with:
           version: '1.72.0'
-      - name: Generate all pinned language bindings
+      - name: Generate four pinned language bindings
         run: buf generate
-      - name: Assert four generated trees are non-empty
+      - name: Python wire producer and version-skew guard
+        run: |
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt
+          python -m scripts.contracts.build_wire_fixture
+          python -m unittest discover -s tests -p 'test_contract_versioning.py' -v
+      - name: TypeScript compile and wire round-trip
+        working-directory: contracts/sdk/typescript
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm run typecheck
+          npm test
+      - name: Rust compile and wire round-trip
+        run: |
+          cargo generate-lockfile --manifest-path contracts/sdk/rust/Cargo.toml
+          cargo test --locked --manifest-path contracts/sdk/rust/Cargo.toml
+      - name: Build generated manifest
+        run: python -m scripts.contracts.generated_manifest
+      - name: Upload generated SDK evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp02-generated-sdk-${{ github.sha }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            contracts/sdk/python/clever/
+            contracts/sdk/typescript/src/gen/
+            contracts/sdk/typescript/package-lock.json
+            contracts/sdk/rust/src/gen/
+            contracts/sdk/rust/Cargo.lock
+            contracts/sdk/swift/Sources/CleverContracts/Gen/
+            contracts/fixtures/wire/
+            contracts/generated_manifest.json
+
+  swift-compatibility:
+    needs: generate-linux
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: cp02-generated-sdk-${{ github.sha }}
+          path: contracts
+      - name: Swift compile and wire round-trip
+        run: swift test --package-path contracts/sdk/swift
+      - name: Upload Swift dependency lock
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp02-swift-lock-${{ github.sha }}
+          retention-days: 7
+          path: contracts/sdk/swift/Package.resolved
+
+  persist-w02:
+    needs: [generate-linux, swift-compatibility]
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: cp02-generated-sdk-${{ github.sha }}
+          path: contracts
+      - uses: actions/download-artifact@v4
+        with:
+          name: cp02-swift-lock-${{ github.sha }}
+          path: contracts/sdk/swift
+      - name: Verify generated artifact manifest
+        run: python -m scripts.contracts.generated_manifest --check
+      - name: Advance W02 to W03 from proven compatibility gate
+        run: |
+          python -m scripts.agentic.advance_wave \
+            --complete-task CP02-002 \
+            --complete-wave CP02-W02 \
+            --complete-subcheckpoint I02.2 \
+            --next-task CP02-003 \
+            --next-wave CP02-W03 \
+            --next-wave-name 'Rust kernel identity event capability policy scaffold' \
+            --next-subcheckpoint I02.3 \
+            --evidence-id EVID-0008 \
+            --evidence-claim 'Pinned Python TypeScript Swift and Rust bindings generate; all compile; one shared protobuf EventEnvelope wire fixture decodes and round-trips across all four runtimes; unknown contract major versions fail closed.' \
+            --run-id "$GITHUB_RUN_ID" \
+            --head-sha "$SOURCE_SHA"
+      - name: Validate post-transition state
+        run: |
+          python scripts/validate_agentic_state.py
+          python scripts/context/build_context_pack.py --check
+          git diff --check
+      - name: Commit generated bindings and state transition
         shell: bash
         run: |
           set -euo pipefail
-          for lang in python typescript swift rust; do
-            echo "=== $lang ==="
-            test -d "contracts/generated/$lang"
-            find "contracts/generated/$lang" -type f -print | sort
-            test "$(find "contracts/generated/$lang" -type f | wc -l)" -gt 0
-          done
-      - name: Upload generated binding probe
-        uses: actions/upload-artifact@v4
-        with:
-          name: cp02-codegen-probe-${{ github.sha }}
-          retention-days: 7
-          if-no-files-found: error
-          path: contracts/generated/
+          remote_head="$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)"
+          test "$remote_head" = "$SOURCE_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            contracts/sdk/python/clever contracts/sdk/typescript/src/gen contracts/sdk/typescript/package-lock.json \
+            contracts/sdk/rust/src/gen contracts/sdk/rust/Cargo.lock \
+            contracts/sdk/swift/Sources/CleverContracts/Gen contracts/sdk/swift/Package.resolved \
+            contracts/fixtures/wire contracts/generated_manifest.json \
+            GOAL_STATE.json EXECUTION_STATE.json STATE.md HANDOFF.md TASKS.md iterations/02/STATE.json .agentic/CONFIG.yaml \
+            .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md .agentic/context/NEXT_ACTIONS.json \
+            ledgers/EVIDENCE_LEDGER.ndjson ledgers/WAVE_LEDGER.ndjson ledgers/RUN_LOG.ndjson
+          git commit -m 'feat(cp02): persist polyglot bindings and advance to Rust kernel'
+          python scripts/validate_agentic_state.py
+          git push origin "HEAD:${GITHUB_REF_NAME}"
