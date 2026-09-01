@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -24,6 +23,7 @@ class Cp03BaselineTests(unittest.TestCase):
             "cap_drop_all": True,
             "no_new_privileges": True,
             "secrets_forwarded": False,
+            "pythonpath": "/src/src",
             "selected_tests": ["tests/core/test_events.py"],
             "marker_expression": "not live and not cloud and not hub",
         }
@@ -60,6 +60,14 @@ class Cp03BaselineTests(unittest.TestCase):
             junit(path, tests=0)
             report = build_report(junit=path, metadata=self.metadata(), exit_code=5)
             self.assertEqual("FAIL", report["status"])
+
+    def test_missing_junit_is_structured_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "missing.xml"
+            report = build_report(junit=path, metadata=self.metadata(), exit_code=4)
+            self.assertEqual("FAIL", report["status"])
+            self.assertEqual(0, report["results"]["tests"])
+            self.assertTrue(any("junit report is missing" in error for error in report["errors"]))
 
 
 if __name__ == "__main__":

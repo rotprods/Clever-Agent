@@ -7,7 +7,9 @@ on:
     paths:
       - 'scripts/cp03/baseline.py'
       - 'scripts/cp03/Dockerfile.baseline'
+      - 'scripts/agentic/advance.py'
       - 'tests/test_cp03_baseline.py'
+      - 'tests/test_agentic_claim_release.py'
       - '.github/workflows/cp03-w00-baseline.yml'
   workflow_dispatch:
 
@@ -34,10 +36,11 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
-      - name: Test baseline compiler before upstream execution
+      - name: Test baseline compiler and claim reconciler before upstream execution
         run: |
-          python -m compileall -q scripts/cp03 tests/test_cp03_baseline.py
+          python -m compileall -q scripts/cp03 scripts/agentic tests/test_cp03_baseline.py tests/test_agentic_claim_release.py
           python -m unittest discover -s tests -p 'test_cp03_baseline.py' -v
+          python -m unittest discover -s tests -p 'test_agentic_claim_release.py' -v
           python -m scripts.parity.ledger --check --source-repo openjarvis
       - name: Acquire exact pinned OpenJarvis source
         shell: bash
@@ -74,7 +77,6 @@ jobs:
           test -s /tmp/selected-tests
           cat /tmp/selected-tests
       - name: Execute upstream tests with network and host privileges removed
-        id: upstream
         shell: bash
         run: |
           set -euo pipefail
@@ -95,6 +97,8 @@ jobs:
             -e XDG_CONFIG_HOME=/tmp/config \
             -e XDG_DATA_HOME=/tmp/data \
             -e PYTHONHASHSEED=0 \
+            -e PYTHONPATH=/src/src \
+            -e MARKERS="$MARKERS" \
             "clever-openjarvis-baseline:$SOURCE_SHA" \
             'mkdir -p "$HOME" "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" && /src/.venv/bin/python -m pytest "$@" -p no:cacheprovider -q --tb=short -m "$MARKERS" --junitxml=/evidence/junit.xml' sh "${selected[@]}"
           rc=$?
@@ -118,6 +122,7 @@ jobs:
               'cap_drop_all': True,
               'no_new_privileges': True,
               'secrets_forwarded': False,
+              'pythonpath': '/src/src',
               'selected_tests': Path('evidence/cp03/baseline/selected-tests.txt').read_text().splitlines(),
               'marker_expression': os.environ['MARKERS'],
           }
@@ -139,6 +144,15 @@ jobs:
           python scripts/context/build_context_pack.py --check
           python scripts/context/validate_next_actions.py
           python -m scripts.parity.ledger --check --source-repo openjarvis
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          latest={}
+          for raw in Path('ledgers/CLAIM_LEDGER.ndjson').read_text().splitlines():
+              if raw.strip():
+                  row=json.loads(raw); latest[row['claim_id']]=row
+          assert not any(row.get('wave_id') == 'CP03-W00' and row.get('status') == 'ACTIVE' for row in latest.values())
+          PY
           git diff --check
       - name: Upload W00 evidence whether pass or fail
         if: always()
@@ -162,6 +176,6 @@ jobs:
           git add evidence/cp03/baseline reports/cp03/OPENJARVIS_BASELINE.* reports/cp03/OPENJARVIS_PLATFORM_GAPS.json \
             GOAL_STATE.json EXECUTION_STATE.json STATE.md HANDOFF.md TASKS.md iterations/03/STATE.json \
             .agentic/CONFIG.yaml .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md .agentic/context/NEXT_ACTIONS.json \
-            ledgers/EVIDENCE_LEDGER.ndjson ledgers/WAVE_LEDGER.ndjson ledgers/RUN_LOG.ndjson
+            ledgers/EVIDENCE_LEDGER.ndjson ledgers/WAVE_LEDGER.ndjson ledgers/RUN_LOG.ndjson ledgers/CLAIM_LEDGER.ndjson
           git commit -m 'test(cp03): persist hermetic OpenJarvis baseline and open W01'
           git push origin "HEAD:${GITHUB_REF_NAME}"

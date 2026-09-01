@@ -23,6 +23,14 @@ GATED_MARKERS = {
     "modal": "REMOTE_CREDENTIAL_GATED",
 }
 
+ZERO_RESULTS: dict[str, int | float] = {
+    "tests": 0,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "time_seconds": 0.0,
+}
+
 
 def _int(value: str | None) -> int:
     return int(value or 0)
@@ -31,7 +39,7 @@ def _int(value: str | None) -> int:
 def parse_junit(path: Path) -> dict[str, Any]:
     root = ET.parse(path).getroot()
     suites = [root] if root.tag == "testsuite" else list(root.findall("testsuite"))
-    totals = {"tests": 0, "failures": 0, "errors": 0, "skipped": 0, "time_seconds": 0.0}
+    totals: dict[str, Any] = dict(ZERO_RESULTS)
     for suite in suites:
         totals["tests"] += _int(suite.get("tests"))
         totals["failures"] += _int(suite.get("failures"))
@@ -42,8 +50,17 @@ def parse_junit(path: Path) -> dict[str, Any]:
 
 
 def build_report(*, junit: Path, metadata: dict[str, Any], exit_code: int) -> dict[str, Any]:
-    results = parse_junit(junit)
     errors: list[str] = []
+    if junit.is_file():
+        try:
+            results = parse_junit(junit)
+        except (ET.ParseError, OSError, ValueError) as exc:
+            results = dict(ZERO_RESULTS)
+            errors.append(f"junit report is invalid: {exc}")
+    else:
+        results = dict(ZERO_RESULTS)
+        errors.append("junit report is missing; pytest did not reach report generation")
+
     if metadata.get("source_commit") != PIN:
         errors.append("upstream pin mismatch")
     if metadata.get("network_mode") != "none":
@@ -75,6 +92,7 @@ def build_report(*, junit: Path, metadata: dict[str, Any], exit_code: int) -> di
             "cap_drop_all": bool(metadata.get("cap_drop_all")),
             "no_new_privileges": bool(metadata.get("no_new_privileges")),
             "secrets_forwarded": bool(metadata.get("secrets_forwarded")),
+            "pythonpath": metadata.get("pythonpath", ""),
             "selected_tests": selected,
             "marker_expression": metadata.get("marker_expression", ""),
             "exit_code": exit_code,
