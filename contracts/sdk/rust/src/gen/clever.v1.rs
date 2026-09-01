@@ -284,6 +284,299 @@ impl ActionReceiptStatus {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RuntimeDescriptor {
+    #[prost(message, optional, tag="1")]
+    pub contract_version: ::core::option::Option<ContractVersion>,
+    #[prost(string, tag="2")]
+    pub runtime_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub runtime_kind: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub implementation_version: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub process_id: ::prost::alloc::string::String,
+    #[prost(string, tag="6")]
+    pub device_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag="7")]
+    pub capability_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(message, repeated, tag="8")]
+    pub platform_constraints: ::prost::alloc::vec::Vec<PlatformConstraint>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RuntimeHealth {
+    #[prost(message, optional, tag="1")]
+    pub contract_version: ::core::option::Option<ContractVersion>,
+    #[prost(string, tag="2")]
+    pub runtime_id: ::prost::alloc::string::String,
+    #[prost(enumeration="RuntimeHealthStatus", tag="3")]
+    pub status: i32,
+    #[prost(string, repeated, tag="4")]
+    pub degradation_reasons: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(message, optional, tag="5")]
+    pub observed_at: ::core::option::Option<::prost_types::Timestamp>,
+    #[prost(uint64, tag="6")]
+    pub dropped_event_count: u64,
+    #[prost(uint64, tag="7")]
+    pub failed_action_count: u64,
+    #[prost(string, tag="8")]
+    pub recovery_hint: ::prost::alloc::string::String,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum RuntimeHealthStatus {
+    Unspecified = 0,
+    Starting = 1,
+    Ready = 2,
+    Degraded = 3,
+    Unavailable = 4,
+    Stopping = 5,
+}
+impl RuntimeHealthStatus {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            RuntimeHealthStatus::Unspecified => "RUNTIME_HEALTH_STATUS_UNSPECIFIED",
+            RuntimeHealthStatus::Starting => "RUNTIME_HEALTH_STATUS_STARTING",
+            RuntimeHealthStatus::Ready => "RUNTIME_HEALTH_STATUS_READY",
+            RuntimeHealthStatus::Degraded => "RUNTIME_HEALTH_STATUS_DEGRADED",
+            RuntimeHealthStatus::Unavailable => "RUNTIME_HEALTH_STATUS_UNAVAILABLE",
+            RuntimeHealthStatus::Stopping => "RUNTIME_HEALTH_STATUS_STOPPING",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "RUNTIME_HEALTH_STATUS_UNSPECIFIED" => Some(Self::Unspecified),
+            "RUNTIME_HEALTH_STATUS_STARTING" => Some(Self::Starting),
+            "RUNTIME_HEALTH_STATUS_READY" => Some(Self::Ready),
+            "RUNTIME_HEALTH_STATUS_DEGRADED" => Some(Self::Degraded),
+            "RUNTIME_HEALTH_STATUS_UNAVAILABLE" => Some(Self::Unavailable),
+            "RUNTIME_HEALTH_STATUS_STOPPING" => Some(Self::Stopping),
+            _ => None,
+        }
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdapterHello {
+    #[prost(message, optional, tag="1")]
+    pub contract_version: ::core::option::Option<ContractVersion>,
+    #[prost(string, tag="2")]
+    pub adapter_id: ::prost::alloc::string::String,
+    #[prost(message, optional, tag="3")]
+    pub runtime: ::core::option::Option<RuntimeDescriptor>,
+    #[prost(string, tag="4")]
+    pub upstream_repository: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub upstream_commit: ::prost::alloc::string::String,
+    #[prost(uint64, tag="6")]
+    pub max_frame_bytes: u64,
+    #[prost(string, repeated, tag="7")]
+    pub supported_features: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdapterHelloAck {
+    #[prost(message, optional, tag="1")]
+    pub contract_version: ::core::option::Option<ContractVersion>,
+    #[prost(string, tag="2")]
+    pub adapter_id: ::prost::alloc::string::String,
+    #[prost(bool, tag="3")]
+    pub accepted: bool,
+    #[prost(string, tag="4")]
+    pub reason: ::prost::alloc::string::String,
+    #[prost(uint64, tag="5")]
+    pub max_frame_bytes: u64,
+    #[prost(string, repeated, tag="6")]
+    pub negotiated_features: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct RegistrySnapshotRequest {
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NativeRegistryEntry {
+    #[prost(enumeration="RegistryPrimitive", tag="1")]
+    pub primitive: i32,
+    #[prost(string, tag="2")]
+    pub key: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub implementation: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub native_type: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag="5")]
+    pub platform_constraints: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(map="string, string", tag="6")]
+    pub metadata: ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RegistrySnapshot {
+    #[prost(string, tag="1")]
+    pub runtime_id: ::prost::alloc::string::String,
+    #[prost(message, repeated, tag="2")]
+    pub entries: ::prost::alloc::vec::Vec<NativeRegistryEntry>,
+    #[prost(message, optional, tag="3")]
+    pub observed_at: ::core::option::Option<::prost_types::Timestamp>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct AdapterHealthRequest {
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdapterCancel {
+    #[prost(string, tag="1")]
+    pub target_request_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub reason: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdapterShutdown {
+    #[prost(string, tag="1")]
+    pub reason: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdapterBusy {
+    #[prost(uint64, tag="1")]
+    pub retry_after_ms: u64,
+    #[prost(string, tag="2")]
+    pub reason: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdapterError {
+    #[prost(string, tag="1")]
+    pub code: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub message: ::prost::alloc::string::String,
+    #[prost(bool, tag="3")]
+    pub retryable: bool,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdapterFrame {
+    #[prost(message, optional, tag="1")]
+    pub contract_version: ::core::option::Option<ContractVersion>,
+    #[prost(string, tag="2")]
+    pub frame_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub correlation_id: ::prost::alloc::string::String,
+    #[prost(message, optional, tag="4")]
+    pub sent_at: ::core::option::Option<::prost_types::Timestamp>,
+    #[prost(message, optional, tag="5")]
+    pub deadline_at: ::core::option::Option<::prost_types::Timestamp>,
+    #[prost(oneof="adapter_frame::Body", tags="10, 11, 12, 13, 14, 15, 16, 17, 18, 19")]
+    pub body: ::core::option::Option<adapter_frame::Body>,
+}
+/// Nested message and enum types in `AdapterFrame`.
+pub mod adapter_frame {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Body {
+        #[prost(message, tag="10")]
+        Hello(super::AdapterHello),
+        #[prost(message, tag="11")]
+        HelloAck(super::AdapterHelloAck),
+        #[prost(message, tag="12")]
+        RegistrySnapshotRequest(super::RegistrySnapshotRequest),
+        #[prost(message, tag="13")]
+        RegistrySnapshot(super::RegistrySnapshot),
+        #[prost(message, tag="14")]
+        HealthRequest(super::AdapterHealthRequest),
+        #[prost(message, tag="15")]
+        Health(super::RuntimeHealth),
+        #[prost(message, tag="16")]
+        Cancel(super::AdapterCancel),
+        #[prost(message, tag="17")]
+        Shutdown(super::AdapterShutdown),
+        #[prost(message, tag="18")]
+        Busy(super::AdapterBusy),
+        #[prost(message, tag="19")]
+        Error(super::AdapterError),
+    }
+}
+/// Adapter transport is control-plane plumbing, not a source of authorization.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum RegistryPrimitive {
+    Unspecified = 0,
+    Model = 1,
+    Engine = 2,
+    Memory = 3,
+    FactStore = 4,
+    Agent = 5,
+    Tool = 6,
+    RouterPolicy = 7,
+    Benchmark = 8,
+    Channel = 9,
+    Learning = 10,
+    Skill = 11,
+    Speech = 12,
+    Compression = 13,
+    Tts = 14,
+    Connector = 15,
+    Miner = 16,
+}
+impl RegistryPrimitive {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            RegistryPrimitive::Unspecified => "REGISTRY_PRIMITIVE_UNSPECIFIED",
+            RegistryPrimitive::Model => "REGISTRY_PRIMITIVE_MODEL",
+            RegistryPrimitive::Engine => "REGISTRY_PRIMITIVE_ENGINE",
+            RegistryPrimitive::Memory => "REGISTRY_PRIMITIVE_MEMORY",
+            RegistryPrimitive::FactStore => "REGISTRY_PRIMITIVE_FACT_STORE",
+            RegistryPrimitive::Agent => "REGISTRY_PRIMITIVE_AGENT",
+            RegistryPrimitive::Tool => "REGISTRY_PRIMITIVE_TOOL",
+            RegistryPrimitive::RouterPolicy => "REGISTRY_PRIMITIVE_ROUTER_POLICY",
+            RegistryPrimitive::Benchmark => "REGISTRY_PRIMITIVE_BENCHMARK",
+            RegistryPrimitive::Channel => "REGISTRY_PRIMITIVE_CHANNEL",
+            RegistryPrimitive::Learning => "REGISTRY_PRIMITIVE_LEARNING",
+            RegistryPrimitive::Skill => "REGISTRY_PRIMITIVE_SKILL",
+            RegistryPrimitive::Speech => "REGISTRY_PRIMITIVE_SPEECH",
+            RegistryPrimitive::Compression => "REGISTRY_PRIMITIVE_COMPRESSION",
+            RegistryPrimitive::Tts => "REGISTRY_PRIMITIVE_TTS",
+            RegistryPrimitive::Connector => "REGISTRY_PRIMITIVE_CONNECTOR",
+            RegistryPrimitive::Miner => "REGISTRY_PRIMITIVE_MINER",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "REGISTRY_PRIMITIVE_UNSPECIFIED" => Some(Self::Unspecified),
+            "REGISTRY_PRIMITIVE_MODEL" => Some(Self::Model),
+            "REGISTRY_PRIMITIVE_ENGINE" => Some(Self::Engine),
+            "REGISTRY_PRIMITIVE_MEMORY" => Some(Self::Memory),
+            "REGISTRY_PRIMITIVE_FACT_STORE" => Some(Self::FactStore),
+            "REGISTRY_PRIMITIVE_AGENT" => Some(Self::Agent),
+            "REGISTRY_PRIMITIVE_TOOL" => Some(Self::Tool),
+            "REGISTRY_PRIMITIVE_ROUTER_POLICY" => Some(Self::RouterPolicy),
+            "REGISTRY_PRIMITIVE_BENCHMARK" => Some(Self::Benchmark),
+            "REGISTRY_PRIMITIVE_CHANNEL" => Some(Self::Channel),
+            "REGISTRY_PRIMITIVE_LEARNING" => Some(Self::Learning),
+            "REGISTRY_PRIMITIVE_SKILL" => Some(Self::Skill),
+            "REGISTRY_PRIMITIVE_SPEECH" => Some(Self::Speech),
+            "REGISTRY_PRIMITIVE_COMPRESSION" => Some(Self::Compression),
+            "REGISTRY_PRIMITIVE_TTS" => Some(Self::Tts),
+            "REGISTRY_PRIMITIVE_CONNECTOR" => Some(Self::Connector),
+            "REGISTRY_PRIMITIVE_MINER" => Some(Self::Miner),
+            _ => None,
+        }
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PermissionRequirement {
     #[prost(string, tag="1")]
     pub permission: ::prost::alloc::string::String,
@@ -751,84 +1044,6 @@ impl PolicyDecisionKind {
             "POLICY_DECISION_KIND_ALLOW" => Some(Self::Allow),
             "POLICY_DECISION_KIND_DENY" => Some(Self::Deny),
             "POLICY_DECISION_KIND_REQUIRE_CONFIRMATION" => Some(Self::RequireConfirmation),
-            _ => None,
-        }
-    }
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct RuntimeDescriptor {
-    #[prost(message, optional, tag="1")]
-    pub contract_version: ::core::option::Option<ContractVersion>,
-    #[prost(string, tag="2")]
-    pub runtime_id: ::prost::alloc::string::String,
-    #[prost(string, tag="3")]
-    pub runtime_kind: ::prost::alloc::string::String,
-    #[prost(string, tag="4")]
-    pub implementation_version: ::prost::alloc::string::String,
-    #[prost(string, tag="5")]
-    pub process_id: ::prost::alloc::string::String,
-    #[prost(string, tag="6")]
-    pub device_id: ::prost::alloc::string::String,
-    #[prost(string, repeated, tag="7")]
-    pub capability_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    #[prost(message, repeated, tag="8")]
-    pub platform_constraints: ::prost::alloc::vec::Vec<PlatformConstraint>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct RuntimeHealth {
-    #[prost(message, optional, tag="1")]
-    pub contract_version: ::core::option::Option<ContractVersion>,
-    #[prost(string, tag="2")]
-    pub runtime_id: ::prost::alloc::string::String,
-    #[prost(enumeration="RuntimeHealthStatus", tag="3")]
-    pub status: i32,
-    #[prost(string, repeated, tag="4")]
-    pub degradation_reasons: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    #[prost(message, optional, tag="5")]
-    pub observed_at: ::core::option::Option<::prost_types::Timestamp>,
-    #[prost(uint64, tag="6")]
-    pub dropped_event_count: u64,
-    #[prost(uint64, tag="7")]
-    pub failed_action_count: u64,
-    #[prost(string, tag="8")]
-    pub recovery_hint: ::prost::alloc::string::String,
-}
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum RuntimeHealthStatus {
-    Unspecified = 0,
-    Starting = 1,
-    Ready = 2,
-    Degraded = 3,
-    Unavailable = 4,
-    Stopping = 5,
-}
-impl RuntimeHealthStatus {
-    /// String value of the enum field names used in the ProtoBuf definition.
-    ///
-    /// The values are not transformed in any way and thus are considered stable
-    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
-    pub fn as_str_name(&self) -> &'static str {
-        match self {
-            RuntimeHealthStatus::Unspecified => "RUNTIME_HEALTH_STATUS_UNSPECIFIED",
-            RuntimeHealthStatus::Starting => "RUNTIME_HEALTH_STATUS_STARTING",
-            RuntimeHealthStatus::Ready => "RUNTIME_HEALTH_STATUS_READY",
-            RuntimeHealthStatus::Degraded => "RUNTIME_HEALTH_STATUS_DEGRADED",
-            RuntimeHealthStatus::Unavailable => "RUNTIME_HEALTH_STATUS_UNAVAILABLE",
-            RuntimeHealthStatus::Stopping => "RUNTIME_HEALTH_STATUS_STOPPING",
-        }
-    }
-    /// Creates an enum from field names used in the ProtoBuf definition.
-    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
-        match value {
-            "RUNTIME_HEALTH_STATUS_UNSPECIFIED" => Some(Self::Unspecified),
-            "RUNTIME_HEALTH_STATUS_STARTING" => Some(Self::Starting),
-            "RUNTIME_HEALTH_STATUS_READY" => Some(Self::Ready),
-            "RUNTIME_HEALTH_STATUS_DEGRADED" => Some(Self::Degraded),
-            "RUNTIME_HEALTH_STATUS_UNAVAILABLE" => Some(Self::Unavailable),
-            "RUNTIME_HEALTH_STATUS_STOPPING" => Some(Self::Stopping),
             _ => None,
         }
     }
