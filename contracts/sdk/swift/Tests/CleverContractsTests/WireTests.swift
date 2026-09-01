@@ -14,3 +14,15 @@ import Testing
     let again = try Clever_V1_EventEnvelope(serializedBytes: encoded)
     #expect(again.messageID == event.messageID)
 }
+
+@Test func decodesAndRoundTripsAdapterHelloFixture() throws {
+    let packageRoot = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+    let fixture = packageRoot.appendingPathComponent("../../fixtures/wire/adapter-hello.bin").standardizedFileURL
+    let data = try Data(contentsOf: fixture)
+    let frame = try Clever_V1_AdapterFrame(serializedBytes: data)
+    #expect(frame.frameID == "frame_hello_openjarvis")
+    #expect(frame.correlationID == "corr_openjarvis_boot")
+    let encoded = try frame.serializedData()
+    let again = try Clever_V1_AdapterFrame(serializedBytes: encoded)
+    #expect(again.frameID == frame.frameID)
+}
