@@ -1,7 +1,7 @@
 version: v2
 clean: true
 plugins:
-  - remote: buf.build/protocolbuffers/python:v36.1
+  - remote: buf.build/protocolbuffers/python:v36.0
     out: contracts/generated/python
   - remote: buf.build/bufbuild/es:v2.14.0
     out: contracts/generated/typescript/src/gen
