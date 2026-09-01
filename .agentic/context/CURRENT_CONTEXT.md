@@ -35,6 +35,7 @@
 
 ## Active claims
 
+- `CLAIM-CP03-W01-001` → `CP03-W01` · `chatgpt-gpt-5.6-sol`
 
 ## Open / mitigating risks
 
