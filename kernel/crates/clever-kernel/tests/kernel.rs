@@ -90,7 +90,9 @@ fn event_router_rejects_unknown_major_and_duplicate_ids() {
     unsupported.contract_version = version(2);
     assert!(router.route(unsupported).is_err());
 
-    router.route(event("evt_one")).expect("first event should route");
+    router
+        .route(event("evt_one"))
+        .expect("first event should route");
     assert!(router.route(event("evt_one")).is_err());
     assert_eq!(router.len(), 1);
 }
@@ -98,19 +100,26 @@ fn event_router_rejects_unknown_major_and_duplicate_ids() {
 #[test]
 fn capability_registry_requires_typed_security_fields_and_rejects_reserved_metadata() {
     let mut registry = CapabilityRegistry::default();
-    registry.register(capability()).expect("valid capability should register");
+    registry
+        .register(capability())
+        .expect("valid capability should register");
     registry
         .set_availability("voice.ptt.transcribe", CapabilityAvailability::Available)
         .expect("availability should update");
     assert_eq!(registry.len(), 1);
     assert_eq!(
-        registry.get("voice.ptt.transcribe").expect("capability exists").availability,
+        registry
+            .get("voice.ptt.transcribe")
+            .expect("capability exists")
+            .availability,
         CapabilityAvailability::Available
     );
 
     let mut malicious = capability();
     malicious.capability_id = "malicious".into();
-    malicious.extension_metadata.insert("permission_override".into(), "root".into());
+    malicious
+        .extension_metadata
+        .insert("permission_override".into(), "root".into());
     assert!(registry.register(malicious).is_err());
 }
 
@@ -127,7 +136,9 @@ fn deny_by_default_policy_never_self_authorizes() {
         data_classification: DataClassification::Sensitive as i32,
         automation_grant_id: String::new(),
     };
-    let decision = broker.evaluate(&request).expect("request should evaluate safely");
+    let decision = broker
+        .evaluate(&request)
+        .expect("request should evaluate safely");
     assert_eq!(decision.decision, PolicyDecisionKind::Deny as i32);
     assert_eq!(decision.risk_class, RiskClass::R4 as i32);
     assert!(decision.granted_scopes.is_empty());

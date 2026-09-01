@@ -76,8 +76,14 @@ fn validate_descriptor(descriptor: &CapabilityDescriptor) -> Result<(), KernelEr
     require_text(&descriptor.capability_id, "capability_id")?;
     require_text(&descriptor.family, "capability.family")?;
     require_text(&descriptor.name, "capability.name")?;
-    require_text(&descriptor.interface_contract, "capability.interface_contract")?;
-    require_text(&descriptor.interface_version, "capability.interface_version")?;
+    require_text(
+        &descriptor.interface_contract,
+        "capability.interface_contract",
+    )?;
+    require_text(
+        &descriptor.interface_version,
+        "capability.interface_version",
+    )?;
     let owner = descriptor
         .owner
         .as_ref()
@@ -100,9 +106,16 @@ fn validate_descriptor(descriptor: &CapabilityDescriptor) -> Result<(), KernelEr
     }
     for key in descriptor.extension_metadata.keys() {
         let normalized = key.to_ascii_lowercase();
-        if ["permission", "scope", "risk", "policy", "authorization", "authz"]
-            .iter()
-            .any(|reserved| normalized.contains(reserved))
+        if [
+            "permission",
+            "scope",
+            "risk",
+            "policy",
+            "authorization",
+            "authz",
+        ]
+        .iter()
+        .any(|reserved| normalized.contains(reserved))
         {
             return Err(KernelError::ReservedExtensionKey(key.clone()));
         }

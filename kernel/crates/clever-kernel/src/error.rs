@@ -17,7 +17,10 @@ impl Display for KernelError {
             Self::MissingField(field) => write!(formatter, "missing required field: {field}"),
             Self::EmptyField(field) => write!(formatter, "required field is empty: {field}"),
             Self::UnsupportedContractMajor(major) => {
-                write!(formatter, "unsupported Clever contract major version: {major}")
+                write!(
+                    formatter,
+                    "unsupported Clever contract major version: {major}"
+                )
             }
             Self::InvalidEnum { field, value } => {
                 write!(formatter, "invalid enum value {value} for {field}")
@@ -25,7 +28,10 @@ impl Display for KernelError {
             Self::DuplicateId { kind, id } => write!(formatter, "duplicate {kind} id: {id}"),
             Self::UnknownCapability(id) => write!(formatter, "unknown capability: {id}"),
             Self::ReservedExtensionKey(key) => {
-                write!(formatter, "extension metadata key is security-reserved: {key}")
+                write!(
+                    formatter,
+                    "extension metadata key is security-reserved: {key}"
+                )
             }
         }
     }
