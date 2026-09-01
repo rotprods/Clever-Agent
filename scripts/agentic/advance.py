@@ -15,6 +15,13 @@ def load_json(path: str | Path) -> dict[str, Any]:
     return json.loads((ROOT / path).read_text(encoding="utf-8"))
 
 
+def read_jsonl(path: str) -> list[dict[str, Any]]:
+    target = ROOT / path
+    if not target.exists():
+        return []
+    return [json.loads(raw) for raw in target.read_text(encoding="utf-8").splitlines() if raw.strip()]
+
+
 def write_json(path: str | Path, payload: dict[str, Any]) -> None:
     target = ROOT / path
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -50,6 +57,39 @@ def _render_tasks(plan: dict[str, Any], checkpoint: str) -> str:
     return "\n".join(lines)
 
 
+def active_claim_ids_for_wave(wave_id: str) -> list[str]:
+    latest: dict[str, dict[str, Any]] = {}
+    for row in read_jsonl("ledgers/CLAIM_LEDGER.ndjson"):
+        claim_id = row.get("claim_id")
+        if claim_id:
+            latest[str(claim_id)] = row
+    return sorted(
+        claim_id
+        for claim_id, row in latest.items()
+        if row.get("wave_id") == wave_id and row.get("status") == "ACTIVE"
+    )
+
+
+def release_claims_for_wave(wave_id: str, evidence_id: str, date: str) -> list[str]:
+    active = active_claim_ids_for_wave(wave_id)
+    if not active:
+        raise RuntimeError(f"wave {wave_id} has no ACTIVE claim to release")
+    for claim_id in active:
+        append_jsonl(
+            "ledgers/CLAIM_LEDGER.ndjson",
+            {
+                "schema_version": 1,
+                "date": date,
+                "claim_id": claim_id,
+                "event": "RELEASE",
+                "wave_id": wave_id,
+                "status": "RELEASED",
+                "release_evidence_id": evidence_id,
+            },
+        )
+    return active
+
+
 def advance(*, checkpoint: str, iteration: str, complete_task: str, complete_wave: str, complete_subcheckpoint: str, next_task: str, next_wave: str, next_wave_name: str, next_subcheckpoint: str, evidence_id: str, evidence_claim: str, run_id: str, head_sha: str, date: str) -> None:
     plan = load_json(".agentic/context/NEXT_ACTIONS.json")
     if plan.get("checkpoint") != checkpoint or plan.get("iteration") != iteration:
@@ -63,6 +103,7 @@ def advance(*, checkpoint: str, iteration: str, complete_task: str, complete_wav
         raise RuntimeError(f"incomplete dependencies: {missing}")
     if complete_task not in nxt.get("depends_on", []):
         raise RuntimeError("next task does not depend on completed task")
+    release_claims_for_wave(complete_wave, evidence_id, date)
     current["status"] = "COMPLETE"
     nxt["status"] = "READY"
     plan["first_executable_task"] = next_task

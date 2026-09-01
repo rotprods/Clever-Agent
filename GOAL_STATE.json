@@ -1,7 +1,7 @@
 {
   "active_checkpoint": "CP03",
   "active_iteration": "I03",
-  "frontier": "Execute /empezarproyecto at CP03-W00 and execute CP03-000 hermetic OpenJarvis baseline before adapter implementation.",
+  "frontier": "Execute /empezarproyecto at CP03-W01 and execute CP03-001.",
   "goal_id": "CLEVER-JARVIS-001",
   "invariants_locked": true,
   "last_updated_date": "2026-09-01",

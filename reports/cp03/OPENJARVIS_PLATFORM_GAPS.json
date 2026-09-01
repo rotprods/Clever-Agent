@@ -1,0 +1,61 @@
+{
+  "gated_markers": [
+    {
+      "classification": "AMD_HARDWARE_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "amd"
+    },
+    {
+      "classification": "APPLE_HARDWARE_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "apple"
+    },
+    {
+      "classification": "CREDENTIAL_NETWORK_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "cloud"
+    },
+    {
+      "classification": "DOCKER_SOCKET_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "docker"
+    },
+    {
+      "classification": "NETWORK_DATASET_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "hub"
+    },
+    {
+      "classification": "NETWORK_OR_RUNTIME_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "live"
+    },
+    {
+      "classification": "CHANNEL_CREDENTIAL_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "live_channel"
+    },
+    {
+      "classification": "EXTERNAL_FRAMEWORK_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "live_external"
+    },
+    {
+      "classification": "APPLE_PLATFORM_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "macos15"
+    },
+    {
+      "classification": "REMOTE_CREDENTIAL_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "modal"
+    },
+    {
+      "classification": "NVIDIA_HARDWARE_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "nvidia"
+    }
+  ],
+  "schema_version": 1,
+  "source_commit": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5"
+}

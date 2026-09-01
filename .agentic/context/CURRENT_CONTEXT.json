@@ -50,7 +50,8 @@
     "EVID-0009",
     "EVID-0010",
     "EVID-0011",
-    "EVID-0012"
+    "EVID-0012",
+    "EVID-0013"
   ],
   "frontier": {
     "blocking_issues": [],
@@ -70,13 +71,14 @@
       "CP02-W03",
       "CP02-W04",
       "CP02-W05",
-      "CP02-W06"
+      "CP02-W06",
+      "CP03-W00"
     ],
     "iteration": "I03",
-    "next_wave": "CP03-W00",
-    "next_wave_name": "Hermetic OpenJarvis baseline",
+    "next_wave": "CP03-W01",
+    "next_wave_name": "Transport lifecycle and registry bridge",
     "parity_denominator_status": "GENERATED_UNVERIFIED",
-    "subcheckpoint": "I03.0"
+    "subcheckpoint": "I03.1"
   },
   "graph_planes": [
     {
@@ -159,7 +161,7 @@
   "planning": {
     "active_iteration_state": "iterations/03/STATE.json",
     "consciousness_act": "docs/ACTA_DE_CONSCIENCIA.md",
-    "first_executable_task": "CP03-000",
+    "first_executable_task": "CP03-001",
     "implementation_plan": "IMPLEMENTATION_PLAN.md",
     "next_actions": ".agentic/context/NEXT_ACTIONS.json",
     "regression": "docs/REGRESSION_2026-08-31.md",

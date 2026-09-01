@@ -25,3 +25,5 @@
 {"checkpoint":"CP02","date":"2026-09-01","iteration":"I02","objective":"Reconcile CP02 evidence and advance to CP03 only if checkpoint exit criteria pass.","schema_version":1,"status":"PROPOSED","wave_id":"CP02-W06"}
 {"date":"2026-09-01","event":"RELEASE_RECONCILIATION","evidence_id":"EVID-0012","next_wave":"CP03-W00","schema_version":1,"status":"COMPLETE","wave_id":"CP02-W06"}
 {"checkpoint":"CP03","date":"2026-09-01","iteration":"I03","objective":"Run hermetic pinned OpenJarvis baseline and classify gated tests.","schema_version":1,"status":"PROPOSED","wave_id":"CP03-W00"}
+{"date":"2026-09-01","event":"VERIFICATION","evidence_id":"EVID-0013","next_wave":"CP03-W01","schema_version":1,"status":"COMPLETE","wave_id":"CP03-W00"}
+{"checkpoint":"CP03","date":"2026-09-01","iteration":"I03","objective":"Implement supervised adapter transport, lifecycle and typed registry bridge.","schema_version":1,"status":"PROPOSED","wave_id":"CP03-W01"}

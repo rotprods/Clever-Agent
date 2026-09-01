@@ -1,0 +1,12 @@
+FROM python:3.12.11-slim-bookworm
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UV_LINK_MODE=copy
+
+RUN python -m pip install --no-cache-dir 'uv==0.12.4'
+WORKDIR /src
+COPY . /src
+RUN uv sync --frozen --extra dev --extra scheduler --no-install-project
+
+ENTRYPOINT ["/bin/sh", "-lc"]
