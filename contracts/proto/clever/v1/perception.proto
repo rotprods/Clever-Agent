@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package clever.v1;
+
+import "clever/v1/common.proto";
+import "clever/v1/identity.proto";
+import "google/protobuf/timestamp.proto";
+
+enum ObservationKind {
+  OBSERVATION_KIND_UNSPECIFIED = 0;
+  OBSERVATION_KIND_AUDIO = 1;
+  OBSERVATION_KIND_SCREEN = 2;
+  OBSERVATION_KIND_CAMERA = 3;
+  OBSERVATION_KIND_LOCATION = 4;
+  OBSERVATION_KIND_DEVICE_SENSOR = 5;
+}
+
+message PerceptionObservation {
+  ContractVersion contract_version = 1;
+  string observation_id = 2;
+  ObservationKind kind = 3;
+  PrincipalRef principal = 4;
+  string device_id = 5;
+  DataClassification classification = 6;
+  bool consent_active = 7;
+  string permission_grant_id = 8;
+  string content_ref = 9;
+  Payload inline_payload = 10;
+  google.protobuf.Timestamp observed_at = 11;
+  repeated ProvenanceRef provenance = 12;
+}
+
+message PointingTarget {
+  string target_id = 1;
+  string display_id = 2;
+  double x_normalized = 3;
+  double y_normalized = 4;
+  double confidence = 5;
+  string source_observation_id = 6;
+}

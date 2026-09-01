@@ -1,0 +1,174 @@
+{
+  "authority": "contracts/proto + contracts/contract_manifest.json + contracts/toolchain.lock.json",
+  "files": [
+    {
+      "bytes": 4453,
+      "path": "contracts/sdk/python/gen/clever/v1/actions_pb2.py",
+      "sha256": "d124c04b835cea63e0ad309ee0aa14c42d5035dae751e787dcfd5ba03cce4820"
+    },
+    {
+      "bytes": 5080,
+      "path": "contracts/sdk/python/gen/clever/v1/capabilities_pb2.py",
+      "sha256": "860b05b4d7fb92f52bd2a76e9bb1ab624b6167fec0300f0c694eb9e9582af393"
+    },
+    {
+      "bytes": 3715,
+      "path": "contracts/sdk/python/gen/clever/v1/common_pb2.py",
+      "sha256": "c9a952f6901aafb68873639dbedff79b8d8b7a4287a79a9bcbf21bb9fea8509e"
+    },
+    {
+      "bytes": 2644,
+      "path": "contracts/sdk/python/gen/clever/v1/events_pb2.py",
+      "sha256": "1417ffc720e5e067c5b7c0b7171047f7acf623931caaaea609f4a8812f87021a"
+    },
+    {
+      "bytes": 2642,
+      "path": "contracts/sdk/python/gen/clever/v1/identity_pb2.py",
+      "sha256": "e884ae0a2b4d63cdf88e67bc85b0b014dc98125d89092004ca0c871bbf656b53"
+    },
+    {
+      "bytes": 3574,
+      "path": "contracts/sdk/python/gen/clever/v1/memory_pb2.py",
+      "sha256": "0655995cea8fcefec3a93dc48eb586812cf6e9345d0417743f146353711cad68"
+    },
+    {
+      "bytes": 3470,
+      "path": "contracts/sdk/python/gen/clever/v1/perception_pb2.py",
+      "sha256": "b1c22c7e9b1c7c748af925522edea3c757f2bb28020ad11c50287ccfeab10fb1"
+    },
+    {
+      "bytes": 3822,
+      "path": "contracts/sdk/python/gen/clever/v1/policy_pb2.py",
+      "sha256": "664b2d598103a77b0f6829c47e01fb62ee38a6b972b5353d3e3f268144084791"
+    },
+    {
+      "bytes": 3290,
+      "path": "contracts/sdk/python/gen/clever/v1/runtime_pb2.py",
+      "sha256": "f6134208cf7b66109cf347c11b9289a18cbe9fc700cbc45b0e3d411722232227"
+    },
+    {
+      "bytes": 2691,
+      "path": "contracts/sdk/python/gen/clever/v1/traces_pb2.py",
+      "sha256": "983ecd5b56d8ec0b6bda459d98c316640adcd498d2b2e5a370d9f43abb3aa0af"
+    },
+    {
+      "bytes": 7948,
+      "path": "contracts/sdk/typescript/src/gen/clever/v1/actions_pb.ts",
+      "sha256": "e644e39b807f09738b93c85bb0d82ebb3526883d496bdeb07968fa9a5b089cf3"
+    },
+    {
+      "bytes": 8600,
+      "path": "contracts/sdk/typescript/src/gen/clever/v1/capabilities_pb.ts",
+      "sha256": "39aecb3e2daaf13ef1a8ffd3809044caa1a1142b028aa73e207fa232a5924935"
+    },
+    {
+      "bytes": 6876,
+      "path": "contracts/sdk/typescript/src/gen/clever/v1/common_pb.ts",
+      "sha256": "60535b4c5af00caae36ee29250668dc0b4b13cbaa9c70a86a5b47979da5afc6c"
+    },
+    {
+      "bytes": 3582,
+      "path": "contracts/sdk/typescript/src/gen/clever/v1/events_pb.ts",
+      "sha256": "518f330fafd2dca4a145b08ddcccba8dbb7ef6fedd3e82e31f259c4a014434cd"
+    },
+    {
+      "bytes": 3842,
+      "path": "contracts/sdk/typescript/src/gen/clever/v1/identity_pb.ts",
+      "sha256": "7903b90d4b402f30427d31752db3628e4a31934e5221e213c5d66936a97716bf"
+    },
+    {
+      "bytes": 5907,
+      "path": "contracts/sdk/typescript/src/gen/clever/v1/memory_pb.ts",
+      "sha256": "2438aec72192949969ca3386368b7db25bc26cca2fc19af5bb5192d7d1ac901b"
+    },
+    {
+      "bytes": 5653,
+      "path": "contracts/sdk/typescript/src/gen/clever/v1/perception_pb.ts",
+      "sha256": "0aae1a166de07cc2e47c829df92516c5b8fdffca4e238a5682140ee098045d4d"
+    },
+    {
+      "bytes": 6449,
+      "path": "contracts/sdk/typescript/src/gen/clever/v1/policy_pb.ts",
+      "sha256": "eb02dd9edc28750c3b496d0e64131720c0dd5f2648a3c5ef992ecf64bf9eac6b"
+    },
+    {
+      "bytes": 5330,
+      "path": "contracts/sdk/typescript/src/gen/clever/v1/runtime_pb.ts",
+      "sha256": "5b3f5533d1bf46f38e5d16c02aaab4934391c023b3ce6f381f4eb71d94361192"
+    },
+    {
+      "bytes": 3833,
+      "path": "contracts/sdk/typescript/src/gen/clever/v1/traces_pb.ts",
+      "sha256": "e6c591e12b077d55a51cdeca39790044f1a5cb2d603eb1b4028df4875bb898ff"
+    },
+    {
+      "bytes": 26490,
+      "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/actions.pb.swift",
+      "sha256": "a5afbb95b45318c7711933f647e1f47ab024eedef291852d0f8237cec0fbd5ad"
+    },
+    {
+      "bytes": 24368,
+      "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/capabilities.pb.swift",
+      "sha256": "f14493f3a69bcecc47d7466d736d2b8d0f124fb58a0ef1c8543fbb86f68c7492"
+    },
+    {
+      "bytes": 19777,
+      "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/common.pb.swift",
+      "sha256": "2841a35d590058a0d2f992cb5b1126b7abbe251581ea060aef925961d6e2f594"
+    },
+    {
+      "bytes": 13169,
+      "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/events.pb.swift",
+      "sha256": "f15fa330bb332a5fcd8ce01c24111ba93b0ce3fbf48af7001445be6d64406a86"
+    },
+    {
+      "bytes": 12189,
+      "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/identity.pb.swift",
+      "sha256": "0f291c9d455368437b72d826a2ef9d5735d44a28ea14103348fea9604087b66f"
+    },
+    {
+      "bytes": 16784,
+      "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/memory.pb.swift",
+      "sha256": "a6cec129d1b37013f636850b2286dd8c09a4d40bade5975329e34a7ee6a1474d"
+    },
+    {
+      "bytes": 17001,
+      "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/perception.pb.swift",
+      "sha256": "6a5d421ec970ef313967f11a7ff680e457c663e704c41ad02bc7f6f33c0a7957"
+    },
+    {
+      "bytes": 15221,
+      "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/policy.pb.swift",
+      "sha256": "2331ddd3e2e0b3accdce1b09fcc30627ebb7ba037f5984f58c66bbffad4d454d"
+    },
+    {
+      "bytes": 13018,
+      "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/runtime.pb.swift",
+      "sha256": "57d81627878351d083cb2fb5207c22cebe12932918b16a265b02dd866eac87de"
+    },
+    {
+      "bytes": 14781,
+      "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/traces.pb.swift",
+      "sha256": "fc04214f7d2610ad85048da8e9911b660b489c52a4461f9d5416c8ded84ac6b5"
+    },
+    {
+      "bytes": 37369,
+      "path": "contracts/sdk/rust/src/gen/clever.v1.rs",
+      "sha256": "b4a8c6314f330af9820bde1ee54100f58d43277c07f242c81a5f6a45da07b0b5"
+    },
+    {
+      "bytes": 222,
+      "path": "contracts/fixtures/wire/event.bin",
+      "sha256": "57d93dc0c308e08cc92c82a82b735d020f9844c54375aa1557f55009fb3dc466"
+    },
+    {
+      "bytes": 601,
+      "path": "contracts/fixtures/wire/event.protobuf.json",
+      "sha256": "c609492c56126dd8eb88dfa68793f80817607d2b183125720a42b6e1b942ad93"
+    }
+  ],
+  "generated_file_count": 33,
+  "proto_tree_sha256": "820dbabc0bfca4075279cf63bfb4201e04c394d186d9fdb25807debb5c91381b",
+  "schema_version": 1,
+  "toolchain_lock_sha256": "ab3267b70749f36c0859d0fc61ef5b1e9fc3015eb0faeeb47308e141cc303052"
+}

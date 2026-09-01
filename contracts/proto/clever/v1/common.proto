@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package clever.v1;
+
+import "google/protobuf/timestamp.proto";
+
+message ContractVersion {
+  uint32 major = 1;
+  uint32 minor = 2;
+}
+
+enum DataClassification {
+  DATA_CLASSIFICATION_UNSPECIFIED = 0;
+  DATA_CLASSIFICATION_PUBLIC = 1;
+  DATA_CLASSIFICATION_INTERNAL = 2;
+  DATA_CLASSIFICATION_SENSITIVE = 3;
+  DATA_CLASSIFICATION_RESTRICTED = 4;
+}
+
+message EvidenceRef {
+  string evidence_id = 1;
+  string uri = 2;
+  string digest = 3;
+}
+
+message ProvenanceRef {
+  string source_repo = 1;
+  string source_commit = 2;
+  string source_path = 3;
+  string source_symbol = 4;
+}
+
+message RuntimeOwner {
+  string runtime_id = 1;
+  string adapter_id = 2;
+  string device_id = 3;
+  string process_id = 4;
+}
+
+message Payload {
+  string schema_uri = 1;
+  string content_type = 2;
+  bytes data = 3;
+}
+
+message PlatformConstraint {
+  string platform = 1;
+  string minimum_version = 2;
+  repeated string required_features = 3;
+}
+
+message TimestampedRef {
+  string id = 1;
+  google.protobuf.Timestamp observed_at = 2;
+}

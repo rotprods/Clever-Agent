@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package clever.v1;
+
+import "clever/v1/common.proto";
+import "clever/v1/identity.proto";
+import "google/protobuf/timestamp.proto";
+
+enum RiskClass {
+  RISK_CLASS_UNSPECIFIED = 0;
+  RISK_CLASS_R0 = 1;
+  RISK_CLASS_R1 = 2;
+  RISK_CLASS_R2 = 3;
+  RISK_CLASS_R3 = 4;
+  RISK_CLASS_R4 = 5;
+}
+
+enum PolicyDecisionKind {
+  POLICY_DECISION_KIND_UNSPECIFIED = 0;
+  POLICY_DECISION_KIND_ALLOW = 1;
+  POLICY_DECISION_KIND_DENY = 2;
+  POLICY_DECISION_KIND_REQUIRE_CONFIRMATION = 3;
+}
+
+message PolicyEvaluationRequest {
+  ContractVersion contract_version = 1;
+  string evaluation_id = 2;
+  PrincipalRef principal = 3;
+  string capability_id = 4;
+  string operation = 5;
+  repeated string requested_permissions = 6;
+  DataClassification data_classification = 7;
+  string automation_grant_id = 8;
+}
+
+message PolicyDecision {
+  ContractVersion contract_version = 1;
+  string decision_id = 2;
+  string evaluation_id = 3;
+  PolicyDecisionKind decision = 4;
+  RiskClass risk_class = 5;
+  repeated string granted_scopes = 6;
+  repeated string reason_codes = 7;
+  bool user_confirmation_required = 8;
+  google.protobuf.Timestamp expires_at = 9;
+  string audit_ref = 10;
+}

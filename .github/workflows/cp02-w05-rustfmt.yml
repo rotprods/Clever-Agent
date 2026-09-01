@@ -1,0 +1,48 @@
+name: CP02 W05 Rustfmt Repair
+
+on:
+  push:
+    branches:
+      - wave/cp02/canonical-contracts-kernel
+    paths:
+      - '.github/workflows/cp02-w05-rustfmt.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rustfmt-repair:
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - name: Apply canonical rustfmt
+        run: cargo fmt --manifest-path kernel/Cargo.toml --all
+      - name: Assert formatting delta is Rust-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only)"
+          test -n "$changed"
+          echo "$changed"
+          if echo "$changed" | grep -Ev '^kernel/.*\.rs$' >/dev/null; then
+            echo 'rustfmt changed a non-Rust path' >&2
+            exit 1
+          fi
+          cargo fmt --manifest-path kernel/Cargo.toml --all -- --check
+      - name: Commit rustfmt repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_head="$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)"
+          test "$remote_head" = "$SOURCE_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add kernel/**/*.rs
+          git commit -m 'style(cp02): apply rustfmt to W05 adversarial hardening'
+          git push origin "HEAD:${GITHUB_REF_NAME}"

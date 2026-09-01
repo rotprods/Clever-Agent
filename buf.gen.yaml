@@ -1,0 +1,15 @@
+version: v2
+clean: true
+plugins:
+  - remote: buf.build/protocolbuffers/python:v36.0
+    out: contracts/sdk/python/gen
+  - remote: buf.build/bufbuild/es:v2.14.0
+    out: contracts/sdk/typescript/src/gen
+    opt:
+      - target=ts
+  - remote: buf.build/apple/swift:v1.38.1
+    out: contracts/sdk/swift/Sources/CleverContracts/Gen
+    opt:
+      - Visibility=Public
+  - remote: buf.build/community/neoeinstein-prost:v0.4.0
+    out: contracts/sdk/rust/src/gen

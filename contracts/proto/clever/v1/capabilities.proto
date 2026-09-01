@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package clever.v1;
+
+import "clever/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+enum CapabilityAvailability {
+  CAPABILITY_AVAILABILITY_UNSPECIFIED = 0;
+  CAPABILITY_AVAILABILITY_AVAILABLE = 1;
+  CAPABILITY_AVAILABILITY_DEGRADED = 2;
+  CAPABILITY_AVAILABILITY_UNAVAILABLE = 3;
+  CAPABILITY_AVAILABILITY_BLOCKED_BY_POLICY = 4;
+  CAPABILITY_AVAILABILITY_UNSUPPORTED = 5;
+}
+
+enum LifecycleMode {
+  LIFECYCLE_MODE_UNSPECIFIED = 0;
+  LIFECYCLE_MODE_EPHEMERAL = 1;
+  LIFECYCLE_MODE_SESSION = 2;
+  LIFECYCLE_MODE_PERSISTENT = 3;
+  LIFECYCLE_MODE_DEVICE = 4;
+}
+
+message PermissionRequirement {
+  string permission = 1;
+  string scope = 2;
+  bool mandatory = 3;
+}
+
+message CapabilityDescriptor {
+  ContractVersion contract_version = 1;
+  string capability_id = 2;
+  string family = 3;
+  string name = 4;
+  RuntimeOwner owner = 5;
+  string implementation_version = 6;
+  string interface_contract = 7;
+  string interface_version = 8;
+  LifecycleMode lifecycle_mode = 9;
+  repeated PermissionRequirement permissions = 10;
+  repeated string state_effects = 11;
+  repeated string side_effects = 12;
+  repeated PlatformConstraint platform_constraints = 13;
+  bool rollback_supported = 14;
+  repeated ProvenanceRef provenance = 15;
+  repeated EvidenceRef evidence = 16;
+  map<string, string> extension_metadata = 17;
+}
+
+message CapabilityAnnouncement {
+  CapabilityDescriptor descriptor = 1;
+  CapabilityAvailability availability = 2;
+  repeated string degradation_reasons = 3;
+  google.protobuf.Timestamp announced_at = 4;
+  string health_ref = 5;
+}

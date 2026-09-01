@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package clever.v1;
+
+import "clever/v1/common.proto";
+import "clever/v1/identity.proto";
+import "google/protobuf/timestamp.proto";
+
+message EventEnvelope {
+  ContractVersion contract_version = 1;
+  string message_id = 2;
+  string correlation_id = 3;
+  string causation_id = 4;
+  google.protobuf.Timestamp occurred_at = 5;
+  RuntimeOwner producer = 6;
+  PrincipalRef principal = 7;
+  string session_id = 8;
+  string goal_id = 9;
+  DataClassification classification = 10;
+  string event_type = 11;
+  Payload payload = 12;
+  repeated ProvenanceRef provenance = 13;
+  repeated EvidenceRef evidence = 14;
+}

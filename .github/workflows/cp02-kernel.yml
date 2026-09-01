@@ -1,0 +1,17 @@
+name: CP02 Rust Kernel W03 Replay
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  kernel-w03-replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          cargo fmt --manifest-path kernel/Cargo.toml --all -- --check
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+          cargo test --locked --manifest-path kernel/Cargo.toml --workspace --all-targets

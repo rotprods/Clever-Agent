@@ -3,8 +3,8 @@ project:
   id: CLEVER-JARVIS-001
   repository: rotprods/Clever-Agent
   default_branch: main
-  active_iteration: I02
-  active_checkpoint: CP02
+  active_iteration: I03
+  active_checkpoint: CP03
 
 authority:
   execution: AGENTS.md
@@ -37,6 +37,7 @@ persistence:
     - ledgers/RISK_LEDGER.ndjson
     - ledgers/EVIDENCE_LEDGER.ndjson
     - ledgers/CAPABILITY_LEDGER.jsonl
+    - ledgers/PARITY_LEDGER.ndjson
     - ledgers/UPSTREAM_DRIFT.ndjson
 
 execution:
@@ -156,8 +157,8 @@ tool_integrations:
     context_manifest: .agentic/context/CURRENT_CONTEXT.json
 
 current_iteration:
-  id: I02
-  metaprompt: iterations/02/METAPROMPT.md
-  plan: iterations/02/ITERATION.md
-  state: iterations/02/STATE.json
-  next_wave: CP02-W01
+  id: I03
+  metaprompt: iterations/03/METAPROMPT.md
+  plan: iterations/03/ITERATION.md
+  state: iterations/03/STATE.json
+  next_wave: CP03-W00

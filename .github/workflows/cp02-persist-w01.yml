@@ -1,0 +1,74 @@
+name: Persist CP02 W01
+
+on:
+  push:
+    branches:
+      - wave/cp02/canonical-contracts-kernel
+    paths:
+      - 'scripts/agentic/advance_wave.py'
+      - '.github/workflows/cp02-persist-w01.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cp02-persist-w01-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  persist-w01:
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: bufbuild/buf-setup-action@v1
+        with:
+          version: '1.72.0'
+      - name: Re-prove W01 on transition source
+        run: |
+          python -m compileall -q scripts/contracts scripts/agentic tests/test_cp02_contracts.py
+          python -m unittest discover -s tests -p 'test_cp02_contracts.py' -v
+          python -m scripts.contracts.validate_manifest
+          buf format -d --exit-code
+          buf lint
+          buf build -o /tmp/clever-contracts.binpb
+          python -m pip install --disable-pip-version-check 'jsonschema==4.25.1'
+          python -m scripts.contracts.validate_fixtures
+      - name: Advance W01 to W02 in worktree
+        run: |
+          python -m scripts.agentic.advance_wave \
+            --complete-task CP02-001 \
+            --complete-wave CP02-W01 \
+            --complete-subcheckpoint I02.1 \
+            --next-task CP02-002 \
+            --next-wave CP02-W02 \
+            --next-wave-name 'Cross-runtime bindings and compatibility' \
+            --next-subcheckpoint I02.2 \
+            --evidence-id EVID-0007 \
+            --evidence-claim 'Canonical v1 Protobuf and JSON Schema contracts format, lint, build, and validate all canonical fixtures.' \
+            --run-id "$GITHUB_RUN_ID" \
+            --head-sha "$SOURCE_SHA"
+      - name: Validate post-transition state
+        run: |
+          python scripts/validate_agentic_state.py
+          python scripts/context/build_context_pack.py --check
+          git diff --check
+      - name: Commit state transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add GOAL_STATE.json EXECUTION_STATE.json STATE.md HANDOFF.md TASKS.md iterations/02/STATE.json .agentic/CONFIG.yaml .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md .agentic/context/NEXT_ACTIONS.json ledgers/EVIDENCE_LEDGER.ndjson ledgers/WAVE_LEDGER.ndjson ledgers/RUN_LOG.ndjson
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'chore(cp02): advance contract gate to W02'
+          python scripts/validate_agentic_state.py
+          git push origin "HEAD:${GITHUB_REF_NAME}"

@@ -1,0 +1,82 @@
+{
+  "check_count": 16,
+  "checkpoint": "CP02",
+  "checks": [
+    {
+      "id": "unknown_major_json_fail_closed",
+      "status": "PASS"
+    },
+    {
+      "id": "unknown_major_python_fail_closed",
+      "status": "PASS"
+    },
+    {
+      "id": "unknown_major_rust_fail_closed",
+      "status": "PASS"
+    },
+    {
+      "id": "malformed_identity_rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "missing_event_timestamp_rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "capability_security_metadata_self_assertion_rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "policy_decision_id_mismatch_rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "risk_class_r4_rejected_without_hardened_flow",
+      "status": "PASS"
+    },
+    {
+      "id": "idempotency_conflict_rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "terminal_receipt_transition_rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "terminal_receipt_requires_timestamp",
+      "status": "PASS"
+    },
+    {
+      "id": "false_green_runtime_health_rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "invalid_runtime_transition_rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "audit_hash_chain_tamper_detected",
+      "status": "PASS"
+    },
+    {
+      "id": "cross_user_memory_read_rejected",
+      "status": "PASS"
+    },
+    {
+      "id": "generated_binding_manifest_reproducible",
+      "status": "PASS"
+    }
+  ],
+  "github_actions_run_id": 33456696252,
+  "invariants": {
+    "cross_user_memory_denied": true,
+    "migration_authorized": false,
+    "native_upstream_deletion_authorized": false,
+    "r4_default_execution_denied": true,
+    "unknown_major_fail_closed": true
+  },
+  "schema_version": 1,
+  "source_sha": "71a1bd4b434c59e2827ee002b8955291e1d9adfd",
+  "status": "PASS",
+  "wave": "CP02-W05"
+}

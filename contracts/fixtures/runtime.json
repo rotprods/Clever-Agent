@@ -1,0 +1,1 @@
+{"contractVersion":{"major":1,"minor":0},"runtimeId":"openjarvis-cognition","status":"RUNTIME_HEALTH_STATUS_DEGRADED","degradationReasons":["CLOUD_PROVIDER_UNAVAILABLE"],"observedAt":"2026-09-01T00:00:00Z","droppedEventCount":0,"failedActionCount":0,"recoveryHint":"route local-first"}

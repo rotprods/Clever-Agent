@@ -1,0 +1,9 @@
+[package]
+name = "clever-contracts"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+prost = "=0.13.5"
+prost-types = "=0.13.5"

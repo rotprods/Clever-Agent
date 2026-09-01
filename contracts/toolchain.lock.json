@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "buf_cli": "1.72.0",
+  "generators": {
+    "python": {"remote": "buf.build/protocolbuffers/python:v36.0", "runtime": "protobuf==7.36.0", "observed_bsr_latest": "v36.0", "fallback_protoc": {"version": "36.1", "linux_x86_64_url": "https://github.com/protocolbuffers/protobuf/releases/download/v36.1/protoc-36.1-linux-x86_64.zip", "sha256": "c4bc672d9d49214dc8cafdceadf4df92182d6ca8e3ec65a56b2d7de5602669b4"}},
+    "typescript": {"remote": "buf.build/bufbuild/es:v2.14.0", "runtime": "@bufbuild/protobuf@2.14.0", "compiler": "typescript@7.0.2", "runner": "tsx@4.23.12"},
+    "swift": {"remote": "buf.build/apple/swift:v1.38.1", "runtime": "SwiftProtobuf@1.38.1"},
+    "rust": {"remote": "buf.build/community/neoeinstein-prost:v0.4.0", "runtime": "prost@0.13.5", "runtime_types": "prost-types@0.13.5", "compatibility_basis": "protoc-gen-prost 0.4.0 ecosystem alignment"}
+  },
+  "policy": {
+    "floating_generator_versions_forbidden": true,
+    "generated_code_is_derived_not_authority": true,
+    "proto_and_contract_manifest_are_authority": true,
+    "cross_runtime_wire_fixture_required": true,
+    "rust_prost_runtime_generator_skew_forbidden": true
+  }
+}

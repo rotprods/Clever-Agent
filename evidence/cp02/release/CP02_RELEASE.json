@@ -1,0 +1,27 @@
+{
+  "capability_ledger_sha256": "6987a119e10c87ed64936b5ec552b6e5924f3f3d40f328b7ac3ce86c80498d75",
+  "checkpoint": "CP02",
+  "denominator": 7565,
+  "errors": [],
+  "gauntlet_check_count": 16,
+  "generated_manifest_sha256": "bceb232dc1dc37a3721eb0183a7cb63fcefbf6030f618856e34872eff58fe8b9",
+  "github_actions_run_id": 33503239942,
+  "invariants": {
+    "cp03_requires_release_transition": true,
+    "denominator_immutable": true,
+    "migration_authorized": false,
+    "native_upstream_deletion_authorized": false
+  },
+  "openjarvis_obligations": 646,
+  "required_evidence": [
+    "EVID-0007",
+    "EVID-0008",
+    "EVID-0009",
+    "EVID-0010",
+    "EVID-0011"
+  ],
+  "schema_version": 1,
+  "source_sha": "8c97c88754b269a917c4ceacfa2c96f0a4092afa",
+  "status": "PASS",
+  "verified": 0
+}

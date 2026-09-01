@@ -1,0 +1,1 @@
+{"contractVersion":{"major":1,"minor":0},"decisionId":"pol_demo","evaluationId":"eval_demo","decision":"POLICY_DECISION_KIND_REQUIRE_CONFIRMATION","riskClass":"RISK_CLASS_R3","grantedScopes":[],"reasonCodes":["DESTRUCTIVE_ACTION"],"userConfirmationRequired":true,"expiresAt":"2026-09-01T00:05:00Z","auditRef":"audit_demo"}

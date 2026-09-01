@@ -1,0 +1,34 @@
+name: CP02 Plugin Catalog
+
+on:
+  push:
+    branches:
+      - wave/cp02/canonical-contracts-kernel
+    paths:
+      - '.github/workflows/cp02-plugin-catalog.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bufbuild/buf-setup-action@v1
+        with:
+          version: '1.72.0'
+      - name: Resolve latest public plugin commits
+        shell: bash
+        run: |
+          set -euo pipefail
+          for plugin in \
+            buf.build/bufbuild/es \
+            buf.build/protocolbuffers/python \
+            buf.build/apple/swift \
+            buf.build/community/neoeinstein-prost
+          do
+            echo "=== $plugin ==="
+            buf registry plugin commit list "$plugin" --page-size 1 --format json
+          done
