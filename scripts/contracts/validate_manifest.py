@@ -40,8 +40,9 @@ def validate() -> list[str]:
             if "contractVersion" not in required:
                 errors.append(f"{contract_id}: contractVersion must be required")
     common = json.loads((ROOT / "contracts/jsonschema/common.schema.json").read_text(encoding="utf-8"))
-    if common.get("$defs", {}).get("contractVersion", {}).get("properties", {}).get("major", {}).get("minimum") != 1:
-        errors.append("contract major version must fail closed below v1")
+    major_schema = common.get("$defs", {}).get("contractVersion", {}).get("properties", {}).get("major", {})
+    if major_schema.get("const") != 1:
+        errors.append("contract major version schema must fail closed to v1 exactly")
     action = json.loads((ROOT / "contracts/jsonschema/action-intent.schema.json").read_text(encoding="utf-8"))
     if not {"idempotencyKey", "policyDecisionId", "sideEffectClass"}.issubset(action.get("required", [])):
         errors.append("ActionIntent must require idempotency/policy/side-effect semantics")

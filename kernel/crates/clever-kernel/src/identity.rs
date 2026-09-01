@@ -17,5 +17,9 @@ pub fn validate_principal(principal: Option<&PrincipalRef>) -> Result<(), Kernel
 pub fn validate_session(session: &SessionRef) -> Result<(), KernelError> {
     validate_contract_version(session.contract_version.as_ref())?;
     require_text(&session.session_id, "session_id")?;
-    validate_principal(session.principal.as_ref())
+    validate_principal(session.principal.as_ref())?;
+    if session.created_at.is_none() {
+        return Err(KernelError::MissingField("session.created_at"));
+    }
+    Ok(())
 }
