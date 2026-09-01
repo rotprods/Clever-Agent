@@ -6,15 +6,15 @@
 
 - Project: `CLEVER-JARVIS-001`
 - Checkpoint: `CP03`
-- Iteration: `I03` / `I03.0`
-- Next wave: `CP03-W00 — Hermetic OpenJarvis baseline`
+- Iteration: `I03` / `I03.1`
+- Next wave: `CP03-W01 — Transport lifecycle and registry bridge`
 - Parity denominator: `GENERATED_UNVERIFIED`
 - Protocol: `COS-GRAPH-ENGINE-V2-20D`
 - 20D model: `COS-20D-v2` (20 dimensions)
 
 ## Planning
 
-- First executable task: `CP03-000`
+- First executable task: `CP03-001`
 - Active iteration state: `iterations/03/STATE.json`
 - Machine task graph: `.agentic/context/NEXT_ACTIONS.json`
 - Implementation plan: `IMPLEMENTATION_PLAN.md`
@@ -35,7 +35,6 @@
 
 ## Active claims
 
-- `CLAIM-CP03-W00-001` → `CP03-W00` · `chatgpt-gpt-5.6-sol`
 
 ## Open / mitigating risks
 

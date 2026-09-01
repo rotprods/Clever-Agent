@@ -1,14 +1,16 @@
 {
-  "active_subcheckpoint": "I03.0",
+  "active_subcheckpoint": "I03.1",
   "blocking_issues": [],
   "checkpoint_id": "CP03",
-  "completed_subcheckpoints": [],
+  "completed_subcheckpoints": [
+    "I03.0"
+  ],
   "goal_id": "CLEVER-JARVIS-001",
   "iteration_id": "I03",
   "last_updated_date": "2026-09-01",
   "name": "OpenJarvis Cognitive Adapter",
-  "next_wave": "CP03-W00",
-  "next_wave_name": "Hermetic OpenJarvis baseline",
+  "next_wave": "CP03-W01",
+  "next_wave_name": "Transport lifecycle and registry bridge",
   "parity_denominator_status": "GENERATED_UNVERIFIED",
   "schema_version": 1,
   "status": "IN_PROGRESS"

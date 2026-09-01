@@ -2,10 +2,10 @@
 
 Machine authority: `.agentic/context/NEXT_ACTIONS.json`.
 
-## CP03 — OpenJarvis cognitive adapter
+## CP03
 
-- [ ] **CP03-000 / CP03-W00 — Run hermetic pinned OpenJarvis baseline and classify gated tests.** Status: `READY`.
-- [ ] **CP03-001 / CP03-W01 — Implement supervised adapter transport, lifecycle and typed registry bridge.** Status: `BLOCKED`.
+- [x] **CP03-000 / CP03-W00 — Run hermetic pinned OpenJarvis baseline and classify gated tests.** Status: `COMPLETE`.
+- [ ] **CP03-001 / CP03-W01 — Implement supervised adapter transport, lifecycle and typed registry bridge.** Status: `READY`.
 - [ ] **CP03-002 / CP03-W02 — Map models, engines and inference behavior through canonical contracts.** Status: `BLOCKED`.
 - [ ] **CP03-003 / CP03-W03 — Map agents, tools and MCP while enforcing Clever action authority.** Status: `BLOCKED`.
 - [ ] **CP03-004 / CP03-W04 — Map memory/retrieval with principal-scoped ownership and provenance.** Status: `BLOCKED`.
@@ -15,5 +15,3 @@ Machine authority: `.agentic/context/NEXT_ACTIONS.json`.
 - [ ] **CP03-008 / CP03-W08 — Compile and burn down parity for all 646 OpenJarvis obligations.** Status: `BLOCKED`.
 - [ ] **CP03-009 / CP03-W09 — Run adversarial recovery and performance gauntlet.** Status: `BLOCKED`.
 - [ ] **CP03-010 / CP03-W10 — Reconcile CP03 release evidence and hand off to CP04.** Status: `BLOCKED`.
-
-Frozen OpenJarvis obligation set: **646**. Global denominator: **7565**. Native state deletion/migration is forbidden in CP03.

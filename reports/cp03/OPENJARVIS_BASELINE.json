@@ -1,0 +1,100 @@
+{
+  "checkpoint": "CP03",
+  "errors": [],
+  "execution": {
+    "cap_drop_all": true,
+    "container_image_id": "sha256:82fbcc62115166fe2e1497464f71c926d53ac7a92384a812da9102595d333626",
+    "exit_code": 0,
+    "marker_expression": "not live and not cloud and not hub and not docker and not apple and not nvidia and not amd and not live_channel and not live_external and not modal and not macos15",
+    "network_mode": "none",
+    "no_new_privileges": true,
+    "python": "3.12",
+    "pythonpath": "/src/src",
+    "read_only_root": true,
+    "secrets_forwarded": false,
+    "selected_tests": [
+      "tests/core/test_events.py",
+      "tests/core/test_registry.py",
+      "tests/core/test_types.py",
+      "tests/memory/test_fact_store.py",
+      "tests/traces",
+      "tests/scheduler"
+    ]
+  },
+  "gated_markers": [
+    {
+      "classification": "AMD_HARDWARE_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "amd"
+    },
+    {
+      "classification": "APPLE_HARDWARE_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "apple"
+    },
+    {
+      "classification": "CREDENTIAL_NETWORK_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "cloud"
+    },
+    {
+      "classification": "DOCKER_SOCKET_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "docker"
+    },
+    {
+      "classification": "NETWORK_DATASET_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "hub"
+    },
+    {
+      "classification": "NETWORK_OR_RUNTIME_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "live"
+    },
+    {
+      "classification": "CHANNEL_CREDENTIAL_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "live_channel"
+    },
+    {
+      "classification": "EXTERNAL_FRAMEWORK_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "live_external"
+    },
+    {
+      "classification": "APPLE_PLATFORM_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "macos15"
+    },
+    {
+      "classification": "REMOTE_CREDENTIAL_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "modal"
+    },
+    {
+      "classification": "NVIDIA_HARDWARE_GATED",
+      "execution_status": "NOT_RUN",
+      "marker": "nvidia"
+    }
+  ],
+  "invariants": {
+    "network_disabled_during_tests": true,
+    "not_run_is_not_pass": true,
+    "platform_gaps_do_not_count_as_verified": true,
+    "read_only_source": true,
+    "secret_free": true
+  },
+  "results": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 1,
+    "tests": 184,
+    "time_seconds": 8.478
+  },
+  "schema_version": 1,
+  "source_commit": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5",
+  "source_repo": "openjarvis",
+  "status": "PASS",
+  "wave": "CP03-W00"
+}
