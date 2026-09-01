@@ -20,15 +20,16 @@
         "runtime": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["contractVersion", "runtimeId", "runtimeName", "runtimeVersion", "platform"],
+          "required": ["contractVersion", "runtimeId", "runtimeKind", "implementationVersion"],
           "properties": {
             "contractVersion": {"$ref": "https://schemas.rotprods.dev/clever/v1/common.schema.json#/$defs/contractVersion"},
             "runtimeId": {"type": "string", "minLength": 1},
-            "runtimeName": {"type": "string", "minLength": 1},
-            "runtimeVersion": {"type": "string"},
-            "platform": {"type": "string", "minLength": 1},
+            "runtimeKind": {"type": "string", "minLength": 1},
+            "implementationVersion": {"type": "string", "minLength": 1},
+            "processId": {"type": "string"},
+            "deviceId": {"type": "string"},
             "capabilityIds": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-            "metadata": {"type": "object", "additionalProperties": {"type": "string"}}
+            "platformConstraints": {"type": "array", "items": {"$ref": "https://schemas.rotprods.dev/clever/v1/common.schema.json#/$defs/platformConstraint"}}
           }
         },
         "upstreamRepository": {"const": "open-jarvis/OpenJarvis"},

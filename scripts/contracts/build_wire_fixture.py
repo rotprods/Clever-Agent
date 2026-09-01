@@ -61,9 +61,8 @@ def main() -> int:
             runtime=runtime_pb2.RuntimeDescriptor(
                 contract_version=common_pb2.ContractVersion(major=1, minor=1),
                 runtime_id="openjarvis-sidecar",
-                runtime_name="OpenJarvis",
-                runtime_version="pinned-72033b8",
-                platform="linux",
+                runtime_kind="cognitive-runtime",
+                implementation_version="pinned-72033b8",
             ),
             upstream_repository="open-jarvis/OpenJarvis",
             upstream_commit="72033b8ec288aa067ce4530ff9d96bf231e9c4e5",
@@ -75,6 +74,7 @@ def main() -> int:
     decoded = adapter_pb2.AdapterFrame.FromString(adapter.SerializeToString())
     assert decoded.frame_id == "frame_hello_openjarvis"
     assert decoded.hello.upstream_commit == "72033b8ec288aa067ce4530ff9d96bf231e9c4e5"
+    assert decoded.hello.runtime.runtime_kind == "cognitive-runtime"
     print(f"OK: Python produced event={event_bytes} bytes adapter_hello={adapter_bytes} bytes")
     return 0
 
