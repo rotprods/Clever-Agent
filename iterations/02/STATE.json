@@ -1,19 +1,20 @@
 {
-  "active_subcheckpoint": "I02.4",
+  "active_subcheckpoint": "I02.5",
   "blocking_issues": [],
   "checkpoint_id": "CP02",
   "completed_subcheckpoints": [
     "I02.0",
     "I02.1",
     "I02.2",
-    "I02.3"
+    "I02.3",
+    "I02.4"
   ],
   "goal_id": "CLEVER-JARVIS-001",
   "iteration_id": "I02",
   "last_updated_date": "2026-09-01",
   "name": "Canonical Contracts + Rust Kernel Scaffold",
-  "next_wave": "CP02-W04",
-  "next_wave_name": "Action receipts idempotency lifecycle and audit",
+  "next_wave": "CP02-W05",
+  "next_wave_name": "Contract kernel security recovery and version skew gauntlet",
   "parity_denominator_status": "GENERATED_UNVERIFIED",
   "schema_version": 1,
   "status": "IN_PROGRESS"

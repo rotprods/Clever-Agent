@@ -1,6 +1,6 @@
 {
   "active_iteration": "I02",
-  "active_subcheckpoint": "I02.4",
+  "active_subcheckpoint": "I02.5",
   "blocking_issues": [],
   "branch": "main",
   "completed_waves": [
@@ -15,7 +15,8 @@
     "I01-W08",
     "CP02-W01",
     "CP02-W02",
-    "CP02-W03"
+    "CP02-W03",
+    "CP02-W04"
   ],
   "current_checkpoint": "CP02",
   "goal_id": "CLEVER-JARVIS-001",
@@ -23,8 +24,8 @@
   "mandatory_boot_command": "/empezarproyecto",
   "mode": "canonical-contracts",
   "next_checkpoint": "CP03",
-  "next_wave": "CP02-W04",
-  "next_wave_name": "Action receipts idempotency lifecycle and audit",
+  "next_wave": "CP02-W05",
+  "next_wave_name": "Contract kernel security recovery and version skew gauntlet",
   "required_next_outputs": [
     "versioned canonical Protobuf and JSON Schema contracts",
     "canonical cross-runtime fixtures",

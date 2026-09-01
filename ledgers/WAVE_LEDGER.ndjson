@@ -19,3 +19,5 @@
 {"checkpoint":"CP02","date":"2026-09-01","iteration":"I02","objective":"Scaffold Rust kernel identity/event/capability/policy primitives behind canonical contracts.","schema_version":1,"status":"PROPOSED","wave_id":"CP02-W03"}
 {"date":"2026-09-01","event":"VERIFICATION","evidence_id":"EVID-0009","next_wave":"CP02-W04","schema_version":1,"status":"COMPLETE","wave_id":"CP02-W03"}
 {"checkpoint":"CP02","date":"2026-09-01","iteration":"I02","objective":"Implement action receipts/idempotency, lifecycle health and append-only audit primitives.","schema_version":1,"status":"PROPOSED","wave_id":"CP02-W04"}
+{"date":"2026-09-01","event":"VERIFICATION","evidence_id":"EVID-0010","next_wave":"CP02-W05","schema_version":1,"status":"COMPLETE","wave_id":"CP02-W04"}
+{"checkpoint":"CP02","date":"2026-09-01","iteration":"I02","objective":"Run contract/kernel security, malformed-input, version-skew and recovery gauntlet.","schema_version":1,"status":"PROPOSED","wave_id":"CP02-W05"}

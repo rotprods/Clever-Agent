@@ -8,11 +8,11 @@
 - Global status: `IN_PROGRESS`
 - Active checkpoint: `CP02 — Canonical contracts and Rust kernel scaffold`
 - Active iteration: `I02 — Canonical Contracts + Rust Kernel Scaffold`
-- Active subcheckpoint: `I02.4`
-- Next executable wave: `CP02-W04 — Action receipts idempotency lifecycle and audit`
+- Active subcheckpoint: `I02.5`
+- Next executable wave: `CP02-W05 — Contract kernel security recovery and version skew gauntlet`
 - Capability denominator: `7565`
 - Clever VERIFIED parity: `0 / 7565`
 
 ## Canonical frontier
 
-Execute `/empezarproyecto`, claim `CP02-W04`, and follow `iterations/02/METAPROMPT.md`. Contracts remain authoritative over kernel implementation.
+Execute `/empezarproyecto`, claim `CP02-W05`, and follow `iterations/02/METAPROMPT.md`. Contracts remain authoritative over kernel implementation.
