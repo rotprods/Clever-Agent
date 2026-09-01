@@ -12,7 +12,14 @@
     "D-0010",
     "D-0011"
   ],
-  "active_claims": [],
+  "active_claims": [
+    {
+      "claim_id": "CLAIM-CP03-W00-001",
+      "owner": "chatgpt-gpt-5.6-sol",
+      "status": "ACTIVE",
+      "wave_id": "CP03-W00"
+    }
+  ],
   "authority_read_order": [
     "GOAL.md",
     "SECURITY_MODEL.md",
