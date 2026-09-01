@@ -1,7 +1,7 @@
 {
   "checkpoint": "CP02",
-  "first_executable_task": "CP02-003",
-  "frontier_wave": "CP02-W03",
+  "first_executable_task": "CP02-004",
+  "frontier_wave": "CP02-W04",
   "iteration": "I02",
   "project_id": "CLEVER-JARVIS-001",
   "schema_version": 1,
@@ -494,7 +494,7 @@
       ],
       "owner_role": "rust_lead",
       "priority": "P4",
-      "status": "READY",
+      "status": "COMPLETE",
       "wave": "CP02-W03"
     },
     {
@@ -512,7 +512,7 @@
       ],
       "owner_role": "rust_lead",
       "priority": "P4",
-      "status": "BLOCKED",
+      "status": "READY",
       "wave": "CP02-W04"
     },
     {
