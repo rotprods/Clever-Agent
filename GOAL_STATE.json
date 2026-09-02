@@ -1,10 +1,10 @@
 {
   "active_checkpoint": "CP03",
   "active_iteration": "I03",
-  "frontier": "Execute /empezarproyecto at CP03-W01 and execute CP03-001.",
+  "frontier": "Execute /empezarproyecto at CP03-W02 and execute CP03-002.",
   "goal_id": "CLEVER-JARVIS-001",
   "invariants_locked": true,
-  "last_updated_date": "2026-09-01",
+  "last_updated_date": "2026-09-02",
   "parity": {
     "denominator_status": "GENERATED_UNVERIFIED",
     "ratio": 0.0,

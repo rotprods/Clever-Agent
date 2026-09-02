@@ -5,8 +5,8 @@ Machine authority: `.agentic/context/NEXT_ACTIONS.json`.
 ## CP03
 
 - [x] **CP03-000 / CP03-W00 — Run hermetic pinned OpenJarvis baseline and classify gated tests.** Status: `COMPLETE`.
-- [ ] **CP03-001 / CP03-W01 — Implement supervised adapter transport, lifecycle and typed registry bridge.** Status: `READY`.
-- [ ] **CP03-002 / CP03-W02 — Map models, engines and inference behavior through canonical contracts.** Status: `BLOCKED`.
+- [x] **CP03-001 / CP03-W01 — Implement supervised adapter transport, lifecycle and typed registry bridge.** Status: `COMPLETE`.
+- [ ] **CP03-002 / CP03-W02 — Map models, engines and inference behavior through canonical contracts.** Status: `READY`.
 - [ ] **CP03-003 / CP03-W03 — Map agents, tools and MCP while enforcing Clever action authority.** Status: `BLOCKED`.
 - [ ] **CP03-004 / CP03-W04 — Map memory/retrieval with principal-scoped ownership and provenance.** Status: `BLOCKED`.
 - [ ] **CP03-005 / CP03-W05 — Map traces, telemetry, evals and proposal-only learning signals.** Status: `BLOCKED`.

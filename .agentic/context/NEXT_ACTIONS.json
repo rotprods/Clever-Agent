@@ -1,7 +1,7 @@
 {
   "checkpoint": "CP03",
-  "first_executable_task": "CP03-001",
-  "frontier_wave": "CP03-W01",
+  "first_executable_task": "CP03-002",
+  "frontier_wave": "CP03-W02",
   "iteration": "I03",
   "project_id": "CLEVER-JARVIS-001",
   "schema_version": 1,
@@ -45,7 +45,7 @@
       ],
       "owner_role": "builder",
       "priority": "P0",
-      "status": "READY",
+      "status": "COMPLETE",
       "wave": "CP03-W01"
     },
     {
@@ -64,7 +64,7 @@
       ],
       "owner_role": "builder",
       "priority": "P0",
-      "status": "BLOCKED",
+      "status": "READY",
       "wave": "CP03-W02"
     },
     {

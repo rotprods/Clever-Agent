@@ -12,14 +12,7 @@
     "D-0010",
     "D-0011"
   ],
-  "active_claims": [
-    {
-      "claim_id": "CLAIM-CP03-W01-001",
-      "owner": "chatgpt-gpt-5.6-sol",
-      "status": "ACTIVE",
-      "wave_id": "CP03-W01"
-    }
-  ],
+  "active_claims": [],
   "authority_read_order": [
     "GOAL.md",
     "SECURITY_MODEL.md",
@@ -58,7 +51,8 @@
     "EVID-0010",
     "EVID-0011",
     "EVID-0012",
-    "EVID-0013"
+    "EVID-0013",
+    "EVID-0014"
   ],
   "frontier": {
     "blocking_issues": [],
@@ -79,13 +73,14 @@
       "CP02-W04",
       "CP02-W05",
       "CP02-W06",
-      "CP03-W00"
+      "CP03-W00",
+      "CP03-W01"
     ],
     "iteration": "I03",
-    "next_wave": "CP03-W01",
-    "next_wave_name": "Transport lifecycle and registry bridge",
+    "next_wave": "CP03-W02",
+    "next_wave_name": "Models engines and inference behavior",
     "parity_denominator_status": "GENERATED_UNVERIFIED",
-    "subcheckpoint": "I03.1"
+    "subcheckpoint": "I03.2"
   },
   "graph_planes": [
     {
@@ -168,7 +163,7 @@
   "planning": {
     "active_iteration_state": "iterations/03/STATE.json",
     "consciousness_act": "docs/ACTA_DE_CONSCIENCIA.md",
-    "first_executable_task": "CP03-001",
+    "first_executable_task": "CP03-002",
     "implementation_plan": "IMPLEMENTATION_PLAN.md",
     "next_actions": ".agentic/context/NEXT_ACTIONS.json",
     "regression": "docs/REGRESSION_2026-08-31.md",

@@ -42,6 +42,7 @@ name = "clever-kernel"
 version = "0.1.0"
 dependencies = [
  "clever-contracts",
+ "prost",
  "prost-types",
  "sha2",
 ]
