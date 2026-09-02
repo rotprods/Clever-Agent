@@ -10,6 +10,30 @@ ROOT = Path(__file__).resolve().parents[2]
 EXPECTED_COMMIT = "72033b8ec288aa067ce4530ff9d96bf231e9c4e5"
 RESERVED = ("permission", "scope", "risk", "policy", "authorization", "authz")
 REQUIRED_REGISTRIES = {"AgentRegistry", "EngineRegistry", "ToolRegistry"}
+PRIMITIVE_ORDER = {
+    name: index
+    for index, name in enumerate(
+        (
+            "REGISTRY_PRIMITIVE_MODEL",
+            "REGISTRY_PRIMITIVE_ENGINE",
+            "REGISTRY_PRIMITIVE_MEMORY",
+            "REGISTRY_PRIMITIVE_FACT_STORE",
+            "REGISTRY_PRIMITIVE_AGENT",
+            "REGISTRY_PRIMITIVE_TOOL",
+            "REGISTRY_PRIMITIVE_ROUTER_POLICY",
+            "REGISTRY_PRIMITIVE_BENCHMARK",
+            "REGISTRY_PRIMITIVE_CHANNEL",
+            "REGISTRY_PRIMITIVE_LEARNING",
+            "REGISTRY_PRIMITIVE_SKILL",
+            "REGISTRY_PRIMITIVE_SPEECH",
+            "REGISTRY_PRIMITIVE_COMPRESSION",
+            "REGISTRY_PRIMITIVE_TTS",
+            "REGISTRY_PRIMITIVE_CONNECTOR",
+            "REGISTRY_PRIMITIVE_MINER",
+        ),
+        start=1,
+    )
+}
 
 
 def validate(payload: dict[str, Any]) -> list[str]:
@@ -33,7 +57,7 @@ def validate(payload: dict[str, Any]) -> list[str]:
         primitive = str(row.get("primitive", ""))
         key = str(row.get("key", ""))
         implementation = str(row.get("implementation", ""))
-        if not primitive or primitive.endswith("UNSPECIFIED") or not key or not implementation:
+        if primitive not in PRIMITIVE_ORDER or not key or not implementation:
             errors.append(f"invalid registry entry: {row!r}")
             continue
         identity = (primitive, key, implementation)
@@ -45,8 +69,12 @@ def validate(payload: dict[str, Any]) -> list[str]:
             normalized = str(metadata_key).casefold()
             if any(token in normalized for token in RESERVED):
                 errors.append(f"security-reserved metadata leaked: {metadata_key}")
-    if observed != sorted(observed):
-        errors.append("registry entries are not deterministically ordered")
+    canonical = sorted(
+        observed,
+        key=lambda row: (PRIMITIVE_ORDER[row[0]], row[1], row[2]),
+    )
+    if observed != canonical:
+        errors.append("registry entries are not in canonical enum/key/implementation order")
 
     source = (ROOT / "adapters/openjarvis/sidecar.py").read_text(encoding="utf-8")
     # Provider keys are discovered from upstream registries, not copied into Clever source.
@@ -80,6 +108,7 @@ def main() -> int:
             "provider_keys_discovered_not_hardcoded": not any("hard-coded" in error for error in errors),
             "reserved_metadata_filtered": not any("reserved metadata" in error for error in errors),
             "exact_upstream_pin": payload.get("upstream_commit") == EXPECTED_COMMIT,
+            "canonical_order": not any("canonical enum" in error for error in errors),
         },
     }
     report_path = ROOT / args.report

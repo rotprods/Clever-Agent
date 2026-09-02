@@ -4,7 +4,6 @@ import argparse
 import contextlib
 import importlib
 import inspect
-import io
 import json
 from pathlib import Path
 import struct
@@ -40,18 +39,21 @@ _REGISTRATION_IMPORT_HINTS = {
     "AgentRegistry": ("openjarvis.agents",),
     "BenchmarkRegistry": ("openjarvis.bench",),
     "ChannelRegistry": ("openjarvis.channels",),
-    "CompressionRegistry": ("openjarvis.compression",),
+    "CompressionRegistry": ("openjarvis.sessions.compression",),
     "ConnectorRegistry": ("openjarvis.connectors",),
     "EngineRegistry": ("openjarvis.engine",),
     "FactStoreRegistry": ("openjarvis.memory",),
-    "LearningRegistry": ("openjarvis.learning",),
+    "LearningRegistry": ("openjarvis.learning.intelligence",),
     "MemoryRegistry": ("openjarvis.memory", "openjarvis.tools.storage"),
     "MinerRegistry": ("openjarvis.mining",),
     "ModelRegistry": ("openjarvis.intelligence",),
-    "RouterPolicyRegistry": ("openjarvis.routing",),
+    "RouterPolicyRegistry": (
+        "openjarvis.learning.routing.heuristic_policy",
+        "openjarvis.learning.routing.learned_router",
+    ),
     "SkillRegistry": ("openjarvis.skills",),
     "SpeechRegistry": ("openjarvis.speech",),
-    "TTSRegistry": ("openjarvis.tts", "openjarvis.tools.text_to_speech"),
+    "TTSRegistry": ("openjarvis.tools.text_to_speech",),
     "ToolRegistry": ("openjarvis.tools",),
 }
 

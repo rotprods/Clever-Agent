@@ -30,6 +30,28 @@ class OpenJarvisSidecarTests(unittest.TestCase):
         self.assertEqual(set(sidecar._REGISTRY_PRIMITIVES), expected)
         self.assertTrue(all(value != 0 for value in sidecar._REGISTRY_PRIMITIVES.values()))
 
+    def test_registration_hints_follow_pinned_source_layout(self) -> None:
+        self.assertEqual(
+            sidecar._REGISTRATION_IMPORT_HINTS["CompressionRegistry"],
+            ("openjarvis.sessions.compression",),
+        )
+        self.assertIn(
+            "openjarvis.learning.routing.heuristic_policy",
+            sidecar._REGISTRATION_IMPORT_HINTS["RouterPolicyRegistry"],
+        )
+        self.assertIn(
+            "openjarvis.learning.routing.learned_router",
+            sidecar._REGISTRATION_IMPORT_HINTS["RouterPolicyRegistry"],
+        )
+        self.assertEqual(
+            sidecar._REGISTRATION_IMPORT_HINTS["TTSRegistry"],
+            ("openjarvis.tools.text_to_speech",),
+        )
+        self.assertEqual(
+            sidecar._REGISTRATION_IMPORT_HINTS["LearningRegistry"],
+            ("openjarvis.learning.intelligence",),
+        )
+
     def test_frame_reader_fails_closed_on_oversized_frame(self) -> None:
         stream = BytesIO(struct.pack(">I", sidecar.MAX_FRAME_BYTES + 1))
         with self.assertRaises(ValueError):
