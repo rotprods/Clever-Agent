@@ -161,4 +161,4 @@ current_iteration:
   metaprompt: iterations/03/METAPROMPT.md
   plan: iterations/03/ITERATION.md
   state: iterations/03/STATE.json
-  next_wave: CP03-W01
+  next_wave: CP03-W02

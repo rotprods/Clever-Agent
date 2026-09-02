@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.rotprods.dev/clever/v1/adapter.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contractVersion", "frameId", "correlationId", "sentAt", "deadlineAt", "hello"],
+  "properties": {
+    "contractVersion": {"$ref": "https://schemas.rotprods.dev/clever/v1/common.schema.json#/$defs/contractVersion"},
+    "frameId": {"type": "string", "minLength": 1},
+    "correlationId": {"type": "string", "minLength": 1},
+    "sentAt": {"$ref": "https://schemas.rotprods.dev/clever/v1/common.schema.json#/$defs/timestamp"},
+    "deadlineAt": {"$ref": "https://schemas.rotprods.dev/clever/v1/common.schema.json#/$defs/timestamp"},
+    "hello": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contractVersion", "adapterId", "runtime", "upstreamRepository", "upstreamCommit", "maxFrameBytes", "supportedFeatures"],
+      "properties": {
+        "contractVersion": {"$ref": "https://schemas.rotprods.dev/clever/v1/common.schema.json#/$defs/contractVersion"},
+        "adapterId": {"type": "string", "minLength": 1},
+        "runtime": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["contractVersion", "runtimeId", "runtimeKind", "implementationVersion"],
+          "properties": {
+            "contractVersion": {"$ref": "https://schemas.rotprods.dev/clever/v1/common.schema.json#/$defs/contractVersion"},
+            "runtimeId": {"type": "string", "minLength": 1},
+            "runtimeKind": {"type": "string", "minLength": 1},
+            "implementationVersion": {"type": "string", "minLength": 1},
+            "processId": {"type": "string"},
+            "deviceId": {"type": "string"},
+            "capabilityIds": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+            "platformConstraints": {"type": "array", "items": {"$ref": "https://schemas.rotprods.dev/clever/v1/common.schema.json#/$defs/platformConstraint"}}
+          }
+        },
+        "upstreamRepository": {"const": "open-jarvis/OpenJarvis"},
+        "upstreamCommit": {"const": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5"},
+        "maxFrameBytes": {"type": "string", "pattern": "^[1-9][0-9]*$"},
+        "supportedFeatures": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    }
+  }
+}

@@ -6,15 +6,15 @@
 
 - Project: `CLEVER-JARVIS-001`
 - Checkpoint: `CP03`
-- Iteration: `I03` / `I03.1`
-- Next wave: `CP03-W01 — Transport lifecycle and registry bridge`
+- Iteration: `I03` / `I03.2`
+- Next wave: `CP03-W02 — Models engines and inference behavior`
 - Parity denominator: `GENERATED_UNVERIFIED`
 - Protocol: `COS-GRAPH-ENGINE-V2-20D`
 - 20D model: `COS-20D-v2` (20 dimensions)
 
 ## Planning
 
-- First executable task: `CP03-001`
+- First executable task: `CP03-002`
 - Active iteration state: `iterations/03/STATE.json`
 - Machine task graph: `.agentic/context/NEXT_ACTIONS.json`
 - Implementation plan: `IMPLEMENTATION_PLAN.md`

@@ -7,6 +7,11 @@
       "sha256": "d124c04b835cea63e0ad309ee0aa14c42d5035dae751e787dcfd5ba03cce4820"
     },
     {
+      "bytes": 7717,
+      "path": "contracts/sdk/python/gen/clever/v1/adapter_pb2.py",
+      "sha256": "54b311a97fac9f98b741f097b25930b7de9e0e8985565acd1b8d3dbb225d4d25"
+    },
+    {
       "bytes": 5080,
       "path": "contracts/sdk/python/gen/clever/v1/capabilities_pb2.py",
       "sha256": "860b05b4d7fb92f52bd2a76e9bb1ab624b6167fec0300f0c694eb9e9582af393"
@@ -55,6 +60,11 @@
       "bytes": 7948,
       "path": "contracts/sdk/typescript/src/gen/clever/v1/actions_pb.ts",
       "sha256": "e644e39b807f09738b93c85bb0d82ebb3526883d496bdeb07968fa9a5b089cf3"
+    },
+    {
+      "bytes": 15474,
+      "path": "contracts/sdk/typescript/src/gen/clever/v1/adapter_pb.ts",
+      "sha256": "c7a61780425511bef9cc968dbf8935f8371b6727835aab4e727846d5e277cc4e"
     },
     {
       "bytes": 8600,
@@ -107,6 +117,11 @@
       "sha256": "a5afbb95b45318c7711933f647e1f47ab024eedef291852d0f8237cec0fbd5ad"
     },
     {
+      "bytes": 47325,
+      "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/adapter.pb.swift",
+      "sha256": "9614b0f09f22b0259b29efb378f9701a1f55a814354a8a00639033c4af0249f2"
+    },
+    {
       "bytes": 24368,
       "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/capabilities.pb.swift",
       "sha256": "f14493f3a69bcecc47d7466d736d2b8d0f124fb58a0ef1c8543fbb86f68c7492"
@@ -152,9 +167,19 @@
       "sha256": "fc04214f7d2610ad85048da8e9911b660b489c52a4461f9d5416c8ded84ac6b5"
     },
     {
-      "bytes": 37369,
+      "bytes": 46464,
       "path": "contracts/sdk/rust/src/gen/clever.v1.rs",
-      "sha256": "b4a8c6314f330af9820bde1ee54100f58d43277c07f242c81a5f6a45da07b0b5"
+      "sha256": "296a62f9d846e1431cb8ae12f386e76e60817f3c3de27fe752a7b8223d1a277f"
+    },
+    {
+      "bytes": 268,
+      "path": "contracts/fixtures/wire/adapter-hello.bin",
+      "sha256": "4612ab8fa6b26e50619ae3895692c1d8b13759d220e77f6f3a0a7b097920338e"
+    },
+    {
+      "bytes": 825,
+      "path": "contracts/fixtures/wire/adapter-hello.protobuf.json",
+      "sha256": "8442402145f9e61614d602c6c25f4ddb65145b66c63a40598eaf72667ba76ef6"
     },
     {
       "bytes": 222,
@@ -167,8 +192,8 @@
       "sha256": "c609492c56126dd8eb88dfa68793f80817607d2b183125720a42b6e1b942ad93"
     }
   ],
-  "generated_file_count": 33,
-  "proto_tree_sha256": "820dbabc0bfca4075279cf63bfb4201e04c394d186d9fdb25807debb5c91381b",
+  "generated_file_count": 38,
+  "proto_tree_sha256": "2b0c3aa4d9b1c4c177bcb3a30034d232de091376173b3ece12cb198c3fd6fc9c",
   "schema_version": 1,
   "toolchain_lock_sha256": "ab3267b70749f36c0859d0fc61ef5b1e9fc3015eb0faeeb47308e141cc303052"
 }

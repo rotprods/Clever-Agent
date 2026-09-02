@@ -1,0 +1,154 @@
+name: CP03 W01 Adapter Contract Codegen
+
+on:
+  push:
+    branches:
+      - wave/cp03/w01-transport-registry
+    paths:
+      - 'contracts/proto/clever/v1/adapter.proto'
+      - 'contracts/jsonschema/adapter.schema.json'
+      - 'contracts/fixtures/adapter.json'
+      - 'contracts/contract_manifest.json'
+      - 'scripts/contracts/build_wire_fixture.py'
+      - 'contracts/sdk/typescript/test/roundtrip.ts'
+      - 'contracts/sdk/rust/tests/wire.rs'
+      - 'contracts/sdk/swift/Tests/CleverContractsTests/WireTests.swift'
+      - 'tests/test_cp03_adapter_contract.py'
+      - '.github/workflows/cp03-w01-contract-codegen.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cp03-w01-codegen-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  generate-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - uses: bufbuild/buf-setup-action@v1
+        with:
+          version: '1.72.0'
+      - name: Validate additive adapter contract before codegen
+        run: |
+          python -m pip install --disable-pip-version-check 'jsonschema==4.25.1'
+          python -m unittest discover -s tests -p 'test_cp03_adapter_contract.py' -v
+          python -m scripts.contracts.validate_manifest
+          python -m scripts.contracts.validate_fixtures
+          python -m unittest discover -s tests -p 'test_contract_versioning.py' -v
+          buf format -d --exit-code
+          buf lint
+          buf build -o /tmp/clever-contracts.binpb
+      - name: Generate four pinned language bindings
+        run: buf generate
+      - name: Python builds deterministic event and adapter fixtures
+        run: |
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt
+          python -m scripts.contracts.build_wire_fixture
+      - name: TypeScript compile and both wire round-trips
+        working-directory: contracts/sdk/typescript
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run typecheck
+          npm test
+      - name: Rust compile and both wire round-trips
+        run: cargo test --locked --manifest-path contracts/sdk/rust/Cargo.toml
+      - name: Build deterministic generated manifest
+        run: python -m scripts.contracts.generated_manifest
+      - name: Upload generated SDK evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp03-w01-generated-sdk-${{ env.SOURCE_SHA }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            contracts/sdk/python/gen/clever/
+            contracts/sdk/typescript/src/gen/
+            contracts/sdk/rust/src/gen/
+            contracts/sdk/swift/Sources/CleverContracts/Gen/
+            contracts/fixtures/wire/
+            contracts/generated_manifest.json
+
+  swift-compatibility:
+    needs: generate-linux
+    runs-on: macos-15
+    timeout-minutes: 20
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: cp03-w01-generated-sdk-${{ env.SOURCE_SHA }}
+          path: contracts
+      - name: Swift compiles and round-trips event plus adapter hello
+        run: swift test --package-path contracts/sdk/swift
+
+  persist-generated:
+    needs: [generate-linux, swift-compatibility]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: cp03-w01-generated-sdk-${{ env.SOURCE_SHA }}
+          path: contracts
+      - name: Verify generated artifact authority
+        run: |
+          python -m scripts.contracts.generated_manifest --check
+          python -m unittest discover -s tests -p 'test_generated_manifest.py' -v
+          git diff --check
+      - name: Materialize contract subgate evidence
+        run: |
+          mkdir -p evidence/cp03/w01
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          payload={
+            'schema_version':1,
+            'checkpoint':'CP03','wave':'CP03-W01','subgate':'ADAPTER_CONTRACT_CODEGEN',
+            'source_sha':os.environ['SOURCE_SHA'],'run_id':int(os.environ['GITHUB_RUN_ID']),
+            'status':'PASS','wire_version':{'major':1,'minor':1},
+            'runtimes':['python','typescript','rust','swift'],
+            'fixtures':['event.bin','adapter-hello.bin'],
+            'state_advanced':False
+          }
+          Path('evidence/cp03/w01/adapter_contract_codegen.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+          PY
+      - name: Persist generated bindings without advancing W01
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_head="$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)"
+          test "$remote_head" = "$SOURCE_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add contracts/sdk/python/gen/clever contracts/sdk/typescript/src/gen contracts/sdk/rust/src/gen contracts/sdk/swift/Sources/CleverContracts/Gen contracts/fixtures/wire contracts/generated_manifest.json evidence/cp03/w01/adapter_contract_codegen.json
+          git commit -m 'feat(cp03): persist adapter transport bindings after polyglot gate'
+          git push origin "HEAD:${GITHUB_REF_NAME}"

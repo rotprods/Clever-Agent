@@ -1,6 +1,6 @@
 {
   "active_iteration": "I03",
-  "active_subcheckpoint": "I03.1",
+  "active_subcheckpoint": "I03.2",
   "blocking_issues": [],
   "branch": "main",
   "completed_waves": [
@@ -19,7 +19,8 @@
     "CP02-W04",
     "CP02-W05",
     "CP02-W06",
-    "CP03-W00"
+    "CP03-W00",
+    "CP03-W01"
   ],
   "current_checkpoint": "CP03",
   "goal_id": "CLEVER-JARVIS-001",
@@ -27,8 +28,8 @@
   "mandatory_boot_command": "/empezarproyecto",
   "mode": "openjarvis-adapter",
   "next_checkpoint": "CP04",
-  "next_wave": "CP03-W01",
-  "next_wave_name": "Transport lifecycle and registry bridge",
+  "next_wave": "CP03-W02",
+  "next_wave_name": "Models engines and inference behavior",
   "required_next_outputs": [
     "hermetic OpenJarvis baseline",
     "646-capability OpenJarvis obligation manifest",

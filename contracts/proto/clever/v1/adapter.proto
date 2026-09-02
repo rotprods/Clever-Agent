@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package clever.v1;
+
+import "clever/v1/common.proto";
+import "clever/v1/runtime.proto";
+import "google/protobuf/timestamp.proto";
+
+// Adapter transport is control-plane plumbing, not a source of authorization.
+enum RegistryPrimitive {
+  REGISTRY_PRIMITIVE_UNSPECIFIED = 0;
+  REGISTRY_PRIMITIVE_MODEL = 1;
+  REGISTRY_PRIMITIVE_ENGINE = 2;
+  REGISTRY_PRIMITIVE_MEMORY = 3;
+  REGISTRY_PRIMITIVE_FACT_STORE = 4;
+  REGISTRY_PRIMITIVE_AGENT = 5;
+  REGISTRY_PRIMITIVE_TOOL = 6;
+  REGISTRY_PRIMITIVE_ROUTER_POLICY = 7;
+  REGISTRY_PRIMITIVE_BENCHMARK = 8;
+  REGISTRY_PRIMITIVE_CHANNEL = 9;
+  REGISTRY_PRIMITIVE_LEARNING = 10;
+  REGISTRY_PRIMITIVE_SKILL = 11;
+  REGISTRY_PRIMITIVE_SPEECH = 12;
+  REGISTRY_PRIMITIVE_COMPRESSION = 13;
+  REGISTRY_PRIMITIVE_TTS = 14;
+  REGISTRY_PRIMITIVE_CONNECTOR = 15;
+  REGISTRY_PRIMITIVE_MINER = 16;
+}
+
+message AdapterHello {
+  ContractVersion contract_version = 1;
+  string adapter_id = 2;
+  RuntimeDescriptor runtime = 3;
+  string upstream_repository = 4;
+  string upstream_commit = 5;
+  uint64 max_frame_bytes = 6;
+  repeated string supported_features = 7;
+}
+
+message AdapterHelloAck {
+  ContractVersion contract_version = 1;
+  string adapter_id = 2;
+  bool accepted = 3;
+  string reason = 4;
+  uint64 max_frame_bytes = 5;
+  repeated string negotiated_features = 6;
+}
+
+message RegistrySnapshotRequest {}
+
+message NativeRegistryEntry {
+  RegistryPrimitive primitive = 1;
+  string key = 2;
+  string implementation = 3;
+  string native_type = 4;
+  repeated string platform_constraints = 5;
+  map<string, string> metadata = 6;
+}
+
+message RegistrySnapshot {
+  string runtime_id = 1;
+  repeated NativeRegistryEntry entries = 2;
+  google.protobuf.Timestamp observed_at = 3;
+}
+
+message AdapterHealthRequest {}
+
+message AdapterCancel {
+  string target_request_id = 1;
+  string reason = 2;
+}
+
+message AdapterShutdown {
+  string reason = 1;
+}
+
+message AdapterBusy {
+  uint64 retry_after_ms = 1;
+  string reason = 2;
+}
+
+message AdapterError {
+  string code = 1;
+  string message = 2;
+  bool retryable = 3;
+}
+
+message AdapterFrame {
+  ContractVersion contract_version = 1;
+  string frame_id = 2;
+  string correlation_id = 3;
+  google.protobuf.Timestamp sent_at = 4;
+  google.protobuf.Timestamp deadline_at = 5;
+
+  oneof body {
+    AdapterHello hello = 10;
+    AdapterHelloAck hello_ack = 11;
+    RegistrySnapshotRequest registry_snapshot_request = 12;
+    RegistrySnapshot registry_snapshot = 13;
+    AdapterHealthRequest health_request = 14;
+    RuntimeHealth health = 15;
+    AdapterCancel cancel = 16;
+    AdapterShutdown shutdown = 17;
+    AdapterBusy busy = 18;
+    AdapterError error = 19;
+  }
+}

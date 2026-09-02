@@ -1,0 +1,37 @@
+{
+  "checkpoint": "CP03",
+  "entry_count": 230,
+  "errors": [],
+  "gate": "openjarvis_registry_discovery",
+  "import_failures": [],
+  "invariants": {
+    "canonical_order": true,
+    "exact_upstream_pin": true,
+    "provider_keys_discovered_not_hardcoded": true,
+    "reserved_metadata_filtered": true
+  },
+  "registry_class_count": 16,
+  "registry_counts": {
+    "AgentRegistry": 22,
+    "BenchmarkRegistry": 3,
+    "ChannelRegistry": 30,
+    "CompressionRegistry": 4,
+    "ConnectorRegistry": 27,
+    "EngineRegistry": 15,
+    "FactStoreRegistry": 1,
+    "LearningRegistry": 2,
+    "MemoryRegistry": 4,
+    "MinerRegistry": 3,
+    "ModelRegistry": 69,
+    "RouterPolicyRegistry": 2,
+    "SkillRegistry": 0,
+    "SpeechRegistry": 3,
+    "TTSRegistry": 3,
+    "ToolRegistry": 42
+  },
+  "schema_version": 1,
+  "status": "PASS",
+  "unsupported_registries": [],
+  "upstream_commit": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5",
+  "wave": "CP03-W01"
+}

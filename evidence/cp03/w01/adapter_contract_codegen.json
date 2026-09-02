@@ -1,0 +1,24 @@
+{
+  "checkpoint": "CP03",
+  "fixtures": [
+    "event.bin",
+    "adapter-hello.bin"
+  ],
+  "run_id": 33506940282,
+  "runtimes": [
+    "python",
+    "typescript",
+    "rust",
+    "swift"
+  ],
+  "schema_version": 1,
+  "source_sha": "dbce3b3854db9509b8556f7467b85d6d7669f09c",
+  "state_advanced": false,
+  "status": "PASS",
+  "subgate": "ADAPTER_CONTRACT_CODEGEN",
+  "wave": "CP03-W01",
+  "wire_version": {
+    "major": 1,
+    "minor": 1
+  }
+}

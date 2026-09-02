@@ -1,0 +1,35 @@
+{
+  "contractVersion": {
+    "major": 1,
+    "minor": 1
+  },
+  "correlationId": "corr_openjarvis_boot",
+  "deadlineAt": "2026-09-01T12:00:05Z",
+  "frameId": "frame_hello_openjarvis",
+  "hello": {
+    "adapterId": "openjarvis",
+    "contractVersion": {
+      "major": 1,
+      "minor": 1
+    },
+    "maxFrameBytes": "4194304",
+    "runtime": {
+      "contractVersion": {
+        "major": 1,
+        "minor": 1
+      },
+      "implementationVersion": "pinned-72033b8",
+      "runtimeId": "openjarvis-sidecar",
+      "runtimeKind": "cognitive-runtime"
+    },
+    "supportedFeatures": [
+      "registry.snapshot",
+      "health",
+      "cancel",
+      "shutdown"
+    ],
+    "upstreamCommit": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5",
+    "upstreamRepository": "open-jarvis/OpenJarvis"
+  },
+  "sentAt": "2026-09-01T12:00:00Z"
+}

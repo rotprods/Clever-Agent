@@ -1,0 +1,23 @@
+{
+  "checkpoint": "CP03",
+  "errors": [],
+  "gate": "rust_supervisor_registry_bridge",
+  "openjarvis_obligation_count": 646,
+  "openjarvis_verified_after_w01": 0,
+  "real_openjarvis_registry_entries": 230,
+  "run_id": 33623506559,
+  "schema_version": 1,
+  "source_sha": "74240b8fab4e68ba982e32e6ac2393ab50484af8",
+  "status": "PASS",
+  "tests": [
+    "unknown-major fail closed",
+    "oversized/truncated framing fail closed",
+    "bounded handshake timeout",
+    "bounded crash restart budget",
+    "ambient secret stripping",
+    "registry metadata privilege filtering",
+    "real pinned OpenJarvis supervised handshake/snapshot/health/shutdown",
+    "230 registry entries bridged idempotently as UNAVAILABLE"
+  ],
+  "wave": "CP03-W01"
+}
