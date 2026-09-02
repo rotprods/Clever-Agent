@@ -1,0 +1,107 @@
+name: CP03 W01 OpenJarvis Registry Sidecar
+
+on:
+  push:
+    branches:
+      - wave/cp03/w01-transport-registry
+    paths:
+      - 'adapters/openjarvis/**'
+      - 'scripts/cp03/validate_openjarvis_registry_snapshot.py'
+      - 'tests/test_cp03_openjarvis_sidecar.py'
+      - '.github/workflows/cp03-w01-sidecar-registry.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cp03-w01-sidecar-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  registry-sidecar:
+    runs-on: ubuntu-24.04
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+      OPENJARVIS_SHA: 72033b8ec288aa067ce4530ff9d96bf231e9c4e5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Unit-test fail-closed sidecar primitives
+        run: |
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt
+          python -m compileall -q adapters/openjarvis scripts/cp03/validate_openjarvis_registry_snapshot.py tests/test_cp03_openjarvis_sidecar.py
+          python -m unittest discover -s tests -p 'test_cp03_openjarvis_sidecar.py' -v
+      - name: Acquire exact pinned OpenJarvis source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init /tmp/openjarvis
+          git -C /tmp/openjarvis remote add origin https://github.com/open-jarvis/OpenJarvis.git
+          git -C /tmp/openjarvis fetch --depth 1 origin "$OPENJARVIS_SHA"
+          git -C /tmp/openjarvis checkout --detach FETCH_HEAD
+          test "$(git -C /tmp/openjarvis rev-parse HEAD)" = "$OPENJARVIS_SHA"
+      - name: Build frozen OpenJarvis dependency image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build -f "$GITHUB_WORKSPACE/scripts/cp03/Dockerfile.baseline" -t "clever-openjarvis-w01:$SOURCE_SHA" /tmp/openjarvis
+      - name: Discover native registries twice inside hermetic runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence/cp03/cp03-w01
+          for run in 1 2; do
+            docker run --rm \
+              --network none \
+              --read-only \
+              --cap-drop ALL \
+              --security-opt no-new-privileges \
+              --pids-limit 256 \
+              --memory 2g \
+              --cpus 2 \
+              --tmpfs /tmp:rw,noexec,nosuid,size=256m \
+              -e HOME=/tmp/home \
+              -e XDG_CONFIG_HOME=/tmp/config \
+              -e XDG_DATA_HOME=/tmp/data \
+              -e PYTHONHASHSEED=0 \
+              -e PYTHONPATH=/clever:/clever/contracts/sdk/python/gen:/src/src \
+              -v "$GITHUB_WORKSPACE:/clever:ro" \
+              "clever-openjarvis-w01:$SOURCE_SHA" \
+              /src/.venv/bin/python /clever/adapters/openjarvis/sidecar.py --dump-registry \
+              > "evidence/cp03/cp03-w01/registry-${run}.json"
+          done
+          cmp evidence/cp03/cp03-w01/registry-1.json evidence/cp03/cp03-w01/registry-2.json
+          cp evidence/cp03/cp03-w01/registry-1.json evidence/cp03/cp03-w01/openjarvis-registry-snapshot.json
+      - name: Validate registry bridge invariants
+        run: |
+          python scripts/cp03/validate_openjarvis_registry_snapshot.py evidence/cp03/cp03-w01/openjarvis-registry-snapshot.json
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python scripts/validate_agentic_state.py
+          python scripts/context/build_context_pack.py --check
+          git diff --check
+      - name: Upload sidecar registry proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp03-w01-registry-${{ env.SOURCE_SHA }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            evidence/cp03/cp03-w01/*.json
+            reports/cp03/OPENJARVIS_W01_REGISTRY.json
+      - name: Persist successful registry proof without advancing W01
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_head="$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)"
+          test "$remote_head" = "$SOURCE_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add evidence/cp03/cp03-w01/openjarvis-registry-snapshot.json reports/cp03/OPENJARVIS_W01_REGISTRY.json
+          git commit -m 'test(cp03): persist OpenJarvis registry discovery proof'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
