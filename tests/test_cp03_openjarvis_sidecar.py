@@ -46,6 +46,12 @@ class OpenJarvisSidecarTests(unittest.TestCase):
             self.assertNotIn(f'"{provider_key}"', source)
             self.assertNotIn(f"'{provider_key}'", source)
 
+    def test_sidecar_image_pins_contract_runtime_dependency(self) -> None:
+        dockerfile = (Path(__file__).resolve().parents[1] / "scripts/cp03/Dockerfile.openjarvis-sidecar").read_text(encoding="utf-8")
+        self.assertIn("protobuf==7.36.0", dockerfile)
+        self.assertIn("/src/.venv/bin/python", dockerfile)
+        self.assertNotIn("apt-get", dockerfile)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -6,6 +6,7 @@ on:
       - wave/cp03/w01-transport-registry
     paths:
       - 'adapters/openjarvis/**'
+      - 'scripts/cp03/Dockerfile.openjarvis-sidecar'
       - 'scripts/cp03/validate_openjarvis_registry_snapshot.py'
       - 'tests/test_cp03_openjarvis_sidecar.py'
       - '.github/workflows/cp03-w01-sidecar-registry.yml'
@@ -46,11 +47,18 @@ jobs:
           git -C /tmp/openjarvis fetch --depth 1 origin "$OPENJARVIS_SHA"
           git -C /tmp/openjarvis checkout --detach FETCH_HEAD
           test "$(git -C /tmp/openjarvis rev-parse HEAD)" = "$OPENJARVIS_SHA"
-      - name: Build frozen OpenJarvis dependency image
+      - name: Build frozen OpenJarvis dependency image and Clever contract layer
         shell: bash
         run: |
           set -euo pipefail
-          docker build -f "$GITHUB_WORKSPACE/scripts/cp03/Dockerfile.baseline" -t "clever-openjarvis-w01:$SOURCE_SHA" /tmp/openjarvis
+          docker build -f "$GITHUB_WORKSPACE/scripts/cp03/Dockerfile.baseline" -t "clever-openjarvis-base:$SOURCE_SHA" /tmp/openjarvis
+          mkdir -p /tmp/openjarvis-sidecar-context
+          docker build \
+            --build-arg "BASE_IMAGE=clever-openjarvis-base:$SOURCE_SHA" \
+            -f "$GITHUB_WORKSPACE/scripts/cp03/Dockerfile.openjarvis-sidecar" \
+            -t "clever-openjarvis-w01:$SOURCE_SHA" \
+            /tmp/openjarvis-sidecar-context
+          docker run --rm --entrypoint /src/.venv/bin/python "clever-openjarvis-w01:$SOURCE_SHA" -c 'import google.protobuf; print(google.protobuf.__version__)' | grep '^7\.36\.0$'
       - name: Discover native registries twice inside hermetic runtime
         shell: bash
         run: |

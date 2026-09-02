@@ -1,0 +1,9 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
+# Clever's generated Python bindings are compiled with protobuf v7.36.0.
+# Install the exact runtime into the already-frozen OpenJarvis venv at image
+# build time; the resulting sidecar is still executed with --network none.
+RUN /src/.venv/bin/python -m pip install --no-cache-dir 'protobuf==7.36.0'
+
+ENTRYPOINT ["/bin/sh", "-lc"]
