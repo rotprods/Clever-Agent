@@ -1,0 +1,1 @@
+Trigger CP03-W01 supervisor gate after canonical rustfmt. Remove after W01 closes.
