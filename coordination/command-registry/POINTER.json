@@ -1,0 +1,18 @@
+{
+  "project_id": "CLEVER-JARVIS-001",
+  "registry_role": "project-pointer",
+  "universal_registry": {
+    "repository": "rotprods/rot.knowledge",
+    "path": "_hub/command-registry/registry.json",
+    "ref": "feat/universal-command-registry-v1",
+    "exact_sha": "d4575ad99e0bc051878912fa1d480dac23c60109",
+    "authority_ceiling": "CANDIDATE_NOT_PROMOTED"
+  },
+  "required_commands": ["CMD-CGEV2", "CMD-PCE"],
+  "compatibility_mode": "EXACT",
+  "resolution_failure_state": "COMMAND_AUTHORITY_BLOCKED",
+  "command_version_failure_state": "COMMAND_VERSION_BLOCKED",
+  "project_local_protocol_bodies_must_not_be_copied": true,
+  "active_project_work_must_not_be_mutated_by_registry_adoption": true,
+  "notes": "Clever-Agent consumes the shared command index only; its CP03 execution authority remains local and unaffected."
+}
