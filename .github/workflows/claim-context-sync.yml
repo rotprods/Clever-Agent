@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'ledgers/CLAIM_LEDGER.ndjson'
+      - '.github/workflows/claim-context-sync.yml'
   workflow_dispatch:
 
 permissions:
@@ -34,18 +35,25 @@ jobs:
           python scripts/context/build_context_pack.py --check
           python scripts/context/validate_next_actions.py
       - name: Restrict mutation to derived ContextPack
+        id: scope
         shell: bash
         run: |
           set -euo pipefail
           mapfile -t changed < <(git status --short | awk '{print $2}')
-          test "${#changed[@]}" -gt 0
+          if [ "${#changed[@]}" -eq 0 ]; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            echo 'ContextPack already synchronized; no persistence commit required.'
+            exit 0
+          fi
           for path in "${changed[@]}"; do
             case "$path" in
               .agentic/context/CURRENT_CONTEXT.json|.agentic/context/CURRENT_CONTEXT.md) ;;
               *) echo "unexpected mutation: $path" >&2; exit 1 ;;
             esac
           done
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
       - name: Persist derived context only
+        if: steps.scope.outputs.changed == 'true'
         shell: bash
         run: |
           set -euo pipefail
