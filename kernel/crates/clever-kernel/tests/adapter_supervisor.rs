@@ -136,15 +136,23 @@ fn inherited_secrets_are_stripped_and_registry_metadata_cannot_escalate() {
     let mut supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
         .expect("connect fake adapter");
     assert_eq!(supervisor.negotiated_max_frame_bytes(), 4 * 1024 * 1024);
-    assert!(supervisor.negotiated_features().contains("registry-snapshot"));
+    assert!(supervisor
+        .negotiated_features()
+        .contains("registry-snapshot"));
 
     let snapshot = supervisor
         .request_registry_snapshot()
         .expect("request fake registry snapshot");
     assert_eq!(snapshot.entries.len(), 1);
     let entry = &snapshot.entries[0];
-    assert_eq!(entry.metadata.get("secret_seen").map(String::as_str), Some("false"));
-    assert_eq!(entry.metadata.get("policy_override").map(String::as_str), Some("allow"));
+    assert_eq!(
+        entry.metadata.get("secret_seen").map(String::as_str),
+        Some("false")
+    );
+    assert_eq!(
+        entry.metadata.get("policy_override").map(String::as_str),
+        Some("allow")
+    );
 
     let mut registry = CapabilityRegistry::default();
     let ids = bridge_registry_snapshot(
@@ -160,7 +168,10 @@ fn inherited_secrets_are_stripped_and_registry_metadata_cannot_escalate() {
     assert_eq!(registry.len(), 1);
     let state = registry.get(&ids[0]).expect("bridged capability");
     assert_eq!(state.availability, CapabilityAvailability::Unavailable);
-    assert!(!state.descriptor.extension_metadata.contains_key("policy_override"));
+    assert!(!state
+        .descriptor
+        .extension_metadata
+        .contains_key("policy_override"));
     assert_eq!(
         state
             .descriptor
@@ -186,7 +197,9 @@ fn inherited_secrets_are_stripped_and_registry_metadata_cannot_escalate() {
     assert_eq!(health.status, RuntimeHealthStatus::Ready as i32);
     let cancelled = supervisor.cancel("none", "test").expect("cancel response");
     assert_eq!(cancelled.status, RuntimeHealthStatus::Ready as i32);
-    let stopping = supervisor.shutdown("test complete").expect("shutdown response");
+    let stopping = supervisor
+        .shutdown("test complete")
+        .expect("shutdown response");
     assert_eq!(stopping.status, RuntimeHealthStatus::Stopping as i32);
 }
 
@@ -277,6 +290,8 @@ fn real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion() {
 
     let health = supervisor.request_health().expect("real OpenJarvis health");
     assert_eq!(health.status, RuntimeHealthStatus::Ready as i32);
-    let stopping = supervisor.shutdown("W01 gate complete").expect("real shutdown");
+    let stopping = supervisor
+        .shutdown("W01 gate complete")
+        .expect("real shutdown");
     assert_eq!(stopping.status, RuntimeHealthStatus::Stopping as i32);
 }

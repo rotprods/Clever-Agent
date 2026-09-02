@@ -10,9 +10,9 @@ use std::{
 };
 
 use clever_contracts::{
-    adapter_frame, AdapterCancel, AdapterFrame, AdapterHealthRequest, AdapterHello,
-    AdapterHelloAck, AdapterShutdown, CapabilityDescriptor, ContractVersion, LifecycleMode,
-    NativeRegistryEntry, PlatformConstraint, ProvenanceRef, RegistryPrimitive, RegistrySnapshot,
+    adapter_frame, AdapterCancel, AdapterFrame, AdapterHealthRequest, AdapterHelloAck,
+    AdapterShutdown, CapabilityDescriptor, ContractVersion, LifecycleMode, NativeRegistryEntry,
+    PlatformConstraint, ProvenanceRef, RegistryPrimitive, RegistrySnapshot,
     RegistrySnapshotRequest, RuntimeHealth, RuntimeHealthStatus, RuntimeOwner,
 };
 use prost::Message;
@@ -63,17 +63,33 @@ impl Display for AdapterSupervisorError {
         match self {
             Self::Io(message) => write!(formatter, "adapter I/O error: {message}"),
             Self::Decode(message) => write!(formatter, "adapter protobuf decode error: {message}"),
-            Self::InvalidCommand(message) => write!(formatter, "invalid adapter command: {message}"),
-            Self::FrameTooLarge(size) => write!(formatter, "adapter frame exceeds limit: {size} bytes"),
+            Self::InvalidCommand(message) => {
+                write!(formatter, "invalid adapter command: {message}")
+            }
+            Self::FrameTooLarge(size) => {
+                write!(formatter, "adapter frame exceeds limit: {size} bytes")
+            }
             Self::EmptyFrame => write!(formatter, "adapter emitted a zero-length frame"),
             Self::TruncatedFrame => write!(formatter, "adapter emitted a truncated frame"),
             Self::Timeout(stage) => write!(formatter, "adapter timed out during {stage}"),
-            Self::ProcessExited => write!(formatter, "adapter process exited before completing protocol"),
-            Self::UnexpectedFrame(stage) => write!(formatter, "unexpected adapter frame during {stage}"),
+            Self::ProcessExited => write!(
+                formatter,
+                "adapter process exited before completing protocol"
+            ),
+            Self::UnexpectedFrame(stage) => {
+                write!(formatter, "unexpected adapter frame during {stage}")
+            }
             Self::InvalidHello(message) => write!(formatter, "invalid adapter hello: {message}"),
-            Self::InvalidSnapshot(message) => write!(formatter, "invalid registry snapshot: {message}"),
-            Self::InvalidRuntimeResponse(message) => write!(formatter, "invalid runtime response: {message}"),
-            Self::RestartBudgetExhausted { attempts, last_error } => write!(
+            Self::InvalidSnapshot(message) => {
+                write!(formatter, "invalid registry snapshot: {message}")
+            }
+            Self::InvalidRuntimeResponse(message) => {
+                write!(formatter, "invalid runtime response: {message}")
+            }
+            Self::RestartBudgetExhausted {
+                attempts,
+                last_error,
+            } => write!(
                 formatter,
                 "adapter restart budget exhausted after {attempts} attempts: {last_error}"
             ),
@@ -261,7 +277,8 @@ impl AdapterSupervisor {
             negotiated_features: BTreeSet::new(),
             next_frame_sequence: 0,
         };
-        let hello_frame = supervisor.receive_frame(supervisor.policy.handshake_timeout, "handshake")?;
+        let hello_frame =
+            supervisor.receive_frame(supervisor.policy.handshake_timeout, "handshake")?;
         let (negotiated_max, features) = supervisor.validate_hello(&hello_frame)?;
         supervisor.negotiated_max_frame_bytes = negotiated_max;
         supervisor.negotiated_features = features.clone();
@@ -279,7 +296,9 @@ impl AdapterSupervisor {
         &self.negotiated_features
     }
 
-    pub fn request_registry_snapshot(&mut self) -> Result<RegistrySnapshot, AdapterSupervisorError> {
+    pub fn request_registry_snapshot(
+        &mut self,
+    ) -> Result<RegistrySnapshot, AdapterSupervisorError> {
         let request = self.next_control_frame(
             adapter_frame::Body::RegistrySnapshotRequest(RegistrySnapshotRequest {}),
             self.policy.request_timeout,
@@ -333,7 +352,10 @@ impl AdapterSupervisor {
         self.extract_health(response, "cancel")
     }
 
-    pub fn shutdown(mut self, reason: impl Into<String>) -> Result<RuntimeHealth, AdapterSupervisorError> {
+    pub fn shutdown(
+        mut self,
+        reason: impl Into<String>,
+    ) -> Result<RuntimeHealth, AdapterSupervisorError> {
         let request = self.next_control_frame(
             adapter_frame::Body::Shutdown(AdapterShutdown {
                 reason: reason.into(),
@@ -544,7 +566,10 @@ pub fn bridge_registry_snapshot(
             "snapshot runtime_id does not match expected runtime".to_owned(),
         ));
     }
-    if adapter_id.trim().is_empty() || source_repo.trim().is_empty() || source_commit.trim().is_empty() {
+    if adapter_id.trim().is_empty()
+        || source_repo.trim().is_empty()
+        || source_commit.trim().is_empty()
+    {
         return Err(AdapterSupervisorError::InvalidSnapshot(
             "bridge provenance/adapter identity is incomplete".to_owned(),
         ));
