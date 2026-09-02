@@ -73,8 +73,9 @@ jobs:
               -e PYTHONPATH=/clever:/clever/contracts/sdk/python/gen:/src/src \
               -v "$GITHUB_WORKSPACE:/clever:ro" \
               "clever-openjarvis-w01:$SOURCE_SHA" \
-              /src/.venv/bin/python /clever/adapters/openjarvis/sidecar.py --dump-registry \
+              'exec /src/.venv/bin/python /clever/adapters/openjarvis/sidecar.py --dump-registry' \
               > "evidence/cp03/cp03-w01/registry-${run}.json"
+            test -s "evidence/cp03/cp03-w01/registry-${run}.json"
           done
           cmp evidence/cp03/cp03-w01/registry-1.json evidence/cp03/cp03-w01/registry-2.json
           cp evidence/cp03/cp03-w01/registry-1.json evidence/cp03/cp03-w01/openjarvis-registry-snapshot.json
