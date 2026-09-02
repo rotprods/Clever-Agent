@@ -1,9 +1,10 @@
-ARG BASE_IMAGE
+ARG BASE_IMAGE=python:3.12.11-slim-bookworm
 FROM ${BASE_IMAGE}
 
 # Clever's generated Python bindings are compiled with protobuf v7.36.0.
-# Install the exact runtime into the already-frozen OpenJarvis venv at image
-# build time; the resulting sidecar is still executed with --network none.
-RUN /src/.venv/bin/python -m pip install --no-cache-dir 'protobuf==7.36.0'
+# The OpenJarvis venv is created by uv without pip, so use the already-pinned
+# uv executable from the frozen base image to install into that interpreter.
+# This happens at image build time; runtime execution remains --network none.
+RUN uv pip install --python /src/.venv/bin/python 'protobuf==7.36.0'
 
 ENTRYPOINT ["/bin/sh", "-lc"]
