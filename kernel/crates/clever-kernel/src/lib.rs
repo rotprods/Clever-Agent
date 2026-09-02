@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 
 pub mod actions;
+pub mod adapter;
 pub mod audit;
 pub mod capabilities;
 pub mod error;
