@@ -1,1 +1,519 @@
-{"schema_version":1,"plan_id":"CP03-W02-IMPLEMENTATION-v1","project_id":"CLEVER-JARVIS-001","parent_task":"CP03-002","wave":"CP03-W02","iteration":"I03","prepared_date":"2026-09-07","source_sha":"d3499fac7e098273d39244570b3f66fe8d529f56","upstream_commit":"72033b8ec288aa067ce4530ff9d96bf231e9c4e5","status":"PLANNED_NOT_IMPLEMENTED","first_executable_task":"W02-00","global_denominator":7565,"openjarvis_obligations":646,"verified_at_plan_start":0,"w02_obligation_count":null,"schedule_basis":"GATE_RELATIVE_NOT_CALENDAR_COMMITMENT","milestones":{"demonstrator":"G3: real inference; does not close W02","release":"G7: complete parity/evidence release"},"tasks":[{"id":"W02-00","title":"Reconciliar estado y entorno","owner_role":"orchestrator","reviewer_role":"security_reviewer","depends_on":[],"gate":"G0","status":"READY","priority":"P0","deliverables":["HEAD/state/claims reconciliados","Entornos y required checks; administración separada"],"acceptance_tests":["Prerequisito obligatorio ausente => BLOCKED, no PASS"],"evidence_path":"evidence/cp03/cp03-w02/W02-00/","rollback":"Conservar estado padre y registrar discrepancia.","proof":[]},{"id":"W02-01","title":"Compilar obligaciones W02","owner_role":"forensic_researcher","reviewer_role":"reviewer_gauntlet","depends_on":["W02-00"],"gate":"G0","status":"BLOCKED","priority":"P0","deliverables":["W02_OBLIGATIONS con K, IDs, source paths, plataforma y hashes"],"acceptance_tests":["Duplicados/huérfanos/omisiones rechazados; 7565/646 intactos"],"evidence_path":"evidence/cp03/cp03-w02/W02-01/","rollback":"Revertir selección sin mutar ledger fuente.","proof":[]},{"id":"W02-02","title":"Eliminar falsos verdes del harness","owner_role":"test_engineer","reviewer_role":"reviewer_gauntlet","depends_on":["W02-00"],"gate":"G0","status":"BLOCKED","priority":"P0","deliverables":["Lanes y JUnit/JSON con casos realmente ejecutados"],"acceptance_tests":["Sin CLEVER_TEST_PYTHON falla preflight","JUnit vacío/skip requerido no satisface gate"],"evidence_path":"evidence/cp03/cp03-w02/W02-02/","rollback":"Revertir slice conservando evidencia fallida.","proof":[]},{"id":"W02-03","title":"Acotar I/O y backpressure","owner_role":"rust_builder","reviewer_role":"reviewer_gauntlet","depends_on":["W02-02"],"gate":"G1","status":"BLOCKED","priority":"P0","deliverables":["Presupuesto de bytes/mensajes y deadlines de escritura/lectura","Canal de control no bloqueado por datos"],"acceptance_tests":["Flood/slow consumer mantiene límites","Peer no lee stdin => timeout acotado"],"evidence_path":"evidence/cp03/cp03-w02/W02-03/","rollback":"Revertir slice y deshabilitar streaming expuesto.","proof":[]},{"id":"W02-04","title":"Teardown y cleanup reales","owner_role":"rust_builder","reviewer_role":"security_reviewer","depends_on":["W02-03"],"gate":"G1","status":"BLOCKED","priority":"P0","deliverables":["Shutdown/Drop sin espera ilimitada","Cleanup verificado de process group/container ID"],"acceptance_tests":["STOPPING sin exit","Nieto retiene pipe y launcher muere: workload eliminado"],"evidence_path":"evidence/cp03/cp03-w02/W02-04/","rollback":"Deshabilitar ruta insegura sin borrar evidencia.","proof":[]},{"id":"W02-05","title":"Correlación y registry atómico","owner_role":"rust_builder","reviewer_role":"reviewer_gauntlet","depends_on":["W02-03"],"gate":"G1","status":"BLOCKED","priority":"P0","deliverables":["Request/attempt/replay validados","Stage/validate/commit del registry"],"acceptance_tests":["Respuesta ajena rechazada","Snapshot inválido deja estado intacto"],"evidence_path":"evidence/cp03/cp03-w02/W02-05/","rollback":"Revertir transacción conservando registry anterior.","proof":[]},{"id":"W02-06","title":"Contratos tipados de inferencia","owner_role":"protocol_engineer","reviewer_role":"reviewer_gauntlet","depends_on":["W02-01","W02-05"],"gate":"G2","status":"BLOCKED","priority":"P0","deliverables":["ADR y mensajes mínimos request/chunk/terminal/error/cancel","Identidad, secuencia, uso, deadline y finish reason"],"acceptance_tests":["Round-trip Python/Rust/TS/Swift","Unknown major y fixtures históricas"],"evidence_path":"evidence/cp03/cp03-w02/W02-06/","rollback":"Revertir extensión compatible y regenerar SDK anteriores.","proof":[]},{"id":"W02-07","title":"Privacidad egress y presupuesto","owner_role":"security_reviewer","reviewer_role":"rust_builder","depends_on":["W02-06"],"gate":"G2","status":"BLOCKED","priority":"P0","deliverables":["Policy/grant y límites para inferencia externa","Secretos opacos y logs redactados"],"acceptance_tests":["Cloud sin grant y endpoints inyectados rechazados","Canary no sale a logs/otro principal"],"evidence_path":"evidence/cp03/cp03-w02/W02-07/","rollback":"Deny-by-default de la ruta afectada.","proof":[]},{"id":"W02-08","title":"Bridge models y engines","owner_role":"python_builder","reviewer_role":"reviewer_gauntlet","depends_on":["W02-06","W02-07"],"gate":"G2","status":"BLOCKED","priority":"P1","deliverables":["Prepare/can_serve/list_models/health/close conservados","REGISTERED separado de SERVING"],"acceptance_tests":["Modelo ausente UNAVAILABLE","Prepare falla y close repetido"],"evidence_path":"evidence/cp03/cp03-w02/W02-08/","rollback":"Revertir adapter sin reescribir upstream.","proof":[]},{"id":"W02-09","title":"Lane con modelo y pesos reales","owner_role":"runtime_engineer","reviewer_role":"reviewer_gauntlet","depends_on":["W02-01","W02-02"],"gate":"G2","status":"BLOCKED","priority":"P1","deliverables":["Engine/modelo/runtime/licencia/digests fijados","Adquisición controlada separada de ejecución offline"],"acceptance_tests":["Pesos ausentes/corruptos BLOCKED","Mock no satisface lane real-model"],"evidence_path":"evidence/cp03/cp03-w02/W02-09/","rollback":"Retirar artefacto inválido sin sustituir por ref flotante.","proof":[]},{"id":"W02-10","title":"Inferencia unary end-to-end","owner_role":"rust_builder","reviewer_role":"python_builder","depends_on":["W02-04","W02-05","W02-08","W02-09"],"gate":"G3","status":"BLOCKED","priority":"P1","deliverables":["Rust→Protobuf→sidecar→OpenJarvis→modelo real→resultado","Traza correlacionada y terminal"],"acceptance_tests":["End-to-end real sin comparar prosa idéntica","Entrada inválida rechazada antes del engine"],"evidence_path":"evidence/cp03/cp03-w02/W02-10/","rollback":"Deshabilitar inferencia; M1 no cierra W02.","proof":[]},{"id":"W02-11","title":"Stream y stream_full","owner_role":"rust_builder","reviewer_role":"python_builder","depends_on":["W02-10"],"gate":"G4","status":"BLOCKED","priority":"P1","deliverables":["Chunks secuenciados y un terminal","Usage/finish reason nativos o UNKNOWN"],"acceptance_tests":["Frames fragmentados/coalescidos, UTF-8 cortado","EOF/duplicado/reordenación no produce falso éxito"],"evidence_path":"evidence/cp03/cp03-w02/W02-11/","rollback":"Volver al camino unary seguro.","proof":[]},{"id":"W02-12","title":"Cancelación real","owner_role":"rust_builder","reviewer_role":"python_builder","depends_on":["W02-11"],"gate":"G4","status":"BLOCKED","priority":"P0","deliverables":["REQUESTED/ACK/terminación diferenciados","Aislamiento por request o single-flight explícito"],"acceptance_tests":["Cancel antes/durante/terminal y worker ignora cancel","Cese local probado; efecto remoto UNKNOWN si no se acredita"],"evidence_path":"evidence/cp03/cp03-w02/W02-12/","rollback":"Desactivar concurrencia/ruta no cancelable.","proof":[]},{"id":"W02-13","title":"Structured output y tool-call fragments","owner_role":"python_builder","reviewer_role":"protocol_engineer","depends_on":["W02-11"],"gate":"G4","status":"BLOCKED","priority":"P1","deliverables":["Ensamblado tipado y validación de schema","Tools permanecen datos"],"acceptance_tests":["JSON inválido y argumentos fragmentados","Cero shell/MCP/browser ejecutado"],"evidence_path":"evidence/cp03/cp03-w02/W02-13/","rollback":"Retirar decoder defectuoso sin inventar salida.","proof":[]},{"id":"W02-14","title":"Fallback retry y salida parcial","owner_role":"runtime_engineer","reviewer_role":"reviewer_gauntlet","depends_on":["W02-11","W02-12"],"gate":"G4","status":"BLOCKED","priority":"P1","deliverables":["Attempt ID nuevo y coste acumulado","No concatenación de streams de engines distintos"],"acceptance_tests":["Fallo antes/después del primer token","Sin loops/rebaja de privacidad/duplicados ocultos"],"evidence_path":"evidence/cp03/cp03-w02/W02-14/","rollback":"Desactivar fallback automático conservando receipts.","proof":[]},{"id":"W02-15","title":"Regresión de seguridad","owner_role":"security_reviewer","reviewer_role":"reviewer_gauntlet","depends_on":["W02-07","W02-12","W02-13","W02-14"],"gate":"G5","status":"BLOCKED","priority":"P0","deliverables":["Policy/tenant/logs/transporte verificados","Cero P0/P1 abierto en ruta expuesta"],"acceptance_tests":["Injection, metadata privilegiada, cross-principal","Flood y cancel no autorizado"],"evidence_path":"evidence/cp03/cp03-w02/W02-15/","rollback":"Denegar ruta afectada y conservar finding abierto.","proof":[]},{"id":"W02-16","title":"Retest recovery performance","owner_role":"test_engineer","reviewer_role":"runtime_engineer","depends_on":["W02-15"],"gate":"G5","status":"BLOCKED","priority":"P1","deliverables":["Repeticiones críticas con seeds y fallos conservados","Baseline same-host con presupuestos fijados antes de medir"],"acceptance_tests":["20 repeticiones propuestas de cancel/flood/restart","No elegir el mejor rerun para ocultar flakiness"],"evidence_path":"evidence/cp03/cp03-w02/W02-16/","rollback":"Conservar baseline y detener release ante regresión.","proof":[]},{"id":"W02-17","title":"Paridad y grafo W02","owner_role":"graph_engineer","reviewer_role":"release_reconciler","depends_on":["W02-01","W02-13","W02-14","W02-16"],"gate":"G6","status":"BLOCKED","priority":"P1","deliverables":["K mappings con contrato/test ejecutado/evidence","P0→P1→P2→P3 y overlay sin alterar denominator"],"acceptance_tests":["Evidence inexistente/SHA ajeno rechazados","BLOCKED/waiver/NOT_RUN separados de VERIFIED"],"evidence_path":"evidence/cp03/cp03-w02/W02-17/","rollback":"Revertir solo proyecciones derivadas; preservar fuente.","proof":[]},{"id":"W02-18","title":"Release limpio y post-merge","owner_role":"release_reconciler","reviewer_role":"reviewer_gauntlet","depends_on":["W02-17"],"gate":"G7","status":"BLOCKED","priority":"P0","deliverables":["Suite sobre SHA exacto y hashes de artifacts","Required checks verificados y workflows antiguos read-only"],"acceptance_tests":["Clean-room y post-merge","Un gate fallido bloquea cierre aunque exista demo"],"evidence_path":"evidence/cp03/cp03-w02/W02-18/","rollback":"Revertir candidate; no borrar fallos ni forzar main.","proof":[]},{"id":"W02-19","title":"Persistir cierre y handoff","owner_role":"release_reconciler","reviewer_role":"reviewer_gauntlet","depends_on":["W02-18"],"gate":"G7","status":"BLOCKED","priority":"P1","deliverables":["W02 completo solo con K demostrado","State/DAG/ledgers/context atómicos y claims liberados"],"acceptance_tests":["Nuevo agente recupera siguiente tarea","Hardware/paridad pendiente mantiene W02 abierto"],"evidence_path":"evidence/cp03/cp03-w02/W02-19/","rollback":"Restaurar frontier soportado por evidencia.","proof":[]}]}
+{
+  "first_executable_task": "W02-02",
+  "global_denominator": 7565,
+  "iteration": "I03",
+  "milestones": {
+    "demonstrator": "G3: real inference; does not close W02",
+    "release": "G7: complete parity/evidence release"
+  },
+  "openjarvis_obligations": 646,
+  "parent_task": "CP03-002",
+  "plan_id": "CP03-W02-IMPLEMENTATION-v1",
+  "prepared_date": "2026-09-07",
+  "project_id": "CLEVER-JARVIS-001",
+  "schedule_basis": "GATE_RELATIVE_NOT_CALENDAR_COMMITMENT",
+  "schema_version": 1,
+  "source_sha": "d3499fac7e098273d39244570b3f66fe8d529f56",
+  "status": "IN_PROGRESS",
+  "tasks": [
+    {
+      "acceptance_tests": [
+        "Prerequisito obligatorio ausente => BLOCKED, no PASS"
+      ],
+      "deliverables": [
+        "HEAD/state/claims reconciliados",
+        "Entornos y required checks; administraci\u00f3n separada"
+      ],
+      "depends_on": [],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-00/",
+      "gate": "G0",
+      "id": "W02-00",
+      "owner_role": "orchestrator",
+      "priority": "P0",
+      "proof": [
+        {
+          "head": "47bfb577a83bc894db96412f056f876bf36d3273",
+          "result": "PASS",
+          "run_id": 34157768857,
+          "type": "agentic_contract"
+        },
+        {
+          "head": "04dc2964d249a569255dc7bca43ee357b5e589cb",
+          "result": "PASS",
+          "run_id": 34158286005,
+          "type": "scope_lock_preflight"
+        }
+      ],
+      "reviewer_role": "security_reviewer",
+      "rollback": "Conservar estado padre y registrar discrepancia.",
+      "status": "COMPLETE",
+      "title": "Reconciliar estado y entorno"
+    },
+    {
+      "acceptance_tests": [
+        "Duplicados/hu\u00e9rfanos/omisiones rechazados; 7565/646 intactos"
+      ],
+      "deliverables": [
+        "W02_OBLIGATIONS con K, IDs, source paths, plataforma y hashes"
+      ],
+      "depends_on": [
+        "W02-00"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-01/",
+      "gate": "G0",
+      "id": "W02-01",
+      "owner_role": "forensic_researcher",
+      "priority": "P0",
+      "proof": [
+        {
+          "evidence_id": "EVID-W02-FACETS-20260907",
+          "result": "PASS",
+          "run_id": 34157458150
+        },
+        {
+          "K": 47,
+          "artifact_id": 10031706982,
+          "evidence_id": "EVID-W02-SCOPE-LOCK-20260907",
+          "owned": 37,
+          "result": "PASS",
+          "run_id": 34158286005,
+          "shared": 10
+        }
+      ],
+      "reviewer_role": "reviewer_gauntlet",
+      "rollback": "Revertir selecci\u00f3n sin mutar ledger fuente.",
+      "status": "COMPLETE",
+      "title": "Compilar obligaciones W02"
+    },
+    {
+      "acceptance_tests": [
+        "Sin CLEVER_TEST_PYTHON falla preflight",
+        "JUnit vac\u00edo/skip requerido no satisface gate"
+      ],
+      "deliverables": [
+        "Lanes y JUnit/JSON con casos realmente ejecutados"
+      ],
+      "depends_on": [
+        "W02-00"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-02/",
+      "gate": "G0",
+      "id": "W02-02",
+      "owner_role": "test_engineer",
+      "priority": "P0",
+      "proof": [],
+      "reviewer_role": "reviewer_gauntlet",
+      "rollback": "Revertir slice conservando evidencia fallida.",
+      "status": "READY",
+      "title": "Eliminar falsos verdes del harness"
+    },
+    {
+      "acceptance_tests": [
+        "Flood/slow consumer mantiene l\u00edmites",
+        "Peer no lee stdin => timeout acotado"
+      ],
+      "deliverables": [
+        "Presupuesto de bytes/mensajes y deadlines de escritura/lectura",
+        "Canal de control no bloqueado por datos"
+      ],
+      "depends_on": [
+        "W02-02"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-03/",
+      "gate": "G1",
+      "id": "W02-03",
+      "owner_role": "rust_builder",
+      "priority": "P0",
+      "proof": [],
+      "reviewer_role": "reviewer_gauntlet",
+      "rollback": "Revertir slice y deshabilitar streaming expuesto.",
+      "status": "BLOCKED",
+      "title": "Acotar I/O y backpressure"
+    },
+    {
+      "acceptance_tests": [
+        "STOPPING sin exit",
+        "Nieto retiene pipe y launcher muere: workload eliminado"
+      ],
+      "deliverables": [
+        "Shutdown/Drop sin espera ilimitada",
+        "Cleanup verificado de process group/container ID"
+      ],
+      "depends_on": [
+        "W02-03"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-04/",
+      "gate": "G1",
+      "id": "W02-04",
+      "owner_role": "rust_builder",
+      "priority": "P0",
+      "proof": [],
+      "reviewer_role": "security_reviewer",
+      "rollback": "Deshabilitar ruta insegura sin borrar evidencia.",
+      "status": "BLOCKED",
+      "title": "Teardown y cleanup reales"
+    },
+    {
+      "acceptance_tests": [
+        "Respuesta ajena rechazada",
+        "Snapshot inv\u00e1lido deja estado intacto"
+      ],
+      "deliverables": [
+        "Request/attempt/replay validados",
+        "Stage/validate/commit del registry"
+      ],
+      "depends_on": [
+        "W02-03"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-05/",
+      "gate": "G1",
+      "id": "W02-05",
+      "owner_role": "rust_builder",
+      "priority": "P0",
+      "proof": [],
+      "reviewer_role": "reviewer_gauntlet",
+      "rollback": "Revertir transacci\u00f3n conservando registry anterior.",
+      "status": "BLOCKED",
+      "title": "Correlaci\u00f3n y registry at\u00f3mico"
+    },
+    {
+      "acceptance_tests": [
+        "Round-trip Python/Rust/TS/Swift",
+        "Unknown major y fixtures hist\u00f3ricas"
+      ],
+      "deliverables": [
+        "ADR y mensajes m\u00ednimos request/chunk/terminal/error/cancel",
+        "Identidad, secuencia, uso, deadline y finish reason"
+      ],
+      "depends_on": [
+        "W02-01",
+        "W02-05"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-06/",
+      "gate": "G2",
+      "id": "W02-06",
+      "owner_role": "protocol_engineer",
+      "priority": "P0",
+      "proof": [],
+      "reviewer_role": "reviewer_gauntlet",
+      "rollback": "Revertir extensi\u00f3n compatible y regenerar SDK anteriores.",
+      "status": "BLOCKED",
+      "title": "Contratos tipados de inferencia"
+    },
+    {
+      "acceptance_tests": [
+        "Cloud sin grant y endpoints inyectados rechazados",
+        "Canary no sale a logs/otro principal"
+      ],
+      "deliverables": [
+        "Policy/grant y l\u00edmites para inferencia externa",
+        "Secretos opacos y logs redactados"
+      ],
+      "depends_on": [
+        "W02-06"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-07/",
+      "gate": "G2",
+      "id": "W02-07",
+      "owner_role": "security_reviewer",
+      "priority": "P0",
+      "proof": [],
+      "reviewer_role": "rust_builder",
+      "rollback": "Deny-by-default de la ruta afectada.",
+      "status": "BLOCKED",
+      "title": "Privacidad egress y presupuesto"
+    },
+    {
+      "acceptance_tests": [
+        "Modelo ausente UNAVAILABLE",
+        "Prepare falla y close repetido"
+      ],
+      "deliverables": [
+        "Prepare/can_serve/list_models/health/close conservados",
+        "REGISTERED separado de SERVING"
+      ],
+      "depends_on": [
+        "W02-06",
+        "W02-07"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-08/",
+      "gate": "G2",
+      "id": "W02-08",
+      "owner_role": "python_builder",
+      "priority": "P1",
+      "proof": [],
+      "reviewer_role": "reviewer_gauntlet",
+      "rollback": "Revertir adapter sin reescribir upstream.",
+      "status": "BLOCKED",
+      "title": "Bridge models y engines"
+    },
+    {
+      "acceptance_tests": [
+        "Pesos ausentes/corruptos BLOCKED",
+        "Mock no satisface lane real-model"
+      ],
+      "deliverables": [
+        "Engine/modelo/runtime/licencia/digests fijados",
+        "Adquisici\u00f3n controlada separada de ejecuci\u00f3n offline"
+      ],
+      "depends_on": [
+        "W02-01",
+        "W02-02"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-09/",
+      "gate": "G2",
+      "id": "W02-09",
+      "owner_role": "runtime_engineer",
+      "priority": "P1",
+      "proof": [],
+      "reviewer_role": "reviewer_gauntlet",
+      "rollback": "Retirar artefacto inv\u00e1lido sin sustituir por ref flotante.",
+      "status": "BLOCKED",
+      "title": "Lane con modelo y pesos reales"
+    },
+    {
+      "acceptance_tests": [
+        "End-to-end real sin comparar prosa id\u00e9ntica",
+        "Entrada inv\u00e1lida rechazada antes del engine"
+      ],
+      "deliverables": [
+        "Rust\u2192Protobuf\u2192sidecar\u2192OpenJarvis\u2192modelo real\u2192resultado",
+        "Traza correlacionada y terminal"
+      ],
+      "depends_on": [
+        "W02-04",
+        "W02-05",
+        "W02-08",
+        "W02-09"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-10/",
+      "gate": "G3",
+      "id": "W02-10",
+      "owner_role": "rust_builder",
+      "priority": "P1",
+      "proof": [],
+      "reviewer_role": "python_builder",
+      "rollback": "Deshabilitar inferencia; M1 no cierra W02.",
+      "status": "BLOCKED",
+      "title": "Inferencia unary end-to-end"
+    },
+    {
+      "acceptance_tests": [
+        "Frames fragmentados/coalescidos, UTF-8 cortado",
+        "EOF/duplicado/reordenaci\u00f3n no produce falso \u00e9xito"
+      ],
+      "deliverables": [
+        "Chunks secuenciados y un terminal",
+        "Usage/finish reason nativos o UNKNOWN"
+      ],
+      "depends_on": [
+        "W02-10"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-11/",
+      "gate": "G4",
+      "id": "W02-11",
+      "owner_role": "rust_builder",
+      "priority": "P1",
+      "proof": [],
+      "reviewer_role": "python_builder",
+      "rollback": "Volver al camino unary seguro.",
+      "status": "BLOCKED",
+      "title": "Stream y stream_full"
+    },
+    {
+      "acceptance_tests": [
+        "Cancel antes/durante/terminal y worker ignora cancel",
+        "Cese local probado; efecto remoto UNKNOWN si no se acredita"
+      ],
+      "deliverables": [
+        "REQUESTED/ACK/terminaci\u00f3n diferenciados",
+        "Aislamiento por request o single-flight expl\u00edcito"
+      ],
+      "depends_on": [
+        "W02-11"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-12/",
+      "gate": "G4",
+      "id": "W02-12",
+      "owner_role": "rust_builder",
+      "priority": "P0",
+      "proof": [],
+      "reviewer_role": "python_builder",
+      "rollback": "Desactivar concurrencia/ruta no cancelable.",
+      "status": "BLOCKED",
+      "title": "Cancelaci\u00f3n real"
+    },
+    {
+      "acceptance_tests": [
+        "JSON inv\u00e1lido y argumentos fragmentados",
+        "Cero shell/MCP/browser ejecutado"
+      ],
+      "deliverables": [
+        "Ensamblado tipado y validaci\u00f3n de schema",
+        "Tools permanecen datos"
+      ],
+      "depends_on": [
+        "W02-11"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-13/",
+      "gate": "G4",
+      "id": "W02-13",
+      "owner_role": "python_builder",
+      "priority": "P1",
+      "proof": [],
+      "reviewer_role": "protocol_engineer",
+      "rollback": "Retirar decoder defectuoso sin inventar salida.",
+      "status": "BLOCKED",
+      "title": "Structured output y tool-call fragments"
+    },
+    {
+      "acceptance_tests": [
+        "Fallo antes/despu\u00e9s del primer token",
+        "Sin loops/rebaja de privacidad/duplicados ocultos"
+      ],
+      "deliverables": [
+        "Attempt ID nuevo y coste acumulado",
+        "No concatenaci\u00f3n de streams de engines distintos"
+      ],
+      "depends_on": [
+        "W02-11",
+        "W02-12"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-14/",
+      "gate": "G4",
+      "id": "W02-14",
+      "owner_role": "runtime_engineer",
+      "priority": "P1",
+      "proof": [],
+      "reviewer_role": "reviewer_gauntlet",
+      "rollback": "Desactivar fallback autom\u00e1tico conservando receipts.",
+      "status": "BLOCKED",
+      "title": "Fallback retry y salida parcial"
+    },
+    {
+      "acceptance_tests": [
+        "Injection, metadata privilegiada, cross-principal",
+        "Flood y cancel no autorizado"
+      ],
+      "deliverables": [
+        "Policy/tenant/logs/transporte verificados",
+        "Cero P0/P1 abierto en ruta expuesta"
+      ],
+      "depends_on": [
+        "W02-07",
+        "W02-12",
+        "W02-13",
+        "W02-14"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-15/",
+      "gate": "G5",
+      "id": "W02-15",
+      "owner_role": "security_reviewer",
+      "priority": "P0",
+      "proof": [],
+      "reviewer_role": "reviewer_gauntlet",
+      "rollback": "Denegar ruta afectada y conservar finding abierto.",
+      "status": "BLOCKED",
+      "title": "Regresi\u00f3n de seguridad"
+    },
+    {
+      "acceptance_tests": [
+        "20 repeticiones propuestas de cancel/flood/restart",
+        "No elegir el mejor rerun para ocultar flakiness"
+      ],
+      "deliverables": [
+        "Repeticiones cr\u00edticas con seeds y fallos conservados",
+        "Baseline same-host con presupuestos fijados antes de medir"
+      ],
+      "depends_on": [
+        "W02-15"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-16/",
+      "gate": "G5",
+      "id": "W02-16",
+      "owner_role": "test_engineer",
+      "priority": "P1",
+      "proof": [],
+      "reviewer_role": "runtime_engineer",
+      "rollback": "Conservar baseline y detener release ante regresi\u00f3n.",
+      "status": "BLOCKED",
+      "title": "Retest recovery performance"
+    },
+    {
+      "acceptance_tests": [
+        "Evidence inexistente/SHA ajeno rechazados",
+        "BLOCKED/waiver/NOT_RUN separados de VERIFIED"
+      ],
+      "deliverables": [
+        "K mappings con contrato/test ejecutado/evidence",
+        "P0\u2192P1\u2192P2\u2192P3 y overlay sin alterar denominator"
+      ],
+      "depends_on": [
+        "W02-01",
+        "W02-13",
+        "W02-14",
+        "W02-16"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-17/",
+      "gate": "G6",
+      "id": "W02-17",
+      "owner_role": "graph_engineer",
+      "priority": "P1",
+      "proof": [],
+      "reviewer_role": "release_reconciler",
+      "rollback": "Revertir solo proyecciones derivadas; preservar fuente.",
+      "status": "BLOCKED",
+      "title": "Paridad y grafo W02"
+    },
+    {
+      "acceptance_tests": [
+        "Clean-room y post-merge",
+        "Un gate fallido bloquea cierre aunque exista demo"
+      ],
+      "deliverables": [
+        "Suite sobre SHA exacto y hashes de artifacts",
+        "Required checks verificados y workflows antiguos read-only"
+      ],
+      "depends_on": [
+        "W02-17"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-18/",
+      "gate": "G7",
+      "id": "W02-18",
+      "owner_role": "release_reconciler",
+      "priority": "P0",
+      "proof": [],
+      "reviewer_role": "reviewer_gauntlet",
+      "rollback": "Revertir candidate; no borrar fallos ni forzar main.",
+      "status": "BLOCKED",
+      "title": "Release limpio y post-merge"
+    },
+    {
+      "acceptance_tests": [
+        "Nuevo agente recupera siguiente tarea",
+        "Hardware/paridad pendiente mantiene W02 abierto"
+      ],
+      "deliverables": [
+        "W02 completo solo con K demostrado",
+        "State/DAG/ledgers/context at\u00f3micos y claims liberados"
+      ],
+      "depends_on": [
+        "W02-18"
+      ],
+      "evidence_path": "evidence/cp03/cp03-w02/W02-19/",
+      "gate": "G7",
+      "id": "W02-19",
+      "owner_role": "release_reconciler",
+      "priority": "P1",
+      "proof": [],
+      "reviewer_role": "reviewer_gauntlet",
+      "rollback": "Restaurar frontier soportado por evidencia.",
+      "status": "BLOCKED",
+      "title": "Persistir cierre y handoff"
+    }
+  ],
+  "upstream_commit": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5",
+  "verified_at_plan_start": 0,
+  "w02_obligation_count": 47,
+  "wave": "CP03-W02"
+}
