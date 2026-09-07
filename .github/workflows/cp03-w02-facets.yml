@@ -39,11 +39,11 @@ jobs:
           python scripts/cp03/w02_scope.py --write
           python scripts/cp03/w02_scope.py --check
       - name: Compile reviewed facets
-        run: python scripts/cp03/w02_facets.py --write
+        run: python -m scripts.cp03.w02_facets --write
       - name: Run adversarial facet suite
         run: python -m unittest discover -s tests -p 'test_cp03_w02_facets.py' -v
       - name: Prove deterministic facet outputs
-        run: python scripts/cp03/w02_facets.py --check
+        run: python -m scripts.cp03.w02_facets --check
       - name: Assert no denominator or parity promotion
         run: |
           python - <<'PY'
