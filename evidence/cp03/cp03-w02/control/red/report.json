@@ -1,0 +1,120 @@
+{
+  "executions": 11,
+  "failures": [],
+  "mode": "red",
+  "parity_promotions": 0,
+  "records": [
+    {
+      "log": "00-unrelated_health_is_rejected.txt",
+      "repeat": 0,
+      "result": "EXPECTED_ASSERTION_FAILURE",
+      "returncode": 101,
+      "seconds": 0.04875363099998253,
+      "sha256": "234e63a86d68bb062f770eaa518ba19792482eecc76ff94574a9ba57e9f3aac3",
+      "test_id": "unrelated_health_is_rejected"
+    },
+    {
+      "log": "00-unrelated_cancel_is_rejected.txt",
+      "repeat": 0,
+      "result": "EXPECTED_ASSERTION_FAILURE",
+      "returncode": 101,
+      "seconds": 0.04512771000000271,
+      "sha256": "c4f9a7fd441c2641440ffad135c90e66e149ba7da1cb062d021080a23328a6a3",
+      "test_id": "unrelated_cancel_is_rejected"
+    },
+    {
+      "log": "00-unrelated_shutdown_is_rejected.txt",
+      "repeat": 0,
+      "result": "EXPECTED_ASSERTION_FAILURE",
+      "returncode": 101,
+      "seconds": 0.050908208000009836,
+      "sha256": "6c76c1fac0b2bda0329d777cfa860fd69123f7b7de32c99b8b743bd8330cf6e9",
+      "test_id": "unrelated_shutdown_is_rejected"
+    },
+    {
+      "log": "00-unspecified_health_is_rejected.txt",
+      "repeat": 0,
+      "result": "EXPECTED_ASSERTION_FAILURE",
+      "returncode": 101,
+      "seconds": 0.04538460000000555,
+      "sha256": "57b47190d37d639648abbe84b0713d11c8cc9ffddd502b640c947207bbeb72c2",
+      "test_id": "unspecified_health_is_rejected"
+    },
+    {
+      "log": "00-false_green_health_is_rejected.txt",
+      "repeat": 0,
+      "result": "EXPECTED_ASSERTION_FAILURE",
+      "returncode": 101,
+      "seconds": 0.04504345699999135,
+      "sha256": "28f2b0db4267600ba7093900c9e434a23eacef7881782cea005be581242d8357",
+      "test_id": "false_green_health_is_rejected"
+    },
+    {
+      "log": "00-peer_frame_limit_is_enforced.txt",
+      "repeat": 0,
+      "result": "EXPECTED_ASSERTION_FAILURE",
+      "returncode": 101,
+      "seconds": 0.04614490200000887,
+      "sha256": "ede4f8fa331dab24135240a77af3a432e735454db13dac4e8c1a5f0b7393a8a7",
+      "test_id": "peer_frame_limit_is_enforced"
+    },
+    {
+      "log": "00-timeout_prevents_stale_connection_reuse.txt",
+      "repeat": 0,
+      "result": "EXPECTED_ASSERTION_FAILURE",
+      "returncode": 101,
+      "seconds": 0.6166447059999882,
+      "sha256": "3a244a5f22cee468cd8d2526782ab036fea7b35918287a5721eb8b89b3e30f3c",
+      "test_id": "timeout_prevents_stale_connection_reuse"
+    },
+    {
+      "log": "00-protocol_failure_prevents_reuse.txt",
+      "repeat": 0,
+      "result": "EXPECTED_ASSERTION_FAILURE",
+      "returncode": 101,
+      "seconds": 0.04573690499998406,
+      "sha256": "62a724cc9005554a7f306af74954e966be6bff33f4c666a7f54984b0fac61569",
+      "test_id": "protocol_failure_prevents_reuse"
+    },
+    {
+      "log": "00-registry_invalid_tail_is_atomic.txt",
+      "repeat": 0,
+      "result": "EXPECTED_ASSERTION_FAILURE",
+      "returncode": 101,
+      "seconds": 0.0016320830000040587,
+      "sha256": "677f2087e15514f2995aca531a63297352d0f09cd1310bc2d3bbcf8b5170dd48",
+      "test_id": "registry_invalid_tail_is_atomic"
+    },
+    {
+      "log": "00-registry_duplicate_batch_is_rejected.txt",
+      "repeat": 0,
+      "result": "EXPECTED_ASSERTION_FAILURE",
+      "returncode": 101,
+      "seconds": 0.001436342999994622,
+      "sha256": "ec7c01ee2f08416842179e05147299511f37289bf8f402f68a8764806f824da6",
+      "test_id": "registry_duplicate_batch_is_rejected"
+    },
+    {
+      "log": "00-registry_existing_conflict_is_atomic.txt",
+      "repeat": 0,
+      "result": "EXPECTED_ASSERTION_FAILURE",
+      "returncode": 101,
+      "seconds": 0.0013860939999972288,
+      "sha256": "de6907b03d1f6bba0364d899c5da6054aab0dee9ebb735f58ad82ddda1518a98",
+      "test_id": "registry_existing_conflict_is_atomic"
+    }
+  ],
+  "repeat": 1,
+  "required_test_count": 11,
+  "schema_version": 1,
+  "scope": "CONTROL_REGRESSION_NOT_MODEL_PARITY",
+  "source_hashes": {
+    "kernel/crates/clever-kernel/src/adapter.rs": "914aaeb0ca26676fd96131120a13f26a6bf85e9cb87013b15ed02dad916f80c1",
+    "kernel/crates/clever-kernel/src/capabilities.rs": "536f3c35f4689997b0dd8d98e1388ce65eb43d71b793523f2e3f51c1c28a1431",
+    "kernel/crates/clever-kernel/tests/control_regressions.rs": "686dc79116f7bdf4c4b8ed00b7655b8550fddf9ae72fc4849ad3a4df5da0878d",
+    "kernel/crates/clever-kernel/tests/fixtures/control_peer.py": "3f3b51f93bc9d49109fff209f95db4eb6b0b9501c6339a097d68a683983daa1f"
+  },
+  "source_sha": "7feba0d207413b67f6a612e81fc16c04cc4c51da",
+  "status": "PASS",
+  "test_source_sha": "1a52b02db91152443af2fe08b51db37e52fd2192"
+}

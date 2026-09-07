@@ -1,0 +1,18 @@
+
+running 1 test
+test unrelated_health_is_rejected ... FAILED
+
+failures:
+
+---- unrelated_health_is_rejected stdout ----
+
+thread 'unrelated_health_is_rejected' (2892) panicked at crates/clever-kernel/tests/control_regressions.rs:79:5:
+assertion: unrelated health cannot satisfy a request
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    unrelated_health_is_rejected
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 14 filtered out; finished in 0.05s
+

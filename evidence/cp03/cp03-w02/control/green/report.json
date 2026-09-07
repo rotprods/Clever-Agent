@@ -1,0 +1,156 @@
+{
+  "executions": 15,
+  "failures": [],
+  "mode": "green",
+  "parity_promotions": 0,
+  "records": [
+    {
+      "log": "00-unrelated_health_is_rejected.txt",
+      "repeat": 0,
+      "result": "PASS",
+      "returncode": 0,
+      "seconds": 0.04663595900001383,
+      "sha256": "09e4895633602d6985c43b3da82b8cacbcbe828fdbb486dbb789d761b65618d6",
+      "test_id": "unrelated_health_is_rejected"
+    },
+    {
+      "log": "00-unrelated_cancel_is_rejected.txt",
+      "repeat": 0,
+      "result": "PASS",
+      "returncode": 0,
+      "seconds": 0.045805524999991576,
+      "sha256": "eb9bf89a09f1274f08e3d2a492ea521bb774d59f0b138ae593186b6b915411ca",
+      "test_id": "unrelated_cancel_is_rejected"
+    },
+    {
+      "log": "00-unrelated_shutdown_is_rejected.txt",
+      "repeat": 0,
+      "result": "PASS",
+      "returncode": 0,
+      "seconds": 0.046135965999980044,
+      "sha256": "c6b53060d8ac19c2eacfffc848ff3bfa8e463c5aa87eca4c1a165418153cc1ad",
+      "test_id": "unrelated_shutdown_is_rejected"
+    },
+    {
+      "log": "00-unspecified_health_is_rejected.txt",
+      "repeat": 0,
+      "result": "PASS",
+      "returncode": 0,
+      "seconds": 0.045700565999993614,
+      "sha256": "b5a3f420d65707ae8271fd27d7c9e4288eec314b364482129f5251ffdd6e2c8d",
+      "test_id": "unspecified_health_is_rejected"
+    },
+    {
+      "log": "00-false_green_health_is_rejected.txt",
+      "repeat": 0,
+      "result": "PASS",
+      "returncode": 0,
+      "seconds": 0.04598329099999887,
+      "sha256": "26913fee99c9c100d3694bf0aea5ff6e5db3b7cc443d4b381263433849d6b45b",
+      "test_id": "false_green_health_is_rejected"
+    },
+    {
+      "log": "00-peer_frame_limit_is_enforced.txt",
+      "repeat": 0,
+      "result": "PASS",
+      "returncode": 0,
+      "seconds": 0.046218792999979996,
+      "sha256": "cf410b7090bce341c989ae2bbe0a93f1be733e01c930a84cc8482137d75c9e96",
+      "test_id": "peer_frame_limit_is_enforced"
+    },
+    {
+      "log": "00-timeout_prevents_stale_connection_reuse.txt",
+      "repeat": 0,
+      "result": "PASS",
+      "returncode": 0,
+      "seconds": 0.6162918570000215,
+      "sha256": "6e6acd63edbdb6088122920353bd9ccc7a3ba2aa98a8f0e8d683f0f7ab835758",
+      "test_id": "timeout_prevents_stale_connection_reuse"
+    },
+    {
+      "log": "00-protocol_failure_prevents_reuse.txt",
+      "repeat": 0,
+      "result": "PASS",
+      "returncode": 0,
+      "seconds": 0.045225444000010384,
+      "sha256": "f1b8bca5ac46084a407a1f1f17a6f6e0f5ff33ae964ff45641e675dfe9366a7a",
+      "test_id": "protocol_failure_prevents_reuse"
+    },
+    {
+      "log": "00-malformed_body_is_rejected.txt",
+      "repeat": 0,
+      "result": "PASS",
+      "returncode": 0,
+      "seconds": 0.04504063199999564,
+      "sha256": "2ea15b0cff6081ac5476308bc8d4e78130c5b81d942f44653d045eccb7b38862",
+      "test_id": "malformed_body_is_rejected"
+    },
+    {
+      "log": "00-wrong_runtime_is_rejected.txt",
+      "repeat": 0,
+      "result": "PASS",
+      "returncode": 0,
+      "seconds": 0.0448250459999997,
+      "sha256": "9e8981b83874c568f65cd016f9c81a70afd93140acb7de0e379353970bea7e0f",
+      "test_id": "wrong_runtime_is_rejected"
+    },
+    {
+      "log": "00-registry_invalid_tail_is_atomic.txt",
+      "repeat": 0,
+      "result": "PASS",
+      "returncode": 0,
+      "seconds": 0.0014878570000007585,
+      "sha256": "3a79f9cae2fe5e6be948f5f2455121a9c7e4fd30bee082d7000e255b0451e9f3",
+      "test_id": "registry_invalid_tail_is_atomic"
+    },
+    {
+      "log": "00-registry_duplicate_batch_is_rejected.txt",
+      "repeat": 0,
+      "result": "PASS",
+      "returncode": 0,
+      "seconds": 0.0013354379999839239,
+      "sha256": "007fd0540d6c2a92d27d646779ccfceffcf12c1d7555fafe2c0022ea9c2efd3d",
+      "test_id": "registry_duplicate_batch_is_rejected"
+    },
+    {
+      "log": "00-registry_existing_conflict_is_atomic.txt",
+      "repeat": 0,
+      "result": "PASS",
+      "returncode": 0,
+      "seconds": 0.0013605389999895579,
+      "sha256": "760b25b6be2702ff5c35607415a8b0e2e6f523940d83ab73266a38b8d4d139a9",
+      "test_id": "registry_existing_conflict_is_atomic"
+    },
+    {
+      "log": "00-registry_replay_preserves_availability.txt",
+      "repeat": 0,
+      "result": "PASS",
+      "returncode": 0,
+      "seconds": 0.001330047999999806,
+      "sha256": "9cd7f214c9626c4fcaed5c3391754a52b748a0ab87521a9aa71728ac5dc97b90",
+      "test_id": "registry_replay_preserves_availability"
+    },
+    {
+      "log": "00-valid_control_roundtrip_still_works.txt",
+      "repeat": 0,
+      "result": "PASS",
+      "returncode": 0,
+      "seconds": 0.05084761300000196,
+      "sha256": "d9c0c84e1059eb9b699d3a9d843be43e36d94e9931796b03ef80c9b49a3be302",
+      "test_id": "valid_control_roundtrip_still_works"
+    }
+  ],
+  "repeat": 1,
+  "required_test_count": 15,
+  "schema_version": 1,
+  "scope": "CONTROL_REGRESSION_NOT_MODEL_PARITY",
+  "source_hashes": {
+    "kernel/crates/clever-kernel/src/adapter.rs": "b2302467da37a8da2f8f40c6c3879ea629308c476e60d66e2e57b6775141fd4a",
+    "kernel/crates/clever-kernel/src/capabilities.rs": "ccd69baf4d8fd92065143445798d86671b592a3d7c3bba5e1414d6c5990e0f49",
+    "kernel/crates/clever-kernel/tests/control_regressions.rs": "686dc79116f7bdf4c4b8ed00b7655b8550fddf9ae72fc4849ad3a4df5da0878d",
+    "kernel/crates/clever-kernel/tests/fixtures/control_peer.py": "3f3b51f93bc9d49109fff209f95db4eb6b0b9501c6339a097d68a683983daa1f"
+  },
+  "source_sha": "5faa1de6503687b707a6a97e2eba4c870e3ded11",
+  "status": "PASS",
+  "test_source_sha": "1a52b02db91152443af2fe08b51db37e52fd2192"
+}

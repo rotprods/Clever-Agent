@@ -1,0 +1,77 @@
+   Compiling clever-kernel v0.1.0 (/home/runner/work/Clever-Agent/Clever-Agent/kernel/crates/clever-kernel)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.83s
+     Running unittests src/lib.rs (kernel/target/debug/deps/clever_kernel-2adf263f41a45624)
+
+running 1 test
+test audit::tests::tampering_breaks_hash_chain ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/action_plane.rs (kernel/target/debug/deps/action_plane-440e9b172b282183)
+
+running 6 tests
+test classification_is_still_explicit_on_actions_context ... ok
+test deny_policy_cannot_enter_action_store ... ok
+test exact_replay_is_duplicate_without_second_action ... ok
+test false_green_runtime_health_is_rejected ... ok
+test same_idempotency_key_with_different_action_is_conflict ... ok
+test receipt_state_machine_rejects_invalid_transition_then_accepts_valid_flow ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/adapter_supervisor.rs (kernel/target/debug/deps/adapter_supervisor-a9ef624c4076e4da)
+
+running 7 tests
+test handshake_timeout_is_bounded ... ok
+test inherited_secrets_are_stripped_and_registry_metadata_cannot_escalate ... ok
+test rejects_relative_adapter_programs_before_spawn ... ok
+test rejects_unknown_contract_major ... ok
+test rejects_oversized_and_truncated_frames ... ok
+test crash_restart_budget_is_bounded ... ok
+test real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.13s
+
+     Running tests/control_regressions.rs (kernel/target/debug/deps/control_regressions-d5d75a2dabe943b5)
+
+running 15 tests
+test false_green_health_is_rejected ... ok
+test malformed_body_is_rejected ... ok
+test registry_duplicate_batch_is_rejected ... ok
+test registry_existing_conflict_is_atomic ... ok
+test registry_invalid_tail_is_atomic ... ok
+test registry_replay_preserves_availability ... ok
+test peer_frame_limit_is_enforced ... ok
+test protocol_failure_prevents_reuse ... ok
+test unrelated_cancel_is_rejected ... ok
+test unrelated_health_is_rejected ... ok
+test unrelated_shutdown_is_rejected ... ok
+test unspecified_health_is_rejected ... ok
+test wrong_runtime_is_rejected ... ok
+test valid_control_roundtrip_still_works ... ok
+test timeout_prevents_stale_connection_reuse ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.70s
+
+     Running tests/gauntlet.rs (kernel/target/debug/deps/gauntlet-03ec1ae3ee7339da)
+
+running 7 tests
+test capability_cannot_self_assert_security_metadata ... ok
+test cross_user_memory_read_is_denied ... ok
+test action_policy_mismatch_r4_and_replay_conflict_fail ... ok
+test runtime_false_green_and_invalid_transition_fail ... ok
+test malformed_session_identity_fails ... ok
+test terminal_receipt_cannot_restart_or_complete_without_timestamp ... ok
+test unknown_major_and_malformed_event_fail_closed ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/kernel.rs (kernel/target/debug/deps/kernel-3c0b8f6634dcea1f)
+
+running 3 tests
+test capability_registry_requires_typed_security_fields_and_rejects_reserved_metadata ... ok
+test deny_by_default_policy_never_self_authorizes ... ok
+test event_router_rejects_unknown_major_and_duplicate_ids ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

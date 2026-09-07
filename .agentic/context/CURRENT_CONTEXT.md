@@ -35,7 +35,6 @@
 
 ## Active claims
 
-- `CLAIM-W02-CONTROL-20260907` → `CP03-W02-CONTROL` · `chatgpt`
 
 ## Open / mitigating risks
 

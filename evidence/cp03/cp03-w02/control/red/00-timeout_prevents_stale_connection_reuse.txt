@@ -1,0 +1,18 @@
+
+running 1 test
+test timeout_prevents_stale_connection_reuse ... FAILED
+
+failures:
+
+---- timeout_prevents_stale_connection_reuse stdout ----
+
+thread 'timeout_prevents_stale_connection_reuse' (2916) panicked at crates/clever-kernel/tests/control_regressions.rs:111:5:
+assertion: late health from expired request must not satisfy another request
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    timeout_prevents_stale_connection_reuse
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 14 filtered out; finished in 0.62s
+

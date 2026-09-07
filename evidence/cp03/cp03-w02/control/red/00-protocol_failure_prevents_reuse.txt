@@ -1,0 +1,18 @@
+
+running 1 test
+test protocol_failure_prevents_reuse ... FAILED
+
+failures:
+
+---- protocol_failure_prevents_reuse stdout ----
+
+thread 'protocol_failure_prevents_reuse' (2920) panicked at crates/clever-kernel/tests/control_regressions.rs:119:5:
+assertion failed: peer.request_health().is_err()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    protocol_failure_prevents_reuse
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 14 filtered out; finished in 0.04s
+

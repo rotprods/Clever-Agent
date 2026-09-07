@@ -1,0 +1,18 @@
+
+running 1 test
+test unrelated_shutdown_is_rejected ... FAILED
+
+failures:
+
+---- unrelated_shutdown_is_rejected stdout ----
+
+thread 'unrelated_shutdown_is_rejected' (2900) panicked at crates/clever-kernel/tests/control_regressions.rs:92:5:
+assertion failed: peer.shutdown("test").is_err()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    unrelated_shutdown_is_rejected
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 14 filtered out; finished in 0.05s
+
