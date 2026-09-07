@@ -53,7 +53,8 @@
     "EVID-0012",
     "EVID-0013",
     "EVID-0014",
-    "EVID-W02-FACETS-20260907"
+    "EVID-W02-FACETS-20260907",
+    "EVID-W02-SCOPE-LOCK-20260907"
   ],
   "frontier": {
     "blocking_issues": [],

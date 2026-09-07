@@ -1,0 +1,59 @@
+name: CP03 W02 Scope Lock
+
+on:
+  push:
+    branches: [wave/cp03/w02-scope-lock]
+    paths:
+      - 'inventory/cp03/W02_SCOPE_LOCK.json'
+      - 'scripts/cp03/w02_scope_lock.py'
+      - 'tests/test_cp03_w02_scope_lock.py'
+      - '.github/workflows/cp03-w02-scope-lock.yml'
+  pull_request:
+    paths:
+      - 'inventory/cp03/W02_SCOPE_LOCK.json'
+      - 'scripts/cp03/w02_scope_lock.py'
+      - 'tests/test_cp03_w02_scope_lock.py'
+      - '.github/workflows/cp03-w02-scope-lock.yml'
+      - 'iterations/03/waves/CP03-W02/TASK_GRAPH.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scope-lock:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Recompute all W02 scope inputs
+        run: |
+          python scripts/validate_agentic_state.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/context/validate_context_pack.py
+          python scripts/context/validate_next_actions.py
+          python scripts/cp03/w02_scope.py --write
+          python -m scripts.cp03.w02_facets --write
+      - name: Validate immutable scope lock
+        run: python -m scripts.cp03.w02_scope_lock --write-receipt
+      - name: Run scope-lock tamper suite
+        run: python -m unittest discover -s tests -p 'test_cp03_w02_scope_lock.py' -v
+      - name: Revalidate lock after tests
+        run: |
+          python -m scripts.cp03.w02_scope_lock
+          python scripts/cp03/w02_scope.py --check
+          python -m scripts.cp03.w02_facets --check
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          git diff --check
+      - name: Upload lock receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cp03-w02-scope-lock-${{ github.sha }}
+          path: evidence/cp03/cp03-w02/W02-01/SCOPE_LOCK_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 30

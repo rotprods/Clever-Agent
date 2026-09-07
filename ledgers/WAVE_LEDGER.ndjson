@@ -29,3 +29,4 @@
 {"checkpoint":"CP03","date":"2026-09-01","iteration":"I03","objective":"Implement supervised adapter transport, lifecycle and typed registry bridge.","schema_version":1,"status":"PROPOSED","wave_id":"CP03-W01"}
 {"date":"2026-09-02","event":"VERIFICATION","evidence_id":"EVID-0014","next_wave":"CP03-W02","schema_version":1,"status":"COMPLETE","wave_id":"CP03-W01"}
 {"checkpoint":"CP03","date":"2026-09-02","iteration":"I03","objective":"Map models, engines and inference behavior through canonical contracts.","schema_version":1,"status":"PROPOSED","wave_id":"CP03-W02"}
+{"checkpoint":"CP03","date":"2026-09-07","event":"VERIFICATION","event_id":"WAVE-W02-SCOPE-LOCK-20260907","evidence_id":"EVID-W02-SCOPE-LOCK-20260907","iteration":"I03","next_task":"W02-02","parent_wave":"CP03-W02","schema_version":1,"status":"COMPLETE","wave_id":"CP03-W02-SCOPE-LOCK-20260907"}
