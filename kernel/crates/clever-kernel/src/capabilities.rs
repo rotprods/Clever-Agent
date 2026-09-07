@@ -1,17 +1,15 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
+use crate::{error::KernelError, version::validate_contract_version};
 use clever_contracts::{
     CapabilityAvailability, CapabilityDescriptor, LifecycleMode, PermissionRequirement,
 };
-
-use crate::{error::KernelError, version::validate_contract_version};
 
 #[derive(Debug, Clone)]
 pub struct CapabilityState {
     pub descriptor: CapabilityDescriptor,
     pub availability: CapabilityAvailability,
 }
-
 #[derive(Debug, Default)]
 pub struct CapabilityRegistry {
     capabilities: BTreeMap<String, CapabilityState>,
@@ -36,6 +34,42 @@ impl CapabilityRegistry {
         Ok(())
     }
 
+    /// Validate the whole batch before committing. Replays of identical existing
+    /// descriptors preserve availability. Duplicate input IDs or any conflict abort
+    /// without inserting anything.
+    pub fn register_batch(
+        &mut self,
+        descriptors: Vec<CapabilityDescriptor>,
+    ) -> Result<Vec<String>, KernelError> {
+        let mut seen = BTreeSet::new();
+        let mut ids = Vec::with_capacity(descriptors.len());
+        for descriptor in &descriptors {
+            validate_descriptor(descriptor)?;
+            if !seen.insert(descriptor.capability_id.clone())
+                || self
+                    .capabilities
+                    .get(&descriptor.capability_id)
+                    .is_some_and(|existing| existing.descriptor != *descriptor)
+            {
+                return Err(KernelError::DuplicateId {
+                    kind: "capability",
+                    id: descriptor.capability_id.clone(),
+                });
+            }
+            ids.push(descriptor.capability_id.clone());
+        }
+        // Nothing fallible below; exclusive &mut ownership makes the update atomic
+        // to other registry users. Allocator abort is not a recoverable transaction.
+        for descriptor in descriptors {
+            self.capabilities
+                .entry(descriptor.capability_id.clone())
+                .or_insert(CapabilityState {
+                    descriptor,
+                    availability: CapabilityAvailability::Unavailable,
+                });
+        }
+        Ok(ids)
+    }
     pub fn set_availability(
         &mut self,
         capability_id: &str,
@@ -47,30 +81,25 @@ impl CapabilityRegistry {
                 value: availability as i32,
             });
         }
-        let state = self
-            .capabilities
+        self.capabilities
             .get_mut(capability_id)
-            .ok_or_else(|| KernelError::UnknownCapability(capability_id.to_owned()))?;
-        state.availability = availability;
+            .ok_or_else(|| KernelError::UnknownCapability(capability_id.to_owned()))?
+            .availability = availability;
         Ok(())
     }
-
     #[must_use]
     pub fn get(&self, capability_id: &str) -> Option<&CapabilityState> {
         self.capabilities.get(capability_id)
     }
-
     #[must_use]
     pub fn len(&self) -> usize {
         self.capabilities.len()
     }
-
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.capabilities.is_empty()
     }
 }
-
 fn validate_descriptor(descriptor: &CapabilityDescriptor) -> Result<(), KernelError> {
     validate_contract_version(descriptor.contract_version.as_ref())?;
     require_text(&descriptor.capability_id, "capability_id")?;
@@ -122,7 +151,6 @@ fn validate_descriptor(descriptor: &CapabilityDescriptor) -> Result<(), KernelEr
     }
     Ok(())
 }
-
 fn validate_permission(permission: &PermissionRequirement) -> Result<(), KernelError> {
     require_text(&permission.permission, "capability.permission.permission")?;
     if permission.mandatory {
@@ -130,7 +158,6 @@ fn validate_permission(permission: &PermissionRequirement) -> Result<(), KernelE
     }
     Ok(())
 }
-
 fn require_text(value: &str, field: &'static str) -> Result<(), KernelError> {
     if value.trim().is_empty() {
         return Err(KernelError::EmptyField(field));

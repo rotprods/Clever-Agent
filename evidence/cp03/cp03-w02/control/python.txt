@@ -1,0 +1,30 @@
+test_absent_interpreter_fails (test_cp03_control_gate.ControlGateTests.test_absent_interpreter_fails) ... ok
+test_assertion_is_valid_red (test_cp03_control_gate.ControlGateTests.test_assertion_is_valid_red) ... ok
+test_build_failure_is_not_red (test_cp03_control_gate.ControlGateTests.test_build_failure_is_not_red) ... ok
+test_empty_result_fails (test_cp03_control_gate.ControlGateTests.test_empty_result_fails) ... ok
+test_failed_exit_fails (test_cp03_control_gate.ControlGateTests.test_failed_exit_fails) ... ok
+test_ignored_test_fails (test_cp03_control_gate.ControlGateTests.test_ignored_test_fails) ... ok
+test_panic_without_assertion_is_not_red (test_cp03_control_gate.ControlGateTests.test_panic_without_assertion_is_not_red) ... ok
+test_relative_interpreter_fails (test_cp03_control_gate.ControlGateTests.test_relative_interpreter_fails) ... ok
+test_valid_pass (test_cp03_control_gate.ControlGateTests.test_valid_pass) ... ok
+test_wrong_name_fails (test_cp03_control_gate.ControlGateTests.test_wrong_name_fails) ... ok
+test_zero_tests_fails (test_cp03_control_gate.ControlGateTests.test_zero_tests_fails) ... ok
+test_ack_correlation_mismatch (test_cp03_control_protocol.ControlProtocolTests.test_ack_correlation_mismatch) ... ok
+test_ack_frame_limit_invalid (test_cp03_control_protocol.ControlProtocolTests.test_ack_frame_limit_invalid) ... ok
+test_ack_identity_mismatch (test_cp03_control_protocol.ControlProtocolTests.test_ack_identity_mismatch) ... ok
+test_ack_missing_feature (test_cp03_control_protocol.ControlProtocolTests.test_ack_missing_feature) ... ok
+test_ack_version_mismatch (test_cp03_control_protocol.ControlProtocolTests.test_ack_version_mismatch) ... ok
+test_all_control_responses_are_correlated (test_cp03_control_protocol.ControlProtocolTests.test_all_control_responses_are_correlated) ... ok
+test_empty_body_is_rejected (test_cp03_control_protocol.ControlProtocolTests.test_empty_body_is_rejected) ... ok
+test_empty_frame_id_is_rejected (test_cp03_control_protocol.ControlProtocolTests.test_empty_frame_id_is_rejected) ... ok
+test_expired_request_is_error (test_cp03_control_protocol.ControlProtocolTests.test_expired_request_is_error) ... ok
+test_fragmented_prefix_and_payload (test_cp03_control_protocol.ControlProtocolTests.test_fragmented_prefix_and_payload) ... ok
+test_initial_hello_has_no_correlation (test_cp03_control_protocol.ControlProtocolTests.test_initial_hello_has_no_correlation) ... ok
+test_negotiated_inbound_limit (test_cp03_control_protocol.ControlProtocolTests.test_negotiated_inbound_limit) ... ok
+test_replay_is_error_and_closes (test_cp03_control_protocol.ControlProtocolTests.test_replay_is_error_and_closes) ... ok
+test_truncated_prefix_is_rejected (test_cp03_control_protocol.ControlProtocolTests.test_truncated_prefix_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 25 tests in 0.010s
+
+OK

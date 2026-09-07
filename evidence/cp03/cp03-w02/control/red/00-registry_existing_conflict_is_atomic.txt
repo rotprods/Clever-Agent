@@ -1,0 +1,20 @@
+
+running 1 test
+test registry_existing_conflict_is_atomic ... FAILED
+
+failures:
+
+---- registry_existing_conflict_is_atomic stdout ----
+
+thread 'registry_existing_conflict_is_atomic' (2928) panicked at crates/clever-kernel/tests/control_regressions.rs:157:5:
+assertion `left == right` failed: existing conflict must roll back the new prefix
+  left: 2
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    registry_existing_conflict_is_atomic
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 14 filtered out; finished in 0.00s
+

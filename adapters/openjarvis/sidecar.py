@@ -24,17 +24,9 @@ from clever.v1 import adapter_pb2, common_pb2, runtime_pb2
 MAX_FRAME_BYTES = 4 * 1024 * 1024
 WIRE_MAJOR = 1
 WIRE_MINOR = 1
-_RESERVED_METADATA_TOKENS = (
-    "permission",
-    "scope",
-    "risk",
-    "policy",
-    "authorization",
-    "authz",
-)
+_RESERVED_METADATA_TOKENS = ("permission", "scope", "risk", "policy", "authorization", "authz")
 
-# These are registry-domain import hints, never provider/implementation allowlists.
-# The registry contents themselves remain authoritative and are enumerated at runtime.
+# Domain import hints, not implementation/provider allowlists.
 _REGISTRATION_IMPORT_HINTS = {
     "AgentRegistry": ("openjarvis.agents",),
     "BenchmarkRegistry": ("openjarvis.bench",),
@@ -47,16 +39,12 @@ _REGISTRATION_IMPORT_HINTS = {
     "MemoryRegistry": ("openjarvis.memory", "openjarvis.tools.storage"),
     "MinerRegistry": ("openjarvis.mining",),
     "ModelRegistry": ("openjarvis.intelligence",),
-    "RouterPolicyRegistry": (
-        "openjarvis.learning.routing.heuristic_policy",
-        "openjarvis.learning.routing.learned_router",
-    ),
+    "RouterPolicyRegistry": ("openjarvis.learning.routing.heuristic_policy", "openjarvis.learning.routing.learned_router"),
     "SkillRegistry": ("openjarvis.skills",),
     "SpeechRegistry": ("openjarvis.speech",),
     "TTSRegistry": ("openjarvis.tools.text_to_speech",),
     "ToolRegistry": ("openjarvis.tools",),
 }
-
 _REGISTRY_PRIMITIVES = {
     "ModelRegistry": adapter_pb2.REGISTRY_PRIMITIVE_MODEL,
     "EngineRegistry": adapter_pb2.REGISTRY_PRIMITIVE_ENGINE,
@@ -82,52 +70,41 @@ def contract_version() -> common_pb2.ContractVersion:
 
 
 def is_reserved_metadata_key(key: str) -> bool:
-    normalized = key.casefold()
-    return any(token in normalized for token in _RESERVED_METADATA_TOKENS)
+    return any(token in key.casefold() for token in _RESERVED_METADATA_TOKENS)
 
 
 def sanitize_metadata(metadata: dict[str, str]) -> dict[str, str]:
-    return {
-        str(key): str(value)
-        for key, value in sorted(metadata.items())
-        if not is_reserved_metadata_key(str(key))
-    }
+    return {str(k): str(v) for k, v in sorted(metadata.items()) if not is_reserved_metadata_key(str(k))}
 
 
 def _import_registry_domains(registry_names: Iterable[str]) -> list[str]:
     failures: list[str] = []
     seen: set[str] = set()
     for registry_name in sorted(registry_names):
-        for module_name in _REGISTRATION_IMPORT_HINTS.get(registry_name, ()):  # domain hint only
+        for module_name in _REGISTRATION_IMPORT_HINTS.get(registry_name, ()):
             if module_name in seen:
                 continue
             seen.add(module_name)
             try:
-                # Third-party import-time chatter must never corrupt stdout framing.
                 with contextlib.redirect_stdout(sys.stderr):
                     module = importlib.import_module(module_name)
                     if module_name == "openjarvis.intelligence":
                         register_builtin = getattr(module, "register_builtin_models", None)
                         if callable(register_builtin):
                             register_builtin()
-            except Exception as exc:  # optional extras/platform bindings may fail at import
+            except Exception as exc:
                 failures.append(f"{module_name}:{type(exc).__name__}")
     return sorted(failures)
 
 
 def _registry_classes() -> list[tuple[str, type]]:
-    registry_module = importlib.import_module("openjarvis.core.registry")
-    registry_base = getattr(registry_module, "RegistryBase")
-    classes: list[tuple[str, type]] = []
-    for name, candidate in vars(registry_module).items():
-        if (
-            name.endswith("Registry")
-            and inspect.isclass(candidate)
-            and candidate is not registry_base
-            and issubclass(candidate, registry_base)
-        ):
-            classes.append((name, candidate))
-    return sorted(classes, key=lambda item: item[0])
+    module = importlib.import_module("openjarvis.core.registry")
+    base = getattr(module, "RegistryBase")
+    return sorted([
+        (name, candidate) for name, candidate in vars(module).items()
+        if name.endswith("Registry") and inspect.isclass(candidate)
+        and candidate is not base and issubclass(candidate, base)
+    ], key=lambda item: item[0])
 
 
 def _entry_identity(entry: object) -> tuple[str, str]:
@@ -135,16 +112,12 @@ def _entry_identity(entry: object) -> tuple[str, str]:
         module = getattr(entry, "__module__", type(entry).__module__)
         qualname = getattr(entry, "__qualname__", getattr(entry, "__name__", type(entry).__name__))
         return f"{module}.{qualname}", type(entry).__name__
-    entry_type = type(entry)
-    return f"{entry_type.__module__}.{entry_type.__qualname__}", entry_type.__name__
+    return f"{type(entry).__module__}.{type(entry).__qualname__}", type(entry).__name__
 
 
 def discover_registry_snapshot() -> tuple[adapter_pb2.RegistrySnapshot, dict[str, object]]:
     classes = _registry_classes()
-    registry_names = [name for name, _ in classes]
-    import_failures = _import_registry_domains(registry_names)
-
-    # Imports may have populated the same class objects; enumerate only after import.
+    import_failures = _import_registry_domains(name for name, _ in classes)
     classes = _registry_classes()
     entries: list[adapter_pb2.NativeRegistryEntry] = []
     unsupported_registries: list[str] = []
@@ -154,53 +127,32 @@ def discover_registry_snapshot() -> tuple[adapter_pb2.RegistrySnapshot, dict[str
         if primitive is None:
             unsupported_registries.append(registry_name)
             continue
-        native_items = sorted(registry_cls.items(), key=lambda item: str(item[0]))
-        registry_counts[registry_name] = len(native_items)
-        for key, entry in native_items:
+        items = sorted(registry_cls.items(), key=lambda item: str(item[0]))
+        registry_counts[registry_name] = len(items)
+        for key, entry in items:
             implementation, native_type = _entry_identity(entry)
-            metadata = sanitize_metadata(
-                {
-                    "registry_class": registry_name,
-                    "entry_module": getattr(entry, "__module__", type(entry).__module__),
-                    "entry_qualname": getattr(
-                        entry,
-                        "__qualname__",
-                        getattr(entry, "__name__", type(entry).__qualname__),
-                    ),
-                }
-            )
-            entries.append(
-                adapter_pb2.NativeRegistryEntry(
-                    primitive=primitive,
-                    key=str(key),
-                    implementation=implementation,
-                    native_type=native_type,
-                    metadata=metadata,
-                )
-            )
-
+            metadata = sanitize_metadata({
+                "registry_class": registry_name,
+                "entry_module": getattr(entry, "__module__", type(entry).__module__),
+                "entry_qualname": getattr(entry, "__qualname__", getattr(entry, "__name__", type(entry).__qualname__)),
+            })
+            entries.append(adapter_pb2.NativeRegistryEntry(
+                primitive=primitive, key=str(key), implementation=implementation,
+                native_type=native_type, metadata=metadata,
+            ))
     entries.sort(key=lambda row: (row.primitive, row.key, row.implementation))
     snapshot = adapter_pb2.RegistrySnapshot(runtime_id=RUNTIME_ID, entries=entries)
     diagnostics: dict[str, object] = {
-        "schema_version": 1,
-        "source_repo": "openjarvis",
-        "upstream_repository": UPSTREAM_REPOSITORY,
-        "upstream_commit": UPSTREAM_COMMIT,
-        "registry_class_count": len(classes),
-        "registry_counts": dict(sorted(registry_counts.items())),
-        "entry_count": len(entries),
-        "import_failures": import_failures,
+        "schema_version": 1, "source_repo": "openjarvis",
+        "upstream_repository": UPSTREAM_REPOSITORY, "upstream_commit": UPSTREAM_COMMIT,
+        "registry_class_count": len(classes), "registry_counts": dict(sorted(registry_counts.items())),
+        "entry_count": len(entries), "import_failures": import_failures,
         "unsupported_registries": sorted(unsupported_registries),
-        "entries": [
-            {
-                "primitive": adapter_pb2.RegistryPrimitive.Name(row.primitive),
-                "key": row.key,
-                "implementation": row.implementation,
-                "native_type": row.native_type,
-                "metadata": dict(sorted(row.metadata.items())),
-            }
-            for row in entries
-        ],
+        "entries": [{
+            "primitive": adapter_pb2.RegistryPrimitive.Name(row.primitive), "key": row.key,
+            "implementation": row.implementation, "native_type": row.native_type,
+            "metadata": dict(sorted(row.metadata.items())),
+        } for row in entries],
     }
     return snapshot, diagnostics
 
@@ -221,137 +173,71 @@ def read_frame(stream: BinaryIO, *, max_frame_bytes: int = MAX_FRAME_BYTES) -> a
     prefix = stream.read(4)
     if prefix == b"":
         return None
-    if len(prefix) != 4:
-        raise EOFError("truncated adapter frame length prefix")
-    (length,) = struct.unpack(">I", prefix)
+    if len(prefix) < 4:
+        prefix += _read_exact(stream, 4 - len(prefix))
+    length, = struct.unpack(">I", prefix)
     if length == 0 or length > max_frame_bytes:
-        raise ValueError(f"adapter frame length {length} outside allowed range")
-    payload = _read_exact(stream, length)
+        raise ValueError("adapter frame length outside allowed range")
     frame = adapter_pb2.AdapterFrame()
-    frame.ParseFromString(payload)
+    frame.ParseFromString(_read_exact(stream, length))
     if frame.contract_version.major != WIRE_MAJOR:
-        raise ValueError(f"unsupported Clever adapter major {frame.contract_version.major}")
+        raise ValueError("unsupported Clever adapter major")
+    if not frame.frame_id.strip() or frame.WhichOneof("body") is None:
+        raise ValueError("adapter frame identity/body missing")
     return frame
 
 
 def write_frame(stream: BinaryIO, frame: adapter_pb2.AdapterFrame, *, max_frame_bytes: int = MAX_FRAME_BYTES) -> None:
+    if not 0 < frame.ByteSize() <= max_frame_bytes:
+        raise ValueError("adapter frame length outside allowed range")
     payload = frame.SerializeToString(deterministic=True)
-    if not payload or len(payload) > max_frame_bytes:
-        raise ValueError(f"adapter frame length {len(payload)} outside allowed range")
     stream.write(struct.pack(">I", len(payload)))
     stream.write(payload)
     stream.flush()
 
 
 def _now_timestamp() -> tuple[int, int]:
-    now = time.time_ns()
-    return divmod(now, 1_000_000_000)
+    return divmod(time.time_ns(), 1_000_000_000)
 
 
 def _stamp(message: object) -> None:
-    seconds, nanos = _now_timestamp()
     target = getattr(message, "sent_at", None)
     if target is not None:
-        target.seconds = seconds
-        target.nanos = nanos
+        target.seconds, target.nanos = _now_timestamp()
 
 
 def _frame(frame_id: str, body_name: str, body: object) -> adapter_pb2.AdapterFrame:
-    frame = adapter_pb2.AdapterFrame(
-        contract_version=contract_version(),
-        frame_id=frame_id,
-        correlation_id=frame_id,
-    )
-    _stamp(frame)
-    getattr(frame, body_name).CopyFrom(body)
-    return frame
+    result = adapter_pb2.AdapterFrame(contract_version=contract_version(), frame_id=frame_id)
+    _stamp(result)
+    getattr(result, body_name).CopyFrom(body)
+    return result
 
 
 def hello_frame() -> adapter_pb2.AdapterFrame:
-    hello = adapter_pb2.AdapterHello(
-        contract_version=contract_version(),
-        adapter_id=ADAPTER_ID,
+    return _frame("openjarvis-hello", "hello", adapter_pb2.AdapterHello(
+        contract_version=contract_version(), adapter_id=ADAPTER_ID,
         runtime=runtime_pb2.RuntimeDescriptor(
-            contract_version=contract_version(),
-            runtime_id=RUNTIME_ID,
-            runtime_kind="python-sidecar",
-            implementation_version=UPSTREAM_COMMIT[:12],
+            contract_version=contract_version(), runtime_id=RUNTIME_ID,
+            runtime_kind="python-sidecar", implementation_version=UPSTREAM_COMMIT[:12],
             process_id=str(__import__("os").getpid()),
         ),
-        upstream_repository=UPSTREAM_REPOSITORY,
-        upstream_commit=UPSTREAM_COMMIT,
+        upstream_repository=UPSTREAM_REPOSITORY, upstream_commit=UPSTREAM_COMMIT,
         max_frame_bytes=MAX_FRAME_BYTES,
-        supported_features=[
-            "be32-length-prefix",
-            "registry-snapshot",
-            "runtime-health",
-            "cancel",
-            "shutdown",
-        ],
-    )
-    return _frame("openjarvis-hello", "hello", hello)
+        supported_features=["be32-length-prefix", "registry-snapshot", "runtime-health", "cancel", "shutdown"],
+    ))
 
 
 def health_frame(*, degraded: bool = False, reasons: Iterable[str] = ()) -> adapter_pb2.AdapterFrame:
-    seconds, nanos = _now_timestamp()
     reason_list = sorted(set(str(reason) for reason in reasons if str(reason)))
-    status = (
-        runtime_pb2.RUNTIME_HEALTH_STATUS_DEGRADED
-        if degraded or reason_list
-        else runtime_pb2.RUNTIME_HEALTH_STATUS_READY
-    )
-    health = runtime_pb2.RuntimeHealth(
-        contract_version=contract_version(),
-        runtime_id=RUNTIME_ID,
-        status=status,
-        degradation_reasons=reason_list,
-        dropped_event_count=0,
-        failed_action_count=0,
-    )
-    health.observed_at.seconds = seconds
-    health.observed_at.nanos = nanos
+    status = runtime_pb2.RUNTIME_HEALTH_STATUS_DEGRADED if degraded or reason_list else runtime_pb2.RUNTIME_HEALTH_STATUS_READY
+    health = runtime_pb2.RuntimeHealth(contract_version=contract_version(), runtime_id=RUNTIME_ID, status=status, degradation_reasons=reason_list)
+    health.observed_at.seconds, health.observed_at.nanos = _now_timestamp()
     return _frame("openjarvis-health", "health", health)
 
 
 def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
-    snapshot, diagnostics = discover_registry_snapshot()
-    write_frame(stdout, hello_frame())
-    first = read_frame(stdin)
-    if first is None or first.WhichOneof("body") != "hello_ack" or not first.hello_ack.accepted:
-        return 64
-
-    while True:
-        request = read_frame(stdin)
-        if request is None:
-            return 0
-        body = request.WhichOneof("body")
-        if body == "registry_snapshot_request":
-            response = _frame(f"registry:{request.frame_id}", "registry_snapshot", snapshot)
-            response.correlation_id = request.frame_id
-            write_frame(stdout, response)
-        elif body == "health_request":
-            write_frame(stdout, health_frame(reasons=diagnostics["unsupported_registries"]))
-        elif body == "cancel":
-            # W01 has no long-running executable requests; cancellation is accepted as a no-op.
-            write_frame(stdout, health_frame())
-        elif body == "shutdown":
-            seconds, nanos = _now_timestamp()
-            stopping = runtime_pb2.RuntimeHealth(
-                contract_version=contract_version(),
-                runtime_id=RUNTIME_ID,
-                status=runtime_pb2.RUNTIME_HEALTH_STATUS_STOPPING,
-            )
-            stopping.observed_at.seconds = seconds
-            stopping.observed_at.nanos = nanos
-            write_frame(stdout, _frame("openjarvis-stopping", "health", stopping))
-            return 0
-        else:
-            error = adapter_pb2.AdapterError(
-                code="UNSUPPORTED_W01_FRAME",
-                message=f"W01 sidecar does not execute frame body {body!r}",
-                retryable=False,
-            )
-            write_frame(stdout, _frame(f"error:{request.frame_id}", "error", error))
+    from adapters.openjarvis.control import serve
+    return serve(stdin, stdout, sys.modules[__name__])
 
 
 def main() -> int:
