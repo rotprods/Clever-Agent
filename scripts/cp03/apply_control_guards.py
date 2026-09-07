@@ -10,6 +10,9 @@ def replace(text: str, before: str, after: str) -> str:
 def apply() -> None:
     path = ROOT / "kernel/crates/clever-kernel/src/adapter.rs"
     s = path.read_text()
+    s = replace(s, "    receiver: Receiver<Result<AdapterFrame, AdapterSupervisorError>>,", "    receiver: Receiver<Result<(AdapterFrame, usize), AdapterSupervisorError>>,")
+    s = replace(s, ") -> Result<Option<AdapterFrame>, AdapterSupervisorError> {", ") -> Result<Option<(AdapterFrame, usize)>, AdapterSupervisorError> {")
+    s = replace(s, "    Ok(Some(frame))", "    Ok(Some((frame, length)))")
     s = replace(s, "    next_frame_sequence: u64,\n}", "    next_frame_sequence: u64,\n    protocol_failed: bool,\n}")
     s = replace(s, "            next_frame_sequence: 0,", "            next_frame_sequence: 0,\n            protocol_failed: false,")
     s = replace(s,
@@ -28,9 +31,10 @@ def apply() -> None:
         stage: &'static str,
     ) -> Result<AdapterFrame, AdapterSupervisorError> {
         let result = match self.receiver.recv_timeout(timeout) {
-            Ok(result) => result.and_then(|frame| {
-                if frame.encoded_len() > self.negotiated_max_frame_bytes {
-                    return Err(AdapterSupervisorError::FrameTooLarge(frame.encoded_len()));
+            Ok(result) => result.and_then(|(frame, wire_length)| {
+                // The wire size includes unknown fields discarded by decoding.
+                if wire_length > self.negotiated_max_frame_bytes {
+                    return Err(AdapterSupervisorError::FrameTooLarge(wire_length));
                 }
                 if frame.frame_id.trim().is_empty() || frame.body.is_none() {
                     return Err(AdapterSupervisorError::UnexpectedFrame(stage));
@@ -162,5 +166,4 @@ def apply() -> None:
     s = replace(s, '    ) else {\n        return;\n    };\n\n    let mount =', '    ) else {\n        panic!("real OpenJarvis lane requires image, workspace and Docker binary");\n    };\n\n    let mount =')
     path.write_text(s)
 
-if __name__ == "__main__":
-    apply()
+if __name__ == "__main__": apply()

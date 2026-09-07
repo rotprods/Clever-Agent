@@ -1,0 +1,75 @@
+name: CP03 W02 Read-Only Candidate Validation
+on:
+  push:
+    branches: [wave/cp03/w02-control-guards]
+    paths:
+      - '.github/workflows/cp03-w02-candidate-validation.yml'
+permissions:
+  contents: read
+jobs:
+  validate-candidate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CARGO_TERM_COLOR: never
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
+      OPENJARVIS_SHA: 72033b8ec288aa067ce4530ff9d96bf231e9c4e5
+      CLEVER_TEST_SECRET: test-canary-not-a-real-secret
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Validate starting state and contract interpreter
+        run: |
+          python scripts/validate_agentic_state.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/cp03/validate_w02_plan.py
+          python -m pip install -r contracts/sdk/python/requirements.txt
+          echo "CLEVER_TEST_PYTHON=$(command -v python)" >> "$GITHUB_ENV"
+      - name: Test candidate in ephemeral workspace only
+        run: |
+          python scripts/cp03/prepare_control_retest.py
+          python scripts/cp03/control_guard_gate.py --repair
+      - name: Build pinned native test image
+        run: |
+          set -euo pipefail
+          git init /tmp/openjarvis
+          git -C /tmp/openjarvis remote add origin https://github.com/open-jarvis/OpenJarvis.git
+          git -C /tmp/openjarvis fetch --depth 1 origin "$OPENJARVIS_SHA"
+          git -C /tmp/openjarvis checkout --detach FETCH_HEAD
+          test "$(git -C /tmp/openjarvis rev-parse HEAD)" = "$OPENJARVIS_SHA"
+          docker build -f scripts/cp03/Dockerfile.baseline -t clever-control-base /tmp/openjarvis
+          mkdir -p /tmp/sidecar-build
+          docker build --build-arg BASE_IMAGE=clever-control-base -f "$PWD/scripts/cp03/Dockerfile.openjarvis-sidecar" -t clever-control-native /tmp/sidecar-build
+          echo "CLEVER_DOCKER_BIN=$(command -v docker)" >> "$GITHUB_ENV"
+          echo "CLEVER_REPO_ROOT=$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
+          echo "CLEVER_OPENJARVIS_IMAGE=clever-control-native" >> "$GITHUB_ENV"
+      - name: Require actual native registry execution
+        run: python scripts/cp03/control_guard_gate.py --native
+      - name: Export candidate for review without repository mutation
+        run: |
+          python - <<'PY'
+          import hashlib, json, pathlib, shutil, subprocess
+          root=pathlib.Path.cwd()
+          output=root/'.cache/control-guards/candidate'
+          paths=['kernel/crates/clever-kernel/src/adapter.rs','adapters/openjarvis/sidecar.py','kernel/crates/clever-kernel/tests/adapter_supervisor.rs','kernel/crates/clever-kernel/tests/control_guards.rs']
+          changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
+          assert changed==set(paths), f'unexpected experiment mutations: {changed}'
+          for relative in paths:
+              target=output/relative
+              target.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copyfile(root/relative,target)
+          (root/'.cache/control-guards/CANDIDATE_MANIFEST.json').write_text(json.dumps({'status':'TESTED_CANDIDATE_NOT_COMMITTED','files':{p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in paths},'repository_writes':False},indent=2)+'\n')
+          subprocess.run(['git','diff','--check'],check=True)
+          PY
+      - name: Retain test logs and candidate
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: w02-readonly-candidate-${{ github.sha }}
+          include-hidden-files: true
+          path: .cache/control-guards/
+          if-no-files-found: error
