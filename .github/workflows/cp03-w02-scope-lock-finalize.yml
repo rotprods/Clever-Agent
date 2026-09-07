@@ -44,6 +44,10 @@ jobs:
           python scripts/context/validate_next_actions.py
           python -m scripts.parity.ledger --check --source-repo openjarvis
           git diff --check
+      - name: Remove clean-room views that are reproducible but not transition state
+        run: |
+          rm -rf reports/cp03/w02_facets graphs/cp03/w02_facets
+          rm -f reports/cp03/w02_scope/ALLOCATIONS.jsonl reports/cp03/w02_scope/GROUPS.json reports/cp03/w02_scope/SUPPLEMENTAL.jsonl graphs/cp03/w02_scope/ALLOCATION_GRAPH.json
       - name: Restrict durable mutation surface
         run: |
           python - <<'PY'
