@@ -1,0 +1,135 @@
+{
+  "authority": "PROVISIONAL_ALLOCATION_NOT_PARITY",
+  "base_sha": "7feba0d207413b67f6a612e81fc16c04cc4c51da",
+  "expected_counts": {
+    "candidates": 2188,
+    "global": 7565,
+    "openjarvis": 646
+  },
+  "fallback_inference": "CROSS_WAVE_REVIEW",
+  "fallback_other": "OTHER_CP03_WAVE",
+  "freeze_authorized": false,
+  "inputs": {
+    "inventory/surfaces/openjarvis.jsonl": {
+      "bytes": 2184564,
+      "git_blob_sha": "54697466b6101d09567146225c7fc9f354c5e2f9",
+      "sha256": "dd1d76499d0bc672589434ceb992aafdfb9685ee299f92a95f148cca488d4aa2"
+    },
+    "inventory/upstreams/openjarvis.json": {
+      "bytes": 480499,
+      "git_blob_sha": "72067bc3e90473a9bc791c466338a77c2daa02c8",
+      "sha256": "6440a4ca0c1dd8f3fbe55c5d3c64ab4ec1ce633be14e397d8f18c565995f45b6"
+    },
+    "ledgers/CAPABILITY_LEDGER.jsonl": {
+      "bytes": 6254457,
+      "git_blob_sha": "e401ff4c7ce4a1829b97299b564bd28aa3abb7b1",
+      "sha256": "6987a119e10c87ed64936b5ec552b6e5924f3f3d40f328b7ac3ce86c80498d75"
+    }
+  },
+  "note": "All 646 obligations stay in the immutable denominator. OTHER_CP03_WAVE means deferred ownership, not exclusion/waiver. All candidate definitions remain outside the denominator. No rule or manifest grants execution permission.",
+  "parity_promotions": 0,
+  "policy_id": "CP03-W02-SCOPE-v1",
+  "rules": [
+    {
+      "disposition": "W02_CORE",
+      "id": "S01",
+      "path_prefixes": [
+        "src/openjarvis/engine/",
+        "rust/crates/openjarvis-engine/"
+      ],
+      "reason": "Native inference-engine implementations, registration and engine protocol; source is retained, not rewritten."
+    },
+    {
+      "disposition": "W02_CORE",
+      "id": "S02",
+      "paths": [
+        "src/openjarvis/intelligence/model_catalog.py",
+        "src/openjarvis/cli/model.py"
+      ],
+      "reason": "Model catalogue registration and model lifecycle CLI. Mutating operations still require policy and real tests."
+    },
+    {
+      "disposition": "W02_CORE",
+      "id": "S03",
+      "names": [
+        "InferenceStartEvent",
+        "InferenceEndEvent",
+        "ModelInfo",
+        "ProviderSavings"
+      ],
+      "paths": [
+        "frontend/src/types/index.ts"
+      ],
+      "reason": "Typed inference/model/cost events; type compatibility is not UI or runtime parity."
+    },
+    {
+      "disposition": "W02_CORE",
+      "id": "S04",
+      "paths": [
+        "src/openjarvis/server/routes.py"
+      ],
+      "reason": "Public model/provider lifecycle; destructive or credential operations are not authorized by allocation.",
+      "routes": [
+        "/v1/models",
+        "/v1/models/pull",
+        "/v1/models/{model_name:path}",
+        "/v1/cloud/reload"
+      ]
+    },
+    {
+      "disposition": "CROSS_WAVE_REVIEW",
+      "id": "S05",
+      "paths": [
+        "src/openjarvis/server/routes.py"
+      ],
+      "reason": "Shared API: inference is coupled with agent/memory/telemetry or whole-runtime health; split behavioral facets before freeze.",
+      "routes": [
+        "/v1/chat/completions",
+        "/health",
+        "/v1/info",
+        "/v1/savings"
+      ]
+    },
+    {
+      "disposition": "CROSS_WAVE_REVIEW",
+      "id": "S06",
+      "paths": [
+        "src/openjarvis/cli/ask.py",
+        "src/openjarvis/cli/chat_cmd.py",
+        "src/openjarvis/cli/serve.py"
+      ],
+      "reason": "User entrypoints combine inference with orchestration, bootstrap or scheduler; no whole-route parity claim in W02."
+    },
+    {
+      "disposition": "CROSS_WAVE_REVIEW",
+      "id": "S07",
+      "reason": "Mount-only extraction does not preserve router target/prefix sufficiently; do not pretend each is an inference capability.",
+      "surface_kinds": [
+        "route_mount"
+      ]
+    },
+    {
+      "disposition": "CROSS_WAVE_REVIEW",
+      "id": "S08",
+      "path_prefixes": [
+        "src/openjarvis/learning/routing/"
+      ],
+      "reason": "Routing crosses model selection and learning; defer learned-policy promotion to its own wave."
+    }
+  ],
+  "schema_version": 1,
+  "supplemental_paths": [
+    "src/openjarvis/core/types.py"
+  ],
+  "supplemental_prefixes": [
+    "src/openjarvis/engine/",
+    "src/openjarvis/intelligence/",
+    "rust/crates/openjarvis-engine/"
+  ],
+  "upstream_refs": {
+    "clicky": "a80fa80721a8aebe51a170a7780705024ebc6e46",
+    "omi": "e1eca38ff28758d58cde43045691c8ba479063e9",
+    "openclaw": "3ee32fb9c10dcf9d5713c0c4891e55227f5b1f0d",
+    "openjarvis": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5"
+  }
+}
