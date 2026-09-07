@@ -15,3 +15,9 @@ Machine authority: `.agentic/context/NEXT_ACTIONS.json`.
 - [ ] **CP03-008 / CP03-W08 — Compile and burn down parity for all 646 OpenJarvis obligations.** Status: `BLOCKED`.
 - [ ] **CP03-009 / CP03-W09 — Run adversarial recovery and performance gauntlet.** Status: `BLOCKED`.
 - [ ] **CP03-010 / CP03-W10 — Reconcile CP03 release evidence and hand off to CP04.** Status: `BLOCKED`.
+
+## CP03-002 implementation decomposition
+
+Read `iterations/03/waves/CP03-W02/PLAN.md`, `TASK_GRAPH.json`, `REVIEW_FINDINGS.json`, `TEST_PROTOCOL.md`, `COS20D_REVIEW.json` and `METAPROMPT.md` before W02 implementation. The subordinate graph has 20 tasks and eight gates; first task is `W02-00`. It does not replace the global DAG. A first real inference (G3) does not close W02 (G7).
+
+Planning validation: `python scripts/cp03/validate_w02_plan.py` and `python -m unittest discover -s tests -p 'test_cp03_w02_plan.py' -v`. These tests certify plan integrity only; no inference parity is promoted.
