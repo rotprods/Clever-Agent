@@ -43,8 +43,8 @@ class W02PlanTests(unittest.TestCase):
         self.plan["parent_task"] = "CP03-003"
         self.invalid("canonical field")
 
-    def test_unknown_w02_count_not_fabricated(self):
-        self.assertIsNone(self.plan["w02_obligation_count"])
+    def test_w02_count_is_present_after_scope_lock_and_bounds_remain_enforced(self):
+        self.assertEqual(self.plan["w02_obligation_count"], 47)
         self.plan["w02_obligation_count"] = 647
         self.invalid("obligation count")
 
@@ -65,11 +65,13 @@ class W02PlanTests(unittest.TestCase):
         self.invalid("self dependency")
 
     def test_false_ready_rejected(self):
-        self.plan["tasks"][1]["status"] = "READY"
+        # W02-03 depends on W02-02, which is READY rather than COMPLETE.
+        self.plan["tasks"][3]["status"] = "READY"
         self.invalid("false-ready")
 
     def test_completion_without_evidence_rejected(self):
-        self.plan["tasks"][0]["status"] = "COMPLETE"
+        # W02-02 is the current READY task and has no proof yet.
+        self.plan["tasks"][2]["status"] = "COMPLETE"
         self.invalid("without proof")
 
     def test_missing_acceptance_rejected(self):
