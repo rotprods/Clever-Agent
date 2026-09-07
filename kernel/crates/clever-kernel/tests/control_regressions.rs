@@ -21,7 +21,7 @@ fn bridge(entries: Vec<NativeRegistryEntry>, registry: &mut CapabilityRegistry) 
 #[test]
 fn unrelated_health_is_rejected() {
     let mut peer = start("mismatch");
-    assert!(peer.request_health().is_err(), "unrelated health cannot satisfy a request");
+    assert!(peer.request_health().is_err(), "assertion: unrelated health cannot satisfy a request");
 }
 #[test]
 fn unrelated_cancel_is_rejected() {
@@ -50,13 +50,13 @@ fn timeout_prevents_stale_connection_reuse() {
     let mut peer = start("late");
     assert!(peer.request_health().is_err());
     thread::sleep(Duration::from_millis(450));
-    assert!(peer.request_health().is_err(), "late health from expired request must not satisfy another request");
+    assert!(peer.request_health().is_err(), "assertion: late health from expired request must not satisfy another request");
 }
 #[test]
 fn protocol_failure_prevents_reuse() {
     let mut peer = start("mismatch-once");
     assert!(peer.request_health().is_err());
-    assert!(peer.request_health().is_err(), "reconnect is required after protocol ambiguity");
+    assert!(peer.request_health().is_err(), "assertion: reconnect is required after protocol ambiguity");
 }
 #[test]
 fn malformed_body_is_rejected() {
@@ -72,7 +72,7 @@ fn registry_invalid_tail_is_atomic() {
     let mut invalid = entry("bad");
     invalid.primitive = 999;
     assert!(bridge(vec![entry("new"), invalid], &mut registry).is_err());
-    assert!(registry.is_empty(), "invalid tail must not leave the valid prefix registered");
+    assert!(registry.is_empty(), "assertion: invalid tail must not leave the valid prefix registered");
 }
 #[test]
 fn registry_duplicate_batch_is_rejected() {
