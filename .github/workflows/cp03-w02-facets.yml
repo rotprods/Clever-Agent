@@ -1,0 +1,70 @@
+name: CP03 W02 Facet Review
+
+on:
+  push:
+    branches: [wave/cp03/w02-facet-review]
+    paths:
+      - 'inventory/cp03/w02_facet_policy.json'
+      - 'scripts/cp03/w02_facets.py'
+      - 'tests/test_cp03_w02_facets.py'
+      - '.github/workflows/cp03-w02-facets.yml'
+  pull_request:
+    paths:
+      - 'inventory/cp03/w02_facet_policy.json'
+      - 'scripts/cp03/w02_facets.py'
+      - 'tests/test_cp03_w02_facets.py'
+      - '.github/workflows/cp03-w02-facets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  facet-review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Validate canonical context and source scope
+        run: |
+          python scripts/validate_agentic_state.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/context/validate_context_pack.py
+          python scripts/context/validate_next_actions.py
+          python scripts/cp03/w02_scope.py --write
+          python scripts/cp03/w02_scope.py --check
+      - name: Compile reviewed facets
+        run: python scripts/cp03/w02_facets.py --write
+      - name: Run adversarial facet suite
+        run: python -m unittest discover -s tests -p 'test_cp03_w02_facets.py' -v
+      - name: Prove deterministic facet outputs
+        run: python scripts/cp03/w02_facets.py --check
+      - name: Assert no denominator or parity promotion
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          s=json.loads(Path('reports/cp03/w02_facets/SUMMARY.json').read_text())
+          assert s['global_denominator']==7565
+          assert s['openjarvis_obligations']==646
+          assert s['parity_promotions']==0 and s['verified']==0
+          assert s['K_w02_proof_units']==47
+          assert s['K_w02_owned_capabilities']==37
+          assert s['K_w02_shared_capabilities']==10
+          assert s['freeze_ready'] is True and s['scope_frozen'] is False
+          PY
+          git diff --check
+      - name: Upload derived facet evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cp03-w02-facets-${{ github.sha }}
+          path: |
+            reports/cp03/w02_facets/
+            graphs/cp03/w02_facets/
+          if-no-files-found: error
+          retention-days: 30
