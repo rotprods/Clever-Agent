@@ -40,28 +40,7 @@ jobs:
       - name: Apply deterministic bounded-I/O slice
         run: |
           set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          path=Path('scripts/cp03/w02_io_harness.py')
-          text=path.read_text(encoding='utf-8')
-          old='''                    Err(error) => {
-                        if let Err(TrySendError::Full(_)) = sender.try_send(Err(error.clone())) {
-                            reader_state.poison(error);
-                        }
-                        break;
-                    }
-'''
-          new='''                    Err(error) => {
-                        reader_state.poison(error.clone());
-                        let _ = sender.try_send(Err(error));
-                        break;
-                    }
-'''
-          if new not in text:
-              if text.count(old) != 1:
-                  raise SystemExit(f'expected one reader-error compiler block, found {text.count(old)}')
-              path.write_text(text.replace(old,new,1), encoding='utf-8')
-          PY
+          python -c "from pathlib import Path; p=Path('scripts/cp03/w02_io_harness.py'); t=p.read_text(encoding='utf-8'); old='                    Err(error) => {\\n                        if let Err(TrySendError::Full(_)) = sender.try_send(Err(error.clone())) {\\n                            reader_state.poison(error);\\n                        }\\n                        break;\\n                    }\\n'; new='                    Err(error) => {\\n                        reader_state.poison(error.clone());\\n                        let _ = sender.try_send(Err(error));\\n                        break;\\n                    }\\n'; assert new in t or t.count(old)==1, 'reader-error compiler block mismatch'; p.write_text(t if new in t else t.replace(old,new,1), encoding='utf-8')"
           python scripts/cp03/w02_io_harness.py --apply
           cargo fmt --manifest-path kernel/Cargo.toml --all
           python scripts/cp03/w02_io_harness.py --check
