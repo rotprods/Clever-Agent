@@ -35,7 +35,6 @@
 
 ## Active claims
 
-- `CLAIM-CP03-W02-HARNESS-001` → `CP03-W02-HARNESS-20260909` · `chatgpt-gpt-5.6-sol`
 
 ## Open / mitigating risks
 
