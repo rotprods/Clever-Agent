@@ -194,10 +194,22 @@
       "id": "W02-05",
       "owner_role": "rust_builder",
       "priority": "P0",
-      "proof": [],
+      "proof": [
+        {
+          "artifact_id": 10127237390,
+          "evidence_id": "EVID-W02-CONTROL-ATOMIC-20260909",
+          "green_tests": 15,
+          "historical_red_failures": 12,
+          "parity_promotions": 0,
+          "result": "PASS",
+          "retest_executions": 75,
+          "run_id": 34411015932,
+          "validated_head": "5a3d1cc50a6d01b6c62da0ae5a7451d6de9ad1be"
+        }
+      ],
       "reviewer_role": "reviewer_gauntlet",
       "rollback": "Revertir transacci\u00f3n conservando registry anterior.",
-      "status": "READY",
+      "status": "COMPLETE",
       "title": "Correlaci\u00f3n y registry at\u00f3mico"
     },
     {
