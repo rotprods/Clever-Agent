@@ -1,5 +1,5 @@
 {
-  "first_executable_task": "W02-03",
+  "first_executable_task": "W02-04",
   "global_denominator": 7565,
   "iteration": "I03",
   "milestones": {
@@ -135,10 +135,23 @@
       "id": "W02-03",
       "owner_role": "rust_builder",
       "priority": "P0",
-      "proof": [],
+      "proof": [
+        {
+          "artifact_id": 10112491093,
+          "evidence_id": "EVID-W02-IO-20260909",
+          "executed_count": 3,
+          "parity_promotions": 0,
+          "queue_flood": "PASS",
+          "result": "PASS",
+          "run_id": 34372496777,
+          "validated_head": "df0b9509ad802dc2d617d25e13e30d840081f311",
+          "wire_byte_budget": "PASS",
+          "write_deadline": "PASS"
+        }
+      ],
       "reviewer_role": "reviewer_gauntlet",
       "rollback": "Revertir slice y deshabilitar streaming expuesto.",
-      "status": "READY",
+      "status": "COMPLETE",
       "title": "Acotar I/O y backpressure"
     },
     {
@@ -161,7 +174,7 @@
       "proof": [],
       "reviewer_role": "security_reviewer",
       "rollback": "Deshabilitar ruta insegura sin borrar evidencia.",
-      "status": "BLOCKED",
+      "status": "READY",
       "title": "Teardown y cleanup reales"
     },
     {
@@ -184,7 +197,7 @@
       "proof": [],
       "reviewer_role": "reviewer_gauntlet",
       "rollback": "Revertir transacci\u00f3n conservando registry anterior.",
-      "status": "BLOCKED",
+      "status": "READY",
       "title": "Correlaci\u00f3n y registry at\u00f3mico"
     },
     {
