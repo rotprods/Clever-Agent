@@ -57,6 +57,18 @@ def main() -> int:
         "def serve(mode: str) -> int:\n    global wire\n    import fake_adapter_sidecar as wire\n    handshake()",
         "lazy supervised-peer wire import",
     )
+    text = replace_once(
+        text,
+        "use std::{env, fs, path::PathBuf, time::{Duration, Instant, SystemTime, UNIX_EPOCH}};",
+        "use std::{env, fs, path::{Path, PathBuf}, time::{Duration, Instant, SystemTime, UNIX_EPOCH}};",
+        "lifecycle Path import",
+    )
+    text = replace_once(
+        text,
+        "fn cleanup(mode: &str, marker: &PathBuf) -> AdapterCleanupCommand {",
+        "fn cleanup(mode: &str, marker: &Path) -> AdapterCleanupCommand {",
+        "lifecycle cleanup Path argument",
+    )
     TARGET.write_text(text, encoding="utf-8")
     check = TARGET.read_text(encoding="utf-8")
     if r'.args([\"-KILL\", \"--\", target.as_str()])' not in check:
@@ -69,6 +81,8 @@ def main() -> int:
         raise RuntimeError("cleanup fixture still eagerly imports adapter runtime")
     if "global wire\n    import fake_adapter_sidecar as wire\n    handshake()" not in check:
         raise RuntimeError("lazy supervised-peer import fix did not persist")
+    if "fn cleanup(mode: &str, marker: &Path) -> AdapterCleanupCommand" not in check:
+        raise RuntimeError("lifecycle cleanup Path fix did not persist")
     return 0
 
 
