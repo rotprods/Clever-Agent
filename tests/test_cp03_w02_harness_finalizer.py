@@ -94,6 +94,20 @@ class HarnessFinalizerTests(unittest.TestCase):
             with patch.object(finalize_w02_harness, "ROOT", root):
                 self.assertEqual(finalize_w02_harness.latest_claim_status("x"), "RELEASED")
 
+    def test_workflow_normalizes_upload_digest_to_canonical_sha256_form(self) -> None:
+        workflow = (
+            Path(__file__).resolve().parents[1]
+            / ".github/workflows/cp03-w02-harness-finalize.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            "--artifact-digest 'sha256:${{ steps.proof.outputs.artifact-digest }}'",
+            workflow,
+        )
+        self.assertNotIn(
+            "--artifact-digest '${{ steps.proof.outputs.artifact-digest }}'",
+            workflow,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
