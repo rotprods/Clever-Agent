@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 import stat
@@ -93,6 +94,46 @@ class W02HarnessTests(unittest.TestCase):
     def test_repository_source_has_no_silent_required_return(self) -> None:
         report = w02_harness.audit_path(w02_harness.TEST_SOURCE)
         self.assertEqual(report["required_tests"], len(w02_harness.ALL_REQUIRED))
+
+    def test_persisted_transition_is_unique_and_opens_only_w02_03(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        plan = json.loads(
+            (root / "iterations/03/waves/CP03-W02/TASK_GRAPH.json").read_text(encoding="utf-8")
+        )
+        tasks = {row["id"]: row for row in plan["tasks"]}
+        self.assertEqual(tasks["W02-02"]["status"], "COMPLETE")
+        self.assertEqual(tasks["W02-03"]["status"], "READY")
+        self.assertEqual(plan["first_executable_task"], "W02-03")
+        proofs = [
+            row for row in tasks["W02-02"].get("proof", [])
+            if row.get("evidence_id") == "EVID-W02-HARNESS-20260909"
+        ]
+        self.assertEqual(len(proofs), 1)
+        self.assertEqual(proofs[0]["fake_executed"], 6)
+        self.assertEqual(proofs[0]["native_executed"], 1)
+        self.assertEqual(proofs[0]["retest_executed"], 6)
+
+        evidence = [
+            json.loads(line)
+            for line in (root / "ledgers/EVIDENCE_LEDGER.ndjson").read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        matching = [row for row in evidence if row.get("evidence_id") == "EVID-W02-HARNESS-20260909"]
+        self.assertEqual(len(matching), 1)
+        self.assertEqual(matching[0]["status"], "VERIFIED")
+        self.assertEqual(matching[0]["parity_promotions"], 0)
+
+        claims = [
+            json.loads(line)
+            for line in (root / "ledgers/CLAIM_LEDGER.ndjson").read_text(encoding="utf-8").splitlines()
+            if line.strip() and json.loads(line).get("claim_id") == "CLAIM-CP03-W02-HARNESS-001"
+        ]
+        self.assertEqual(claims[-1]["status"], "RELEASED")
+        handoff = (root / "HANDOFF.md").read_text(encoding="utf-8")
+        self.assertIn("W02-03", handoff)
+        goal = json.loads((root / "GOAL_STATE.json").read_text(encoding="utf-8"))
+        self.assertEqual(goal["parity"]["total"], 7565)
+        self.assertEqual(goal["parity"]["verified"], 0)
 
 
 if __name__ == "__main__":
