@@ -122,7 +122,9 @@ jobs:
             'ledgers/RUN_LOG.ndjson','ledgers/WAVE_LEDGER.ndjson','HANDOFF.md',
             '.agentic/context/CURRENT_CONTEXT.json','.agentic/context/CURRENT_CONTEXT.md',
           }
-          raw=subprocess.check_output(['git','status','--porcelain=v1','-unormal'],text=True).splitlines()
+          # -uall is deliberate: enumerate every untracked evidence file rather than
+          # accepting a summarized parent directory such as evidence/cp03/cp03-w02/.
+          raw=subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines()
           paths={line[3:] for line in raw if line}
           generated_prefix='evidence/cp03/cp03-w02/W02-02/'
           unexpected={p for p in paths if p not in allowed and not p.startswith(generated_prefix)}
