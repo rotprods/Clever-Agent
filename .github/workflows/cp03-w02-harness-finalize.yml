@@ -102,7 +102,7 @@ jobs:
             --run-id "$GITHUB_RUN_ID" \
             --validated-head "$GITHUB_SHA" \
             --artifact-id '${{ steps.proof.outputs.artifact-id }}' \
-            --artifact-digest '${{ steps.proof.outputs.artifact-digest }}'
+            --artifact-digest 'sha256:${{ steps.proof.outputs.artifact-digest }}'
           python scripts/context/build_context_pack.py
           python scripts/cp03/validate_w02_plan.py
           python scripts/validate_agentic_state.py
