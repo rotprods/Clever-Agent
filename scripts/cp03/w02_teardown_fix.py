@@ -19,8 +19,8 @@ def main() -> int:
     text = TARGET.read_text(encoding="utf-8")
     text = replace_once(
         text,
-        '.args(["-KILL", target.as_str()])',
-        '.args(["-KILL", "--", target.as_str()])',
+        r'.args([\"-KILL\", target.as_str()])',
+        r'.args([\"-KILL\", \"--\", target.as_str()])',
         "negative process-group operand",
     )
     text = replace_once(
@@ -31,14 +31,13 @@ def main() -> int:
     )
     text = replace_once(
         text,
-        '    Command::new("/bin/kill")\n',
-        '    std::process::Command::new("/bin/kill")\n',
+        r'    Command::new(\"/bin/kill\")\n',
+        r'    std::process::Command::new(\"/bin/kill\")\n',
         "non-Linux process probe",
     )
     TARGET.write_text(text, encoding="utf-8")
-    # Idempotence is part of the migration contract.
     check = TARGET.read_text(encoding="utf-8")
-    if '.args(["-KILL", "--", target.as_str()])' not in check:
+    if r'.args([\"-KILL\", \"--\", target.as_str()])' not in check:
         raise RuntimeError("process-group kill fix did not persist")
     if "    process::Command,\n" in check:
         raise RuntimeError("stale unconditional Command import remains")
