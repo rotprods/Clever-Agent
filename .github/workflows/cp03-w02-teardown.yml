@@ -5,6 +5,7 @@ on:
     branches: [wave/cp03/w02-teardown-cleanup]
     paths:
       - 'scripts/cp03/w02_teardown_port.py'
+      - 'scripts/cp03/w02_teardown_fix.py'
       - '.github/workflows/cp03-w02-teardown.yml'
   pull_request:
     branches: [main]
@@ -14,6 +15,7 @@ on:
       - 'kernel/crates/clever-kernel/tests/adapter_lifecycle.rs'
       - 'kernel/crates/clever-kernel/tests/fixtures/lifecycle_peer.py'
       - 'scripts/cp03/w02_teardown_port.py'
+      - 'scripts/cp03/w02_teardown_fix.py'
       - '.github/workflows/cp03-w02-teardown.yml'
 
 permissions:
@@ -55,17 +57,19 @@ jobs:
           PY
           python scripts/context/build_context_pack.py
           python scripts/context/validate_context_pack.py
-      - name: Apply deterministic bounded teardown slice
+      - name: Repair compiler and apply deterministic bounded teardown slice
         run: |
           set -euo pipefail
+          python scripts/cp03/w02_teardown_fix.py
+          python scripts/cp03/w02_teardown_fix.py
           python scripts/cp03/w02_teardown_port.py --apply
           cargo fmt --manifest-path kernel/Cargo.toml --all
           python scripts/cp03/w02_teardown_port.py --check
-          python -m py_compile scripts/cp03/w02_teardown_port.py kernel/crates/clever-kernel/tests/fixtures/lifecycle_peer.py
-          sha256sum kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/tests/lifecycle_legacy_regressions.rs kernel/crates/clever-kernel/tests/adapter_lifecycle.rs kernel/crates/clever-kernel/tests/fixtures/lifecycle_peer.py > /tmp/first.sha
+          python -m py_compile scripts/cp03/w02_teardown_fix.py scripts/cp03/w02_teardown_port.py kernel/crates/clever-kernel/tests/fixtures/lifecycle_peer.py
+          sha256sum kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/tests/lifecycle_legacy_regressions.rs kernel/crates/clever-kernel/tests/adapter_lifecycle.rs kernel/crates/clever-kernel/tests/fixtures/lifecycle_peer.py scripts/cp03/w02_teardown_port.py > /tmp/first.sha
           python scripts/cp03/w02_teardown_port.py --apply
           cargo fmt --manifest-path kernel/Cargo.toml --all
-          sha256sum kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/tests/lifecycle_legacy_regressions.rs kernel/crates/clever-kernel/tests/adapter_lifecycle.rs kernel/crates/clever-kernel/tests/fixtures/lifecycle_peer.py > /tmp/second.sha
+          sha256sum kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/tests/lifecycle_legacy_regressions.rs kernel/crates/clever-kernel/tests/adapter_lifecycle.rs kernel/crates/clever-kernel/tests/fixtures/lifecycle_peer.py scripts/cp03/w02_teardown_port.py > /tmp/second.sha
           diff -u /tmp/first.sha /tmp/second.sha
           git diff --check
       - name: Install generated Python runtime
@@ -121,6 +125,7 @@ jobs:
             'kernel/crates/clever-kernel/tests/lifecycle_legacy_regressions.rs',
             'kernel/crates/clever-kernel/tests/adapter_lifecycle.rs',
             'kernel/crates/clever-kernel/tests/fixtures/lifecycle_peer.py',
+            'scripts/cp03/w02_teardown_port.py',
             'ledgers/CLAIM_LEDGER.ndjson',
             '.agentic/context/CURRENT_CONTEXT.json',
             '.agentic/context/CURRENT_CONTEXT.md',
@@ -133,6 +138,7 @@ jobs:
             'kernel/crates/clever-kernel/tests/lifecycle_legacy_regressions.rs',
             'kernel/crates/clever-kernel/tests/adapter_lifecycle.rs',
             'kernel/crates/clever-kernel/tests/fixtures/lifecycle_peer.py',
+            'scripts/cp03/w02_teardown_port.py',
             'ledgers/CLAIM_LEDGER.ndjson',
           }
           assert required <= paths, f'missing expected W02-04 mutations: {sorted(required-paths)}'
@@ -140,7 +146,7 @@ jobs:
           test "$(git ls-remote origin refs/heads/wave/cp03/w02-teardown-cleanup | cut -f1)" = "$GITHUB_SHA"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/tests/lifecycle_legacy_regressions.rs kernel/crates/clever-kernel/tests/adapter_lifecycle.rs kernel/crates/clever-kernel/tests/fixtures/lifecycle_peer.py ledgers/CLAIM_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git add kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/tests/lifecycle_legacy_regressions.rs kernel/crates/clever-kernel/tests/adapter_lifecycle.rs kernel/crates/clever-kernel/tests/fixtures/lifecycle_peer.py scripts/cp03/w02_teardown_port.py ledgers/CLAIM_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
           git commit -m 'feat(cp03-w02): bound shutdown and clean adapter workloads'
           git push origin HEAD:wave/cp03/w02-teardown-cleanup
 
