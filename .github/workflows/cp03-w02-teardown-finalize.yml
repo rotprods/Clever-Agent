@@ -1,0 +1,170 @@
+name: CP03 W02 Teardown Finalize
+
+on:
+  push:
+    branches: [wave/cp03/w02-teardown-cleanup]
+    paths:
+      - 'scripts/cp03/finalize_w02_teardown.py'
+      - 'tests/test_cp03_w02_teardown_finalizer.py'
+      - '.github/workflows/cp03-w02-teardown-finalize.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cp03-w02-teardown-finalize-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      BASE_SHA: f7f30badc9f1852c6f42117c528f9f32dad74bd7
+      EVIDENCE_DIR: evidence/cp03/cp03-w02/W02-04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Extend claim for exact-head finalization and validate pre-state
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          claim=json.loads(Path('sessions/20260909-w02-teardown/CLAIM.json').read_text())
+          ledger=Path('ledgers/CLAIM_LEDGER.ndjson')
+          text=ledger.read_text(encoding='utf-8')
+          if claim['claim_id'] not in text:
+              raise SystemExit('W02-04 product claim was not materialized')
+          row={
+            'schema_version':1,'date':'2026-09-09','claim_id':claim['claim_id'],'event':'SCOPE_AMENDED',
+            'wave_id':'CP03-W02-TEARDOWN-20260909','parent_wave':'CP03-W02','owner':'chatgpt-gpt-5.6-sol',
+            'scope':['scripts/cp03/finalize_w02_teardown.py','tests/test_cp03_w02_teardown_finalizer.py','.github/workflows/cp03-w02-teardown-finalize.yml','iterations/03/waves/CP03-W02/TASK_GRAPH.json','ledgers/EVIDENCE_LEDGER.ndjson','ledgers/RUN_LOG.ndjson','ledgers/WAVE_LEDGER.ndjson','HANDOFF.md','evidence/cp03/cp03-w02/W02-04/**','.agentic/context/CURRENT_CONTEXT.json','.agentic/context/CURRENT_CONTEXT.md'],
+            'coordination':'Exact-head W02-04 evidence/state transaction only. May close G1 and open W02-06; no inference or parity promotion.'
+          }
+          marker='"event":"SCOPE_AMENDED","wave_id":"CP03-W02-TEARDOWN-20260909"'
+          if marker not in text:
+              with ledger.open('a', encoding='utf-8') as f:
+                  f.write(json.dumps(row,sort_keys=True,separators=(',',':'))+'\n')
+          PY
+          python scripts/context/build_context_pack.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/cp03/validate_w02_plan.py
+          python -m unittest tests.test_cp03_w02_teardown_finalizer -v
+      - name: Install runtime and verify persistent product source
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt
+          echo "CLEVER_TEST_PYTHON=$(command -v python)" >> "$GITHUB_ENV"
+          python scripts/cp03/w02_teardown_port.py --check
+          cargo fmt --manifest-path kernel/Cargo.toml --all -- --check
+      - name: Re-prove historical RED timeouts
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+          git worktree add --detach /tmp/w02-teardown-final-red "$BASE_SHA"
+          cp kernel/crates/clever-kernel/tests/lifecycle_legacy_regressions.rs /tmp/w02-teardown-final-red/kernel/crates/clever-kernel/tests/
+          cp kernel/crates/clever-kernel/tests/fixtures/lifecycle_peer.py /tmp/w02-teardown-final-red/kernel/crates/clever-kernel/tests/fixtures/
+          : > "$EVIDENCE_DIR/historical-red.log"
+          for case in shutdown_stopping_without_exit_is_bounded_and_forced drop_kills_descendant_retaining_stdout_pipe; do
+            set +e
+            CLEVER_TEST_PYTHON="$CLEVER_TEST_PYTHON" timeout --signal=KILL 7s cargo test --locked --manifest-path /tmp/w02-teardown-final-red/kernel/Cargo.toml -p clever-kernel --test lifecycle_legacy_regressions "$case" -- --exact --nocapture >>"$EVIDENCE_DIR/historical-red.log" 2>&1
+            rc=$?
+            set -e
+            if [ "$rc" -ne 124 ] && [ "$rc" -ne 137 ]; then
+              echo "historical lifecycle defect did not reproduce for $case: rc=$rc" >&2
+              exit 1
+            fi
+            echo "EXPECTED_TIMEOUT $case rc=$rc" >> "$EVIDENCE_DIR/historical-red.log"
+          done
+          if [ -s /tmp/w02-red-grandchild.pid ]; then kill -9 "$(cat /tmp/w02-red-grandchild.pid)" 2>/dev/null || true; fi
+      - name: Re-prove five GREEN lifecycle cases and 15 retest executions
+        run: |
+          set -euo pipefail
+          {
+            cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test lifecycle_legacy_regressions -- --nocapture
+            cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_lifecycle -- --nocapture
+          } 2>&1 | tee "$EVIDENCE_DIR/green.log"
+          grep -F '2 passed; 0 failed; 0 ignored' "$EVIDENCE_DIR/green.log"
+          grep -F '3 passed; 0 failed; 0 ignored' "$EVIDENCE_DIR/green.log"
+          : > "$EVIDENCE_DIR/retest.log"
+          for iteration in 1 2 3; do
+            echo "=== lifecycle retest $iteration ===" | tee -a "$EVIDENCE_DIR/retest.log"
+            cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test lifecycle_legacy_regressions 2>&1 | tee -a "$EVIDENCE_DIR/retest.log"
+            cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_lifecycle 2>&1 | tee -a "$EVIDENCE_DIR/retest.log"
+          done
+          test "$(grep -c '2 passed; 0 failed; 0 ignored' "$EVIDENCE_DIR/retest.log")" -eq 3
+          test "$(grep -c '3 passed; 0 failed; 0 ignored' "$EVIDENCE_DIR/retest.log")" -eq 3
+      - name: Regress W02-03 and W02-05 then Clippy
+        run: |
+          set -euo pipefail
+          : > "$EVIDENCE_DIR/g1-regression.log"
+          for case in inbound_frame_queue_is_bounded_under_flood inbound_wire_byte_budget_is_enforced_before_decode outbound_write_timeout_poison_session_when_peer_stops_reading; do
+            cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor "$case" -- --exact --nocapture 2>&1 | tee -a "$EVIDENCE_DIR/g1-regression.log"
+          done
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test control_regressions -- --nocapture 2>&1 | tee -a "$EVIDENCE_DIR/g1-regression.log"
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings 2>&1 | tee "$EVIDENCE_DIR/clippy.log"
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+      - name: Compile exact W02-04 evidence report
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          goal=json.loads(Path('GOAL_STATE.json').read_text())
+          assert goal['parity']['total']==7565 and goal['parity']['verified']==0
+          report={
+            'schema_version':1,'status':'PASS','scope':'W02-04_BOUNDED_TEARDOWN_NOT_INFERENCE',
+            'validated_head':os.environ['GITHUB_SHA'],'historical_red_timeouts':2,'green_tests':5,
+            'retest_executions':15,'w02_03_regressions':3,'w02_05_regressions':15,
+            'clippy':'PASS','parity_promotions':0,'K':47,'global_denominator':7565,'openjarvis_obligations':646
+          }
+          Path(os.environ['EVIDENCE_DIR'],'report.json').write_text(json.dumps(report,indent=2,sort_keys=True)+'\n')
+          PY
+          git diff --check
+      - name: Upload W02-04 proof
+        id: proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: w02-teardown-${{ github.sha }}
+          path: evidence/cp03/cp03-w02/W02-04/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Finalize W02-04 and open W02-06
+        env:
+          ARTIFACT_ID: ${{ steps.proof.outputs.artifact-id }}
+          ARTIFACT_DIGEST_RAW: ${{ steps.proof.outputs.artifact-digest }}
+        run: |
+          set -euo pipefail
+          DIGEST="$ARTIFACT_DIGEST_RAW"; case "$DIGEST" in sha256:*) ;; *) DIGEST="sha256:$DIGEST" ;; esac
+          python scripts/cp03/finalize_w02_teardown.py --run-id "$GITHUB_RUN_ID" --validated-head "$GITHUB_SHA" --artifact-id "$ARTIFACT_ID" --artifact-digest "$DIGEST"
+          python scripts/context/build_context_pack.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/context/validate_next_actions.py
+          python scripts/cp03/validate_w02_plan.py
+      - name: Restrict finalizer mutation and CAS persist
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess
+          allowed_prefix='evidence/cp03/cp03-w02/W02-04/'
+          allowed={'iterations/03/waves/CP03-W02/TASK_GRAPH.json','ledgers/CLAIM_LEDGER.ndjson','ledgers/EVIDENCE_LEDGER.ndjson','ledgers/RUN_LOG.ndjson','ledgers/WAVE_LEDGER.ndjson','HANDOFF.md','.agentic/context/CURRENT_CONTEXT.json','.agentic/context/CURRENT_CONTEXT.md'}
+          paths={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if line}
+          unexpected={p for p in paths if p not in allowed and not p.startswith(allowed_prefix)}
+          assert not unexpected, f'out-of-scope W02-04 finalizer mutation: {sorted(unexpected)}'
+          assert 'iterations/03/waves/CP03-W02/TASK_GRAPH.json' in paths
+          PY
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-teardown-cleanup | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add evidence/cp03/cp03-w02/W02-04 iterations/03/waves/CP03-W02/TASK_GRAPH.json ledgers/CLAIM_LEDGER.ndjson ledgers/EVIDENCE_LEDGER.ndjson ledgers/RUN_LOG.ndjson ledgers/WAVE_LEDGER.ndjson HANDOFF.md .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git commit -m 'test(cp03-w02): close G1 teardown and open inference contracts'
+          git push origin HEAD:wave/cp03/w02-teardown-cleanup

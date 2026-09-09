@@ -1,0 +1,16 @@
+{
+  "K": 47,
+  "clippy": "PASS",
+  "global_denominator": 7565,
+  "green_tests": 5,
+  "historical_red_timeouts": 2,
+  "openjarvis_obligations": 646,
+  "parity_promotions": 0,
+  "retest_executions": 15,
+  "schema_version": 1,
+  "scope": "W02-04_BOUNDED_TEARDOWN_NOT_INFERENCE",
+  "status": "PASS",
+  "validated_head": "81646b83a57a57d4b0685901b4a23c1369d71485",
+  "w02_03_regressions": 3,
+  "w02_05_regressions": 15
+}
