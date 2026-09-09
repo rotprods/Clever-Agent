@@ -29,8 +29,6 @@ import subprocess
 import sys
 import time
 
-import fake_adapter_sidecar as wire
-
 
 def handshake() -> None:
     wire.write_frame(wire.hello())
@@ -57,6 +55,8 @@ def cleanup_hang(path: str) -> int:
 
 
 def serve(mode: str) -> int:
+    global wire
+    import fake_adapter_sidecar as wire
     handshake()
     if mode == "spawn-grandchild":
         pid_file = os.environ["CLEVER_LIFECYCLE_PID_FILE"]
@@ -119,7 +119,6 @@ use std::{
     env,
     fs,
     path::{Path, PathBuf},
-    process::Command,
     thread,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
@@ -196,7 +195,7 @@ fn process_exists(pid: u32) -> bool {
 
 #[cfg(not(target_os = "linux"))]
 fn process_exists(pid: u32) -> bool {
-    Command::new("/bin/kill")
+    std::process::Command::new("/bin/kill")
         .args(["-0", &pid.to_string()])
         .status()
         .is_ok_and(|status| status.success())
@@ -250,7 +249,7 @@ LIFECYCLE_TEST_SOURCE = r'''use clever_kernel::adapter::{
     AdapterCleanupCommand, AdapterCommand, AdapterIdentity, AdapterSupervisor,
     AdapterSupervisorError, SupervisorPolicy,
 };
-use std::{env, fs, path::PathBuf, time::{Duration, Instant, SystemTime, UNIX_EPOCH}};
+use std::{env, fs, path::{Path, PathBuf}, time::{Duration, Instant, SystemTime, UNIX_EPOCH}};
 
 fn root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -289,7 +288,7 @@ fn command(mode: &str) -> AdapterCommand {
     command
 }
 
-fn cleanup(mode: &str, marker: &PathBuf) -> AdapterCleanupCommand {
+fn cleanup(mode: &str, marker: &Path) -> AdapterCleanupCommand {
     let mut cleanup = AdapterCleanupCommand::new(python());
     cleanup.args = vec![
         root()
@@ -477,7 +476,7 @@ def patch_adapter(text: str) -> str:
     shutdown = '''    pub fn shutdown(\n        mut self,\n        reason: impl Into<String>,\n    ) -> Result<RuntimeHealth, AdapterSupervisorError> {\n        let response = self.exchange_control(\n            adapter_frame::Body::Shutdown(AdapterShutdown {\n                reason: reason.into(),\n            }),\n            \"shutdown\",\n        )?;\n        let health = self.extract_health(response, \"shutdown\")?;\n        if health.status != RuntimeHealthStatus::Stopping as i32 {\n            return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(\n                \"shutdown did not return STOPPING\".to_owned(),\n            ));\n        }\n        self.writer_sender.take();\n        if !wait_child_bounded(\n            &mut self.child,\n            self.policy.shutdown_timeout,\n            self.policy.termination_poll_interval,\n        )? {\n            self.terminate_bounded();\n            return Err(AdapterSupervisorError::Timeout(\"shutdown exit\"));\n        }\n        if !self.join_threads_bounded() {\n            self.terminate_bounded();\n            return Err(AdapterSupervisorError::Timeout(\"shutdown I/O drain\"));\n        }\n        self.termination_complete = true;\n        Ok(health)\n    }\n\n'''
     text = replace_region(text, "    pub fn shutdown(\n", "    fn validate_hello(\n", shutdown, "bounded shutdown")
 
-    lifecycle_methods = '''    fn poison_session(&mut self, reason: impl Into<String>) {\n        if self.session_poisoned.is_none() {\n            self.session_poisoned = Some(reason.into());\n        }\n        self.terminate_bounded();\n    }\n\n    fn terminate_bounded(&mut self) {\n        if self.termination_complete {\n            return;\n        }\n        self.writer_sender.take();\n        self.signal_process_group();\n        let _ = self.child.kill();\n        self.run_cleanup_bounded();\n        let _ = wait_child_bounded(\n            &mut self.child,\n            self.policy.shutdown_timeout,\n            self.policy.termination_poll_interval,\n        );\n        let _ = self.join_threads_bounded();\n        self.termination_complete = true;\n    }\n\n    fn signal_process_group(&self) {\n        #[cfg(unix)]\n        if let Some(group_id) = self.process_group_id {\n            let target = format!(\"-{group_id}\");\n            let mut command = Command::new(\"/bin/kill\");\n            command\n                .env_clear()\n                .args([\"-KILL\", target.as_str()])\n                .stdin(Stdio::null())\n                .stdout(Stdio::null())\n                .stderr(Stdio::null());\n            if let Ok(mut killer) = command.spawn() {\n                let _ = wait_child_bounded(\n                    &mut killer,\n                    self.policy.cleanup_timeout,\n                    self.policy.termination_poll_interval,\n                );\n                let _ = killer.kill();\n            }\n        }\n    }\n\n    fn run_cleanup_bounded(&self) {\n        let Some(cleanup) = &self.cleanup else {\n            return;\n        };\n        let mut command = Command::new(&cleanup.program);\n        command\n            .args(&cleanup.args)\n            .env_clear()\n            .envs(&cleanup.env)\n            .stdin(Stdio::null())\n            .stdout(Stdio::null())\n            .stderr(Stdio::null());\n        let Ok(mut cleanup_process) = command.spawn() else {\n            return;\n        };\n        match wait_child_bounded(\n            &mut cleanup_process,\n            self.policy.cleanup_timeout,\n            self.policy.termination_poll_interval,\n        ) {\n            Ok(true) => {}\n            _ => {\n                let _ = cleanup_process.kill();\n                let _ = wait_child_bounded(\n                    &mut cleanup_process,\n                    self.policy.thread_join_timeout,\n                    self.policy.termination_poll_interval,\n                );\n            }\n        }\n    }\n\n    fn join_threads_bounded(&mut self) -> bool {\n        let reader_done = join_handle_bounded(\n            &mut self.reader,\n            self.policy.thread_join_timeout,\n            self.policy.termination_poll_interval,\n        );\n        let writer_done = join_handle_bounded(\n            &mut self.writer,\n            self.policy.thread_join_timeout,\n            self.policy.termination_poll_interval,\n        );\n        reader_done && writer_done\n    }\n\n'''
+    lifecycle_methods = '''    fn poison_session(&mut self, reason: impl Into<String>) {\n        if self.session_poisoned.is_none() {\n            self.session_poisoned = Some(reason.into());\n        }\n        self.terminate_bounded();\n    }\n\n    fn terminate_bounded(&mut self) {\n        if self.termination_complete {\n            return;\n        }\n        self.writer_sender.take();\n        self.signal_process_group();\n        let _ = self.child.kill();\n        self.run_cleanup_bounded();\n        let _ = wait_child_bounded(\n            &mut self.child,\n            self.policy.shutdown_timeout,\n            self.policy.termination_poll_interval,\n        );\n        let _ = self.join_threads_bounded();\n        self.termination_complete = true;\n    }\n\n    fn signal_process_group(&self) {\n        #[cfg(unix)]\n        if let Some(group_id) = self.process_group_id {\n            let target = format!(\"-{group_id}\");\n            let mut command = Command::new(\"/bin/kill\");\n            command\n                .env_clear()\n                .args([\"-KILL\", \"--\", target.as_str()])\n                .stdin(Stdio::null())\n                .stdout(Stdio::null())\n                .stderr(Stdio::null());\n            if let Ok(mut killer) = command.spawn() {\n                let _ = wait_child_bounded(\n                    &mut killer,\n                    self.policy.cleanup_timeout,\n                    self.policy.termination_poll_interval,\n                );\n                let _ = killer.kill();\n            }\n        }\n    }\n\n    fn run_cleanup_bounded(&self) {\n        let Some(cleanup) = &self.cleanup else {\n            return;\n        };\n        let mut command = Command::new(&cleanup.program);\n        command\n            .args(&cleanup.args)\n            .env_clear()\n            .envs(&cleanup.env)\n            .stdin(Stdio::null())\n            .stdout(Stdio::null())\n            .stderr(Stdio::null());\n        let Ok(mut cleanup_process) = command.spawn() else {\n            return;\n        };\n        match wait_child_bounded(\n            &mut cleanup_process,\n            self.policy.cleanup_timeout,\n            self.policy.termination_poll_interval,\n        ) {\n            Ok(true) => {}\n            _ => {\n                let _ = cleanup_process.kill();\n                let _ = wait_child_bounded(\n                    &mut cleanup_process,\n                    self.policy.thread_join_timeout,\n                    self.policy.termination_poll_interval,\n                );\n            }\n        }\n    }\n\n    fn join_threads_bounded(&mut self) -> bool {\n        let reader_done = join_handle_bounded(\n            &mut self.reader,\n            self.policy.thread_join_timeout,\n            self.policy.termination_poll_interval,\n        );\n        let writer_done = join_handle_bounded(\n            &mut self.writer,\n            self.policy.thread_join_timeout,\n            self.policy.termination_poll_interval,\n        );\n        reader_done && writer_done\n    }\n\n'''
     text = replace_region(
         text,
         "    fn poison_session(&mut self, reason: impl Into<String>) {\n",
