@@ -1,0 +1,15 @@
+{
+  "K": 47,
+  "clippy": "PASS",
+  "global_denominator": 7565,
+  "green_tests": 15,
+  "historical_red_failures": 12,
+  "openjarvis_obligations": 646,
+  "parity_promotions": 0,
+  "retest_executions": 75,
+  "schema_version": 1,
+  "scope": "W02-05_CORRELATION_ATOMIC_REGISTRY_NOT_INFERENCE",
+  "status": "PASS",
+  "validated_head": "5a3d1cc50a6d01b6c62da0ae5a7451d6de9ad1be",
+  "w02_03_regression": "PASS"
+}

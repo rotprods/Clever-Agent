@@ -439,42 +439,63 @@ impl AdapterSupervisor {
         self.session_poisoned.is_some() || self.inbound_state.fatal().is_some()
     }
 
+    fn fail_protocol<T>(
+        &mut self,
+        error: AdapterSupervisorError,
+    ) -> Result<T, AdapterSupervisorError> {
+        self.poison_session(error.to_string());
+        Err(error)
+    }
+
+    fn exchange_control(
+        &mut self,
+        body: adapter_frame::Body,
+        stage: &'static str,
+    ) -> Result<AdapterFrame, AdapterSupervisorError> {
+        self.ensure_io_healthy()?;
+        let request = self.next_control_frame(body, self.policy.request_timeout);
+        let request_id = request.frame_id.clone();
+        if let Err(error) = self.write_frame(&request) {
+            return self.fail_protocol(error);
+        }
+        let response = match self.receive_frame(self.policy.request_timeout, stage) {
+            Ok(response) => response,
+            Err(error) => return self.fail_protocol(error),
+        };
+        if response.frame_id.trim().is_empty() || response.correlation_id != request_id {
+            return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                "response frame_id is empty or correlation_id does not match active request"
+                    .to_owned(),
+            ));
+        }
+        Ok(response)
+    }
+
     pub fn request_registry_snapshot(
         &mut self,
     ) -> Result<RegistrySnapshot, AdapterSupervisorError> {
-        let request = self.next_control_frame(
+        let response = self.exchange_control(
             adapter_frame::Body::RegistrySnapshotRequest(RegistrySnapshotRequest {}),
-            self.policy.request_timeout,
-        );
-        let request_id = request.frame_id.clone();
-        self.write_frame(&request)?;
-        let response = self.receive_frame(self.policy.request_timeout, "registry snapshot")?;
-        if response.correlation_id != request_id {
-            return Err(AdapterSupervisorError::InvalidSnapshot(
-                "response correlation_id does not match request frame_id".to_owned(),
-            ));
-        }
+            "registry snapshot",
+        )?;
         match response.body {
-            Some(adapter_frame::Body::RegistrySnapshot(snapshot)) => {
-                if snapshot.runtime_id != self.identity.runtime_id {
-                    return Err(AdapterSupervisorError::InvalidSnapshot(format!(
-                        "runtime mismatch: {}",
-                        snapshot.runtime_id
-                    )));
-                }
+            Some(adapter_frame::Body::RegistrySnapshot(snapshot))
+                if snapshot.runtime_id == self.identity.runtime_id =>
+            {
                 Ok(snapshot)
             }
-            _ => Err(AdapterSupervisorError::UnexpectedFrame("registry snapshot")),
+            Some(adapter_frame::Body::RegistrySnapshot(_)) => self.fail_protocol(
+                AdapterSupervisorError::InvalidSnapshot("runtime mismatch".to_owned()),
+            ),
+            _ => self.fail_protocol(AdapterSupervisorError::UnexpectedFrame("registry snapshot")),
         }
     }
 
     pub fn request_health(&mut self) -> Result<RuntimeHealth, AdapterSupervisorError> {
-        let request = self.next_control_frame(
+        let response = self.exchange_control(
             adapter_frame::Body::HealthRequest(AdapterHealthRequest {}),
-            self.policy.request_timeout,
-        );
-        self.write_frame(&request)?;
-        let response = self.receive_frame(self.policy.request_timeout, "health request")?;
+            "health request",
+        )?;
         self.extract_health(response, "health request")
     }
 
@@ -483,15 +504,13 @@ impl AdapterSupervisor {
         target_request_id: impl Into<String>,
         reason: impl Into<String>,
     ) -> Result<RuntimeHealth, AdapterSupervisorError> {
-        let request = self.next_control_frame(
+        let response = self.exchange_control(
             adapter_frame::Body::Cancel(AdapterCancel {
                 target_request_id: target_request_id.into(),
                 reason: reason.into(),
             }),
-            self.policy.request_timeout,
-        );
-        self.write_frame(&request)?;
-        let response = self.receive_frame(self.policy.request_timeout, "cancel")?;
+            "cancel",
+        )?;
         self.extract_health(response, "cancel")
     }
 
@@ -499,25 +518,17 @@ impl AdapterSupervisor {
         mut self,
         reason: impl Into<String>,
     ) -> Result<RuntimeHealth, AdapterSupervisorError> {
-        let request = self.next_control_frame(
+        let response = self.exchange_control(
             adapter_frame::Body::Shutdown(AdapterShutdown {
                 reason: reason.into(),
             }),
-            self.policy.request_timeout,
-        );
-        self.write_frame(&request)?;
-        let response = self.receive_frame(self.policy.request_timeout, "shutdown")?;
+            "shutdown",
+        )?;
         let health = self.extract_health(response, "shutdown")?;
-        let status = RuntimeHealthStatus::try_from(health.status).map_err(|_| {
-            AdapterSupervisorError::InvalidRuntimeResponse(format!(
-                "invalid shutdown health enum {}",
-                health.status
-            ))
-        })?;
-        if status != RuntimeHealthStatus::Stopping {
-            return Err(AdapterSupervisorError::InvalidRuntimeResponse(format!(
-                "shutdown returned {status:?} instead of STOPPING"
-            )));
+        if health.status != RuntimeHealthStatus::Stopping as i32 {
+            return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                "shutdown did not return STOPPING".to_owned(),
+            ));
         }
         self.child
             .wait()
@@ -530,6 +541,11 @@ impl AdapterSupervisor {
         frame: &AdapterFrame,
     ) -> Result<(usize, BTreeSet<String>), AdapterSupervisorError> {
         validate_contract_version(frame.contract_version.as_ref())?;
+        if frame.frame_id.trim().is_empty() || !frame.correlation_id.is_empty() {
+            return Err(AdapterSupervisorError::InvalidHello(
+                "invalid initial frame identity".to_owned(),
+            ));
+        }
         let hello = match frame.body.as_ref() {
             Some(adapter_frame::Body::Hello(hello)) => hello,
             _ => return Err(AdapterSupervisorError::UnexpectedFrame("handshake")),
@@ -727,29 +743,36 @@ impl AdapterSupervisor {
     }
 
     fn extract_health(
-        &self,
+        &mut self,
         response: AdapterFrame,
         stage: &'static str,
     ) -> Result<RuntimeHealth, AdapterSupervisorError> {
-        match response.body {
-            Some(adapter_frame::Body::Health(health)) => {
-                validate_contract_version(health.contract_version.as_ref())?;
-                if health.runtime_id != self.identity.runtime_id {
-                    return Err(AdapterSupervisorError::InvalidRuntimeResponse(format!(
-                        "health runtime mismatch: {}",
-                        health.runtime_id
-                    )));
-                }
-                RuntimeHealthStatus::try_from(health.status).map_err(|_| {
-                    AdapterSupervisorError::InvalidRuntimeResponse(format!(
-                        "invalid health enum {}",
-                        health.status
-                    ))
-                })?;
-                Ok(health)
-            }
-            _ => Err(AdapterSupervisorError::UnexpectedFrame(stage)),
+        let health = match response.body {
+            Some(adapter_frame::Body::Health(health)) => health,
+            _ => return self.fail_protocol(AdapterSupervisorError::UnexpectedFrame(stage)),
+        };
+        if let Err(error) = validate_contract_version(health.contract_version.as_ref()) {
+            return self.fail_protocol(error.into());
         }
+        let status = RuntimeHealthStatus::try_from(health.status);
+        if health.runtime_id != self.identity.runtime_id
+            || status.is_err()
+            || health.status == RuntimeHealthStatus::Unspecified as i32
+        {
+            return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                "invalid health identity/status".to_owned(),
+            ));
+        }
+        if health.status == RuntimeHealthStatus::Ready as i32
+            && (!health.degradation_reasons.is_empty()
+                || health.dropped_event_count > 0
+                || health.failed_action_count > 0)
+        {
+            return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                "READY contradicts degradation or failure counters".to_owned(),
+            ));
+        }
+        Ok(health)
     }
 }
 
@@ -788,30 +811,20 @@ pub fn bridge_registry_snapshot(
             "bridge provenance/adapter identity is incomplete".to_owned(),
         ));
     }
-
-    let mut capability_ids = Vec::with_capacity(snapshot.entries.len());
-    for entry in &snapshot.entries {
-        let descriptor = descriptor_from_registry_entry(
-            entry,
-            runtime_id,
-            adapter_id,
-            source_repo,
-            source_commit,
-        )?;
-        let capability_id = descriptor.capability_id.clone();
-        if let Some(existing) = registry.get(&capability_id) {
-            if existing.descriptor != descriptor {
-                return Err(AdapterSupervisorError::Kernel(KernelError::DuplicateId {
-                    kind: "capability",
-                    id: capability_id,
-                }));
-            }
-        } else {
-            registry.register(descriptor)?;
-        }
-        capability_ids.push(capability_id);
-    }
-    Ok(capability_ids)
+    let descriptors = snapshot
+        .entries
+        .iter()
+        .map(|entry| {
+            descriptor_from_registry_entry(
+                entry,
+                runtime_id,
+                adapter_id,
+                source_repo,
+                source_commit,
+            )
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    registry.register_batch(descriptors).map_err(Into::into)
 }
 
 fn descriptor_from_registry_entry(

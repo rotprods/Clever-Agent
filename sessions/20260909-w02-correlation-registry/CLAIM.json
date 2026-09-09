@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-09",
+  "claim_id": "CLAIM-CP03-W02-CONTROL-002",
+  "wave_id": "CP03-W02-CONTROL-20260909-B",
+  "parent_wave": "CP03-W02",
+  "canonical_task": "W02-05",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "scope": [
+    "kernel/crates/clever-kernel/src/adapter.rs",
+    "kernel/crates/clever-kernel/src/capabilities.rs",
+    "kernel/crates/clever-kernel/tests/control_regressions.rs",
+    "kernel/crates/clever-kernel/tests/fixtures/control_peer.py",
+    "scripts/cp03/w02_control_port.py",
+    "tests/test_cp03_w02_control_port.py",
+    ".github/workflows/cp03-w02-control-port.yml",
+    "evidence/cp03/cp03-w02/W02-05/**",
+    "ledgers/CLAIM_LEDGER.ndjson",
+    ".agentic/context/CURRENT_CONTEXT.json",
+    ".agentic/context/CURRENT_CONTEXT.md"
+  ],
+  "coordination": "W02-05 only: request correlation, poison-on-protocol-ambiguity, health consistency and atomic registry batch application. Does not implement W02-04 teardown, W02-06 inference contracts, mutate denominator/parity or modify historical PR #15.",
+  "status": "ACTIVE"
+}
