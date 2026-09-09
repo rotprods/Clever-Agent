@@ -8,9 +8,11 @@
   "owner": "chatgpt-gpt-5.6-sol",
   "scope": [
     "kernel/crates/clever-kernel/src/adapter.rs",
+    "kernel/crates/clever-kernel/tests/lifecycle_legacy_regressions.rs",
     "kernel/crates/clever-kernel/tests/adapter_lifecycle.rs",
     "kernel/crates/clever-kernel/tests/fixtures/lifecycle_peer.py",
     "scripts/cp03/w02_teardown_port.py",
+    "scripts/cp03/w02_teardown_fix.py",
     "tests/test_cp03_w02_teardown_port.py",
     ".github/workflows/cp03-w02-teardown.yml",
     "evidence/cp03/cp03-w02/W02-04/**",
@@ -23,6 +25,6 @@
     ".agentic/context/CURRENT_CONTEXT.json",
     ".agentic/context/CURRENT_CONTEXT.md"
   ],
-  "coordination": "Canonical W02-04 only: bounded shutdown/drop, Unix process-group cleanup, bounded thread join and optional external cleanup hook. Does not modify inference contracts, execute an LLM, mutate denominator/parity, or reopen W02-03/W02-05.",
+  "coordination": "Canonical W02-04 only: bounded shutdown/drop, Unix process-group cleanup, bounded thread join and optional external cleanup hook. Scope amendment adds the historical lifecycle regression file and one-shot idempotent compiler repair after the first GREEN exposed negative-PGID kill parsing. Does not modify inference contracts, execute an LLM, mutate denominator/parity, or reopen W02-03/W02-05.",
   "status": "ACTIVE"
 }
