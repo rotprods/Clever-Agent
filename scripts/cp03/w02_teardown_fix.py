@@ -31,8 +31,8 @@ def main() -> int:
     )
     text = replace_once(
         text,
-        r'    Command::new(\"/bin/kill\")\n',
-        r'    std::process::Command::new(\"/bin/kill\")\n',
+        '    Command::new("/bin/kill")\n',
+        '    std::process::Command::new("/bin/kill")\n',
         "non-Linux process probe",
     )
     TARGET.write_text(text, encoding="utf-8")
@@ -41,6 +41,8 @@ def main() -> int:
         raise RuntimeError("process-group kill fix did not persist")
     if "    process::Command,\n" in check:
         raise RuntimeError("stale unconditional Command import remains")
+    if '    std::process::Command::new("/bin/kill")\n' not in check:
+        raise RuntimeError("non-Linux process probe fix did not persist")
     return 0
 
 
