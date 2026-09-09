@@ -1,0 +1,176 @@
+name: CP03 W02 Correlation Registry
+
+on:
+  push:
+    branches: [wave/cp03/w02-correlation-registry]
+    paths:
+      - 'scripts/cp03/w02_control_port.py'
+      - '.github/workflows/cp03-w02-control-port.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'kernel/crates/clever-kernel/src/adapter.rs'
+      - 'kernel/crates/clever-kernel/src/capabilities.rs'
+      - 'kernel/crates/clever-kernel/tests/control_regressions.rs'
+      - 'kernel/crates/clever-kernel/tests/fixtures/control_peer.py'
+      - 'scripts/cp03/w02_control_port.py'
+      - '.github/workflows/cp03-w02-control-port.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cp03-w02-control-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.event_name == 'push'
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      BASE_SHA: d9f15212566e016a055bc16fb490240c0b6127c2
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Materialize durable claim before product mutation
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          claim=json.loads(Path('sessions/20260909-w02-correlation-registry/CLAIM.json').read_text())
+          ledger=Path('ledgers/CLAIM_LEDGER.ndjson')
+          text=ledger.read_text()
+          if claim['claim_id'] not in text:
+              with ledger.open('a', encoding='utf-8') as f:
+                  f.write(json.dumps(claim,sort_keys=True,separators=(',',':'))+'\n')
+          PY
+          python scripts/context/build_context_pack.py
+          python scripts/context/validate_context_pack.py
+      - name: Apply deterministic W02-05 port and prove idempotence
+        run: |
+          set -euo pipefail
+          python scripts/cp03/w02_control_port.py -- --apply
+          cargo fmt --manifest-path kernel/Cargo.toml --all
+          python scripts/cp03/w02_control_port.py -- --check
+          python -m py_compile scripts/cp03/w02_control_port.py kernel/crates/clever-kernel/tests/fixtures/control_peer.py
+          sha256sum kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/src/capabilities.rs kernel/crates/clever-kernel/tests/control_regressions.rs kernel/crates/clever-kernel/tests/fixtures/control_peer.py > /tmp/first.sha
+          python scripts/cp03/w02_control_port.py -- --apply
+          cargo fmt --manifest-path kernel/Cargo.toml --all
+          sha256sum kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/src/capabilities.rs kernel/crates/clever-kernel/tests/control_regressions.rs kernel/crates/clever-kernel/tests/fixtures/control_peer.py > /tmp/second.sha
+          diff -u /tmp/first.sha /tmp/second.sha
+          git diff --check
+      - name: RED against W02-03 historical implementation
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt
+          git worktree add --detach /tmp/w02-control-red "$BASE_SHA"
+          cp kernel/crates/clever-kernel/tests/control_regressions.rs /tmp/w02-control-red/kernel/crates/clever-kernel/tests/
+          cp kernel/crates/clever-kernel/tests/fixtures/control_peer.py /tmp/w02-control-red/kernel/crates/clever-kernel/tests/fixtures/
+          PYTHON_BIN="$(command -v python)"
+          cases=(
+            unrelated_health_is_rejected
+            unrelated_cancel_is_rejected
+            unrelated_shutdown_is_rejected
+            unspecified_health_is_rejected
+            false_green_health_is_rejected
+            timeout_prevents_stale_connection_reuse
+            protocol_failure_prevents_reuse
+            malformed_body_is_rejected
+            wrong_runtime_is_rejected
+            registry_invalid_tail_is_atomic
+            registry_duplicate_batch_is_rejected
+            registry_existing_conflict_is_atomic
+          )
+          mkdir -p /tmp/w02-red-logs
+          for case in "${cases[@]}"; do
+            set +e
+            CLEVER_TEST_PYTHON="$PYTHON_BIN" cargo test --locked --manifest-path /tmp/w02-control-red/kernel/Cargo.toml -p clever-kernel --test control_regressions "$case" -- --exact --nocapture >"/tmp/w02-red-logs/$case.txt" 2>&1
+            rc=$?
+            set -e
+            if [ "$rc" -eq 0 ]; then
+              echo "historical regression unexpectedly passed: $case"
+              cat "/tmp/w02-red-logs/$case.txt"
+              exit 1
+            fi
+          done
+          test "$(find /tmp/w02-red-logs -type f | wc -l)" -eq 12
+      - name: GREEN correlation atomicity and repeated retest
+        run: |
+          set -euo pipefail
+          export CLEVER_TEST_PYTHON="$(command -v python)"
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test control_regressions -- --nocapture
+          for iteration in 1 2 3 4 5; do
+            cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test control_regressions --quiet
+          done
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor -- --skip real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+      - name: Restrict mutation and CAS persist tested source
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess
+          allowed={
+            'kernel/crates/clever-kernel/src/adapter.rs',
+            'kernel/crates/clever-kernel/src/capabilities.rs',
+            'kernel/crates/clever-kernel/tests/control_regressions.rs',
+            'kernel/crates/clever-kernel/tests/fixtures/control_peer.py',
+            'ledgers/CLAIM_LEDGER.ndjson',
+            '.agentic/context/CURRENT_CONTEXT.json',
+            '.agentic/context/CURRENT_CONTEXT.md',
+          }
+          paths={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if line}
+          unexpected=paths-allowed
+          assert not unexpected, f'out-of-scope W02-05 mutation: {sorted(unexpected)}'
+          required={
+            'kernel/crates/clever-kernel/src/adapter.rs',
+            'kernel/crates/clever-kernel/src/capabilities.rs',
+            'kernel/crates/clever-kernel/tests/control_regressions.rs',
+            'kernel/crates/clever-kernel/tests/fixtures/control_peer.py',
+            'ledgers/CLAIM_LEDGER.ndjson',
+          }
+          assert required <= paths, f'missing expected W02-05 mutations: {sorted(required-paths)}'
+          PY
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-correlation-registry | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/src/capabilities.rs kernel/crates/clever-kernel/tests/control_regressions.rs kernel/crates/clever-kernel/tests/fixtures/control_peer.py ledgers/CLAIM_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git commit -m 'feat(cp03-w02): correlate control exchanges and apply registry atomically'
+          git push origin HEAD:wave/cp03/w02-correlation-registry
+
+  validate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Re-prove W02-05 persisted source read-only
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt
+          python scripts/cp03/w02_control_port.py -- --check
+          export CLEVER_TEST_PYTHON="$(command -v python)"
+          cargo fmt --manifest-path kernel/Cargo.toml --all -- --check
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test control_regressions -- --nocapture
+          for iteration in 1 2 3 4 5; do
+            cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test control_regressions --quiet
+          done
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor -- --skip real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python scripts/validate_agentic_state.py
+          python scripts/context/build_context_pack.py --check
