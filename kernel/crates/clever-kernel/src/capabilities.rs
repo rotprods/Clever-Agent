@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use clever_contracts::{
     CapabilityAvailability, CapabilityDescriptor, LifecycleMode, PermissionRequirement,
@@ -34,6 +34,40 @@ impl CapabilityRegistry {
             },
         );
         Ok(())
+    }
+
+    /// Validate the entire batch before mutating the registry. Identical existing
+    /// descriptors are idempotent replays and preserve their availability.
+    pub fn register_batch(
+        &mut self,
+        descriptors: Vec<CapabilityDescriptor>,
+    ) -> Result<Vec<String>, KernelError> {
+        let mut seen = BTreeSet::new();
+        let mut ids = Vec::with_capacity(descriptors.len());
+        for descriptor in &descriptors {
+            validate_descriptor(descriptor)?;
+            if !seen.insert(descriptor.capability_id.clone())
+                || self
+                    .capabilities
+                    .get(&descriptor.capability_id)
+                    .is_some_and(|existing| existing.descriptor != *descriptor)
+            {
+                return Err(KernelError::DuplicateId {
+                    kind: "capability",
+                    id: descriptor.capability_id.clone(),
+                });
+            }
+            ids.push(descriptor.capability_id.clone());
+        }
+        for descriptor in descriptors {
+            self.capabilities
+                .entry(descriptor.capability_id.clone())
+                .or_insert(CapabilityState {
+                    descriptor,
+                    availability: CapabilityAvailability::Unavailable,
+                });
+        }
+        Ok(ids)
     }
 
     pub fn set_availability(
