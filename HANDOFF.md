@@ -1,8 +1,7 @@
 # HANDOFF — CP03-W02
 
-- `W02-00..W02-03` COMPLETE; `W02-05` COMPLETE with `EVID-W02-CONTROL-ATOMIC-20260909`.
+- `W02-00..W02-05` COMPLETE. G1 transport/lifecycle is closed with `EVID-W02-TEARDOWN-20260909` and `EVID-W02-CONTROL-ATOMIC-20260909`.
 - Frozen scope remains K=47 (37 owned + 10 shared); global denominator 7,565; OpenJarvis 646; VERIFIED 0.
-- First executable task remains `W02-04 — Teardown y cleanup reales`.
-- `W02-06` remains BLOCKED until W02-04 closes the G1 lifecycle boundary.
-- W02-05 proves correlated control exchanges, poison-on-ambiguity, strict health and atomic registry replay. It does not prove inference.
-- Do not merge or mutate historical PR #15; relevant behavior was ported cleanly and re-proven.
+- First executable task: `W02-06 — Contratos tipados de inferencia`.
+- G1 proves bounded I/O, raw-wire byte budgets, correlated control, atomic registry application, bounded shutdown/drop, process-group cleanup and bounded external cleanup. It does NOT prove model inference.
+- Next: design minimal inference request/chunk/terminal/error/cancel contracts, regenerate Python/Rust/TypeScript/Swift SDKs and pass version-skew/round-trip gates before W02-07/W02-08.

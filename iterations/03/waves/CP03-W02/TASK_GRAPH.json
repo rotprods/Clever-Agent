@@ -1,5 +1,5 @@
 {
-  "first_executable_task": "W02-04",
+  "first_executable_task": "W02-06",
   "global_denominator": 7565,
   "iteration": "I03",
   "milestones": {
@@ -171,10 +171,22 @@
       "id": "W02-04",
       "owner_role": "rust_builder",
       "priority": "P0",
-      "proof": [],
+      "proof": [
+        {
+          "artifact_id": 10127995696,
+          "evidence_id": "EVID-W02-TEARDOWN-20260909",
+          "green_tests": 5,
+          "historical_red_timeouts": 2,
+          "parity_promotions": 0,
+          "result": "PASS",
+          "retest_executions": 15,
+          "run_id": 34413046871,
+          "validated_head": "81646b83a57a57d4b0685901b4a23c1369d71485"
+        }
+      ],
       "reviewer_role": "security_reviewer",
       "rollback": "Deshabilitar ruta insegura sin borrar evidencia.",
-      "status": "READY",
+      "status": "COMPLETE",
       "title": "Teardown y cleanup reales"
     },
     {
@@ -233,7 +245,7 @@
       "proof": [],
       "reviewer_role": "reviewer_gauntlet",
       "rollback": "Revertir extensi\u00f3n compatible y regenerar SDK anteriores.",
-      "status": "BLOCKED",
+      "status": "READY",
       "title": "Contratos tipados de inferencia"
     },
     {
