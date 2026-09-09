@@ -40,6 +40,28 @@ jobs:
       - name: Apply deterministic bounded-I/O slice
         run: |
           set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('scripts/cp03/w02_io_harness.py')
+          text=path.read_text(encoding='utf-8')
+          old='''                    Err(error) => {
+                        if let Err(TrySendError::Full(_)) = sender.try_send(Err(error.clone())) {
+                            reader_state.poison(error);
+                        }
+                        break;
+                    }
+'''
+          new='''                    Err(error) => {
+                        reader_state.poison(error.clone());
+                        let _ = sender.try_send(Err(error));
+                        break;
+                    }
+'''
+          if new not in text:
+              if text.count(old) != 1:
+                  raise SystemExit(f'expected one reader-error compiler block, found {text.count(old)}')
+              path.write_text(text.replace(old,new,1), encoding='utf-8')
+          PY
           python scripts/cp03/w02_io_harness.py --apply
           cargo fmt --manifest-path kernel/Cargo.toml --all
           python scripts/cp03/w02_io_harness.py --check
@@ -62,6 +84,7 @@ jobs:
             'kernel/crates/clever-kernel/src/adapter.rs',
             'kernel/crates/clever-kernel/tests/adapter_supervisor.rs',
             'kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py',
+            'scripts/cp03/w02_io_harness.py',
           }
           paths={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if line}
           unexpected=paths-allowed
@@ -74,7 +97,7 @@ jobs:
           test "$(git ls-remote origin refs/heads/wave/cp03/w02-io-backpressure | cut -f1)" = "$GITHUB_SHA"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/tests/adapter_supervisor.rs kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py
+          git add kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/tests/adapter_supervisor.rs kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py scripts/cp03/w02_io_harness.py
           git commit -m 'feat(cp03-w02): bound adapter I/O and write completion'
           git push origin HEAD:wave/cp03/w02-io-backpressure
 
