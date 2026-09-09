@@ -24,6 +24,9 @@ class W02PlanTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, message):
             self.check()
 
+    def task(self, task_id: str):
+        return next(row for row in self.plan["tasks"] if row["id"] == task_id)
+
     def test_valid_plan(self):
         self.assertEqual(self.check()["task_count"], 20)
 
@@ -53,33 +56,37 @@ class W02PlanTests(unittest.TestCase):
         self.invalid("duplicate task")
 
     def test_missing_dependency_rejected(self):
-        self.plan["tasks"][1]["depends_on"] = ["W02-99"]
+        self.task("W02-01")["depends_on"] = ["W02-99"]
         self.invalid("missing dependency")
 
     def test_cycle_rejected(self):
-        self.plan["tasks"][3]["depends_on"] = ["W02-04"]
+        # Keep the current frontier out of READY while constructing the cycle so
+        # the validator reaches its cycle detector instead of failing earlier on
+        # false-ready dependency semantics.
+        self.task("W02-03")["status"] = "BLOCKED"
+        self.task("W02-03")["depends_on"] = ["W02-04"]
         self.invalid("cycle")
 
     def test_self_dependency_rejected(self):
-        self.plan["tasks"][3]["depends_on"] = ["W02-03"]
+        self.task("W02-03")["depends_on"] = ["W02-03"]
         self.invalid("self dependency")
 
     def test_false_ready_rejected(self):
-        # W02-03 depends on W02-02, which is READY rather than COMPLETE.
-        self.plan["tasks"][3]["status"] = "READY"
+        # W02-04 depends on current READY task W02-03, so it cannot itself be READY.
+        self.task("W02-04")["status"] = "READY"
         self.invalid("false-ready")
 
     def test_completion_without_evidence_rejected(self):
-        # W02-02 is the current READY task and has no proof yet.
-        self.plan["tasks"][2]["status"] = "COMPLETE"
+        # W02-03 is the current READY task and has no proof yet.
+        self.task("W02-03")["status"] = "COMPLETE"
         self.invalid("without proof")
 
     def test_missing_acceptance_rejected(self):
-        self.plan["tasks"][3]["acceptance_tests"] = []
+        self.task("W02-03")["acceptance_tests"] = []
         self.invalid("acceptance_tests")
 
     def test_path_traversal_rejected(self):
-        self.plan["tasks"][0]["evidence_path"] = "evidence/cp03/cp03-w02/../../secret"
+        self.task("W02-00")["evidence_path"] = "evidence/cp03/cp03-w02/../../secret"
         self.invalid("unsafe evidence")
 
     def test_unmapped_finding_rejected(self):
@@ -101,6 +108,13 @@ class W02PlanTests(unittest.TestCase):
     def test_invalid_first_task_rejected(self):
         self.plan["first_executable_task"] = "W02-19"
         self.invalid("first executable")
+
+    def test_current_frontier_is_w02_03(self):
+        self.assertEqual(self.plan["first_executable_task"], "W02-03")
+        self.assertEqual(self.task("W02-02")["status"], "COMPLETE")
+        self.assertTrue(self.task("W02-02")["proof"])
+        self.assertEqual(self.task("W02-03")["status"], "READY")
+        self.assertEqual(self.task("W02-03")["proof"], [])
 
     def test_deterministic_validation(self):
         self.assertEqual(self.check(), self.check())

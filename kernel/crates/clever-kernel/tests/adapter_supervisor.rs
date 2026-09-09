@@ -18,8 +18,17 @@ fn repo_root() -> PathBuf {
         .to_path_buf()
 }
 
-fn fake_command(mode: &str) -> Option<AdapterCommand> {
-    let python = env::var("CLEVER_TEST_PYTHON").ok()?;
+fn required_env(name: &str) -> String {
+    let value = env::var(name).unwrap_or_else(|_| panic!("MANDATORY prerequisite missing: {name}"));
+    assert!(
+        !value.trim().is_empty(),
+        "MANDATORY prerequisite is empty: {name}"
+    );
+    value
+}
+
+fn fake_command(mode: &str) -> AdapterCommand {
+    let python = required_env("CLEVER_TEST_PYTHON");
     let root = repo_root();
     let script = root.join("kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py");
     let generated = root.join("contracts/sdk/python/gen");
@@ -28,7 +37,7 @@ fn fake_command(mode: &str) -> Option<AdapterCommand> {
     command
         .env
         .insert("PYTHONPATH".to_owned(), generated.display().to_string());
-    Some(command)
+    command
 }
 
 fn fake_identity() -> AdapterIdentity {
@@ -61,9 +70,7 @@ fn rejects_relative_adapter_programs_before_spawn() {
 
 #[test]
 fn rejects_unknown_contract_major() {
-    let Some(command) = fake_command("unknown-major") else {
-        return;
-    };
+    let command = fake_command("unknown-major");
     let error = match AdapterSupervisor::start(command, fake_identity(), fast_policy()) {
         Ok(_) => panic!("unknown major unexpectedly accepted"),
         Err(error) => error,
@@ -76,18 +83,14 @@ fn rejects_unknown_contract_major() {
 
 #[test]
 fn rejects_oversized_and_truncated_frames() {
-    let Some(oversized) = fake_command("oversized") else {
-        return;
-    };
+    let oversized = fake_command("oversized");
     let error = match AdapterSupervisor::start(oversized, fake_identity(), fast_policy()) {
         Ok(_) => panic!("oversized frame unexpectedly accepted"),
         Err(error) => error,
     };
     assert!(matches!(error, AdapterSupervisorError::FrameTooLarge(_)));
 
-    let Some(partial) = fake_command("partial") else {
-        return;
-    };
+    let partial = fake_command("partial");
     let error = match AdapterSupervisor::start(partial, fake_identity(), fast_policy()) {
         Ok(_) => panic!("partial frame unexpectedly accepted"),
         Err(error) => error,
@@ -97,9 +100,7 @@ fn rejects_oversized_and_truncated_frames() {
 
 #[test]
 fn handshake_timeout_is_bounded() {
-    let Some(command) = fake_command("silent") else {
-        return;
-    };
+    let command = fake_command("silent");
     let mut policy = fast_policy();
     policy.handshake_timeout = Duration::from_millis(50);
     let error = match AdapterSupervisor::start(command, fake_identity(), policy) {
@@ -111,9 +112,7 @@ fn handshake_timeout_is_bounded() {
 
 #[test]
 fn crash_restart_budget_is_bounded() {
-    let Some(command) = fake_command("crash") else {
-        return;
-    };
+    let command = fake_command("crash");
     let mut policy = fast_policy();
     policy.max_restarts = 2;
     let error = match AdapterSupervisor::connect_with_restarts(command, fake_identity(), policy) {
@@ -130,9 +129,7 @@ fn crash_restart_budget_is_bounded() {
 
 #[test]
 fn inherited_secrets_are_stripped_and_registry_metadata_cannot_escalate() {
-    let Some(command) = fake_command("valid") else {
-        return;
-    };
+    let command = fake_command("valid");
     let mut supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
         .expect("connect fake adapter");
     assert_eq!(supervisor.negotiated_max_frame_bytes(), 4 * 1024 * 1024);
@@ -205,13 +202,9 @@ fn inherited_secrets_are_stripped_and_registry_metadata_cannot_escalate() {
 
 #[test]
 fn real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion() {
-    let (Ok(image), Ok(workspace), Ok(docker)) = (
-        env::var("CLEVER_OPENJARVIS_IMAGE"),
-        env::var("CLEVER_REPO_ROOT"),
-        env::var("CLEVER_DOCKER_BIN"),
-    ) else {
-        return;
-    };
+    let image = required_env("CLEVER_OPENJARVIS_IMAGE");
+    let workspace = required_env("CLEVER_REPO_ROOT");
+    let docker = required_env("CLEVER_DOCKER_BIN");
 
     let mount = format!("{workspace}:/clever:ro");
     let mut command = AdapterCommand::new(docker);

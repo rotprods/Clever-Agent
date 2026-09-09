@@ -1,5 +1,5 @@
 {
-  "first_executable_task": "W02-02",
+  "first_executable_task": "W02-03",
   "global_denominator": 7565,
   "iteration": "I03",
   "milestones": {
@@ -101,10 +101,21 @@
       "id": "W02-02",
       "owner_role": "test_engineer",
       "priority": "P0",
-      "proof": [],
+      "proof": [
+        {
+          "artifact_id": 10103343809,
+          "evidence_id": "EVID-W02-HARNESS-20260909",
+          "fake_executed": 6,
+          "native_executed": 1,
+          "result": "PASS",
+          "retest_executed": 6,
+          "run_id": 34349972358,
+          "validated_head": "6e73c68624ed96ed9c6311ff98d3e0ea0115caa7"
+        }
+      ],
       "reviewer_role": "reviewer_gauntlet",
       "rollback": "Revertir slice conservando evidencia fallida.",
-      "status": "READY",
+      "status": "COMPLETE",
       "title": "Eliminar falsos verdes del harness"
     },
     {
@@ -127,7 +138,7 @@
       "proof": [],
       "reviewer_role": "reviewer_gauntlet",
       "rollback": "Revertir slice y deshabilitar streaming expuesto.",
-      "status": "BLOCKED",
+      "status": "READY",
       "title": "Acotar I/O y backpressure"
     },
     {
