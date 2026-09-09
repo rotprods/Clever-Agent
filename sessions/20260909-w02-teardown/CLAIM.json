@@ -15,6 +15,9 @@
     "scripts/cp03/w02_teardown_fix.py",
     "tests/test_cp03_w02_teardown_port.py",
     ".github/workflows/cp03-w02-teardown.yml",
+    "scripts/cp03/finalize_w02_teardown.py",
+    "tests/test_cp03_w02_teardown_finalizer.py",
+    ".github/workflows/cp03-w02-teardown-finalize.yml",
     "evidence/cp03/cp03-w02/W02-04/**",
     "iterations/03/waves/CP03-W02/TASK_GRAPH.json",
     "ledgers/CLAIM_LEDGER.ndjson",
@@ -25,6 +28,6 @@
     ".agentic/context/CURRENT_CONTEXT.json",
     ".agentic/context/CURRENT_CONTEXT.md"
   ],
-  "coordination": "Canonical W02-04 only: bounded shutdown/drop, Unix process-group cleanup, bounded thread join and optional external cleanup hook. Scope amendment adds the historical lifecycle regression file and one-shot idempotent compiler repair after the first GREEN exposed negative-PGID kill parsing. Does not modify inference contracts, execute an LLM, mutate denominator/parity, or reopen W02-03/W02-05.",
+  "coordination": "Canonical W02-04 only: bounded shutdown/drop, Unix process-group cleanup, bounded thread join and optional external cleanup hook. Scope now includes exact-head evidence finalization. May close W02-04 and open W02-06 only after clean reproof. Does not execute inference, mutate denominator/parity, or reopen W02-03/W02-05.",
   "status": "ACTIVE"
 }
