@@ -43,6 +43,20 @@ def main() -> int:
         '    std::process::Command::new("/bin/kill")\n',
         "non-Linux process probe",
     )
+    # The external cleanup hook intentionally runs with env_clear(). The lifecycle
+    # fixture therefore must not import Clever/OpenJarvis protobuf dependencies for
+    # cleanup-only modes. Import the wire helper lazily only for the supervised peer.
+    text = remove_once(
+        text,
+        "import fake_adapter_sidecar as wire\n\n",
+        "eager cleanup-fixture wire import",
+    )
+    text = replace_once(
+        text,
+        "def serve(mode: str) -> int:\n    handshake()",
+        "def serve(mode: str) -> int:\n    global wire\n    import fake_adapter_sidecar as wire\n    handshake()",
+        "lazy supervised-peer wire import",
+    )
     TARGET.write_text(text, encoding="utf-8")
     check = TARGET.read_text(encoding="utf-8")
     if r'.args([\"-KILL\", \"--\", target.as_str()])' not in check:
@@ -51,6 +65,10 @@ def main() -> int:
         raise RuntimeError("stale unconditional Command import remains")
     if '    std::process::Command::new("/bin/kill")\n' not in check:
         raise RuntimeError("non-Linux process probe fix did not persist")
+    if "import fake_adapter_sidecar as wire\n\n" in check:
+        raise RuntimeError("cleanup fixture still eagerly imports adapter runtime")
+    if "global wire\n    import fake_adapter_sidecar as wire\n    handshake()" not in check:
+        raise RuntimeError("lazy supervised-peer import fix did not persist")
     return 0
 
 
