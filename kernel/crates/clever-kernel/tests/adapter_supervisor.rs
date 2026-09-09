@@ -1,4 +1,10 @@
-use std::{collections::BTreeMap, env, path::PathBuf, time::Duration};
+use std::{
+    collections::BTreeMap,
+    env,
+    path::PathBuf,
+    thread,
+    time::{Duration, Instant},
+};
 
 use clever_contracts::{CapabilityAvailability, RuntimeHealthStatus};
 use clever_kernel::{
@@ -287,4 +293,74 @@ fn real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion() {
         .shutdown("W01 gate complete")
         .expect("real shutdown");
     assert_eq!(stopping.status, RuntimeHealthStatus::Stopping as i32);
+}
+
+#[test]
+fn inbound_frame_queue_is_bounded_under_flood() {
+    let command = fake_command("flood");
+    let mut policy = fast_policy();
+    policy.max_inbound_frames = 1;
+    policy.max_inbound_bytes = 64 * 1024;
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), policy)
+        .expect("connect flood sidecar before adversarial burst");
+    thread::sleep(Duration::from_millis(300));
+    let error = supervisor
+        .request_health()
+        .expect_err("flood must poison bounded inbound queue");
+    assert_eq!(
+        error,
+        AdapterSupervisorError::InboundQueueFull { max_frames: 1 }
+    );
+    assert!(supervisor.is_poisoned());
+}
+
+#[test]
+fn inbound_wire_byte_budget_is_enforced_before_decode() {
+    let command = fake_command("byte-flood");
+    let mut policy = fast_policy();
+    policy.max_inbound_frames = 8;
+    policy.max_inbound_bytes = 1024;
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), policy)
+        .expect("connect byte-flood sidecar before adversarial burst");
+    thread::sleep(Duration::from_millis(300));
+    let error = supervisor
+        .request_health()
+        .expect_err("oversized aggregate wire budget must poison session");
+    match error {
+        AdapterSupervisorError::InboundBytesExceeded {
+            attempted,
+            max_bytes,
+        } => {
+            assert!(attempted > max_bytes);
+            assert_eq!(max_bytes, 1024);
+        }
+        other => panic!("unexpected inbound-byte error: {other}"),
+    }
+    assert_eq!(supervisor.pending_inbound_bytes(), 0);
+    assert!(supervisor.is_poisoned());
+}
+
+#[test]
+fn outbound_write_timeout_poison_session_when_peer_stops_reading() {
+    let command = fake_command("no-read-after-hello");
+    let mut policy = fast_policy();
+    policy.write_timeout = Duration::from_millis(80);
+    policy.request_timeout = Duration::from_secs(1);
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), policy)
+        .expect("connect no-read sidecar");
+    let reason = "x".repeat(3 * 1024 * 1024);
+    let started = Instant::now();
+    let error = supervisor
+        .cancel("blocked-write", reason)
+        .expect_err("peer that stops reading must hit bounded write deadline");
+    assert_eq!(error, AdapterSupervisorError::Timeout("outbound write"));
+    assert!(started.elapsed() < Duration::from_secs(2));
+    assert!(supervisor.is_poisoned());
+    let follow_up = supervisor
+        .request_health()
+        .expect_err("poisoned writer session must fail closed");
+    assert!(matches!(
+        follow_up,
+        AdapterSupervisorError::SessionPoisoned(_)
+    ));
 }

@@ -327,9 +327,8 @@ pub struct AdapterSupervisor {
                         break;
                     }
                     Err(error) => {
-                        if let Err(TrySendError::Full(_)) = sender.try_send(Err(error.clone())) {
-                            reader_state.poison(error);
-                        }
+                        reader_state.poison(error.clone());
+                        let _ = sender.try_send(Err(error));
                         break;
                     }
                 }
@@ -617,7 +616,7 @@ pub struct AdapterSupervisor {
 ) -> Result<(), AdapterSupervisorError> {
     let mut current = pending_bytes.load(Ordering::Acquire);
     loop {
-        let attempted = current.checked_add(wire_bytes).unwrap_or(usize::MAX);
+        let attempted = current.saturating_add(wire_bytes);
         if attempted > max_pending_bytes {
             return Err(AdapterSupervisorError::InboundBytesExceeded {
                 attempted,

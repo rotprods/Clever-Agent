@@ -103,6 +103,32 @@ def main() -> int:
     if ack is None or ack.WhichOneof("body") != "hello_ack" or not ack.hello_ack.accepted:
         return 64
 
+    if mode == "flood":
+        time.sleep(0.15)
+        for index in range(64):
+            write_frame(
+                frame(
+                    f"flood-{index}",
+                    "health",
+                    health(runtime_pb2.RUNTIME_HEALTH_STATUS_READY),
+                )
+            )
+        time.sleep(2)
+        return 0
+    if mode == "byte-flood":
+        time.sleep(0.15)
+        error = adapter_pb2.AdapterError(
+            code="BYTE_FLOOD",
+            message="x" * 8192,
+            retryable=False,
+        )
+        write_frame(frame("byte-flood", "error", error))
+        time.sleep(2)
+        return 0
+    if mode == "no-read-after-hello":
+        time.sleep(5)
+        return 0
+
     while True:
         request = read_frame()
         if request is None:
