@@ -94,11 +94,14 @@ class HarnessFinalizerTests(unittest.TestCase):
             with patch.object(finalize_w02_harness, "ROOT", root):
                 self.assertEqual(finalize_w02_harness.latest_claim_status("x"), "RELEASED")
 
-    def test_workflow_normalizes_upload_digest_to_canonical_sha256_form(self) -> None:
-        workflow = (
+    def _workflow(self) -> str:
+        return (
             Path(__file__).resolve().parents[1]
             / ".github/workflows/cp03-w02-harness-finalize.yml"
         ).read_text(encoding="utf-8")
+
+    def test_workflow_normalizes_upload_digest_to_canonical_sha256_form(self) -> None:
+        workflow = self._workflow()
         self.assertIn(
             "--artifact-digest 'sha256:${{ steps.proof.outputs.artifact-digest }}'",
             workflow,
@@ -107,6 +110,12 @@ class HarnessFinalizerTests(unittest.TestCase):
             "--artifact-digest '${{ steps.proof.outputs.artifact-digest }}'",
             workflow,
         )
+
+    def test_workflow_enumerates_untracked_files_instead_of_parent_directory(self) -> None:
+        workflow = self._workflow()
+        self.assertIn("'--porcelain=v1','-uall'", workflow)
+        self.assertNotIn("'--porcelain=v1','-unormal'", workflow)
+        self.assertIn("generated_prefix='evidence/cp03/cp03-w02/W02-02/'", workflow)
 
 
 if __name__ == "__main__":
