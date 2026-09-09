@@ -56,7 +56,7 @@ jobs:
             exit 1
           fi
           grep -q 'silent return paths' evidence/cp03/cp03-w02/W02-02/red/audit.log
-          python scripts/cp03/w02_harness.py --mode fake --out evidence/cp03/cp03-w02/W02-02/fake
+          CLEVER_TEST_PYTHON="$(command -v python)" python scripts/cp03/w02_harness.py --mode fake --out evidence/cp03/cp03-w02/W02-02/fake
 
       - name: Build exact pinned OpenJarvis native image
         run: |
