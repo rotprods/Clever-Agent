@@ -15,6 +15,15 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
     return text.replace(old, new, 1)
 
 
+def remove_once(text: str, old: str, label: str) -> str:
+    count = text.count(old)
+    if count == 0:
+        return text
+    if count != 1:
+        raise RuntimeError(f"{label}: expected zero or one source occurrence, found {count}")
+    return text.replace(old, "", 1)
+
+
 def main() -> int:
     text = TARGET.read_text(encoding="utf-8")
     text = replace_once(
@@ -23,10 +32,9 @@ def main() -> int:
         r'.args([\"-KILL\", \"--\", target.as_str()])',
         "negative process-group operand",
     )
-    text = replace_once(
+    text = remove_once(
         text,
         "    process::Command,\n",
-        "",
         "Linux-unused Command import",
     )
     text = replace_once(
