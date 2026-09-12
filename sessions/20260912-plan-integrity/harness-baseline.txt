@@ -1,0 +1,31 @@
+test_case_output_accepts_exact_one_test (test_cp03_w02_harness.W02HarnessTests.test_case_output_accepts_exact_one_test) ... ok
+test_case_output_rejects_ignored_test (test_cp03_w02_harness.W02HarnessTests.test_case_output_rejects_ignored_test) ... ok
+test_case_output_rejects_nonzero_exit (test_cp03_w02_harness.W02HarnessTests.test_case_output_rejects_nonzero_exit) ... ok
+test_case_output_rejects_timeout (test_cp03_w02_harness.W02HarnessTests.test_case_output_rejects_timeout) ... ok
+test_case_output_rejects_zero_tests (test_cp03_w02_harness.W02HarnessTests.test_case_output_rejects_zero_tests) ... ok
+test_persisted_transition_is_unique_and_opens_only_w02_03 (test_cp03_w02_harness.W02HarnessTests.test_persisted_transition_is_unique_and_opens_only_w02_03) ... FAIL
+test_preflight_fake_accepts_absolute_executable (test_cp03_w02_harness.W02HarnessTests.test_preflight_fake_accepts_absolute_executable) ... ok
+test_preflight_missing_python_fails (test_cp03_w02_harness.W02HarnessTests.test_preflight_missing_python_fails) ... ok
+test_preflight_native_requires_docker_workspace_and_image (test_cp03_w02_harness.W02HarnessTests.test_preflight_native_requires_docker_workspace_and_image) ... ok
+test_preflight_relative_python_fails (test_cp03_w02_harness.W02HarnessTests.test_preflight_relative_python_fails) ... ok
+test_repository_source_has_no_silent_required_return (test_cp03_w02_harness.W02HarnessTests.test_repository_source_has_no_silent_required_return) ... ok
+test_required_sets_are_unique_and_nonempty (test_cp03_w02_harness.W02HarnessTests.test_required_sets_are_unique_and_nonempty) ... ok
+test_source_audit_accepts_fail_closed_source (test_cp03_w02_harness.W02HarnessTests.test_source_audit_accepts_fail_closed_source) ... ok
+test_source_audit_rejects_missing_test (test_cp03_w02_harness.W02HarnessTests.test_source_audit_rejects_missing_test) ... ok
+test_source_audit_rejects_silent_return (test_cp03_w02_harness.W02HarnessTests.test_source_audit_rejects_silent_return) ... ok
+
+======================================================================
+FAIL: test_persisted_transition_is_unique_and_opens_only_w02_03 (test_cp03_w02_harness.W02HarnessTests.test_persisted_transition_is_unique_and_opens_only_w02_03)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f39ab18aadd7/repos/Clever-Agent/tests/test_cp03_w02_harness.py", line 105, in test_persisted_transition_is_unique_and_opens_only_w02_03
+    self.assertEqual(tasks["W02-03"]["status"], "READY")
+AssertionError: 'COMPLETE' != 'READY'
+- COMPLETE
++ READY
+
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.003s
+
+FAILED (failures=1)

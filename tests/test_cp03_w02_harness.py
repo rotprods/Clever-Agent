@@ -95,15 +95,26 @@ class W02HarnessTests(unittest.TestCase):
         report = w02_harness.audit_path(w02_harness.TEST_SOURCE)
         self.assertEqual(report["required_tests"], len(w02_harness.ALL_REQUIRED))
 
-    def test_persisted_transition_is_unique_and_opens_only_w02_03(self) -> None:
+    def test_historical_transition_is_unique_without_freezing_current_frontier(self) -> None:
         root = Path(__file__).resolve().parents[1]
         plan = json.loads(
             (root / "iterations/03/waves/CP03-W02/TASK_GRAPH.json").read_text(encoding="utf-8")
         )
         tasks = {row["id"]: row for row in plan["tasks"]}
         self.assertEqual(tasks["W02-02"]["status"], "COMPLETE")
-        self.assertEqual(tasks["W02-03"]["status"], "READY")
-        self.assertEqual(plan["first_executable_task"], "W02-03")
+        self.assertIn("W02-02", tasks["W02-03"]["depends_on"])
+        transitions = [
+            json.loads(line)
+            for line in (root / "ledgers/WAVE_LEDGER.ndjson").read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        historical = [
+            row for row in transitions
+            if row.get("evidence_id") == "EVID-W02-HARNESS-20260909"
+            and row.get("event") == "VERIFICATION"
+        ]
+        self.assertEqual(len(historical), 1)
+        self.assertEqual(historical[0]["next_task"], "W02-03")
         proofs = [
             row for row in tasks["W02-02"].get("proof", [])
             if row.get("evidence_id") == "EVID-W02-HARNESS-20260909"

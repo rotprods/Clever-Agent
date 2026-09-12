@@ -8,3 +8,4 @@
 - Do not merge or mutate historical PR #15; relevant behavior was ported cleanly and re-proven.
 
 - 2026-09-12 CI support: W02-06 now explicitly depends on W02-04 as required by the G1 handoff. No task status or proof changed. Local plan/finalizer checks pass; full evidence: `sessions/20260912-plan-integrity/summary.json`. Review the support PR and require current-head hosted checks; PR #28 remains the separate W02-04 implementation candidate.
+- Follow-up: historical harness-transition assertions now read the immutable wave ledger instead of requiring W02-03 to remain READY forever. 15 harness unit tests pass locally; `sessions/20260912-plan-integrity/harness-summary.json`. Current-head native harness CI still required.
