@@ -6,3 +6,5 @@
 - `W02-06` remains BLOCKED until W02-04 closes the G1 lifecycle boundary.
 - W02-05 proves correlated control exchanges, poison-on-ambiguity, strict health and atomic registry replay. It does not prove inference.
 - Do not merge or mutate historical PR #15; relevant behavior was ported cleanly and re-proven.
+
+- 2026-09-12 CI support: W02-06 now explicitly depends on W02-04 as required by the G1 handoff. No task status or proof changed. Local plan/finalizer checks pass; full evidence: `sessions/20260912-plan-integrity/summary.json`. Review the support PR and require current-head hosted checks; PR #28 remains the separate W02-04 implementation candidate.
