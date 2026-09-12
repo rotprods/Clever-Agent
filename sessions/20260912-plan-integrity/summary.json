@@ -1,0 +1,44 @@
+{
+  "baseline_head": "f7f30badc9f1852c6f42117c528f9f32dad74bd7",
+  "checks": [
+    "agentic state",
+    "context validator",
+    "context deterministic --check",
+    "next actions",
+    "W02 plan validator",
+    "git diff --check"
+  ],
+  "date": "2026-09-12",
+  "evidence_id": "EVID-W02-PLAN-INTEGRITY-20260912",
+  "global_denominator": 7565,
+  "graph_delta": "W02-06 depends_on W02-04 (documented G1 teardown prerequisite)",
+  "historical_failures": 2,
+  "historical_job": 102665759315,
+  "historical_run": 34411196976,
+  "hosted_result": "PENDING",
+  "limitations": [
+    "No runtime or upstream parity verification; no checkpoint closure",
+    "Historical PR15 unchanged; PR28 lifecycle gate remains separate"
+  ],
+  "local_control_finalizer_tests": 4,
+  "local_plan_tests": 23,
+  "local_result": "PASS",
+  "openjarvis_obligations": 646,
+  "parity_promotions": 0,
+  "proof_changes": [],
+  "receipts": [
+    "sessions/20260912-plan-integrity/baseline.txt",
+    "sessions/20260912-plan-integrity/plan-tests.txt",
+    "sessions/20260912-plan-integrity/control-finalizer-tests.txt",
+    "sessions/20260912-plan-integrity/plan-validator.json"
+  ],
+  "schema_version": 1,
+  "scope": "PLAN_INTEGRITY_ONLY",
+  "source_hashes": {
+    "iterations/03/waves/CP03-W02/TASK_GRAPH.json": "d05dc9dfc8a5b9eab41eb8127ab5cb211f13097450f227bf7e3f78ba9a49af64",
+    "tests/test_cp03_w02_plan.py": "3187450ab96cfa68409e6398f30e5d53bbdadf3e519145875260615efb566a72"
+  },
+  "status_changes": [],
+  "w02_proof_units": 47,
+  "wave": "CP03-W02-PLAN-INTEGRITY-20260912"
+}

@@ -4,11 +4,49 @@ from io import BytesIO
 from pathlib import Path
 import struct
 import unittest
+from unittest.mock import patch
 
 from adapters.openjarvis import sidecar
 
 
 class OpenJarvisSidecarTests(unittest.TestCase):
+    def test_initial_hello_is_unsolicited(self) -> None:
+        hello = sidecar.hello_frame()
+        self.assertTrue(hello.frame_id)
+        self.assertEqual(hello.correlation_id, "")
+
+    def test_protocol_responses_correlate_to_each_request(self) -> None:
+        request_bodies = (
+            ("registry_snapshot_request", sidecar.adapter_pb2.RegistrySnapshotRequest()),
+            ("health_request", sidecar.adapter_pb2.AdapterHealthRequest()),
+            ("cancel", sidecar.adapter_pb2.AdapterCancel(target_request_id="absent")),
+            ("busy", sidecar.adapter_pb2.AdapterBusy()),
+            ("shutdown", sidecar.adapter_pb2.AdapterShutdown(reason="test")),
+        )
+        requests = [sidecar._frame(f"request-{index}", body, message)
+                    for index, (body, message) in enumerate(request_bodies)]
+        incoming = BytesIO()
+        sidecar.write_frame(incoming, sidecar._frame(
+            "ack", "hello_ack", sidecar.adapter_pb2.AdapterHelloAck(accepted=True)))
+        for request in requests:
+            sidecar.write_frame(incoming, request)
+        incoming.seek(0)
+        outgoing = BytesIO()
+        snapshot = sidecar.adapter_pb2.RegistrySnapshot(runtime_id=sidecar.RUNTIME_ID)
+        with patch.object(sidecar, "discover_registry_snapshot", return_value=(snapshot, {"unsupported_registries": []})):
+            self.assertEqual(sidecar.run_protocol(incoming, outgoing), 0)
+        outgoing.seek(0)
+        self.assertEqual(sidecar.read_frame(outgoing).WhichOneof("body"), "hello")
+        expected_bodies = ("registry_snapshot", "health", "health", "error", "health")
+        for request, expected_body in zip(requests, expected_bodies):
+            response = sidecar.read_frame(outgoing)
+            with self.subTest(request=request.WhichOneof("body")):
+                self.assertTrue(response.frame_id)
+                self.assertEqual(response.correlation_id, request.frame_id)
+                self.assertEqual(response.WhichOneof("body"), expected_body)
+        self.assertEqual(response.health.status, sidecar.runtime_pb2.RUNTIME_HEALTH_STATUS_STOPPING)
+        self.assertIsNone(sidecar.read_frame(outgoing))
+
     def test_reserved_metadata_is_removed(self) -> None:
         cleaned = sidecar.sanitize_metadata(
             {

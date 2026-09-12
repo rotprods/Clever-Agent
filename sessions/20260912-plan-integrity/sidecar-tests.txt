@@ -1,0 +1,14 @@
+test_frame_reader_fails_closed_on_oversized_frame (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_frame_reader_fails_closed_on_oversized_frame) ... ok
+test_frame_reader_fails_closed_on_partial_frame (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_frame_reader_fails_closed_on_partial_frame) ... ok
+test_initial_hello_is_unsolicited (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_initial_hello_is_unsolicited) ... ok
+test_protocol_responses_correlate_to_each_request (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_protocol_responses_correlate_to_each_request) ... ok
+test_registration_hints_follow_pinned_source_layout (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_registration_hints_follow_pinned_source_layout) ... ok
+test_registry_map_covers_the_pinned_registry_framework (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_registry_map_covers_the_pinned_registry_framework) ... ok
+test_reserved_metadata_is_removed (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_reserved_metadata_is_removed) ... ok
+test_sidecar_does_not_embed_provider_allowlist (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_sidecar_does_not_embed_provider_allowlist) ... ok
+test_sidecar_image_pins_contract_runtime_dependency (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_sidecar_image_pins_contract_runtime_dependency) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.001s
+
+OK

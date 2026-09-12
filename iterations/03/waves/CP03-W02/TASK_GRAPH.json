@@ -223,6 +223,7 @@
       ],
       "depends_on": [
         "W02-01",
+        "W02-04",
         "W02-05"
       ],
       "evidence_path": "evidence/cp03/cp03-w02/W02-06/",

@@ -1,0 +1,28 @@
+test_completion_without_evidence_rejected (test_cp03_w02_plan.W02PlanTests.test_completion_without_evidence_rejected) ... ok
+test_current_frontier_is_executable_and_g1_completion_is_evidenced (test_cp03_w02_plan.W02PlanTests.test_current_frontier_is_executable_and_g1_completion_is_evidenced) ... ok
+test_cycle_rejected (test_cp03_w02_plan.W02PlanTests.test_cycle_rejected) ... ok
+test_deterministic_validation (test_cp03_w02_plan.W02PlanTests.test_deterministic_validation) ... ok
+test_dimension_drift_rejected (test_cp03_w02_plan.W02PlanTests.test_dimension_drift_rejected) ... ok
+test_duplicate_task_rejected (test_cp03_w02_plan.W02PlanTests.test_duplicate_task_rejected) ... ok
+test_false_ready_rejected (test_cp03_w02_plan.W02PlanTests.test_false_ready_rejected) ... ok
+test_findings_source_drift_rejected (test_cp03_w02_plan.W02PlanTests.test_findings_source_drift_rejected) ... ok
+test_global_denominator_locked (test_cp03_w02_plan.W02PlanTests.test_global_denominator_locked) ... ok
+test_inference_can_be_ready_after_both_g1_dependencies_complete (test_cp03_w02_plan.W02PlanTests.test_inference_can_be_ready_after_both_g1_dependencies_complete) ... ok
+test_inference_contracts_require_teardown_and_atomic_registry (test_cp03_w02_plan.W02PlanTests.test_inference_contracts_require_teardown_and_atomic_registry) ... ok
+test_invalid_first_task_rejected (test_cp03_w02_plan.W02PlanTests.test_invalid_first_task_rejected) ... ok
+test_missing_acceptance_rejected (test_cp03_w02_plan.W02PlanTests.test_missing_acceptance_rejected) ... ok
+test_missing_dependency_rejected (test_cp03_w02_plan.W02PlanTests.test_missing_dependency_rejected) ... ok
+test_parent_scope_locked (test_cp03_w02_plan.W02PlanTests.test_parent_scope_locked) ... ok
+test_path_traversal_rejected (test_cp03_w02_plan.W02PlanTests.test_path_traversal_rejected) ... ok
+test_self_dependency_rejected (test_cp03_w02_plan.W02PlanTests.test_self_dependency_rejected) ... ok
+test_unmapped_dimension_rejected (test_cp03_w02_plan.W02PlanTests.test_unmapped_dimension_rejected) ... ok
+test_unmapped_finding_rejected (test_cp03_w02_plan.W02PlanTests.test_unmapped_finding_rejected) ... ok
+test_upstream_pin_locked (test_cp03_w02_plan.W02PlanTests.test_upstream_pin_locked) ... ok
+test_valid_plan (test_cp03_w02_plan.W02PlanTests.test_valid_plan) ... ok
+test_validator_does_not_claim_runtime_proof (test_cp03_w02_plan.W02PlanTests.test_validator_does_not_claim_runtime_proof) ... ok
+test_w02_count_is_present_after_scope_lock_and_bounds_remain_enforced (test_cp03_w02_plan.W02PlanTests.test_w02_count_is_present_after_scope_lock_and_bounds_remain_enforced) ... ok
+
+----------------------------------------------------------------------
+Ran 23 tests in 0.017s
+
+OK

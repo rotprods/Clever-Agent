@@ -256,11 +256,11 @@ def _stamp(message: object) -> None:
         target.nanos = nanos
 
 
-def _frame(frame_id: str, body_name: str, body: object) -> adapter_pb2.AdapterFrame:
+def _frame(frame_id: str, body_name: str, body: object, *, correlation_id: str = "") -> adapter_pb2.AdapterFrame:
     frame = adapter_pb2.AdapterFrame(
         contract_version=contract_version(),
         frame_id=frame_id,
-        correlation_id=frame_id,
+        correlation_id=correlation_id,
     )
     _stamp(frame)
     getattr(frame, body_name).CopyFrom(body)
@@ -292,7 +292,7 @@ def hello_frame() -> adapter_pb2.AdapterFrame:
     return _frame("openjarvis-hello", "hello", hello)
 
 
-def health_frame(*, degraded: bool = False, reasons: Iterable[str] = ()) -> adapter_pb2.AdapterFrame:
+def health_frame(*, degraded: bool = False, reasons: Iterable[str] = (), correlation_id: str = "") -> adapter_pb2.AdapterFrame:
     seconds, nanos = _now_timestamp()
     reason_list = sorted(set(str(reason) for reason in reasons if str(reason)))
     status = (
@@ -310,7 +310,7 @@ def health_frame(*, degraded: bool = False, reasons: Iterable[str] = ()) -> adap
     )
     health.observed_at.seconds = seconds
     health.observed_at.nanos = nanos
-    return _frame("openjarvis-health", "health", health)
+    return _frame("openjarvis-health", "health", health, correlation_id=correlation_id)
 
 
 def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
@@ -326,14 +326,13 @@ def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
             return 0
         body = request.WhichOneof("body")
         if body == "registry_snapshot_request":
-            response = _frame(f"registry:{request.frame_id}", "registry_snapshot", snapshot)
-            response.correlation_id = request.frame_id
+            response = _frame(f"registry:{request.frame_id}", "registry_snapshot", snapshot, correlation_id=request.frame_id)
             write_frame(stdout, response)
         elif body == "health_request":
-            write_frame(stdout, health_frame(reasons=diagnostics["unsupported_registries"]))
+            write_frame(stdout, health_frame(reasons=diagnostics["unsupported_registries"], correlation_id=request.frame_id))
         elif body == "cancel":
             # W01 has no long-running executable requests; cancellation is accepted as a no-op.
-            write_frame(stdout, health_frame())
+            write_frame(stdout, health_frame(correlation_id=request.frame_id))
         elif body == "shutdown":
             seconds, nanos = _now_timestamp()
             stopping = runtime_pb2.RuntimeHealth(
@@ -343,7 +342,7 @@ def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
             )
             stopping.observed_at.seconds = seconds
             stopping.observed_at.nanos = nanos
-            write_frame(stdout, _frame("openjarvis-stopping", "health", stopping))
+            write_frame(stdout, _frame("openjarvis-stopping", "health", stopping, correlation_id=request.frame_id))
             return 0
         else:
             error = adapter_pb2.AdapterError(
@@ -351,7 +350,7 @@ def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
                 message=f"W01 sidecar does not execute frame body {body!r}",
                 retryable=False,
             )
-            write_frame(stdout, _frame(f"error:{request.frame_id}", "error", error))
+            write_frame(stdout, _frame(f"error:{request.frame_id}", "error", error, correlation_id=request.frame_id))
 
 
 def main() -> int:

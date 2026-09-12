@@ -1,0 +1,20 @@
+{
+  "status": "LOCAL_DIAGNOSTICS_VERIFIED_NATIVE_RUNTIME_PENDING",
+  "base_sha": "968d01edfa332381ca87936908c64035e2a1b23a",
+  "native_failure": {
+    "run_id": 34709453010,
+    "job_id": 103595396053,
+    "artifact_id": 10302632704,
+    "case": "real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion",
+    "exit": 101,
+    "artifact_missing_native_log": true
+  },
+  "red_tests": 2,
+  "green_harness_tests": 17,
+  "change": "Save subprocess output before fail-closed validation. Decode TimeoutExpired byte output. No mandatory requirements, workflows, runtime or task statuses changed.",
+  "parity_promotions": 0,
+  "source_sha256": {
+    "scripts/cp03/w02_harness.py": "1b31201a1a3a37e766e2043b41bb3b640c7e9a7655a5a9b134274865e0826aff",
+    "tests/test_cp03_w02_harness.py": "c9f62f2ffea13fb913f1b160d5af819d8659bc66059431a85e8fca7b3f10f939"
+  }
+}

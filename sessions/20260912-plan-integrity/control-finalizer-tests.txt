@@ -1,0 +1,9 @@
+test_canonical_identity_is_frozen (test_cp03_w02_control_finalizer.W02ControlFinalizerTests.test_canonical_identity_is_frozen) ... ok
+test_rejects_non_sha_head_before_mutation (test_cp03_w02_control_finalizer.W02ControlFinalizerTests.test_rejects_non_sha_head_before_mutation) ... ok
+test_rejects_noncanonical_artifact_digest_before_mutation (test_cp03_w02_control_finalizer.W02ControlFinalizerTests.test_rejects_noncanonical_artifact_digest_before_mutation) ... ok
+test_rejects_nonpositive_run_or_artifact_before_mutation (test_cp03_w02_control_finalizer.W02ControlFinalizerTests.test_rejects_nonpositive_run_or_artifact_before_mutation) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.000s
+
+OK
