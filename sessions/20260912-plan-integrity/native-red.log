@@ -1,0 +1,18 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.01s
+     Running tests/adapter_supervisor.rs (kernel/target/debug/deps/adapter_supervisor-1693bdb18962b412)
+
+running 1 test
+
+thread 'real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion' (3380) panicked at crates/clever-kernel/tests/adapter_supervisor.rs:266:10:
+supervise real OpenJarvis sidecar: RestartBudgetExhausted { attempts: 2, last_error: "invalid adapter hello: invalid initial frame identity" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion ... FAILED
+
+failures:
+
+failures:
+    real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 9 filtered out; finished in 4.33s
+
+error: test failed, to rerun pass `--test adapter_supervisor`

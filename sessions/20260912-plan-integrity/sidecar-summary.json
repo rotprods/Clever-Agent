@@ -1,0 +1,20 @@
+{
+  "status": "LOCAL_PROTOCOL_VERIFIED_NATIVE_RETEST_PENDING",
+  "base_sha": "2a0b52316758ebd61005d86734331ee1ecff94f7",
+  "native_red": {
+    "run_id": 34709805284,
+    "job_id": 103596369194,
+    "artifact_id": 10302674736,
+    "error": "invalid adapter hello: invalid initial frame identity"
+  },
+  "root_cause": "W02-05 tightened Rust supervisor correlation validation, but real Python sidecar still self-correlated hello, health, cancel, shutdown and errors. Fake adapter had already been updated.",
+  "fix": "Initial hello has no correlation; all control responses use the requesting frame ID. Strict Rust validation remains intact.",
+  "local_red_assertions": 5,
+  "local_green_sidecar_tests": 9,
+  "parity_promotions": 0,
+  "scope": "Protocol correlation only. No inference promotion, task status, supervisor or workflow changes.",
+  "source_sha256": {
+    "adapters/openjarvis/sidecar.py": "b559deef556d75938390ae37f25d48d824b5277ae7f3add92fd5c1e0a6e0f790",
+    "tests/test_cp03_openjarvis_sidecar.py": "1b4a4765c5160f03c80f728181109b92fdfd521745c5f2b08d435fcfb9bda9a7"
+  }
+}

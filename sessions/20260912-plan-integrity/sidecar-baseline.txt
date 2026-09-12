@@ -1,0 +1,73 @@
+test_frame_reader_fails_closed_on_oversized_frame (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_frame_reader_fails_closed_on_oversized_frame) ... ok
+test_frame_reader_fails_closed_on_partial_frame (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_frame_reader_fails_closed_on_partial_frame) ... ok
+test_initial_hello_is_unsolicited (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_initial_hello_is_unsolicited) ... FAIL
+test_protocol_responses_correlate_to_each_request (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_protocol_responses_correlate_to_each_request) ... 
+  test_protocol_responses_correlate_to_each_request (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_protocol_responses_correlate_to_each_request) (request='health_request') ... FAIL
+  test_protocol_responses_correlate_to_each_request (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_protocol_responses_correlate_to_each_request) (request='cancel') ... FAIL
+  test_protocol_responses_correlate_to_each_request (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_protocol_responses_correlate_to_each_request) (request='busy') ... FAIL
+  test_protocol_responses_correlate_to_each_request (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_protocol_responses_correlate_to_each_request) (request='shutdown') ... FAIL
+test_registration_hints_follow_pinned_source_layout (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_registration_hints_follow_pinned_source_layout) ... ok
+test_registry_map_covers_the_pinned_registry_framework (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_registry_map_covers_the_pinned_registry_framework) ... ok
+test_reserved_metadata_is_removed (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_reserved_metadata_is_removed) ... ok
+test_sidecar_does_not_embed_provider_allowlist (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_sidecar_does_not_embed_provider_allowlist) ... ok
+test_sidecar_image_pins_contract_runtime_dependency (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_sidecar_image_pins_contract_runtime_dependency) ... ok
+
+======================================================================
+FAIL: test_initial_hello_is_unsolicited (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_initial_hello_is_unsolicited)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f39ab18aadd7/repos/Clever-Agent/tests/test_cp03_openjarvis_sidecar.py", line 16, in test_initial_hello_is_unsolicited
+    self.assertEqual(hello.correlation_id, "")
+AssertionError: 'openjarvis-hello' != ''
+- openjarvis-hello
+
+
+======================================================================
+FAIL: test_protocol_responses_correlate_to_each_request (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_protocol_responses_correlate_to_each_request) (request='health_request')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f39ab18aadd7/repos/Clever-Agent/tests/test_cp03_openjarvis_sidecar.py", line 45, in test_protocol_responses_correlate_to_each_request
+    self.assertEqual(response.correlation_id, request.frame_id)
+AssertionError: 'openjarvis-health' != 'request-1'
+- openjarvis-health
++ request-1
+
+
+======================================================================
+FAIL: test_protocol_responses_correlate_to_each_request (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_protocol_responses_correlate_to_each_request) (request='cancel')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f39ab18aadd7/repos/Clever-Agent/tests/test_cp03_openjarvis_sidecar.py", line 45, in test_protocol_responses_correlate_to_each_request
+    self.assertEqual(response.correlation_id, request.frame_id)
+AssertionError: 'openjarvis-health' != 'request-2'
+- openjarvis-health
++ request-2
+
+
+======================================================================
+FAIL: test_protocol_responses_correlate_to_each_request (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_protocol_responses_correlate_to_each_request) (request='busy')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f39ab18aadd7/repos/Clever-Agent/tests/test_cp03_openjarvis_sidecar.py", line 45, in test_protocol_responses_correlate_to_each_request
+    self.assertEqual(response.correlation_id, request.frame_id)
+AssertionError: 'error:request-3' != 'request-3'
+- error:request-3
+? ------
++ request-3
+
+
+======================================================================
+FAIL: test_protocol_responses_correlate_to_each_request (test_cp03_openjarvis_sidecar.OpenJarvisSidecarTests.test_protocol_responses_correlate_to_each_request) (request='shutdown')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f39ab18aadd7/repos/Clever-Agent/tests/test_cp03_openjarvis_sidecar.py", line 45, in test_protocol_responses_correlate_to_each_request
+    self.assertEqual(response.correlation_id, request.frame_id)
+AssertionError: 'openjarvis-stopping' != 'request-4'
+- openjarvis-stopping
++ request-4
+
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.002s
+
+FAILED (failures=5)
