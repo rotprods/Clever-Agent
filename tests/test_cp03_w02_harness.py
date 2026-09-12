@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import stat
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -62,6 +63,30 @@ class W02HarnessTests(unittest.TestCase):
         output = "running 1 test\ntest case ... ok\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out"
         result = w02_harness.validate_case_output("case", 0, output)
         self.assertEqual(result["status"], "PASS")
+
+    def test_failed_native_case_keeps_output_without_passing_report(self) -> None:
+        name = w02_harness.NATIVE_REQUIRED[0]
+        output = "thread 'native' panicked: protocol mismatch\ntest result: FAILED\n"
+        completed = subprocess.CompletedProcess([], 101, stdout=output)
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / "native"
+            with patch.object(w02_harness, "preflight"), patch.object(w02_harness, "audit_path"), patch.object(w02_harness.subprocess, "run", return_value=completed):
+                with self.assertRaisesRegex(w02_harness.HarnessError, "exit=101"):
+                    w02_harness.run("native", out)
+            self.assertEqual((out / f"{name}.log").read_text(), output)
+            self.assertFalse((out / "report.json").exists())
+            self.assertFalse((out / "results.junit.xml").exists())
+
+    def test_timeout_keeps_partial_byte_output_and_fails_closed(self) -> None:
+        name = w02_harness.NATIVE_REQUIRED[0]
+        failure = subprocess.TimeoutExpired([], 1, output=b"partial stdout\n", stderr=b"partial stderr\n")
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / "native"
+            with patch.object(w02_harness, "preflight"), patch.object(w02_harness, "audit_path"), patch.object(w02_harness.subprocess, "run", side_effect=failure):
+                with self.assertRaisesRegex(w02_harness.HarnessError, "timed out"):
+                    w02_harness.run("native", out)
+            self.assertEqual((out / f"{name}.log").read_text(), "partial stdout\npartial stderr\n")
+            self.assertFalse((out / "report.json").exists())
 
     def test_preflight_missing_python_fails(self) -> None:
         with patch.dict(os.environ, {}, clear=True):
