@@ -1,1 +1,2 @@
 {"candidate_sha": "3885ba717cba450fd7283eb45a9e43b09b26b1a0", "date": "2026-09-14", "event": "REVIEW_STARTED", "main_sha": "f7f30badc9f1852c6f42117c528f9f32dad74bd7", "parity_promotions": 0, "pr_scope": [28, 29, 15], "review_id": "CP03-W02-G1-REVIEW-20260914", "schema_version": 1}
+{"candidate_sha":"3885ba717cba450fd7283eb45a9e43b09b26b1a0","date":"2026-09-14","event":"GAUNTLET_TRIGGERED","parity_promotions":0,"review_id":"CP03-W02-G1-REVIEW-20260914","schema_version":1}
