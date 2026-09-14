@@ -138,6 +138,22 @@
       "severity": "P2",
       "status": "OPEN",
       "summary": "Decision/risk ledgers remain largely CP01-era and do not record key W02 decisions/risks."
+    },
+    {
+      "blocking_scope": [
+        "production_release",
+        "workflow_security_hardening"
+      ],
+      "category": "supply-chain",
+      "evidence": [
+        "independent review scan found 27 unpinned uses across CP02/CP03 workflows"
+      ],
+      "id": "SUPPLY-P1-UNPINNED-ACTIONS",
+      "observed_count": 27,
+      "recommended_action": "Replace every external action tag with an audited 40-hex commit SHA; re-run the workflow inventory scan.",
+      "severity": "P1",
+      "status": "OPEN",
+      "summary": "27 external GitHub Action uses are tag-pinned rather than commit-SHA pinned."
     }
   ],
   "invariants": {

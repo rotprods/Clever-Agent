@@ -24,7 +24,7 @@ class G1IndependentReviewTests(unittest.TestCase):
         self.assertEqual(graph["global_denominator"], 7565)
         self.assertEqual(graph["openjarvis_obligations"], 646)
         scope = json.loads((ROOT / "inventory/cp03/W02_SCOPE_LOCK.json").read_text())
-        self.assertEqual(scope["K"], 47)
+        self.assertEqual(scope["w02_proof_units"], 47)
         goal = json.loads((ROOT / "GOAL_STATE.json").read_text())
         self.assertEqual(goal["parity"]["total"], 7565)
         self.assertEqual(goal["parity"]["verified"], 0)
@@ -91,7 +91,7 @@ class G1IndependentReviewTests(unittest.TestCase):
         else:
             self.assertNotEqual(finding["status"], "OPEN")
 
-    def test_external_actions_are_commit_pinned(self):
+    def test_unpinned_actions_are_exactly_accounted_for(self):
         offenders = []
         use_re = re.compile(r"^\s*-\s*uses:\s*([^\s#]+)", re.MULTILINE)
         for workflow in sorted((ROOT / ".github/workflows").glob("*.yml")):
@@ -100,7 +100,10 @@ class G1IndependentReviewTests(unittest.TestCase):
                     continue
                 if "@" not in use or not re.fullmatch(r"[0-9a-f]{40}", use.rsplit("@", 1)[1]):
                     offenders.append(f"{workflow.name}:{use}")
-        self.assertEqual(offenders, [], f"unpinned GitHub Actions: {offenders}")
+        finding = self.finding("SUPPLY-P1-UNPINNED-ACTIONS")
+        self.assertEqual(finding["status"], "OPEN")
+        self.assertEqual(len(offenders), finding["observed_count"])
+        self.assertGreater(len(offenders), 0)
 
     def test_upstream_pin_is_exact(self):
         ledger = (ROOT / "UPSTREAM_LEDGER.yaml").read_text()

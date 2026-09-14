@@ -13,8 +13,7 @@ fn root() -> PathBuf {
 }
 
 fn python() -> String {
-    env::var("CLEVER_TEST_PYTHON")
-        .expect("MANDATORY: CLEVER_TEST_PYTHON is required for G1 review")
+    env::var("CLEVER_TEST_PYTHON").expect("MANDATORY: CLEVER_TEST_PYTHON is required for G1 review")
 }
 
 fn identity() -> AdapterIdentity {

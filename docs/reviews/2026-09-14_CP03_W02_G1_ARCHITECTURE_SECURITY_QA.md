@@ -76,6 +76,15 @@ otherwise surface cleanup failure distinctly.
   constraint or native equivalent.
 - branch protection/rulesets are absent and cannot be repaired by this review branch.
 
+## Supply-chain review
+
+The independent workflow inventory found **27 external action uses pinned to mutable tags**
+such as `@v4`, `@v5` and `buf...@v1`. This is a real supply-chain finding, not a review
+harness defect. The review records it as `SUPPLY-P1-UNPINNED-ACTIONS`.
+
+It blocks production/release hardening until those uses are replaced with audited 40-hex
+commit SHAs. It does not by itself invalidate the Rust G1 behavior under review.
+
 ## QA / recovery review
 
 The candidate contains evidence for W02-03, W02-04 and W02-05, but the final convergence
