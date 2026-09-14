@@ -67,11 +67,10 @@ fn documents_cleanup_failure_observability_gap() {
     let supervisor =
         AdapterSupervisor::start(command, identity(), policy()).expect("peer handshake");
     let result = supervisor.shutdown("review cleanup failure");
-    // Current API collapses cleanup failure into the primary shutdown timeout.
-    // This test intentionally characterizes the limitation so the review cannot
-    // claim that external cleanup success is verified.
+    // Explicit shutdown must surface cleanup failure rather than collapsing it
+    // into a generic parent-process timeout. Drop remains best-effort and bounded.
     assert!(matches!(
         result,
-        Err(AdapterSupervisorError::Timeout("shutdown exit"))
+        Err(AdapterSupervisorError::CleanupFailed(_))
     ));
 }

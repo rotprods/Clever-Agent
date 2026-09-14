@@ -114,7 +114,7 @@ fn cleanup_hook_that_hangs_is_itself_bounded() {
     let result = supervisor.shutdown("force bounded cleanup");
     assert!(matches!(
         result,
-        Err(AdapterSupervisorError::Timeout("shutdown exit"))
+        Err(AdapterSupervisorError::CleanupFailed(_))
     ));
     assert!(started.elapsed() < Duration::from_secs(3));
     assert_eq!(
@@ -122,6 +122,23 @@ fn cleanup_hook_that_hangs_is_itself_bounded() {
         "cleanup-started\n"
     );
     let _ = fs::remove_file(marker);
+}
+
+#[test]
+fn nonzero_cleanup_exit_is_observable() {
+    let false_program = ["/usr/bin/false", "/bin/false"]
+        .into_iter()
+        .find(|path| Path::new(path).exists())
+        .expect("system false executable");
+    let mut command = command("stopping-hang");
+    command.cleanup = Some(AdapterCleanupCommand::new(false_program));
+    let supervisor = AdapterSupervisor::start(command, identity(), fast_policy())
+        .expect("nonzero cleanup peer handshake");
+    let result = supervisor.shutdown("force nonzero cleanup");
+    assert!(matches!(
+        result,
+        Err(AdapterSupervisorError::CleanupFailed(_))
+    ));
 }
 
 #[test]

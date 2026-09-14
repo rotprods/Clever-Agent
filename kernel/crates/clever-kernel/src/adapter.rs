@@ -67,6 +67,7 @@ pub enum AdapterSupervisorError {
     InvalidHello(String),
     InvalidSnapshot(String),
     InvalidRuntimeResponse(String),
+    CleanupFailed(String),
     RestartBudgetExhausted { attempts: u32, last_error: String },
     Kernel(KernelError),
 }
@@ -113,6 +114,9 @@ impl Display for AdapterSupervisorError {
             }
             Self::InvalidRuntimeResponse(message) => {
                 write!(formatter, "invalid runtime response: {message}")
+            }
+            Self::CleanupFailed(message) => {
+                write!(formatter, "adapter cleanup failed: {message}")
             }
             Self::RestartBudgetExhausted {
                 attempts,
@@ -594,11 +598,15 @@ impl AdapterSupervisor {
             self.policy.shutdown_timeout,
             self.policy.termination_poll_interval,
         )? {
-            self.terminate_bounded();
+            if let Some(cleanup_error) = self.terminate_bounded() {
+                return Err(cleanup_error);
+            }
             return Err(AdapterSupervisorError::Timeout("shutdown exit"));
         }
         if !self.join_threads_bounded() {
-            self.terminate_bounded();
+            if let Some(cleanup_error) = self.terminate_bounded() {
+                return Err(cleanup_error);
+            }
             return Err(AdapterSupervisorError::Timeout("shutdown I/O drain"));
         }
         self.termination_complete = true;
@@ -776,17 +784,17 @@ impl AdapterSupervisor {
         if self.session_poisoned.is_none() {
             self.session_poisoned = Some(reason.into());
         }
-        self.terminate_bounded();
+        let _ = self.terminate_bounded();
     }
 
-    fn terminate_bounded(&mut self) {
+    fn terminate_bounded(&mut self) -> Option<AdapterSupervisorError> {
         if self.termination_complete {
-            return;
+            return None;
         }
         self.writer_sender.take();
         self.signal_process_group();
         let _ = self.child.kill();
-        self.run_cleanup_bounded();
+        let cleanup_error = self.run_cleanup_bounded().err();
         let _ = wait_child_bounded(
             &mut self.child,
             self.policy.shutdown_timeout,
@@ -794,6 +802,7 @@ impl AdapterSupervisor {
         );
         let _ = self.join_threads_bounded();
         self.termination_complete = true;
+        cleanup_error
     }
 
     fn signal_process_group(&self) {
@@ -818,9 +827,9 @@ impl AdapterSupervisor {
         }
     }
 
-    fn run_cleanup_bounded(&self) {
+    fn run_cleanup_bounded(&self) -> Result<(), AdapterSupervisorError> {
         let Some(cleanup) = &self.cleanup else {
-            return;
+            return Ok(());
         };
         let mut command = Command::new(&cleanup.program);
         command
@@ -830,22 +839,51 @@ impl AdapterSupervisor {
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null());
-        let Ok(mut cleanup_process) = command.spawn() else {
-            return;
-        };
+        let mut cleanup_process = command.spawn().map_err(|error| {
+            AdapterSupervisorError::CleanupFailed(format!("spawn failed: {error}"))
+        })?;
         match wait_child_bounded(
             &mut cleanup_process,
             self.policy.cleanup_timeout,
             self.policy.termination_poll_interval,
         ) {
-            Ok(true) => {}
-            _ => {
+            Ok(true) => {
+                let status = cleanup_process
+                    .try_wait()
+                    .map_err(|error| {
+                        AdapterSupervisorError::CleanupFailed(format!(
+                            "status read failed: {error}"
+                        ))
+                    })?
+                    .ok_or_else(|| {
+                        AdapterSupervisorError::CleanupFailed(
+                            "cleanup exited without observable status".to_owned(),
+                        )
+                    })?;
+                if status.success() {
+                    Ok(())
+                } else {
+                    Err(AdapterSupervisorError::CleanupFailed(format!(
+                        "cleanup exited with {status}"
+                    )))
+                }
+            }
+            Ok(false) => {
                 let _ = cleanup_process.kill();
                 let _ = wait_child_bounded(
                     &mut cleanup_process,
                     self.policy.thread_join_timeout,
                     self.policy.termination_poll_interval,
                 );
+                Err(AdapterSupervisorError::CleanupFailed(
+                    "cleanup timed out".to_owned(),
+                ))
+            }
+            Err(error) => {
+                let _ = cleanup_process.kill();
+                Err(AdapterSupervisorError::CleanupFailed(format!(
+                    "cleanup wait failed: {error}"
+                )))
             }
         }
     }
@@ -932,7 +970,7 @@ impl AdapterSupervisor {
 impl Drop for AdapterSupervisor {
     fn drop(&mut self) {
         if !self.termination_complete {
-            self.terminate_bounded();
+            let _ = self.terminate_bounded();
         }
     }
 }
