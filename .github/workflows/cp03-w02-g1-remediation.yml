@@ -66,12 +66,15 @@ jobs:
           assert changed, 'remediation produced no delta'
           assert not unexpected, f'out-of-scope remediation paths: {unexpected}'
           PY
-      - name: Compare-and-swap persist remediation
+      - name: Compare-and-swap persist code remediation only
         run: |
           set -euo pipefail
           test "$(git ls-remote origin refs/heads/fix/cp03-w02-g1-remediation-20260914 | cut -f1)" = "$GITHUB_SHA"
+          # Workflow mutations are proven above, but GITHUB_TOKEN cannot write workflow files.
+          # Restore workflow/report surfaces and persist only the Rust cleanup remediation.
+          git checkout HEAD -- .github/workflows reports/reviews/CP03_W02_G1_FINDINGS.json docs/reviews/2026-09-14_CP03_W02_G1_ARCHITECTURE_SECURITY_QA.md tests/test_cp03_w02_g1_review.py
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/workflows kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/tests/adapter_lifecycle.rs kernel/crates/clever-kernel/tests/review_g1_adversarial.rs reports/reviews/CP03_W02_G1_FINDINGS.json docs/reviews/2026-09-14_CP03_W02_G1_ARCHITECTURE_SECURITY_QA.md tests/test_cp03_w02_g1_review.py
-          git commit -m 'security(cp03-w02): resolve G1 cleanup and workflow pin findings'
+          git add kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/tests/adapter_lifecycle.rs kernel/crates/clever-kernel/tests/review_g1_adversarial.rs
+          git commit -m 'fix(cp03-w02): surface external cleanup failures'
           git push origin HEAD:fix/cp03-w02-g1-remediation-20260914
