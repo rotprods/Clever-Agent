@@ -1,0 +1,131 @@
+name: CP03 W02 G1 Independent Review
+
+on:
+  push:
+    branches: [review/cp03-w02-g1-gauntlet-20260914]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cp03-w02-g1-review-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  OPENJARVIS_SHA: 72033b8ec288aa067ce4530ff9d96bf231e9c4e5
+
+jobs:
+  control-plane:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Validate canonical state and review invariants
+        run: |
+          set -euo pipefail
+          python scripts/validate_agentic_state.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/context/validate_context_pack.py
+          python scripts/context/validate_next_actions.py
+          python scripts/cp03/validate_w02_plan.py
+          python -m scripts.cp03.w02_scope_lock
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python -m unittest tests.test_cp03_w02_g1_review -v
+      - name: Regress sidecar, planning and harness contracts
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt
+          python -m unittest \
+            tests.test_cp03_openjarvis_sidecar \
+            tests.test_cp03_w02_plan \
+            tests.test_cp03_w02_harness \
+            tests.test_cp03_w02_control_finalizer \
+            tests.test_cp03_w02_teardown_finalizer -v
+
+  kernel-security-recovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install contract runtime
+        run: |
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt
+          echo "CLEVER_TEST_PYTHON=$(command -v python)" >> "$GITHUB_ENV"
+      - name: Rust format and static analysis
+        run: |
+          set -euo pipefail
+          cargo fmt --manifest-path kernel/Cargo.toml --all -- --check
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+      - name: Kernel, security, control and recovery suites
+        run: |
+          set -euo pipefail
+          for suite in action_plane kernel gauntlet control_regressions lifecycle_legacy_regressions adapter_lifecycle review_g1_adversarial; do
+            cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test "$suite" -- --nocapture
+          done
+          for case in inbound_frame_queue_is_bounded_under_flood inbound_wire_byte_budget_is_enforced_before_decode outbound_write_timeout_poison_session_when_peer_stops_reading; do
+            cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor "$case" -- --exact --nocapture
+          done
+
+  native-openjarvis:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Build exact pinned OpenJarvis runtime
+        run: |
+          set -euo pipefail
+          git init /tmp/openjarvis
+          git -C /tmp/openjarvis remote add origin https://github.com/open-jarvis/OpenJarvis.git
+          git -C /tmp/openjarvis fetch --depth 1 origin "$OPENJARVIS_SHA"
+          git -C /tmp/openjarvis checkout --detach FETCH_HEAD
+          test "$(git -C /tmp/openjarvis rev-parse HEAD)" = "$OPENJARVIS_SHA"
+          docker build -f "$GITHUB_WORKSPACE/scripts/cp03/Dockerfile.baseline" -t "clever-g1-review-base:${GITHUB_SHA}" /tmp/openjarvis
+          mkdir -p /tmp/openjarvis-sidecar-context
+          docker build \
+            --build-arg "BASE_IMAGE=clever-g1-review-base:${GITHUB_SHA}" \
+            -f "$GITHUB_WORKSPACE/scripts/cp03/Dockerfile.openjarvis-sidecar" \
+            -t "clever-g1-review-native:${GITHUB_SHA}" \
+            /tmp/openjarvis-sidecar-context
+          echo "CLEVER_TEST_PYTHON=$(command -v python)" >> "$GITHUB_ENV"
+          echo "CLEVER_DOCKER_BIN=$(command -v docker)" >> "$GITHUB_ENV"
+          echo "CLEVER_REPO_ROOT=$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
+          echo "CLEVER_OPENJARVIS_IMAGE=clever-g1-review-native:${GITHUB_SHA}" >> "$GITHUB_ENV"
+      - name: Unit-test sidecar correlation semantics
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt
+          python -m unittest tests.test_cp03_openjarvis_sidecar -v
+      - name: Exact-pin native E2E
+        run: |
+          set -euo pipefail
+          rm -rf evidence/review/g1/native
+          python scripts/cp03/w02_harness.py --mode native --out evidence/review/g1/native
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path("evidence/review/g1/native/report.json").read_text())
+          assert report["status"] == "PASS"
+          assert report["executed_count"] == 1
+          assert report["failed"] == 0 and report["ignored"] == 0
+          assert report["parity_promotions"] == 0
+          PY
+
+  summary:
+    needs: [control-plane, kernel-security-recovery, native-openjarvis]
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "CP03 W02 G1 independent review gauntlet PASS"
