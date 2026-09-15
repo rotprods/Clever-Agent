@@ -146,14 +146,17 @@
       ],
       "category": "supply-chain",
       "evidence": [
-        "independent review scan found 51 unpinned uses across 20 of 36 workflows"
+        "independent review scan found 51 unpinned uses across 20 of 36 workflows",
+        "scripts/security/audit_github_actions.py reports 0 mutable references after pinning",
+        "tests/test_github_actions_supply_chain.py enforces repository-wide non-regression",
+        "reports/security/GITHUB_ACTIONS_PINNING_20260915.json"
       ],
       "id": "SUPPLY-P1-UNPINNED-ACTIONS",
-      "observed_count": 51,
-      "recommended_action": "Replace every external action tag with an audited 40-hex commit SHA; re-run the workflow inventory scan.",
+      "observed_count": 0,
+      "recommended_action": "Keep the repository-wide immutable-ref gate required for workflow changes and review Dependabot pin updates.",
       "severity": "P1",
-      "status": "OPEN",
-      "summary": "27 external GitHub Action uses are tag-pinned rather than commit-SHA pinned."
+      "status": "REMEDIATED",
+      "summary": "All external GitHub Action uses are pinned to audited 40-hex commit SHAs."
     }
   ],
   "invariants": {

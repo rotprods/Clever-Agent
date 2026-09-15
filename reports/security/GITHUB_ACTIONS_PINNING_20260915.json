@@ -1,0 +1,18 @@
+{
+  "base_sha": "2ac2ec9512381d297a34e5ae8d0d942f62f93cf8",
+  "date": "2026-09-15",
+  "external_action_references": 118,
+  "mutable_references_after": 0,
+  "mutable_references_before": 51,
+  "pins": {
+    "actions/checkout@v4": "11d5960a326750d5838078e36cf38b85af677262",
+    "actions/download-artifact@v4": "d3f86a106a0bac45b974a628896c90dbdf5c8093",
+    "actions/setup-node@v4": "49933ea5288caeca8642d1e84afbd3f7d6820020",
+    "actions/setup-python@v5": "a26af69be951a213d495a4c3e4e4022e16d87065",
+    "actions/upload-artifact@v4": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+    "bufbuild/buf-setup-action@v1": "a47c93e0b1648d5651a065437926377d060baa99"
+  },
+  "schema_version": 1,
+  "status": "PASS",
+  "workflow_count": 38
+}

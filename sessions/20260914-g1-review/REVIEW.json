@@ -20,9 +20,9 @@
   "repository_security_backlog": {
     "contents_write_workflows": 19,
     "severity": "HIGH",
-    "total_workflows": 36,
-    "unpinned_action_references": 51,
-    "workflows_with_unpinned_actions": 20
+    "total_workflows": 38,
+    "unpinned_action_references": 0,
+    "workflows_with_unpinned_actions": 0
   },
   "rust_lane": {
     "reason": "cargo toolchain unavailable and exact head has no hosted checks",
