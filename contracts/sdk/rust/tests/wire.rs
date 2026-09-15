@@ -19,7 +19,10 @@ fn decodes_and_round_trips_inference_request_fixture() {
     let request = InferenceRequest::decode(&bytes[..]).expect("decode inference fixture");
     assert_eq!(request.request_id, "req_contract_001");
     assert_eq!(request.attempt_id, "att_contract_001");
-    assert_eq!(request.principal.as_ref().map(|row| row.user_id.as_str()), Some("user_contract"));
+    assert_eq!(
+        request.principal.as_ref().map(|row| row.user_id.as_str()),
+        Some("user_contract")
+    );
     assert!(request.deadline_at.is_some());
     let encoded = request.encode_to_vec();
     let again = InferenceRequest::decode(encoded.as_slice()).expect("redecode inference request");
