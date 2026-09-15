@@ -131,13 +131,14 @@
       "category": "state-governance",
       "evidence": [
         "ledgers/DECISION_LEDGER.ndjson",
-        "ledgers/RISK_LEDGER.ndjson"
+        "ledgers/RISK_LEDGER.ndjson",
+        "D-0012 through D-0019 and RISK-0006 through RISK-0011"
       ],
       "id": "GOV-P2-RISK-DECISION-DRIFT",
-      "recommended_action": "Add CP03 decisions/risks for correlation semantics, bounded I/O, teardown, stderr privacy, branch protection and donor convergence.",
+      "recommended_action": "Keep CP03 decisions and risk status transitions append-only and require deterministic ContextPack regeneration.",
       "severity": "P2",
-      "status": "OPEN",
-      "summary": "Decision/risk ledgers remain largely CP01-era and do not record key W02 decisions/risks."
+      "status": "REMEDIATED",
+      "summary": "CP03 decisions and risks now cover pinning, bounded I/O, correlation, teardown, stderr privacy, branch protection and PR convergence."
     },
     {
       "blocking_scope": [
