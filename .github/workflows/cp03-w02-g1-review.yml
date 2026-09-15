@@ -4,7 +4,7 @@ on:
   push:
     branches: [review/cp03-w02-g1-gauntlet-20260914]
   pull_request:
-    branches: [main]
+    branches: [main, wave/cp03/w02-teardown-cleanup]
   workflow_dispatch:
 
 permissions:
