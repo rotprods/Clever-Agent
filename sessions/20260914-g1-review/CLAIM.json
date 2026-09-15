@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "claim_id": "CLAIM-CP03-W02-G1-REVIEW-20260914",
+  "wave_id": "CP03-W02-G1-REVIEW-20260914",
+  "parent_wave": "CP03-W02",
+  "canonical_frontier": "W02-06",
+  "source_head": "3885ba717cba450fd7283eb45a9e43b09b26b1a0",
+  "objective": "Independently review PR #28 G1 convergence, remove false-red historical tests, and add a fail-closed release E2E gate without changing runtime or parity.",
+  "status": "IN_PROGRESS",
+  "parity_promotions_authorized": 0
+}
