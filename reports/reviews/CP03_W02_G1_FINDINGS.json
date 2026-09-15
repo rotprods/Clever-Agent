@@ -146,10 +146,10 @@
       ],
       "category": "supply-chain",
       "evidence": [
-        "independent review scan found 27 unpinned uses across CP02/CP03 workflows"
+        "independent review scan found 51 unpinned uses across 20 of 36 workflows"
       ],
       "id": "SUPPLY-P1-UNPINNED-ACTIONS",
-      "observed_count": 27,
+      "observed_count": 51,
       "recommended_action": "Replace every external action tag with an audited 40-hex commit SHA; re-run the workflow inventory scan.",
       "severity": "P1",
       "status": "OPEN",

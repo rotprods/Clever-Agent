@@ -78,11 +78,13 @@ otherwise surface cleanup failure distinctly.
 
 ## Supply-chain review
 
-The independent workflow inventory found **27 external action uses pinned to mutable tags**
+The corrected workflow inventory found **51 external action uses across 20 of 36 workflows pinned to mutable tags**
 such as `@v4`, `@v5` and `buf...@v1`. This is a real supply-chain finding, not a review
 harness defect. The review records it as `SUPPLY-P1-UNPINNED-ACTIONS`.
 
-It blocks production/release hardening until those uses are replaced with audited 40-hex
+The original review scanner only matched compact `- uses:` syntax and missed the common
+`uses:` child of a named step. The corrected scanner covers both forms. This finding
+blocks production/release hardening until those uses are replaced with audited 40-hex
 commit SHAs. It does not by itself invalidate the Rust G1 behavior under review.
 
 ## QA / recovery review

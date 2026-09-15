@@ -93,7 +93,10 @@ class G1IndependentReviewTests(unittest.TestCase):
 
     def test_unpinned_actions_are_exactly_accounted_for(self):
         offenders = []
-        use_re = re.compile(r"^\s*-\s*uses:\s*([^\s#]+)", re.MULTILINE)
+        # Most workflow steps put `uses:` below `- name:` rather than on the
+        # same list-item line.  Both are executable action references and must
+        # be included in the supply-chain inventory.
+        use_re = re.compile(r"^\s*-?\s*uses:\s*([^\s#]+)", re.MULTILINE)
         for workflow in sorted((ROOT / ".github/workflows").glob("*.yml")):
             for use in use_re.findall(workflow.read_text()):
                 if use.startswith("./"):
