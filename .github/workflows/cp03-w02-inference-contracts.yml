@@ -88,6 +88,6 @@ jobs:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: cp03-w02-inference-contracts-${{ env.SOURCE_SHA }}
-          path: contracts
+          path: .
       - name: Swift historical and inference round trips
         run: swift test --package-path contracts/sdk/swift

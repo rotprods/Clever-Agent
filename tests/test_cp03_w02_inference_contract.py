@@ -77,5 +77,10 @@ class InferenceContractTests(unittest.TestCase):
             self.assertRegex(adapter, rf"\b{field}\s*=\s*{number};")
 
 
+    def test_swift_job_restores_artifact_at_repository_root(self) -> None:
+        workflow = (ROOT / ".github/workflows/cp03-w02-inference-contracts.yml").read_text()
+        self.assertIn("name: cp03-w02-inference-contracts-${{ env.SOURCE_SHA }}\n          path: .", workflow)
+        self.assertNotIn("name: cp03-w02-inference-contracts-${{ env.SOURCE_SHA }}\n          path: contracts", workflow)
+
 if __name__ == "__main__":
     unittest.main()
