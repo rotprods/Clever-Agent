@@ -26,3 +26,17 @@ import Testing
     let again = try Clever_V1_AdapterFrame(serializedBytes: encoded)
     #expect(again.frameID == frame.frameID)
 }
+
+@Test func decodesAndRoundTripsInferenceRequestFixture() throws {
+    let packageRoot = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+    let fixture = packageRoot.appendingPathComponent("../../fixtures/wire/inference-request.bin").standardizedFileURL
+    let data = try Data(contentsOf: fixture)
+    let request = try Clever_V1_InferenceRequest(serializedBytes: data)
+    #expect(request.requestID == "req_contract_001")
+    #expect(request.attemptID == "att_contract_001")
+    #expect(request.principal.userID == "user_contract")
+    #expect(request.hasDeadlineAt)
+    let encoded = try request.serializedData()
+    let again = try Clever_V1_InferenceRequest(serializedBytes: encoded)
+    #expect(again.idempotencyKey == "idem_contract_001")
+}

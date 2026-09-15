@@ -3,6 +3,7 @@ syntax = "proto3";
 package clever.v1;
 
 import "clever/v1/common.proto";
+import "clever/v1/inference.proto";
 import "clever/v1/runtime.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -103,5 +104,10 @@ message AdapterFrame {
     AdapterShutdown shutdown = 17;
     AdapterBusy busy = 18;
     AdapterError error = 19;
+    InferenceRequest inference_request = 20;
+    InferenceChunk inference_chunk = 21;
+    InferenceTerminal inference_terminal = 22;
+    InferenceError inference_error = 23;
+    InferenceCancel inference_cancel = 24;
   }
 }

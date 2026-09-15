@@ -9,12 +9,13 @@ PIN = "72033b8ec288aa067ce4530ff9d96bf231e9c4e5"
 
 
 class AdapterContractTests(unittest.TestCase):
-    def test_manifest_adds_adapter_as_minor_v1_extension(self) -> None:
+    def test_manifest_preserves_adapter_and_adds_inference_as_minor_v1_extension(self) -> None:
         manifest = json.loads((ROOT / "contracts/contract_manifest.json").read_text())
-        self.assertEqual({"major": 1, "minor": 1}, manifest["wire_version"])
+        self.assertEqual({"major": 1, "minor": 2}, manifest["wire_version"])
         contracts = {row["id"]: row for row in manifest["contracts"]}
         self.assertIn("adapter_transport", contracts)
         self.assertEqual("clever.v1.AdapterFrame", contracts["adapter_transport"]["message"])
+        self.assertEqual("clever.v1.InferenceRequest", contracts["inference_request"]["message"])
 
     def test_adapter_fixture_is_pinned_and_deadline_bounded(self) -> None:
         fixture = json.loads((ROOT / "contracts/fixtures/adapter.json").read_text())

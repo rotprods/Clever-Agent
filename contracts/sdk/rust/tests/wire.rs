@@ -1,4 +1,4 @@
-use clever_contracts::{AdapterFrame, EventEnvelope};
+use clever_contracts::{AdapterFrame, EventEnvelope, InferenceRequest};
 use prost::Message;
 
 #[test]
@@ -11,6 +11,22 @@ fn decodes_and_round_trips_shared_event_fixture() {
     let encoded = event.encode_to_vec();
     let again = EventEnvelope::decode(encoded.as_slice()).expect("redecode encoded event");
     assert_eq!(again.message_id, event.message_id);
+}
+
+#[test]
+fn decodes_and_round_trips_inference_request_fixture() {
+    let bytes = include_bytes!("../../../fixtures/wire/inference-request.bin");
+    let request = InferenceRequest::decode(&bytes[..]).expect("decode inference fixture");
+    assert_eq!(request.request_id, "req_contract_001");
+    assert_eq!(request.attempt_id, "att_contract_001");
+    assert_eq!(
+        request.principal.as_ref().map(|row| row.user_id.as_str()),
+        Some("user_contract")
+    );
+    assert!(request.deadline_at.is_some());
+    let encoded = request.encode_to_vec();
+    let again = InferenceRequest::decode(encoded.as_slice()).expect("redecode inference request");
+    assert_eq!(again.idempotency_key, "idem_contract_001");
 }
 
 #[test]
