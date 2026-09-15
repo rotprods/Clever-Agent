@@ -79,6 +79,8 @@ class InferenceContractTests(unittest.TestCase):
 
     def test_swift_job_restores_artifact_at_repository_root(self) -> None:
         workflow = (ROOT / ".github/workflows/cp03-w02-inference-contracts.yml").read_text()
+        self.assertIn("SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}", workflow)
+        self.assertEqual(2, workflow.count("ref: ${{ env.SOURCE_SHA }}"))
         self.assertIn("name: cp03-w02-inference-contracts-${{ env.SOURCE_SHA }}\n          path: .", workflow)
         self.assertNotIn("name: cp03-w02-inference-contracts-${{ env.SOURCE_SHA }}\n          path: contracts", workflow)
 
