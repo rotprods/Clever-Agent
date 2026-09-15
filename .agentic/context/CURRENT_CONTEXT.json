@@ -10,7 +10,15 @@
     "D-0008",
     "D-0009",
     "D-0010",
-    "D-0011"
+    "D-0011",
+    "D-0012",
+    "D-0013",
+    "D-0014",
+    "D-0015",
+    "D-0016",
+    "D-0017",
+    "D-0018",
+    "D-0019"
   ],
   "active_claims": [],
   "authority_read_order": [
@@ -166,6 +174,26 @@
     },
     {
       "risk_id": "RISK-0003",
+      "severity": "HIGH",
+      "status": "OPEN"
+    },
+    {
+      "risk_id": "RISK-0006",
+      "severity": "HIGH",
+      "status": "OPEN"
+    },
+    {
+      "risk_id": "RISK-0007",
+      "severity": "HIGH",
+      "status": "OPEN"
+    },
+    {
+      "risk_id": "RISK-0008",
+      "severity": "MEDIUM",
+      "status": "OPEN"
+    },
+    {
+      "risk_id": "RISK-0010",
       "severity": "HIGH",
       "status": "OPEN"
     }

@@ -176,3 +176,8 @@ mutables fueron reemplazadas por los commits que resolvían sus aliases auditado
 `download-artifact@v4` y `buf-setup-action@v1`). El escáner dedicado cubre tanto
 `- uses:` como el `uses:` anidado bajo pasos con nombre y falla ante cualquier ref
 externa que no sea un SHA hexadecimal de 40 caracteres.
+
+El HEAD convergido posterior a la integración es
+`1988d56d1d948422c2b27cc57259d4ac910cee93` y pasó 11/11 workflows alojados.
+También se materializaron `D-0012`–`D-0019` y `RISK-0006`–`RISK-0011`, cerrando
+la deriva de gobernanza sin alterar K=47, el denominador 7.565 ni VERIFIED=0.
