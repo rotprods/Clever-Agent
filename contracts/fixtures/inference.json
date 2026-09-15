@@ -1,0 +1,22 @@
+{
+  "attemptId": "att_contract_001",
+  "config": {
+    "maxOutputTokens": "128",
+    "stopSequences": ["<END>"],
+    "stream": true,
+    "temperature": 0.2,
+    "topP": 0.95
+  },
+  "contractVersion": {"major": 1, "minor": 2},
+  "deadlineAt": "2026-09-15T18:00:05Z",
+  "engineId": "openjarvis.engine.default",
+  "idempotencyKey": "idem_contract_001",
+  "inputs": [
+    {"content": "Answer with one bounded sentence.", "role": "INFERENCE_ROLE_SYSTEM"},
+    {"content": "What is the current contract version?", "role": "INFERENCE_ROLE_USER"}
+  ],
+  "modelId": "fixture-model",
+  "principal": {"deviceId": "device_contract", "userId": "user_contract"},
+  "requestId": "req_contract_001",
+  "sessionId": "ses_contract_001"
+}

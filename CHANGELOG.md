@@ -2,6 +2,14 @@
 
 All notable project-control and implementation changes are recorded here. Evidence and detailed chronology live in append-only ledgers.
 
+## 2026-09-15 — CP03/W02 convergence and inference-contract start
+
+- Converged G1 review, supply-chain hardening and CP03 governance into PR #28; exact HEAD `43bcd638` passed 11/11 hosted workflows.
+- Replaced 51 mutable GitHub Action references and enforced repository-wide immutable commit refs.
+- Closed PR #29 and historical PR #15 as superseded after preserving their donor evidence.
+- Recorded CP03 decisions D-0012..D-0019 and risks RISK-0006..RISK-0011; regenerated the deterministic ContextPack.
+- Started claimed W02-06 implementation with additive v1.2 typed inference request/chunk/terminal/error/cancel contracts and four-language round-trip gates. No model execution or parity promotion is claimed.
+
 ## 2026-08-31
 
 ### W02 closed — behavioral extraction frontier opened

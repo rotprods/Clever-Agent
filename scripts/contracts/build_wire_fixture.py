@@ -12,7 +12,7 @@ if str(GENERATED) not in sys.path:
 
 from google.protobuf.json_format import MessageToDict
 from google.protobuf.timestamp_pb2 import Timestamp
-from clever.v1 import adapter_pb2, common_pb2, events_pb2, identity_pb2, runtime_pb2
+from clever.v1 import adapter_pb2, common_pb2, events_pb2, identity_pb2, inference_pb2, runtime_pb2
 
 
 def timestamp(value: datetime) -> Timestamp:
@@ -75,7 +75,35 @@ def main() -> int:
     assert decoded.frame_id == "frame_hello_openjarvis"
     assert decoded.hello.upstream_commit == "72033b8ec288aa067ce4530ff9d96bf231e9c4e5"
     assert decoded.hello.runtime.runtime_kind == "cognitive-runtime"
-    print(f"OK: Python produced event={event_bytes} bytes adapter_hello={adapter_bytes} bytes")
+
+    inference = inference_pb2.InferenceRequest(
+        contract_version=common_pb2.ContractVersion(major=1, minor=2),
+        request_id="req_contract_001",
+        attempt_id="att_contract_001",
+        principal=identity_pb2.PrincipalRef(user_id="user_contract", device_id="device_contract"),
+        session_id="ses_contract_001",
+        engine_id="openjarvis.engine.default",
+        model_id="fixture-model",
+        inputs=[
+            inference_pb2.InferenceInput(role=inference_pb2.INFERENCE_ROLE_SYSTEM, content="Answer with one bounded sentence."),
+            inference_pb2.InferenceInput(role=inference_pb2.INFERENCE_ROLE_USER, content="What is the current contract version?"),
+        ],
+        config=inference_pb2.InferenceConfig(
+            max_output_tokens=128,
+            temperature=0.2,
+            top_p=0.95,
+            stop_sequences=["<END>"],
+            stream=True,
+        ),
+        deadline_at=timestamp(datetime(2026, 9, 15, 18, 0, 5, tzinfo=timezone.utc)),
+        idempotency_key="idem_contract_001",
+    )
+    inference_bytes = write_message(inference, "inference-request")
+    inference_decoded = inference_pb2.InferenceRequest.FromString(inference.SerializeToString())
+    assert inference_decoded.request_id == "req_contract_001"
+    assert inference_decoded.attempt_id == "att_contract_001"
+    assert inference_decoded.deadline_at.ToDatetime(tzinfo=timezone.utc) > now
+    print(f"OK: Python produced event={event_bytes} adapter_hello={adapter_bytes} inference={inference_bytes} protobuf bytes")
     return 0
 
 

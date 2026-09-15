@@ -35,6 +35,7 @@
 
 ## Active claims
 
+- `CLAIM-CP03-W02-INFERENCE-CONTRACTS-20260915` → `CP03-W02-INFERENCE-CONTRACTS-20260915` · `codex-gpt-5`
 
 ## Open / mitigating risks
 
