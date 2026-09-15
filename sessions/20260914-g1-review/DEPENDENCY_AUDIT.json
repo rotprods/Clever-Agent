@@ -1,0 +1,26 @@
+{
+  "cargo_audit": {
+    "reason": "cargo toolchain unavailable in runner",
+    "status": "BLOCKED"
+  },
+  "date": "2026-09-14",
+  "git_dependencies_in_rust_locks": 0,
+  "pip_audit": {
+    "dependencies": [
+      {
+        "name": "protobuf",
+        "version": "7.36.0",
+        "vulnerabilities": []
+      }
+    ],
+    "status": "PASS"
+  },
+  "rust_lock_checksums": 32,
+  "schema_version": 1,
+  "secret_pattern_matches": 0,
+  "typescript_exact_versions": {
+    "@bufbuild/protobuf": "2.14.0",
+    "tsx": "4.23.12",
+    "typescript": "7.0.2"
+  }
+}

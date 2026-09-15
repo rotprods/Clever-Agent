@@ -1,0 +1,87 @@
+{
+  "frontier": "W02-06",
+  "lanes": {
+    "frontier": {
+      "frontier": "W02-06",
+      "g1_evidence": [
+        "EVID-W02-CONTROL-ATOMIC-20260909",
+        "EVID-W02-TEARDOWN-20260909"
+      ],
+      "parity_promotions": 0,
+      "status": "PASS"
+    },
+    "python": [
+      {
+        "name": "agentic_state",
+        "returncode": 0,
+        "status": "PASS",
+        "stderr_tail": "",
+        "stdout_tail": "OK: agentic state/context/plan are consistent goal=CLEVER-JARVIS-001 checkpoint=CP03 iteration=I03 next_wave=CP03-W02\n"
+      },
+      {
+        "name": "context",
+        "returncode": 0,
+        "status": "PASS",
+        "stderr_tail": "",
+        "stdout_tail": "OK: COS Graph Engine V2 ContextPack is ledger-backed and consistent\n"
+      },
+      {
+        "name": "context_determinism",
+        "returncode": 0,
+        "status": "PASS",
+        "stderr_tail": "",
+        "stdout_tail": "OK: deterministic ContextPack matches canonical state\n"
+      },
+      {
+        "name": "next_actions",
+        "returncode": 0,
+        "status": "PASS",
+        "stderr_tail": "",
+        "stdout_tail": "OK: executable task DAG is valid frontier=CP03-W02 first=CP03-002 tasks=11\n"
+      },
+      {
+        "name": "w02_plan",
+        "returncode": 0,
+        "status": "PASS",
+        "stderr_tail": "",
+        "stdout_tail": "{\"dimension_count\": 20, \"finding_count\": 10, \"first_executable_task\": \"W02-06\", \"gate_count\": 8, \"parity_promotions\": 0, \"runtime_tests_executed_by_this_validator\": 0, \"scope\": \"PLAN_INTEGRITY_ONLY\", \"status\": \"PASS\", \"task_count\": 20, \"topological_order\": [\"W02-00\", \"W02-01\", \"W02-02\", \"W02-03\", \"W02-04\", \"W02-05\", \"W02-06\", \"W02-07\", \"W02-08\", \"W02-09\", \"W02-10\", \"W02-11\", \"W02-12\", \"W02-13\", \"W02-14\", \"W02-15\", \"W02-16\", \"W02-17\", \"W02-18\", \"W02-19\"]}\n"
+      },
+      {
+        "name": "parity",
+        "returncode": 0,
+        "status": "PASS",
+        "stderr_tail": "",
+        "stdout_tail": "{\"counts\": {\"UNVERIFIED\": 646}, \"schema_version\": 1, \"source_repo\": \"openjarvis\", \"total\": 646, \"verified\": 0}\n"
+      },
+      {
+        "name": "python_regressions",
+        "returncode": 0,
+        "status": "PASS",
+        "stderr_tail": "_rejected) ... ok\ntest_missing_acceptance_rejected (tests.test_cp03_w02_plan.W02PlanTests.test_missing_acceptance_rejected) ... ok\ntest_missing_dependency_rejected (tests.test_cp03_w02_plan.W02PlanTests.test_missing_dependency_rejected) ... ok\ntest_parent_scope_locked (tests.test_cp03_w02_plan.W02PlanTests.test_parent_scope_locked) ... ok\ntest_path_traversal_rejected (tests.test_cp03_w02_plan.W02PlanTests.test_path_traversal_rejected) ... ok\ntest_self_dependency_rejected (tests.test_cp03_w02_plan.W02PlanTests.test_self_dependency_rejected) ... ok\ntest_unmapped_dimension_rejected (tests.test_cp03_w02_plan.W02PlanTests.test_unmapped_dimension_rejected) ... ok\ntest_unmapped_finding_rejected (tests.test_cp03_w02_plan.W02PlanTests.test_unmapped_finding_rejected) ... ok\ntest_upstream_pin_locked (tests.test_cp03_w02_plan.W02PlanTests.test_upstream_pin_locked) ... ok\ntest_valid_plan (tests.test_cp03_w02_plan.W02PlanTests.test_valid_plan) ... ok\ntest_validator_does_not_claim_runtime_proof (tests.test_cp03_w02_plan.W02PlanTests.test_validator_does_not_claim_runtime_proof) ... ok\ntest_w02_count_is_present_after_scope_lock_and_bounds_remain_enforced (tests.test_cp03_w02_plan.W02PlanTests.test_w02_count_is_present_after_scope_lock_and_bounds_remain_enforced) ... ok\ntest_bad_digest_fails_before_state_mutation (tests.test_cp03_w02_teardown_finalizer.W02TeardownFinalizerTests.test_bad_digest_fails_before_state_mutation) ... ok\ntest_canonical_transition_is_frozen (tests.test_cp03_w02_teardown_finalizer.W02TeardownFinalizerTests.test_canonical_transition_is_frozen) ... ok\ntest_floating_head_fails_before_state_mutation (tests.test_cp03_w02_teardown_finalizer.W02TeardownFinalizerTests.test_floating_head_fails_before_state_mutation) ... ok\ntest_nonpositive_run_or_artifact_fails (tests.test_cp03_w02_teardown_finalizer.W02TeardownFinalizerTests.test_nonpositive_run_or_artifact_fails) ... ok\n\n----------------------------------------------------------------------\nRan 36 tests in 0.032s\n\nOK\n",
+        "stdout_tail": ""
+      }
+    ],
+    "rust": {
+      "reason": "cargo toolchain unavailable",
+      "status": "BLOCKED"
+    },
+    "workflow_security": {
+      "status": "PASS",
+      "workflows": {
+        ".github/workflows/cp03-w02-teardown-finalize.yml": {
+          "actions": 3,
+          "contents_write": true,
+          "status": "PASS"
+        },
+        ".github/workflows/cp03-w02-teardown.yml": {
+          "actions": 4,
+          "contents_write": true,
+          "status": "PASS"
+        }
+      }
+    }
+  },
+  "parity_promotions": 0,
+  "schema_version": 1,
+  "status": "PASS_WITH_RUST_BLOCKED"
+}

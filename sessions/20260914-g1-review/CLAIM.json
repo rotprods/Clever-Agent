@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-14",
+  "claim_id": "CLAIM-CP03-W02-G1-REVIEW-20260914",
+  "wave_id": "CP03-W02-G1-REVIEW-20260914",
+  "parent_wave": "CP03-W02",
+  "canonical_frontier": "W02-06",
+  "source_head": "3885ba717cba450fd7283eb45a9e43b09b26b1a0",
+  "owner": "codex-gpt-5",
+  "contributors": ["chatgpt-gpt-5.6-sol-review"],
+  "objective": "Independently review PR #28 G1 convergence, repair false-red tests, add fail-closed release and repository-integrity gates, and materialize architecture/security/QA evidence without changing runtime or parity.",
+  "scope": [
+    ".github/workflows/cp03-w02-g1-review.yml",
+    "docs/reviews/2026-09-14_CP03_W02_G1_ARCHITECTURE_SECURITY_QA.md",
+    "kernel/crates/clever-kernel/tests/review_g1_adversarial.rs",
+    "reports/reviews/CP03_W02_G1_FINDINGS.json",
+    "scripts/release_gauntlet.py",
+    "sessions/20260914-g1-review/**",
+    "tests/test_cp01_baselines_supply_chain.py",
+    "tests/test_cp02_release.py",
+    "tests/test_cp03_w02_g1_review.py",
+    "tests/test_cp03_w02_scope.py",
+    "tests/test_release_gauntlet.py",
+    "tests/test_repository_integrity.py"
+  ],
+  "coordination": "Combined independent review overlay. Does not mutate candidate runtime, canonical task status, denominator, parity, PR #15, PR #28 or PR #29.",
+  "status": "RELEASED",
+  "parity_promotions_authorized": 0
+}
