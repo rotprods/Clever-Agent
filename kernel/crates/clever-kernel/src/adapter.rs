@@ -10,8 +10,11 @@ use std::{
         Arc, Mutex,
     },
     thread::{self, JoinHandle},
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
+
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
 
 use clever_contracts::{
     adapter_frame, AdapterCancel, AdapterFrame, AdapterHealthRequest, AdapterHelloAck,
@@ -157,10 +160,29 @@ impl AdapterIdentity {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AdapterCleanupCommand {
+    pub program: String,
+    pub args: Vec<String>,
+    pub env: BTreeMap<String, String>,
+}
+
+impl AdapterCleanupCommand {
+    #[must_use]
+    pub fn new(program: impl Into<String>) -> Self {
+        Self {
+            program: program.into(),
+            args: Vec::new(),
+            env: BTreeMap::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AdapterCommand {
     pub program: String,
     pub args: Vec<String>,
     pub env: BTreeMap<String, String>,
+    pub cleanup: Option<AdapterCleanupCommand>,
 }
 
 impl AdapterCommand {
@@ -170,6 +192,7 @@ impl AdapterCommand {
             program: program.into(),
             args: Vec::new(),
             env: BTreeMap::new(),
+            cleanup: None,
         }
     }
 }
@@ -182,6 +205,10 @@ pub struct SupervisorPolicy {
     pub handshake_timeout: Duration,
     pub request_timeout: Duration,
     pub write_timeout: Duration,
+    pub shutdown_timeout: Duration,
+    pub thread_join_timeout: Duration,
+    pub cleanup_timeout: Duration,
+    pub termination_poll_interval: Duration,
     pub max_restarts: u32,
     pub restart_backoff: Duration,
 }
@@ -195,6 +222,10 @@ impl Default for SupervisorPolicy {
             handshake_timeout: Duration::from_secs(10),
             request_timeout: Duration::from_secs(5),
             write_timeout: Duration::from_secs(5),
+            shutdown_timeout: Duration::from_secs(2),
+            thread_join_timeout: Duration::from_millis(500),
+            cleanup_timeout: Duration::from_secs(2),
+            termination_poll_interval: Duration::from_millis(10),
             max_restarts: 2,
             restart_backoff: Duration::from_millis(50),
         }
@@ -258,6 +289,9 @@ pub struct AdapterSupervisor {
     negotiated_features: BTreeSet<String>,
     next_frame_sequence: u64,
     session_poisoned: Option<String>,
+    process_group_id: Option<u32>,
+    cleanup: Option<AdapterCleanupCommand>,
+    termination_complete: bool,
 }
 
 impl AdapterSupervisor {
@@ -299,16 +333,33 @@ impl AdapterSupervisor {
             || policy.max_inbound_frames == 0
             || policy.max_inbound_bytes == 0
             || policy.write_timeout.is_zero()
+            || policy.shutdown_timeout.is_zero()
+            || policy.thread_join_timeout.is_zero()
+            || policy.cleanup_timeout.is_zero()
+            || policy.termination_poll_interval.is_zero()
         {
             return Err(AdapterSupervisorError::InvalidCommand(
-                "frame, inbound queue/byte budgets, and write_timeout must be positive".to_owned(),
+                "frame/queue budgets and all I/O/lifecycle timeouts must be positive".to_owned(),
             ));
         }
 
+        if let Some(cleanup) = &command.cleanup {
+            if cleanup.program.trim().is_empty() || !Path::new(&cleanup.program).is_absolute() {
+                return Err(AdapterSupervisorError::InvalidCommand(
+                    "cleanup program must be a non-empty absolute path".to_owned(),
+                ));
+            }
+        }
+
+        let cleanup = command.cleanup.clone();
         let mut process = Command::new(&command.program);
         process.args(&command.args);
         process.env_clear();
         process.envs(&command.env);
+        #[cfg(unix)]
+        {
+            process.process_group(0);
+        }
         process
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -316,6 +367,10 @@ impl AdapterSupervisor {
         let mut child = process
             .spawn()
             .map_err(|error| AdapterSupervisorError::Io(error.to_string()))?;
+        #[cfg(unix)]
+        let process_group_id = Some(child.id());
+        #[cfg(not(unix))]
+        let process_group_id = None;
         let stdin = child
             .stdin
             .take()
@@ -405,6 +460,9 @@ impl AdapterSupervisor {
             negotiated_features: BTreeSet::new(),
             next_frame_sequence: 0,
             session_poisoned: None,
+            process_group_id,
+            cleanup,
+            termination_complete: false,
         };
         let hello_frame =
             supervisor.receive_frame(supervisor.policy.handshake_timeout, "handshake")?;
@@ -530,9 +588,20 @@ impl AdapterSupervisor {
                 "shutdown did not return STOPPING".to_owned(),
             ));
         }
-        self.child
-            .wait()
-            .map_err(|error| AdapterSupervisorError::Io(error.to_string()))?;
+        self.writer_sender.take();
+        if !wait_child_bounded(
+            &mut self.child,
+            self.policy.shutdown_timeout,
+            self.policy.termination_poll_interval,
+        )? {
+            self.terminate_bounded();
+            return Err(AdapterSupervisorError::Timeout("shutdown exit"));
+        }
+        if !self.join_threads_bounded() {
+            self.terminate_bounded();
+            return Err(AdapterSupervisorError::Timeout("shutdown I/O drain"));
+        }
+        self.termination_complete = true;
         Ok(health)
     }
 
@@ -707,8 +776,92 @@ impl AdapterSupervisor {
         if self.session_poisoned.is_none() {
             self.session_poisoned = Some(reason.into());
         }
+        self.terminate_bounded();
+    }
+
+    fn terminate_bounded(&mut self) {
+        if self.termination_complete {
+            return;
+        }
         self.writer_sender.take();
+        self.signal_process_group();
         let _ = self.child.kill();
+        self.run_cleanup_bounded();
+        let _ = wait_child_bounded(
+            &mut self.child,
+            self.policy.shutdown_timeout,
+            self.policy.termination_poll_interval,
+        );
+        let _ = self.join_threads_bounded();
+        self.termination_complete = true;
+    }
+
+    fn signal_process_group(&self) {
+        #[cfg(unix)]
+        if let Some(group_id) = self.process_group_id {
+            let target = format!("-{group_id}");
+            let mut command = Command::new("/bin/kill");
+            command
+                .env_clear()
+                .args(["-KILL", "--", target.as_str()])
+                .stdin(Stdio::null())
+                .stdout(Stdio::null())
+                .stderr(Stdio::null());
+            if let Ok(mut killer) = command.spawn() {
+                let _ = wait_child_bounded(
+                    &mut killer,
+                    self.policy.cleanup_timeout,
+                    self.policy.termination_poll_interval,
+                );
+                let _ = killer.kill();
+            }
+        }
+    }
+
+    fn run_cleanup_bounded(&self) {
+        let Some(cleanup) = &self.cleanup else {
+            return;
+        };
+        let mut command = Command::new(&cleanup.program);
+        command
+            .args(&cleanup.args)
+            .env_clear()
+            .envs(&cleanup.env)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null());
+        let Ok(mut cleanup_process) = command.spawn() else {
+            return;
+        };
+        match wait_child_bounded(
+            &mut cleanup_process,
+            self.policy.cleanup_timeout,
+            self.policy.termination_poll_interval,
+        ) {
+            Ok(true) => {}
+            _ => {
+                let _ = cleanup_process.kill();
+                let _ = wait_child_bounded(
+                    &mut cleanup_process,
+                    self.policy.thread_join_timeout,
+                    self.policy.termination_poll_interval,
+                );
+            }
+        }
+    }
+
+    fn join_threads_bounded(&mut self) -> bool {
+        let reader_done = join_handle_bounded(
+            &mut self.reader,
+            self.policy.thread_join_timeout,
+            self.policy.termination_poll_interval,
+        );
+        let writer_done = join_handle_bounded(
+            &mut self.writer,
+            self.policy.thread_join_timeout,
+            self.policy.termination_poll_interval,
+        );
+        reader_done && writer_done
     }
 
     fn receive_frame(
@@ -778,14 +931,8 @@ impl AdapterSupervisor {
 
 impl Drop for AdapterSupervisor {
     fn drop(&mut self) {
-        self.writer_sender.take();
-        let _ = self.child.kill();
-        let _ = self.child.wait();
-        if let Some(reader) = self.reader.take() {
-            let _ = reader.join();
-        }
-        if let Some(writer) = self.writer.take() {
-            let _ = writer.join();
+        if !self.termination_complete {
+            self.terminate_bounded();
         }
     }
 }
@@ -954,6 +1101,47 @@ fn timestamp_at(time: SystemTime) -> prost_types::Timestamp {
         seconds: i64::try_from(duration.as_secs()).unwrap_or(i64::MAX),
         nanos: i32::try_from(duration.subsec_nanos()).unwrap_or(i32::MAX),
     }
+}
+
+fn wait_child_bounded(
+    child: &mut Child,
+    timeout: Duration,
+    poll_interval: Duration,
+) -> Result<bool, AdapterSupervisorError> {
+    let deadline = Instant::now() + timeout;
+    loop {
+        match child
+            .try_wait()
+            .map_err(|error| AdapterSupervisorError::Io(error.to_string()))?
+        {
+            Some(_) => return Ok(true),
+            None if Instant::now() >= deadline => return Ok(false),
+            None => thread::sleep(poll_interval),
+        }
+    }
+}
+
+fn join_handle_bounded(
+    handle: &mut Option<JoinHandle<()>>,
+    timeout: Duration,
+    poll_interval: Duration,
+) -> bool {
+    let Some(thread_handle) = handle.as_ref() else {
+        return true;
+    };
+    let deadline = Instant::now() + timeout;
+    while !thread_handle.is_finished() && Instant::now() < deadline {
+        thread::sleep(poll_interval);
+    }
+    let finished = handle.as_ref().is_none_or(JoinHandle::is_finished);
+    if finished {
+        if let Some(thread_handle) = handle.take() {
+            let _ = thread_handle.join();
+        }
+    } else {
+        handle.take();
+    }
+    finished
 }
 
 fn reserve_inbound_bytes(

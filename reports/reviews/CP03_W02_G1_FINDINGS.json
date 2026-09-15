@@ -1,0 +1,191 @@
+{
+  "base_main_sha": "f7f30badc9f1852c6f42117c528f9f32dad74bd7",
+  "candidate_sha": "3885ba717cba450fd7283eb45a9e43b09b26b1a0",
+  "findings": [
+    {
+      "blocking_scope": [
+        "production_release",
+        "privileged_merge_policy"
+      ],
+      "category": "governance-security",
+      "evidence": [
+        "GitHub branch main protected=false",
+        "GitHub rulesets=[]"
+      ],
+      "id": "SEC-P1-BRANCH-PROTECTION",
+      "recommended_action": "Maintainer/admin must enable branch protection or a ruleset with required checks before production release.",
+      "severity": "P1",
+      "status": "OPEN_EXTERNAL",
+      "summary": "main is not protected and no repository rulesets are present; CI is advisory rather than enforced."
+    },
+    {
+      "blocking_scope": [
+        "main_native_openjarvis"
+      ],
+      "category": "protocol",
+      "evidence": [
+        "main adapters/openjarvis/sidecar.py",
+        "candidate adapters/openjarvis/sidecar.py",
+        "PR29 native failure 34709805284"
+      ],
+      "id": "CODE-P1-SIDECAR-CORRELATION",
+      "recommended_action": "Require native exact-pin E2E on candidate before merge; do not merge PR29 separately after convergence.",
+      "severity": "P1",
+      "status": "RESOLVED_IN_CANDIDATE",
+      "summary": "main sidecar self-correlates unsolicited hello and mis-correlates control responses; candidate ports strict semantics."
+    },
+    {
+      "blocking_scope": [
+        "candidate_merge"
+      ],
+      "category": "qa-evidence",
+      "evidence": [
+        "fetch_commit_workflow_runs(3885ba7)=[]",
+        "Decision D-0010 exact-head evidence"
+      ],
+      "id": "QA-P1-EXACT-HEAD-CI",
+      "recommended_action": "Run independent current-head G1 gauntlet and retain artifacts/logs before merge.",
+      "severity": "P1",
+      "status": "OPEN",
+      "summary": "candidate 3885ba7 has no hosted workflow runs associated with the exact SHA."
+    },
+    {
+      "blocking_scope": [
+        "external_cleanup_claim",
+        "container_daemon_cleanup"
+      ],
+      "category": "reliability-security",
+      "evidence": [
+        "kernel/crates/clever-kernel/src/adapter.rs terminate_bounded/run_cleanup_bounded"
+      ],
+      "id": "REL-P1-CLEANUP-OBSERVABILITY",
+      "recommended_action": "Introduce a structured termination report/result and require observable cleanup success for external workloads before claiming cleanup verified.",
+      "severity": "P1",
+      "status": "OPEN",
+      "summary": "forced termination is bounded, but process-group kill, cleanup exit status, child wait, and join outcomes are mostly discarded before termination_complete=true."
+    },
+    {
+      "blocking_scope": [
+        "W02-07",
+        "provider_credentials",
+        "sensitive_prompt_runtime"
+      ],
+      "category": "secret-handling",
+      "evidence": [
+        "kernel/crates/clever-kernel/src/adapter.rs stderr(Stdio::inherit())"
+      ],
+      "id": "SEC-P2-STDERR",
+      "recommended_action": "Capture stderr with bounded buffering/redaction or prove secret/payload absence before provider credentials are exposed.",
+      "severity": "P2",
+      "status": "OPEN",
+      "summary": "adapter stderr is inherited directly and therefore unbounded/unredacted."
+    },
+    {
+      "blocking_scope": [
+        "non_unix_lifecycle_parity"
+      ],
+      "category": "portability",
+      "evidence": [
+        "cfg(unix) process_group(0) and process_group_id"
+      ],
+      "id": "PORT-P2-PROCESS-GROUP",
+      "recommended_action": "Declare platform constraint or implement native equivalent (for example Windows Job Objects) before cross-platform parity.",
+      "severity": "P2",
+      "status": "OPEN",
+      "summary": "process-group isolation/kill is Unix-specific; non-Unix falls back to parent kill plus optional cleanup."
+    },
+    {
+      "blocking_scope": [
+        "merge_sequence"
+      ],
+      "category": "pr-governance",
+      "evidence": [
+        "PR28 body convergence readback",
+        "PR29 open/draft"
+      ],
+      "id": "GOV-P1-DONOR-CONVERGENCE",
+      "recommended_action": "Use one convergence path. If PR28 candidate passes, close PR29 as superseded with an explicit commit/evidence crosswalk.",
+      "severity": "P1",
+      "status": "OPEN",
+      "summary": "PR28 selectively ports PR29 fixes while PR29 remains open; merging both would duplicate/diverge provenance."
+    },
+    {
+      "blocking_scope": [
+        "historical_cleanup"
+      ],
+      "category": "pr-governance",
+      "evidence": [
+        "PR15 open",
+        "W02-05 evidence on main"
+      ],
+      "id": "GOV-P2-PR15-SUPERSEDED",
+      "recommended_action": "Do not merge PR15. Close as superseded after mapping its evidence to W02-05.",
+      "severity": "P2",
+      "status": "OPEN",
+      "summary": "PR15 remains open despite W02-05 independently porting and re-proving relevant behavior."
+    },
+    {
+      "blocking_scope": [
+        "CP03_release"
+      ],
+      "category": "state-governance",
+      "evidence": [
+        "ledgers/DECISION_LEDGER.ndjson",
+        "ledgers/RISK_LEDGER.ndjson",
+        "D-0012 through D-0019 and RISK-0006 through RISK-0011"
+      ],
+      "id": "GOV-P2-RISK-DECISION-DRIFT",
+      "recommended_action": "Keep CP03 decisions and risk status transitions append-only and require deterministic ContextPack regeneration.",
+      "severity": "P2",
+      "status": "REMEDIATED",
+      "summary": "CP03 decisions and risks now cover pinning, bounded I/O, correlation, teardown, stderr privacy, branch protection and PR convergence."
+    },
+    {
+      "blocking_scope": [
+        "production_release",
+        "workflow_security_hardening"
+      ],
+      "category": "supply-chain",
+      "evidence": [
+        "independent review scan found 51 unpinned uses across 20 of 36 workflows",
+        "scripts/security/audit_github_actions.py reports 0 mutable references after pinning",
+        "tests/test_github_actions_supply_chain.py enforces repository-wide non-regression",
+        "reports/security/GITHUB_ACTIONS_PINNING_20260915.json"
+      ],
+      "id": "SUPPLY-P1-UNPINNED-ACTIONS",
+      "observed_count": 0,
+      "recommended_action": "Keep the repository-wide immutable-ref gate required for workflow changes and review Dependabot pin updates.",
+      "severity": "P1",
+      "status": "REMEDIATED",
+      "summary": "All external GitHub Action uses are pinned to audited 40-hex commit SHAs."
+    }
+  ],
+  "invariants": {
+    "K": 47,
+    "global_denominator": 7565,
+    "openjarvis_obligations": 646,
+    "verified": 0
+  },
+  "merge_recommendation": "CONDITIONAL_BLOCK",
+  "positive_controls": [
+    "federated polyglot architecture preserved",
+    "Clever kernel remains T0 policy authority",
+    "adapter env_clear used",
+    "reserved privilege metadata filtered",
+    "registry batch application is atomic",
+    "inbound frame and byte budgets are bounded",
+    "outbound writes have deadlines",
+    "OpenJarvis commit is pinned",
+    "parity remains 0; no false promotion"
+  ],
+  "review_id": "CP03-W02-G1-REVIEW-20260914",
+  "schema_version": 1,
+  "scope": [
+    "architecture",
+    "security",
+    "qa",
+    "pr-convergence",
+    "state-governance",
+    "supply-chain"
+  ]
+}

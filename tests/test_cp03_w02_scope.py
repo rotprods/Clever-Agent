@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import random
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -192,8 +193,14 @@ class ScopeTests(unittest.TestCase):
         self.assertFalse(json.loads(proc.stdout)['scope_frozen'])
 
     def test_generated_outputs_byte_check(self):
-        for p,b in scope.products(self.reference).items():
-            self.assertEqual((ROOT/p).read_bytes(),b)
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            for p in (*scope.INPUT_PATHS,scope.POLICY_PATH):
+                target=root/p;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/p,target)
+            proc=subprocess.run([sys.executable,str(ROOT/'scripts/cp03/w02_scope.py'),'--root',str(root),'--write'],capture_output=True,text=True,timeout=20)
+            self.assertEqual(proc.returncode,0,proc.stdout+proc.stderr)
+            for p,b in scope.products(self.reference).items():
+                self.assertEqual((root/p).read_bytes(),b)
 
     def test_input_files_not_mutated_by_compilation(self):
         before={p:scope.digest((ROOT/p).read_bytes()) for p in scope.INPUT_PATHS}
@@ -210,7 +217,6 @@ class ScopeTests(unittest.TestCase):
         with self.assertRaisesRegex(scope.ScopeError,'source digest'):scope.compile_rows(r,s,i,p)
 
     def test_output_drift_is_rejected_by_cli(self):
-        import shutil
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
             for p in (*scope.INPUT_PATHS,scope.POLICY_PATH):
@@ -223,10 +229,17 @@ class ScopeTests(unittest.TestCase):
             self.assertIn('output drift',json.loads(proc.stdout)['error'])
 
     def test_no_writes_when_freeze_gate_fails(self):
-        hashes={p:scope.digest((ROOT/p).read_bytes()) for p in scope.products(self.reference)}
-        proc=subprocess.run([sys.executable,str(ROOT/'scripts/cp03/w02_scope.py'),'--root',str(ROOT),'--require-frozen','--write'],capture_output=True,text=True,timeout=20)
-        self.assertEqual(proc.returncode,2)
-        self.assertEqual(hashes,{p:scope.digest((ROOT/p).read_bytes()) for p in scope.products(self.reference)})
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            for p in (*scope.INPUT_PATHS,scope.POLICY_PATH):
+                target=root/p;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/p,target)
+            outputs=scope.products(self.reference)
+            for p,b in outputs.items():
+                target=root/p;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(b)
+            hashes={p:scope.digest((root/p).read_bytes()) for p in outputs}
+            proc=subprocess.run([sys.executable,str(ROOT/'scripts/cp03/w02_scope.py'),'--root',str(root),'--require-frozen','--write'],capture_output=True,text=True,timeout=20)
+            self.assertEqual(proc.returncode,2)
+            self.assertEqual(hashes,{p:scope.digest((root/p).read_bytes()) for p in outputs})
 
 
 class EngineContractTests(unittest.TestCase):

@@ -1,0 +1,33 @@
+{
+  "base_sha": "f7f30badc9f1852c6f42117c528f9f32dad74bd7",
+  "code_review": {
+    "known_blocking_source_defects": 0,
+    "status": "PASS_WITH_EXECUTION_BLOCKER"
+  },
+  "date": "2026-09-14",
+  "decision": "CHANGES_REQUIRED",
+  "exact_head_remote_checks": 0,
+  "frontier": "W02-06",
+  "head_sha": "3885ba717cba450fd7283eb45a9e43b09b26b1a0",
+  "parity_promotions": 0,
+  "pr": 28,
+  "python_tests": {
+    "failed": 0,
+    "passed": 238,
+    "run": 238,
+    "status": "PASS"
+  },
+  "repository_security_backlog": {
+    "contents_write_workflows": 19,
+    "severity": "HIGH",
+    "total_workflows": 38,
+    "unpinned_action_references": 0,
+    "workflows_with_unpinned_actions": 0
+  },
+  "rust_lane": {
+    "reason": "cargo toolchain unavailable and exact head has no hosted checks",
+    "status": "BLOCKED"
+  },
+  "schema_version": 1,
+  "strict_gauntlet": "BLOCKED"
+}

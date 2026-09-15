@@ -10,7 +10,15 @@
     "D-0008",
     "D-0009",
     "D-0010",
-    "D-0011"
+    "D-0011",
+    "D-0012",
+    "D-0013",
+    "D-0014",
+    "D-0015",
+    "D-0016",
+    "D-0017",
+    "D-0018",
+    "D-0019"
   ],
   "active_claims": [],
   "authority_read_order": [
@@ -53,11 +61,16 @@
     "EVID-0012",
     "EVID-0013",
     "EVID-0014",
+    "EVID-CP03-W02-G1-REVIEW-20260914",
+    "EVID-CP03-W02-RESEARCH-20260914",
+    "EVID-CP03-W02-REVIEW-RECONCILE-20260915",
+    "EVID-CP03-W02-REVIEW-TRIGGER-20260915",
     "EVID-W02-CONTROL-ATOMIC-20260909",
     "EVID-W02-FACETS-20260907",
     "EVID-W02-HARNESS-20260909",
     "EVID-W02-IO-20260909",
-    "EVID-W02-SCOPE-LOCK-20260907"
+    "EVID-W02-SCOPE-LOCK-20260907",
+    "EVID-W02-TEARDOWN-20260909"
   ],
   "frontier": {
     "blocking_issues": [],
@@ -161,6 +174,26 @@
     },
     {
       "risk_id": "RISK-0003",
+      "severity": "HIGH",
+      "status": "OPEN"
+    },
+    {
+      "risk_id": "RISK-0006",
+      "severity": "HIGH",
+      "status": "OPEN"
+    },
+    {
+      "risk_id": "RISK-0007",
+      "severity": "HIGH",
+      "status": "OPEN"
+    },
+    {
+      "risk_id": "RISK-0008",
+      "severity": "MEDIUM",
+      "status": "OPEN"
+    },
+    {
+      "risk_id": "RISK-0010",
       "severity": "HIGH",
       "status": "OPEN"
     }

@@ -33,11 +33,14 @@ class CP01BaselineSupplyChainTests(unittest.TestCase):
             self.assertEqual(rows[0]["classification"], "HARDWARE_GATED")
 
     def test_xcode_project_is_platform_gated_not_not_applicable(self) -> None:
-        rows = discover_repo_baselines(
-            Path("."),
-            self.pin("clicky"),
-            {"test_files": [], "manifests": ["leanring-buddy/leanring-buddy.xcodeproj/project.pbxproj"]},
-        )
+        # The fixture must not scan this repository's package manifests.  The
+        # structural manifest is sufficient to characterize an Xcode project.
+        with tempfile.TemporaryDirectory() as tmp:
+            rows = discover_repo_baselines(
+                Path(tmp),
+                self.pin("clicky"),
+                {"test_files": [], "manifests": ["leanring-buddy/leanring-buddy.xcodeproj/project.pbxproj"]},
+            )
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["name"], "xcode-project")
         self.assertEqual(rows[0]["classification"], "PLATFORM_GATED")

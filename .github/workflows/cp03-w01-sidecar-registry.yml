@@ -95,7 +95,7 @@ jobs:
           python scripts/context/build_context_pack.py --check
           git diff --check
       - name: Upload sidecar registry proof
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: cp03-w01-registry-${{ env.SOURCE_SHA }}
           retention-days: 14

@@ -102,8 +102,9 @@ class W02HarnessTests(unittest.TestCase):
         )
         tasks = {row["id"]: row for row in plan["tasks"]}
         self.assertEqual(tasks["W02-02"]["status"], "COMPLETE")
-        self.assertEqual(tasks["W02-03"]["status"], "READY")
-        self.assertEqual(plan["first_executable_task"], "W02-03")
+        self.assertEqual(tasks["W02-04"]["status"], "COMPLETE")
+        self.assertEqual(tasks["W02-06"]["status"], "READY")
+        self.assertEqual(plan["first_executable_task"], "W02-06")
         proofs = [
             row for row in tasks["W02-02"].get("proof", [])
             if row.get("evidence_id") == "EVID-W02-HARNESS-20260909"
@@ -130,7 +131,7 @@ class W02HarnessTests(unittest.TestCase):
         ]
         self.assertEqual(claims[-1]["status"], "RELEASED")
         handoff = (root / "HANDOFF.md").read_text(encoding="utf-8")
-        self.assertIn("W02-03", handoff)
+        self.assertIn("EVID-W02-TEARDOWN-20260909", handoff)
         goal = json.loads((root / "GOAL_STATE.json").read_text(encoding="utf-8"))
         self.assertEqual(goal["parity"]["total"], 7565)
         self.assertEqual(goal["parity"]["verified"], 0)
