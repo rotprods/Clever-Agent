@@ -95,7 +95,7 @@ La decisión arquitectónica correcta es preservar #28 como candidata bounded, n
 
 | Hallazgo | Severidad | Evidencia | Tratamiento |
 |---|---:|---:|---|
-| Actions con tags mutables | Alta | 51 refs, 20/36 workflows | Wave dedicada de pinning + gate de no regresión |
+| Actions con tags mutables | Remediado | 0 refs tras corregir 51 en 20/36 workflows | SHAs de 40 hex + gate repo-wide de no regresión |
 | Superficie `contents: write` | Media | 19/36 workflows | Reducir a job, revisar eventos, CAS y allowlists |
 | Checks ausentes en candidato exacto | Alta para release | 0 runs/statuses | Required checks sobre SHA exacto |
 | Secretos por patrones conocidos | Sin hallazgo | 0 matches versionados | Mantener secret scanning nativo |
@@ -159,5 +159,20 @@ Se creó y publicó `Clever-Agent Control Plane`, con tablas `Actions` y `Review
 - [x] 238/238 pruebas Python verdes.
 - [x] Dependencia Python y secretos auditados.
 - [x] Airtable publicado.
-- [ ] Rust/cargo-audit/Clippy ejecutados en candidato exacto.
-- [ ] Commit/PR/review publicados en GitHub; requiere autorización explícita de exportación.
+- [x] Rust/Clippy y E2E nativo ejecutados en el HEAD de revisión exacto mediante CI alojada.
+- [x] Commit, PR y review publicados en GitHub; PR #30 integrada en la rama de PR #28.
+- [x] Las 51 referencias mutables de Actions sustituidas por SHAs auditables.
+- [x] Gate repo-wide añadido para impedir regresiones de referencias mutables.
+
+## Avance 2026-09-15 — convergencia y hardening
+
+PR #30 se integró mediante merge commit en la rama de PR #28. El HEAD resultante es
+`2ac2ec9512381d297a34e5ae8d0d942f62f93cf8`; `main` permanece sin modificar. Este
+nuevo HEAD debe recibir sus propios checks antes de cualquier decisión de release.
+
+En una wave separada se resolvió `SUPPLY-P1-UNPINNED-ACTIONS`: 51 referencias
+mutables fueron reemplazadas por los commits que resolvían sus aliases auditados
+(`checkout@v4`, `setup-python@v5`, `setup-node@v4`, `upload-artifact@v4`,
+`download-artifact@v4` y `buf-setup-action@v1`). El escáner dedicado cubre tanto
+`- uses:` como el `uses:` anidado bajo pasos con nombre y falla ante cualquier ref
+externa que no sea un SHA hexadecimal de 40 caracteres.

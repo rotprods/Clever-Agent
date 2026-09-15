@@ -104,9 +104,9 @@ class G1IndependentReviewTests(unittest.TestCase):
                 if "@" not in use or not re.fullmatch(r"[0-9a-f]{40}", use.rsplit("@", 1)[1]):
                     offenders.append(f"{workflow.name}:{use}")
         finding = self.finding("SUPPLY-P1-UNPINNED-ACTIONS")
-        self.assertEqual(finding["status"], "OPEN")
+        self.assertEqual(finding["status"], "REMEDIATED")
         self.assertEqual(len(offenders), finding["observed_count"])
-        self.assertGreater(len(offenders), 0)
+        self.assertEqual(len(offenders), 0)
 
     def test_upstream_pin_is_exact(self):
         ledger = (ROOT / "UPSTREAM_LEDGER.yaml").read_text()
