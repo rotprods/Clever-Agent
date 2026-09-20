@@ -76,6 +76,23 @@ class InferenceContractTests(unittest.TestCase):
         for field, number in expected.items():
             self.assertRegex(adapter, rf"\b{field}\s*=\s*{number};")
 
+    def test_generated_inference_bindings_are_persisted_in_git(self) -> None:
+        generated = {
+            "python": ROOT / "contracts/sdk/python/gen/clever/v1/inference_pb2.py",
+            "typescript": ROOT / "contracts/sdk/typescript/src/gen/clever/v1/inference_pb.ts",
+            "swift": ROOT / "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/inference.pb.swift",
+            "rust": ROOT / "contracts/sdk/rust/src/gen/clever.v1.rs",
+        }
+        for language, path in generated.items():
+            with self.subTest(language=language):
+                self.assertTrue(path.is_file(), f"missing persisted {language} inference binding: {path}")
+                text = path.read_text(encoding="utf-8")
+                if language == "rust":
+                    self.assertIn("pub struct InferenceRequest", text)
+                    self.assertIn("pub struct InferenceTerminal", text)
+                else:
+                    self.assertIn("InferenceRequest", text)
+                    self.assertIn("InferenceTerminal", text)
 
     def test_swift_job_restores_artifact_under_contracts(self) -> None:
         workflow = (ROOT / ".github/workflows/cp03-w02-inference-contracts.yml").read_text()
@@ -83,6 +100,7 @@ class InferenceContractTests(unittest.TestCase):
         self.assertEqual(2, workflow.count("ref: ${{ env.SOURCE_SHA }}"))
         self.assertIn("name: cp03-w02-inference-contracts-${{ env.SOURCE_SHA }}\n          path: contracts", workflow)
         self.assertNotIn("name: cp03-w02-inference-contracts-${{ env.SOURCE_SHA }}\n          path: .\n", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
