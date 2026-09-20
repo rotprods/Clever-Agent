@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import os
+import signal
 import struct
+import subprocess
 import sys
 import time
 
@@ -103,6 +105,27 @@ def main() -> int:
     if ack is None or ack.WhichOneof("body") != "hello_ack" or not ack.hello_ack.accepted:
         return 64
 
+    if mode == "descendant-retains-pipe":
+        pid_file = os.environ.get("CLEVER_DESCENDANT_PID_FILE")
+        if not pid_file:
+            return 65
+        code = (
+            "import signal,time;"
+            "signal.signal(signal.SIGTERM, signal.SIG_IGN);"
+            "time.sleep(30)"
+        )
+        child = subprocess.Popen(
+            [sys.executable, "-c", code],
+            stdin=subprocess.DEVNULL,
+            stdout=sys.stdout.buffer,
+            stderr=subprocess.DEVNULL,
+            close_fds=False,
+        )
+        with open(pid_file, "w", encoding="utf-8") as handle:
+            handle.write(str(child.pid))
+        handle = None
+
+
     if mode == "flood":
         time.sleep(0.15)
         for index in range(64):
@@ -152,6 +175,10 @@ def main() -> int:
             write_frame(frame(f"health:{request.frame_id}", "health", health(runtime_pb2.RUNTIME_HEALTH_STATUS_READY), correlation_id=request.frame_id))
         elif body == "shutdown":
             write_frame(frame(f"shutdown:{request.frame_id}", "health", health(runtime_pb2.RUNTIME_HEALTH_STATUS_STOPPING), correlation_id=request.frame_id))
+            if mode == "stopping-hang":
+                signal.signal(signal.SIGTERM, signal.SIG_IGN)
+                while True:
+                    time.sleep(1)
             return 0
         else:
             error = adapter_pb2.AdapterError(code="UNSUPPORTED", message=str(body), retryable=False)
