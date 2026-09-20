@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 LEDGER = ROOT / "ledgers/CLAIM_LEDGER.ndjson"
+RUN_LOG = ROOT / "ledgers/RUN_LOG.ndjson"
 CLAIM_ID = "CLAIM-CP03-W02-EGRESS-BUDGET-001"
 WAVE_ID = "CP03-W02-EGRESS-BUDGET-20260921"
 SCOPE = [
@@ -43,6 +44,13 @@ def latest_claim_rows() -> dict[str, dict]:
     return latest
 
 
+def run_event_exists(event_id: str) -> bool:
+    for raw in RUN_LOG.read_text(encoding="utf-8").splitlines():
+        if raw.strip() and json.loads(raw).get("event_id") == event_id:
+            return True
+    return False
+
+
 def main() -> int:
     latest = latest_claim_rows()
     if latest.get(CLAIM_ID, {}).get("status") == "ACTIVE":
@@ -78,6 +86,26 @@ def main() -> int:
     }
     with LEDGER.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n")
+
+    event_id = "RUN-W02-EGRESS-BUDGET-WORK-STARTED-20260921"
+    if not run_event_exists(event_id):
+        event = {
+            "schema_version": 1,
+            "date": "2026-09-21",
+            "event_id": event_id,
+            "event": "WORK_STARTED",
+            "goal_id": "CLEVER-JARVIS-001",
+            "checkpoint": "CP03",
+            "iteration": "I03",
+            "wave_id": "CP03-W02",
+            "support_wave": WAVE_ID,
+            "task": "W02-07",
+            "status": "IN_PROGRESS",
+            "parity_promotions": 0,
+        }
+        with RUN_LOG.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(event, sort_keys=True, separators=(",", ":")) + "\n")
+
     print(f"activated {CLAIM_ID}")
     return 0
 
