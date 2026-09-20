@@ -60,31 +60,30 @@ class W02PlanTests(unittest.TestCase):
         self.invalid("missing dependency")
 
     def test_cycle_rejected(self):
-        # W02-04 and W02-05 are both legitimately READY after W02-03. Block
-        # both before introducing a cycle so the validator reaches cycle
-        # detection rather than failing earlier on READY dependency semantics.
-        self.task("W02-04")["status"] = "BLOCKED"
-        self.task("W02-05")["status"] = "BLOCKED"
-        self.task("W02-04")["depends_on"] = ["W02-05"]
-        self.task("W02-05")["depends_on"] = ["W02-04"]
+        # Current frontier is W02-06. Keep both cycle members BLOCKED so the
+        # validator reaches graph-cycle detection rather than READY semantics.
+        self.task("W02-06")["status"] = "BLOCKED"
+        self.task("W02-07")["status"] = "BLOCKED"
+        self.task("W02-06")["depends_on"] = ["W02-07"]
+        self.task("W02-07")["depends_on"] = ["W02-06"]
         self.invalid("cycle")
 
     def test_self_dependency_rejected(self):
-        self.task("W02-04")["depends_on"] = ["W02-04"]
+        self.task("W02-06")["depends_on"] = ["W02-06"]
         self.invalid("self dependency")
 
     def test_false_ready_rejected(self):
-        # W02-06 depends on W02-05, which is READY rather than COMPLETE.
-        self.task("W02-06")["status"] = "READY"
+        # W02-07 depends on W02-06, which is READY rather than COMPLETE.
+        self.task("W02-07")["status"] = "READY"
         self.invalid("false-ready")
 
     def test_completion_without_evidence_rejected(self):
-        # W02-04 is the current first executable task and has no proof yet.
-        self.task("W02-04")["status"] = "COMPLETE"
+        # W02-06 is READY with satisfied dependencies but no proof yet.
+        self.task("W02-06")["status"] = "COMPLETE"
         self.invalid("without proof")
 
     def test_missing_acceptance_rejected(self):
-        self.task("W02-04")["acceptance_tests"] = []
+        self.task("W02-06")["acceptance_tests"] = []
         self.invalid("acceptance_tests")
 
     def test_path_traversal_rejected(self):
@@ -111,15 +110,14 @@ class W02PlanTests(unittest.TestCase):
         self.plan["first_executable_task"] = "W02-19"
         self.invalid("first executable")
 
-    def test_current_frontier_is_w02_04_with_w02_05_also_ready(self):
-        self.assertEqual(self.plan["first_executable_task"], "W02-04")
-        self.assertEqual(self.task("W02-03")["status"], "COMPLETE")
-        self.assertTrue(self.task("W02-03")["proof"])
-        self.assertEqual(self.task("W02-04")["status"], "READY")
-        self.assertEqual(self.task("W02-04")["proof"], [])
-        self.assertEqual(self.task("W02-05")["status"], "READY")
-        self.assertEqual(self.task("W02-05")["proof"], [])
-        self.assertEqual(self.task("W02-06")["status"], "BLOCKED")
+    def test_current_frontier_is_w02_06_after_g1_completion(self):
+        self.assertEqual(self.plan["first_executable_task"], "W02-06")
+        for task_id in ("W02-03", "W02-04", "W02-05"):
+            self.assertEqual(self.task(task_id)["status"], "COMPLETE")
+            self.assertTrue(self.task(task_id)["proof"])
+        self.assertEqual(self.task("W02-06")["status"], "READY")
+        self.assertEqual(self.task("W02-06")["proof"], [])
+        self.assertEqual(self.task("W02-07")["status"], "BLOCKED")
 
     def test_deterministic_validation(self):
         self.assertEqual(self.check(), self.check())
