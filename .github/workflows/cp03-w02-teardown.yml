@@ -1,0 +1,44 @@
+name: CP03 W02 Teardown Cleanup
+
+on:
+  push:
+    branches: [wave/cp03/w02-teardown-cleanup-v2]
+    paths:
+      - 'kernel/crates/clever-kernel/src/adapter.rs'
+      - 'kernel/crates/clever-kernel/tests/adapter_supervisor.rs'
+      - 'kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py'
+      - '.github/workflows/cp03-w02-teardown.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'kernel/crates/clever-kernel/src/adapter.rs'
+      - 'kernel/crates/clever-kernel/tests/adapter_supervisor.rs'
+      - 'kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py'
+      - '.github/workflows/cp03-w02-teardown.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  teardown:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Prepare Python contract runtime
+        run: |
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt
+          echo "CLEVER_TEST_PYTHON=$(command -v python)" >> "$GITHUB_ENV"
+      - name: Prove bounded shutdown and descendant cleanup
+        run: |
+          set -euo pipefail
+          timeout 12s cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor shutdown_is_bounded_when_stopping_peer_never_exits -- --exact --nocapture
+          timeout 12s cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor drop_kills_descendant_that_retains_stdout -- --exact --nocapture
+      - name: Regression and lint
+        run: |
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+          python -m scripts.parity.ledger --check --source-repo openjarvis
