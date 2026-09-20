@@ -6,8 +6,9 @@ WORKFLOW = Path('.github/workflows/cp03-w02-egress-budget.yml')
 
 
 class W02EgressWorkflowRegressionTests(unittest.TestCase):
-    def test_kernel_regression_exports_mandatory_python_prerequisite(self) -> None:
+    def test_kernel_regression_installs_and_exports_mandatory_python_prerequisites(self) -> None:
         text = WORKFLOW.read_text(encoding='utf-8')
+        self.assertIn("python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt", text)
         marker = '      - name: Kernel regression\n'
         self.assertIn(marker, text)
         block = text.split(marker, 1)[1].split('      - name:', 1)[0]
