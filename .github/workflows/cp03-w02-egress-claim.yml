@@ -22,10 +22,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: true
-      - name: Register exact W02-07 claim fail-closed
-        env:
-          CLAIM_ID: CLAIM-CP03-W02-EGRESS-BUDGET-20260921
-          OWNER: chatgpt-gpt-5.6-sol
+      - name: Amend exact W02-07 claim fail-closed
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -35,14 +32,15 @@ jobs:
           ledger = Path('ledgers/CLAIM_LEDGER.ndjson')
           rows = [json.loads(line) for line in ledger.read_text().splitlines() if line.strip()]
           claim_id = 'CLAIM-CP03-W02-EGRESS-BUDGET-20260921'
-          if any(row.get('claim_id') == claim_id and row.get('status') == 'ACTIVE' for row in rows):
-              raise SystemExit(0)
-
           latest = {}
           for row in rows:
               cid = row.get('claim_id')
               if cid:
                   latest[cid] = row
+
+          current = latest.get(claim_id)
+          if not current or current.get('status') != 'ACTIVE':
+              raise SystemExit('W02-07 claim is not ACTIVE; refusing scope amendment')
 
           scope = [
               'kernel/crates/clever-kernel/src/inference_security.rs',
@@ -50,8 +48,15 @@ jobs:
               'kernel/crates/clever-kernel/tests/inference_security.rs',
               'scripts/cp03/w02_egress_evidence.py',
               'tests/test_cp03_w02_egress.py',
+              'tests/test_cp03_w02_inference_contract.py',
               '.github/workflows/cp03-w02-egress-claim.yml',
               '.github/workflows/cp03-w02-egress-budget.yml',
+              '.github/workflows/cp03-w02-egress-generate.yml',
+              'contracts/sdk/python/gen/**',
+              'contracts/sdk/typescript/src/gen/**',
+              'contracts/sdk/rust/src/gen/**',
+              'contracts/sdk/swift/Sources/CleverContracts/Gen/**',
+              'contracts/generated_manifest.json',
               'evidence/cp03/cp03-w02/W02-07/**',
               'iterations/03/waves/CP03-W02/TASK_GRAPH.json',
               'ledgers/CLAIM_LEDGER.ndjson',
@@ -81,20 +86,24 @@ jobs:
           if conflicts:
               raise SystemExit('overlapping active claim(s): ' + json.dumps(conflicts, sort_keys=True))
 
-          claim = {
+          if current.get('scope') == scope:
+              raise SystemExit(0)
+
+          amendment = {
               'schema_version': 1,
               'date': '2026-09-21',
               'claim_id': claim_id,
+              'event': 'SCOPE_AMENDED',
               'wave_id': 'CP03-W02-EGRESS-BUDGET-20260921',
               'parent_wave': 'CP03-W02',
               'canonical_task': 'W02-07',
               'owner': 'chatgpt-gpt-5.6-sol',
               'scope': scope,
-              'coordination': 'W02-07 only: external inference deny-by-default, canonical egress grants, principal/session binding, opaque secret handles, redacted audit metadata, and explicit token/cost ceilings. Does not execute models, bridge W02-08, acquire W02-09 weights, mutate denominator/parity, or complete W02-08+.',
+              'coordination': 'W02-07 scope amended after RED compile exposed W02-06 generated SDKs were CI-artifact-only rather than persisted. Adds generated-binding repair and one durable regression only; no proto authority changes, model execution, W02-08 bridge, W02-09 weight acquisition, denominator/parity mutation, or W02-08+ completion.',
               'status': 'ACTIVE',
           }
           with ledger.open('a', encoding='utf-8') as handle:
-              handle.write(json.dumps(claim, sort_keys=True, separators=(',', ':')) + '\n')
+              handle.write(json.dumps(amendment, sort_keys=True, separators=(',', ':')) + '\n')
           PY
           git diff --check
           if git diff --quiet -- ledgers/CLAIM_LEDGER.ndjson; then
@@ -104,5 +113,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add ledgers/CLAIM_LEDGER.ndjson
-          git commit -m 'chore(cp03-w02): claim W02-07 egress budget scope'
+          git commit -m 'chore(cp03-w02): amend W02-07 generated-binding scope'
           git push origin HEAD:wave/cp03/w02-egress-budget-20260921
