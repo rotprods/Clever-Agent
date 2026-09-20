@@ -22,7 +22,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: true
-      - name: Amend exact W02-07 claim fail-closed
+      - name: Reconcile exact W02-07 claim and ContextPack fail-closed
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -40,7 +40,7 @@ jobs:
 
           current = latest.get(claim_id)
           if not current or current.get('status') != 'ACTIVE':
-              raise SystemExit('W02-07 claim is not ACTIVE; refusing scope amendment')
+              raise SystemExit('W02-07 claim is not ACTIVE; refusing reconciliation')
 
           scope = [
               'kernel/crates/clever-kernel/src/inference_security.rs',
@@ -87,32 +87,34 @@ jobs:
           if conflicts:
               raise SystemExit('overlapping active claim(s): ' + json.dumps(conflicts, sort_keys=True))
 
-          if current.get('scope') == scope:
-              raise SystemExit(0)
-
-          amendment = {
-              'schema_version': 1,
-              'date': '2026-09-21',
-              'claim_id': claim_id,
-              'event': 'SCOPE_AMENDED',
-              'wave_id': 'CP03-W02-EGRESS-BUDGET-20260921',
-              'parent_wave': 'CP03-W02',
-              'canonical_task': 'W02-07',
-              'owner': 'chatgpt-gpt-5.6-sol',
-              'scope': scope,
-              'coordination': 'W02-07 scope amended after RED compile exposed W02-06 generated SDK and inference wire outputs were CI-artifact-only rather than persisted. Adds generated binding/fixture repair and one durable regression only; no proto authority changes, model execution, W02-08 bridge, W02-09 weight acquisition, denominator/parity mutation, or W02-08+ completion.',
-              'status': 'ACTIVE',
-          }
-          with ledger.open('a', encoding='utf-8') as handle:
-              handle.write(json.dumps(amendment, sort_keys=True, separators=(',', ':')) + '\n')
+          if current.get('scope') != scope:
+              amendment = {
+                  'schema_version': 1,
+                  'date': '2026-09-21',
+                  'claim_id': claim_id,
+                  'event': 'SCOPE_AMENDED',
+                  'wave_id': 'CP03-W02-EGRESS-BUDGET-20260921',
+                  'parent_wave': 'CP03-W02',
+                  'canonical_task': 'W02-07',
+                  'owner': 'chatgpt-gpt-5.6-sol',
+                  'scope': scope,
+                  'coordination': 'W02-07 only, including durable generated SDK/wire prerequisite repair discovered by RED tests. No proto authority change, model execution, W02-08 bridge, W02-09 weights, denominator/parity mutation, or W02-08+ completion.',
+                  'status': 'ACTIVE',
+              }
+              with ledger.open('a', encoding='utf-8') as handle:
+                  handle.write(json.dumps(amendment, sort_keys=True, separators=(',', ':')) + '\n')
           PY
+          python scripts/context/build_context_pack.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
           git diff --check
-          if git diff --quiet -- ledgers/CLAIM_LEDGER.ndjson; then
+          if git diff --quiet -- ledgers/CLAIM_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md; then
             exit 0
           fi
           test "$(git ls-remote origin refs/heads/wave/cp03/w02-egress-budget-20260921 | cut -f1)" = "$GITHUB_SHA"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add ledgers/CLAIM_LEDGER.ndjson
-          git commit -m 'chore(cp03-w02): include inference wire fixture in W02-07 repair'
+          git add ledgers/CLAIM_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git commit -m 'chore(cp03-w02): reconcile W02-07 claim ContextPack'
           git push origin HEAD:wave/cp03/w02-egress-budget-20260921
