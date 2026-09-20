@@ -1,0 +1,108 @@
+name: CP03 W02 Egress Claim
+
+on:
+  push:
+    branches: [wave/cp03/w02-egress-budget-20260921]
+    paths:
+      - '.github/workflows/cp03-w02-egress-claim.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cp03-w02-egress-claim
+  cancel-in-progress: false
+
+jobs:
+  claim:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Register exact W02-07 claim fail-closed
+        env:
+          CLAIM_ID: CLAIM-CP03-W02-EGRESS-BUDGET-20260921
+          OWNER: chatgpt-gpt-5.6-sol
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          ledger = Path('ledgers/CLAIM_LEDGER.ndjson')
+          rows = [json.loads(line) for line in ledger.read_text().splitlines() if line.strip()]
+          claim_id = 'CLAIM-CP03-W02-EGRESS-BUDGET-20260921'
+          if any(row.get('claim_id') == claim_id and row.get('status') == 'ACTIVE' for row in rows):
+              raise SystemExit(0)
+
+          latest = {}
+          for row in rows:
+              cid = row.get('claim_id')
+              if cid:
+                  latest[cid] = row
+
+          scope = [
+              'kernel/crates/clever-kernel/src/inference_security.rs',
+              'kernel/crates/clever-kernel/src/lib.rs',
+              'kernel/crates/clever-kernel/tests/inference_security.rs',
+              'scripts/cp03/w02_egress_evidence.py',
+              'tests/test_cp03_w02_egress.py',
+              '.github/workflows/cp03-w02-egress-claim.yml',
+              '.github/workflows/cp03-w02-egress-budget.yml',
+              'evidence/cp03/cp03-w02/W02-07/**',
+              'iterations/03/waves/CP03-W02/TASK_GRAPH.json',
+              'ledgers/CLAIM_LEDGER.ndjson',
+              'ledgers/EVIDENCE_LEDGER.ndjson',
+              'ledgers/RUN_LOG.ndjson',
+              'ledgers/WAVE_LEDGER.ndjson',
+              'ledgers/DECISION_LEDGER.ndjson',
+              'ledgers/RISK_LEDGER.ndjson',
+              'HANDOFF.md',
+              '.agentic/context/CURRENT_CONTEXT.json',
+              '.agentic/context/CURRENT_CONTEXT.md',
+          ]
+
+          def prefix(path):
+              return path[:-3] if path.endswith('/**') else path
+          def overlaps(a, b):
+              pa, pb = prefix(a), prefix(b)
+              return pa == pb or pa.startswith(pb.rstrip('/') + '/') or pb.startswith(pa.rstrip('/') + '/')
+
+          conflicts = []
+          for cid, row in latest.items():
+              if cid == claim_id or row.get('status') != 'ACTIVE':
+                  continue
+              for owned in row.get('scope', []):
+                  if any(overlaps(owned, wanted) for wanted in scope):
+                      conflicts.append({'claim_id': cid, 'owned': owned})
+          if conflicts:
+              raise SystemExit('overlapping active claim(s): ' + json.dumps(conflicts, sort_keys=True))
+
+          claim = {
+              'schema_version': 1,
+              'date': '2026-09-21',
+              'claim_id': claim_id,
+              'wave_id': 'CP03-W02-EGRESS-BUDGET-20260921',
+              'parent_wave': 'CP03-W02',
+              'canonical_task': 'W02-07',
+              'owner': 'chatgpt-gpt-5.6-sol',
+              'scope': scope,
+              'coordination': 'W02-07 only: external inference deny-by-default, canonical egress grants, principal/session binding, opaque secret handles, redacted audit metadata, and explicit token/cost ceilings. Does not execute models, bridge W02-08, acquire W02-09 weights, mutate denominator/parity, or complete W02-08+.',
+              'status': 'ACTIVE',
+          }
+          with ledger.open('a', encoding='utf-8') as handle:
+              handle.write(json.dumps(claim, sort_keys=True, separators=(',', ':')) + '\n')
+          PY
+          git diff --check
+          if git diff --quiet -- ledgers/CLAIM_LEDGER.ndjson; then
+            exit 0
+          fi
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-egress-budget-20260921 | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ledgers/CLAIM_LEDGER.ndjson
+          git commit -m 'chore(cp03-w02): claim W02-07 egress budget scope'
+          git push origin HEAD:wave/cp03/w02-egress-budget-20260921
