@@ -35,7 +35,6 @@
 
 ## Active claims
 
-- `CLAIM-CP03-W02-INFERENCE-CONTRACTS-PLAN-REGRESSION-001` → `CP03-W02-INFERENCE-CONTRACTS-PLAN-REGRESSION-20260920` · `chatgpt-gpt-5.6-sol`
 
 ## Open / mitigating risks
 
