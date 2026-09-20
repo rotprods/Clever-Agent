@@ -1,0 +1,67 @@
+name: CP03 W02 Egress Budget
+
+on:
+  push:
+    branches: [wave/cp03/w02-egress-budget-20260921]
+    paths:
+      - 'kernel/crates/clever-kernel/src/inference_security.rs'
+      - 'kernel/crates/clever-kernel/src/lib.rs'
+      - 'kernel/crates/clever-kernel/tests/inference_security.rs'
+      - 'tests/test_cp03_w02_egress.py'
+      - 'scripts/cp03/w02_egress_evidence.py'
+      - '.github/workflows/cp03-w02-egress-budget.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'kernel/crates/clever-kernel/src/inference_security.rs'
+      - 'kernel/crates/clever-kernel/src/lib.rs'
+      - 'kernel/crates/clever-kernel/tests/inference_security.rs'
+      - 'tests/test_cp03_w02_egress.py'
+      - 'scripts/cp03/w02_egress_evidence.py'
+      - '.github/workflows/cp03-w02-egress-budget.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cp03-w02-egress-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  security-gauntlet:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Format check
+        run: cargo fmt --manifest-path kernel/Cargo.toml --all -- --check
+      - name: W02-07 adversarial security tests
+        run: cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_security -- --nocapture
+      - name: Kernel regression
+        run: cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel
+      - name: Clippy fail closed
+        run: cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+      - name: Planning and durable-state regression
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_cp03_w02_plan
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/context/validate_next_actions.py
+      - name: Protect parity denominator and W02 frontier
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          task_graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          assert task_graph['global_denominator']==7565
+          assert task_graph['openjarvis_obligations']==646
+          task={item['id']:item for item in task_graph['tasks']}
+          assert task_graph['first_executable_task']=='W02-07'
+          assert task['W02-07']['status']=='READY'
+          assert not task['W02-07']['proof']
+          for blocked in ('W02-08','W02-09','W02-10'):
+              assert task[blocked]['status']=='BLOCKED'
+          PY
