@@ -35,6 +35,7 @@
 
 ## Active claims
 
+- `CLAIM-CP03-W02-TEARDOWN-002` → `CP03-W02-TEARDOWN-20260920` · `chatgpt-gpt-5.6-sol`
 
 ## Open / mitigating risks
 
