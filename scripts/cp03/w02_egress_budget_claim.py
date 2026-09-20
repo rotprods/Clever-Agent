@@ -14,6 +14,7 @@ SCOPE = [
     "kernel/crates/clever-kernel/tests/inference_policy.rs",
     "tests/test_cp03_w02_egress_budget.py",
     ".github/workflows/cp03-w02-egress-budget.yml",
+    ".github/workflows/cp03-w02-egress-budget-claim.yml",
     "scripts/cp03/w02_egress_budget_claim.py",
     "iterations/03/waves/CP03-W02/TASK_GRAPH.json",
     "ledgers/CLAIM_LEDGER.ndjson",
@@ -51,10 +52,36 @@ def run_event_exists(event_id: str) -> bool:
     return False
 
 
+def append_claim(row: dict) -> None:
+    with LEDGER.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n")
+
+
 def main() -> int:
     latest = latest_claim_rows()
-    if latest.get(CLAIM_ID, {}).get("status") == "ACTIVE":
-        print(f"claim already active: {CLAIM_ID}")
+    current = latest.get(CLAIM_ID)
+    if current and current.get("status") == "ACTIVE":
+        if set(current.get("scope") or []) != set(SCOPE):
+            append_claim(
+                {
+                    "schema_version": 1,
+                    "date": "2026-09-21",
+                    "claim_id": CLAIM_ID,
+                    "event": "SCOPE_AMENDED",
+                    "wave_id": WAVE_ID,
+                    "parent_wave": "CP03-W02",
+                    "owner": "chatgpt-gpt-5.6-sol",
+                    "scope": SCOPE,
+                    "coordination": (
+                        "Scope amendment records the claim-bootstrap workflow used only to acquire/reconcile the canonical W02-07 claim. "
+                        "All product and finalization restrictions remain unchanged."
+                    ),
+                    "status": "ACTIVE",
+                }
+            )
+            print(f"amended {CLAIM_ID}")
+        else:
+            print(f"claim already active: {CLAIM_ID}")
         return 0
 
     overlapping = []
@@ -84,8 +111,7 @@ def main() -> int:
         ),
         "status": "ACTIVE",
     }
-    with LEDGER.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n")
+    append_claim(row)
 
     event_id = "RUN-W02-EGRESS-BUDGET-WORK-STARTED-20260921"
     if not run_event_exists(event_id):
