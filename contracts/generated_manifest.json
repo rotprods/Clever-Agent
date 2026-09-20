@@ -7,9 +7,9 @@
       "sha256": "d124c04b835cea63e0ad309ee0aa14c42d5035dae751e787dcfd5ba03cce4820"
     },
     {
-      "bytes": 7717,
+      "bytes": 8352,
       "path": "contracts/sdk/python/gen/clever/v1/adapter_pb2.py",
-      "sha256": "54b311a97fac9f98b741f097b25930b7de9e0e8985565acd1b8d3dbb225d4d25"
+      "sha256": "087bfdca0eaf0a680ebf5038753a7ddc5f32a9b275febe5c91a2c7f49603e497"
     },
     {
       "bytes": 5080,
@@ -30,6 +30,11 @@
       "bytes": 2642,
       "path": "contracts/sdk/python/gen/clever/v1/identity_pb2.py",
       "sha256": "e884ae0a2b4d63cdf88e67bc85b0b014dc98125d89092004ca0c871bbf656b53"
+    },
+    {
+      "bytes": 7529,
+      "path": "contracts/sdk/python/gen/clever/v1/inference_pb2.py",
+      "sha256": "7a06bd6460d4d5cf7a22ea0393d8f495220df29b818bda1e90da987c53fd1be6"
     },
     {
       "bytes": 3574,
@@ -62,9 +67,9 @@
       "sha256": "e644e39b807f09738b93c85bb0d82ebb3526883d496bdeb07968fa9a5b089cf3"
     },
     {
-      "bytes": 15474,
+      "bytes": 16863,
       "path": "contracts/sdk/typescript/src/gen/clever/v1/adapter_pb.ts",
-      "sha256": "c7a61780425511bef9cc968dbf8935f8371b6727835aab4e727846d5e277cc4e"
+      "sha256": "98c9852e1bf3833ce86e30bfa42bd8cd1c679b087236bf897087faefafd4c897"
     },
     {
       "bytes": 8600,
@@ -85,6 +90,11 @@
       "bytes": 3842,
       "path": "contracts/sdk/typescript/src/gen/clever/v1/identity_pb.ts",
       "sha256": "7903b90d4b402f30427d31752db3628e4a31934e5221e213c5d66936a97716bf"
+    },
+    {
+      "bytes": 15777,
+      "path": "contracts/sdk/typescript/src/gen/clever/v1/inference_pb.ts",
+      "sha256": "dcb7e3fbad1015a205133e1527844b181737934b291b056afa70d210b54eb465"
     },
     {
       "bytes": 5907,
@@ -117,9 +127,9 @@
       "sha256": "a5afbb95b45318c7711933f647e1f47ab024eedef291852d0f8237cec0fbd5ad"
     },
     {
-      "bytes": 47325,
+      "bytes": 52413,
       "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/adapter.pb.swift",
-      "sha256": "9614b0f09f22b0259b29efb378f9701a1f55a814354a8a00639033c4af0249f2"
+      "sha256": "14f9e6b7c508159012f3935470fe96e4de3fa92d37885264d9602341c86f893a"
     },
     {
       "bytes": 24368,
@@ -140,6 +150,11 @@
       "bytes": 12189,
       "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/identity.pb.swift",
       "sha256": "0f291c9d455368437b72d826a2ef9d5735d44a28ea14103348fea9604087b66f"
+    },
+    {
+      "bytes": 44447,
+      "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/inference.pb.swift",
+      "sha256": "bd3de6be36c28d39a2f35c70ab229b7dbaa599efc56ad0437be271e726c7f987"
     },
     {
       "bytes": 16784,
@@ -167,9 +182,9 @@
       "sha256": "fc04214f7d2610ad85048da8e9911b660b489c52a4461f9d5416c8ded84ac6b5"
     },
     {
-      "bytes": 46464,
+      "bytes": 58966,
       "path": "contracts/sdk/rust/src/gen/clever.v1.rs",
-      "sha256": "296a62f9d846e1431cb8ae12f386e76e60817f3c3de27fe752a7b8223d1a277f"
+      "sha256": "68f8d4d139dc2c7d90103f8d62ea7957a075f03b38fe8b4e64af98541305d7a6"
     },
     {
       "bytes": 268,
@@ -190,10 +205,20 @@
       "bytes": 601,
       "path": "contracts/fixtures/wire/event.protobuf.json",
       "sha256": "c609492c56126dd8eb88dfa68793f80817607d2b183125720a42b6e1b942ad93"
+    },
+    {
+      "bytes": 269,
+      "path": "contracts/fixtures/wire/inference-request.bin",
+      "sha256": "ef9358aff94f40a5c684d80c0cc83fcf81beea16d0fe0c7ae913399b946705a1"
+    },
+    {
+      "bytes": 792,
+      "path": "contracts/fixtures/wire/inference-request.protobuf.json",
+      "sha256": "7a5371587c605d1c4e1655b92dd9142ad32c8f91e8a8db15241b4eb48e2129e4"
     }
   ],
-  "generated_file_count": 38,
-  "proto_tree_sha256": "2b0c3aa4d9b1c4c177bcb3a30034d232de091376173b3ece12cb198c3fd6fc9c",
+  "generated_file_count": 43,
+  "proto_tree_sha256": "9de1010c1e35502fa4779bc5917f152ab639730f2e1cf48311c17f2c40327648",
   "schema_version": 1,
   "toolchain_lock_sha256": "ab3267b70749f36c0859d0fc61ef5b1e9fc3015eb0faeeb47308e141cc303052"
 }

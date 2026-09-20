@@ -437,6 +437,46 @@ public nonisolated struct Clever_V1_AdapterFrame: @unchecked Sendable {
     set {_uniqueStorage()._body = .error(newValue)}
   }
 
+  public var inferenceRequest: Clever_V1_InferenceRequest {
+    get {
+      if case .inferenceRequest(let v)? = _storage._body {return v}
+      return Clever_V1_InferenceRequest()
+    }
+    set {_uniqueStorage()._body = .inferenceRequest(newValue)}
+  }
+
+  public var inferenceChunk: Clever_V1_InferenceChunk {
+    get {
+      if case .inferenceChunk(let v)? = _storage._body {return v}
+      return Clever_V1_InferenceChunk()
+    }
+    set {_uniqueStorage()._body = .inferenceChunk(newValue)}
+  }
+
+  public var inferenceTerminal: Clever_V1_InferenceTerminal {
+    get {
+      if case .inferenceTerminal(let v)? = _storage._body {return v}
+      return Clever_V1_InferenceTerminal()
+    }
+    set {_uniqueStorage()._body = .inferenceTerminal(newValue)}
+  }
+
+  public var inferenceError: Clever_V1_InferenceError {
+    get {
+      if case .inferenceError(let v)? = _storage._body {return v}
+      return Clever_V1_InferenceError()
+    }
+    set {_uniqueStorage()._body = .inferenceError(newValue)}
+  }
+
+  public var inferenceCancel: Clever_V1_InferenceCancel {
+    get {
+      if case .inferenceCancel(let v)? = _storage._body {return v}
+      return Clever_V1_InferenceCancel()
+    }
+    set {_uniqueStorage()._body = .inferenceCancel(newValue)}
+  }
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public nonisolated enum OneOf_Body: Equatable, Sendable {
@@ -450,6 +490,11 @@ public nonisolated struct Clever_V1_AdapterFrame: @unchecked Sendable {
     case shutdown(Clever_V1_AdapterShutdown)
     case busy(Clever_V1_AdapterBusy)
     case error(Clever_V1_AdapterError)
+    case inferenceRequest(Clever_V1_InferenceRequest)
+    case inferenceChunk(Clever_V1_InferenceChunk)
+    case inferenceTerminal(Clever_V1_InferenceTerminal)
+    case inferenceError(Clever_V1_InferenceError)
+    case inferenceCancel(Clever_V1_InferenceCancel)
 
   }
 
@@ -868,7 +913,7 @@ nonisolated extension Clever_V1_AdapterError: SwiftProtobuf.Message, SwiftProtob
 
 nonisolated extension Clever_V1_AdapterFrame: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".AdapterFrame"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}contract_version\0\u{3}frame_id\0\u{3}correlation_id\0\u{3}sent_at\0\u{3}deadline_at\0\u{2}\u{5}hello\0\u{3}hello_ack\0\u{3}registry_snapshot_request\0\u{3}registry_snapshot\0\u{3}health_request\0\u{1}health\0\u{1}cancel\0\u{1}shutdown\0\u{1}busy\0\u{1}error\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}contract_version\0\u{3}frame_id\0\u{3}correlation_id\0\u{3}sent_at\0\u{3}deadline_at\0\u{2}\u{5}hello\0\u{3}hello_ack\0\u{3}registry_snapshot_request\0\u{3}registry_snapshot\0\u{3}health_request\0\u{1}health\0\u{1}cancel\0\u{1}shutdown\0\u{1}busy\0\u{1}error\0\u{3}inference_request\0\u{3}inference_chunk\0\u{3}inference_terminal\0\u{3}inference_error\0\u{3}inference_cancel\0")
 
   fileprivate class _StorageClass {
     var _contractVersion: Clever_V1_ContractVersion? = nil
@@ -1046,6 +1091,71 @@ nonisolated extension Clever_V1_AdapterFrame: SwiftProtobuf.Message, SwiftProtob
             _storage._body = .error(v)
           }
         }()
+        case 20: try {
+          var v: Clever_V1_InferenceRequest?
+          var hadOneofValue = false
+          if let current = _storage._body {
+            hadOneofValue = true
+            if case .inferenceRequest(let m) = current {v = m}
+          }
+          try decoder.decodeSingularMessageField(value: &v)
+          if let v = v {
+            if hadOneofValue {try decoder.handleConflictingOneOf()}
+            _storage._body = .inferenceRequest(v)
+          }
+        }()
+        case 21: try {
+          var v: Clever_V1_InferenceChunk?
+          var hadOneofValue = false
+          if let current = _storage._body {
+            hadOneofValue = true
+            if case .inferenceChunk(let m) = current {v = m}
+          }
+          try decoder.decodeSingularMessageField(value: &v)
+          if let v = v {
+            if hadOneofValue {try decoder.handleConflictingOneOf()}
+            _storage._body = .inferenceChunk(v)
+          }
+        }()
+        case 22: try {
+          var v: Clever_V1_InferenceTerminal?
+          var hadOneofValue = false
+          if let current = _storage._body {
+            hadOneofValue = true
+            if case .inferenceTerminal(let m) = current {v = m}
+          }
+          try decoder.decodeSingularMessageField(value: &v)
+          if let v = v {
+            if hadOneofValue {try decoder.handleConflictingOneOf()}
+            _storage._body = .inferenceTerminal(v)
+          }
+        }()
+        case 23: try {
+          var v: Clever_V1_InferenceError?
+          var hadOneofValue = false
+          if let current = _storage._body {
+            hadOneofValue = true
+            if case .inferenceError(let m) = current {v = m}
+          }
+          try decoder.decodeSingularMessageField(value: &v)
+          if let v = v {
+            if hadOneofValue {try decoder.handleConflictingOneOf()}
+            _storage._body = .inferenceError(v)
+          }
+        }()
+        case 24: try {
+          var v: Clever_V1_InferenceCancel?
+          var hadOneofValue = false
+          if let current = _storage._body {
+            hadOneofValue = true
+            if case .inferenceCancel(let m) = current {v = m}
+          }
+          try decoder.decodeSingularMessageField(value: &v)
+          if let v = v {
+            if hadOneofValue {try decoder.handleConflictingOneOf()}
+            _storage._body = .inferenceCancel(v)
+          }
+        }()
         default: break
         }
       }
@@ -1113,6 +1223,26 @@ nonisolated extension Clever_V1_AdapterFrame: SwiftProtobuf.Message, SwiftProtob
       case .error?: try {
         guard case .error(let v)? = _storage._body else { preconditionFailure() }
         try visitor.visitSingularMessageField(value: v, fieldNumber: 19)
+      }()
+      case .inferenceRequest?: try {
+        guard case .inferenceRequest(let v)? = _storage._body else { preconditionFailure() }
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 20)
+      }()
+      case .inferenceChunk?: try {
+        guard case .inferenceChunk(let v)? = _storage._body else { preconditionFailure() }
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 21)
+      }()
+      case .inferenceTerminal?: try {
+        guard case .inferenceTerminal(let v)? = _storage._body else { preconditionFailure() }
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 22)
+      }()
+      case .inferenceError?: try {
+        guard case .inferenceError(let v)? = _storage._body else { preconditionFailure() }
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 23)
+      }()
+      case .inferenceCancel?: try {
+        guard case .inferenceCancel(let v)? = _storage._body else { preconditionFailure() }
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 24)
       }()
       case nil: break
       }

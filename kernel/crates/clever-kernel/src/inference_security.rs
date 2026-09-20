@@ -69,7 +69,7 @@ pub struct InferenceTarget {
     pub external: bool,
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq)]
 pub struct ExternalInferenceGrant {
     pub grant_id: String,
     pub principal: PrincipalRef,
