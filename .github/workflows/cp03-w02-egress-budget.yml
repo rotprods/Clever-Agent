@@ -38,13 +38,16 @@ jobs:
       - name: W02-07 adversarial security tests
         run: cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_security -- --nocapture
       - name: Kernel regression
-        run: cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel
+        run: |
+          set -euo pipefail
+          export CLEVER_TEST_PYTHON="$(command -v python)"
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel
       - name: Clippy fail closed
         run: cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
       - name: Planning and durable-state regression
         run: |
           set -euo pipefail
-          python -m unittest tests.test_cp03_w02_plan
+          python -m unittest tests.test_cp03_w02_egress tests.test_cp03_w02_plan
           python scripts/validate_agentic_state.py
           python scripts/context/validate_context_pack.py
           python scripts/context/build_context_pack.py --check
