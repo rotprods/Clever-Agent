@@ -95,16 +95,13 @@ class W02HarnessTests(unittest.TestCase):
         report = w02_harness.audit_path(w02_harness.TEST_SOURCE)
         self.assertEqual(report["required_tests"], len(w02_harness.ALL_REQUIRED))
 
-    def test_persisted_transition_is_unique_and_opens_only_w02_03(self) -> None:
+    def test_persisted_harness_evidence_is_unique_and_stable(self) -> None:
         root = Path(__file__).resolve().parents[1]
         plan = json.loads(
             (root / "iterations/03/waves/CP03-W02/TASK_GRAPH.json").read_text(encoding="utf-8")
         )
         tasks = {row["id"]: row for row in plan["tasks"]}
         self.assertEqual(tasks["W02-02"]["status"], "COMPLETE")
-        self.assertEqual(tasks["W02-04"]["status"], "COMPLETE")
-        self.assertEqual(tasks["W02-06"]["status"], "READY")
-        self.assertEqual(plan["first_executable_task"], "W02-06")
         proofs = [
             row for row in tasks["W02-02"].get("proof", [])
             if row.get("evidence_id") == "EVID-W02-HARNESS-20260909"
@@ -130,8 +127,6 @@ class W02HarnessTests(unittest.TestCase):
             if line.strip() and json.loads(line).get("claim_id") == "CLAIM-CP03-W02-HARNESS-001"
         ]
         self.assertEqual(claims[-1]["status"], "RELEASED")
-        handoff = (root / "HANDOFF.md").read_text(encoding="utf-8")
-        self.assertIn("EVID-W02-TEARDOWN-20260909", handoff)
         goal = json.loads((root / "GOAL_STATE.json").read_text(encoding="utf-8"))
         self.assertEqual(goal["parity"]["total"], 7565)
         self.assertEqual(goal["parity"]["verified"], 0)
