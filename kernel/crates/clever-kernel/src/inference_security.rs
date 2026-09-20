@@ -196,7 +196,8 @@ pub fn authorize_inference_egress(
 ) -> Result<(EgressAuthorization, InferenceEgressAudit), InferenceSecurityError> {
     validate_contract_version(request.contract_version.as_ref())
         .map_err(|_| InferenceSecurityError::InvalidRequest)?;
-    validate_principal(request.principal.as_ref()).map_err(|_| InferenceSecurityError::InvalidRequest)?;
+    validate_principal(request.principal.as_ref())
+        .map_err(|_| InferenceSecurityError::InvalidRequest)?;
     if request.request_id.trim().is_empty()
         || request.attempt_id.trim().is_empty()
         || request.session_id.trim().is_empty()
@@ -284,9 +285,15 @@ pub fn validate_terminal_usage(
         .usage
         .as_ref()
         .ok_or(InferenceSecurityError::UsageBudgetExceeded)?;
-    if usage.input_tokens.is_some_and(|value| value > budget.max_input_tokens)
-        || usage.output_tokens.is_some_and(|value| value > budget.max_output_tokens)
-        || usage.total_tokens.is_some_and(|value| value > budget.max_total_tokens)
+    if usage
+        .input_tokens
+        .is_some_and(|value| value > budget.max_input_tokens)
+        || usage
+            .output_tokens
+            .is_some_and(|value| value > budget.max_output_tokens)
+        || usage
+            .total_tokens
+            .is_some_and(|value| value > budget.max_total_tokens)
     {
         return Err(InferenceSecurityError::UsageBudgetExceeded);
     }
