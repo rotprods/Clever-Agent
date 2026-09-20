@@ -97,7 +97,7 @@ def audit_path(path: Path) -> dict[str, object]:
     return audit_source(path.read_text(encoding="utf-8"))
 
 
-def _run_case(name: str, *, timeout: float, root: Path = ROOT) -> dict[str, object]:
+def _run_case(name: str, *, timeout: float, log_path: Path, root: Path = ROOT) -> dict[str, object]:
     command = [
         "cargo",
         "test",
@@ -126,10 +126,18 @@ def _run_case(name: str, *, timeout: float, root: Path = ROOT) -> dict[str, obje
         code = completed.returncode
         timed_out = False
     except subprocess.TimeoutExpired as exc:
-        output = (exc.stdout or "") + (exc.stderr or "")
+        # TimeoutExpired may carry bytes even when subprocess.run uses text=True.
+        output = "".join(
+            part.decode("utf-8", errors="replace") if isinstance(part, bytes) else part or ""
+            for part in (exc.stdout, exc.stderr)
+        )
         code = 124
         timed_out = True
     elapsed = time.monotonic() - started
+    # Preserve the diagnostic before validation raises; failing cases must remain
+    # failures, but their output must be available in the uploaded artifact.
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path.write_text(output, encoding="utf-8")
     result = validate_case_output(name, code, output, timed_out=timed_out)
     result.update({"duration_seconds": round(elapsed, 6), "command": command, "output": output})
     return result
@@ -161,7 +169,7 @@ def run(mode: str, out_dir: Path, *, timeout: float = 180.0) -> dict[str, object
     preflight(mode)
     audit_path(TEST_SOURCE)
     names = FAKE_REQUIRED if mode == "fake" else NATIVE_REQUIRED if mode == "native" else ALL_REQUIRED
-    results = [_run_case(name, timeout=timeout) for name in names]
+    results = [_run_case(name, timeout=timeout, log_path=out_dir / f"{name}.log") for name in names]
     _require(len(results) == len(names), "mandatory execution count mismatch")
     _require(all(row["status"] == "PASS" for row in results), "mandatory test did not pass")
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -180,8 +188,6 @@ def run(mode: str, out_dir: Path, *, timeout: float = 180.0) -> dict[str, object
     }
     (out_dir / "report.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     _write_junit(results, out_dir / "results.junit.xml")
-    for row in results:
-        (out_dir / f"{row['name']}.log").write_text(str(row.get("output", "")), encoding="utf-8")
     return report
 
 
