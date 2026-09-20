@@ -57,6 +57,7 @@ jobs:
       - name: Run W02-07 structural and inherited contract regression
         run: |
           set -euo pipefail
+          python -m pip install --disable-pip-version-check jsonschema==4.25.1
           python -m unittest \
             tests.test_cp03_w02_egress_budget \
             tests.test_cp03_w02_inference_contract \
