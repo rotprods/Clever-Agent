@@ -56,6 +56,7 @@ jobs:
               'contracts/sdk/typescript/src/gen/**',
               'contracts/sdk/rust/src/gen/**',
               'contracts/sdk/swift/Sources/CleverContracts/Gen/**',
+              'contracts/fixtures/wire/**',
               'contracts/generated_manifest.json',
               'evidence/cp03/cp03-w02/W02-07/**',
               'iterations/03/waves/CP03-W02/TASK_GRAPH.json',
@@ -99,7 +100,7 @@ jobs:
               'canonical_task': 'W02-07',
               'owner': 'chatgpt-gpt-5.6-sol',
               'scope': scope,
-              'coordination': 'W02-07 scope amended after RED compile exposed W02-06 generated SDKs were CI-artifact-only rather than persisted. Adds generated-binding repair and one durable regression only; no proto authority changes, model execution, W02-08 bridge, W02-09 weight acquisition, denominator/parity mutation, or W02-08+ completion.',
+              'coordination': 'W02-07 scope amended after RED compile exposed W02-06 generated SDK and inference wire outputs were CI-artifact-only rather than persisted. Adds generated binding/fixture repair and one durable regression only; no proto authority changes, model execution, W02-08 bridge, W02-09 weight acquisition, denominator/parity mutation, or W02-08+ completion.',
               'status': 'ACTIVE',
           }
           with ledger.open('a', encoding='utf-8') as handle:
@@ -113,5 +114,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add ledgers/CLAIM_LEDGER.ndjson
-          git commit -m 'chore(cp03-w02): amend W02-07 generated-binding scope'
+          git commit -m 'chore(cp03-w02): include inference wire fixture in W02-07 repair'
           git push origin HEAD:wave/cp03/w02-egress-budget-20260921
