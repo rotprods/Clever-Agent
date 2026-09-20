@@ -364,3 +364,74 @@ fn outbound_write_timeout_poison_session_when_peer_stops_reading() {
         AdapterSupervisorError::SessionPoisoned(_)
     ));
 }
+
+
+#[test]
+fn shutdown_is_bounded_when_stopping_peer_never_exits() {
+    let command = fake_command("stopping-hang");
+    let supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
+        .expect("connect stubborn shutdown sidecar");
+    let started = Instant::now();
+    let error = supervisor
+        .shutdown("bounded teardown proof")
+        .expect_err("stubborn STOPPING peer must not block shutdown forever");
+    assert_eq!(
+        error,
+        AdapterSupervisorError::Timeout("shutdown process exit")
+    );
+    assert!(
+        started.elapsed() < Duration::from_secs(5),
+        "shutdown exceeded bounded lifecycle budget: {:?}",
+        started.elapsed()
+    );
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn drop_kills_descendant_that_retains_stdout() {
+    let mut command = fake_command("descendant-retains-pipe");
+    let pid_path = env::temp_dir().join(format!(
+        "clever-w02-descendant-{}-{}.pid",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos()
+    ));
+    command.env.insert(
+        "CLEVER_DESCENDANT_PID_FILE".to_owned(),
+        pid_path.display().to_string(),
+    );
+
+    let supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
+        .expect("connect descendant sidecar");
+    let deadline = Instant::now() + Duration::from_secs(2);
+    while !pid_path.exists() && Instant::now() < deadline {
+        thread::sleep(Duration::from_millis(10));
+    }
+    let pid: u32 = std::fs::read_to_string(&pid_path)
+        .expect("descendant pid file")
+        .trim()
+        .parse()
+        .expect("descendant pid");
+    let proc_path = PathBuf::from(format!("/proc/{pid}"));
+    assert!(proc_path.exists(), "descendant must exist before Drop");
+
+    let started = Instant::now();
+    drop(supervisor);
+    assert!(
+        started.elapsed() < Duration::from_secs(5),
+        "Drop exceeded bounded lifecycle budget: {:?}",
+        started.elapsed()
+    );
+
+    let deadline = Instant::now() + Duration::from_secs(2);
+    while proc_path.exists() && Instant::now() < deadline {
+        thread::sleep(Duration::from_millis(10));
+    }
+    let _ = std::fs::remove_file(pid_path);
+    assert!(
+        !proc_path.exists(),
+        "descendant process {pid} survived supervisor teardown"
+    );
+}
