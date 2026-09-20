@@ -35,6 +35,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - name: Format check
         run: cargo fmt --manifest-path kernel/Cargo.toml --all -- --check
+      - name: Install Python test prerequisites
+        run: python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt
       - name: W02-07 adversarial security tests
         run: cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_security -- --nocapture
       - name: Kernel regression
