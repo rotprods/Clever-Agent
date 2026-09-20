@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "contract_namespace": "clever.v1",
-  "wire_version": {"major": 1, "minor": 1},
+  "wire_version": {"major": 1, "minor": 2},
   "contracts": [
     {"id":"identity","proto":"clever/v1/identity.proto","message":"clever.v1.SessionRef","json_schema":"contracts/jsonschema/identity.schema.json","fixture":"contracts/fixtures/identity.json"},
     {"id":"event","proto":"clever/v1/events.proto","message":"clever.v1.EventEnvelope","json_schema":"contracts/jsonschema/event.schema.json","fixture":"contracts/fixtures/event.json"},
@@ -13,7 +13,8 @@
     {"id":"runtime","proto":"clever/v1/runtime.proto","message":"clever.v1.RuntimeHealth","json_schema":"contracts/jsonschema/runtime.schema.json","fixture":"contracts/fixtures/runtime.json"},
     {"id":"trace","proto":"clever/v1/traces.proto","message":"clever.v1.TraceSpan","json_schema":"contracts/jsonschema/trace.schema.json","fixture":"contracts/fixtures/trace.json"},
     {"id":"perception","proto":"clever/v1/perception.proto","message":"clever.v1.PerceptionObservation","json_schema":"contracts/jsonschema/perception.schema.json","fixture":"contracts/fixtures/perception.json"},
-    {"id":"adapter_transport","proto":"clever/v1/adapter.proto","message":"clever.v1.AdapterFrame","json_schema":"contracts/jsonschema/adapter.schema.json","fixture":"contracts/fixtures/adapter.json"}
+    {"id":"adapter_transport","proto":"clever/v1/adapter.proto","message":"clever.v1.AdapterFrame","json_schema":"contracts/jsonschema/adapter.schema.json","fixture":"contracts/fixtures/adapter.json"},
+    {"id":"inference_request","proto":"clever/v1/inference.proto","message":"clever.v1.InferenceRequest","json_schema":"contracts/jsonschema/inference.schema.json","fixture":"contracts/fixtures/inference.json"}
   ],
   "security_invariants": [
     "extension metadata cannot grant permissions",
@@ -22,6 +23,8 @@
     "memory access scope and retention are explicit",
     "perception carries consent and permission grant state",
     "adapter registry metadata is native observation, never policy authority",
-    "unknown contract major versions fail closed"
+    "unknown contract major versions fail closed",
+    "inference identity, attempt, deadline and idempotency are explicit",
+    "inference messages cannot grant egress, budget, tool execution or parity authority"
   ]
 }
