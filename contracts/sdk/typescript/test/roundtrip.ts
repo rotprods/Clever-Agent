@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { fromBinary, toBinary } from "@bufbuild/protobuf";
 import { AdapterFrameSchema } from "../src/gen/clever/v1/adapter_pb";
 import { EventEnvelopeSchema } from "../src/gen/clever/v1/events_pb";
+import { InferenceRequestSchema } from "../src/gen/clever/v1/inference_pb";
 
 const eventBytes = readFileSync(new URL("../../../fixtures/wire/event.bin", import.meta.url));
 const event = fromBinary(EventEnvelopeSchema, eventBytes);
@@ -22,4 +23,14 @@ const adapterAgain = fromBinary(AdapterFrameSchema, toBinary(AdapterFrameSchema,
 if (adapterAgain.frameId !== adapter.frameId) {
   throw new Error(`adapter round-trip mismatch: ${adapterAgain.frameId}`);
 }
-console.log(`OK: TypeScript round-tripped event=${eventBytes.length} adapter=${adapterBytes.length} protobuf bytes`);
+
+const inferenceBytes = readFileSync(new URL("../../../fixtures/wire/inference-request.bin", import.meta.url));
+const inference = fromBinary(InferenceRequestSchema, inferenceBytes);
+if (inference.requestId !== "req_contract_001" || inference.attemptId !== "att_contract_001") {
+  throw new Error(`inference identity mismatch: ${inference.requestId}/${inference.attemptId}`);
+}
+const inferenceAgain = fromBinary(InferenceRequestSchema, toBinary(InferenceRequestSchema, inference));
+if (inferenceAgain.deadlineAt === undefined || inferenceAgain.principal?.userId !== "user_contract") {
+  throw new Error("inference deadline/principal lost during round-trip");
+}
+console.log(`OK: TypeScript round-tripped event=${eventBytes.length} adapter=${adapterBytes.length} inference=${inferenceBytes.length} protobuf bytes`);
