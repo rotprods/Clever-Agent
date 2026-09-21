@@ -47,7 +47,7 @@ def patch_adapter(text: str) -> str:
     text = replace_once(
         text,
         '''    AdapterShutdown, CapabilityDescriptor, ContractVersion, LifecycleMode, NativeRegistryEntry,\n    PlatformConstraint, ProvenanceRef, RegistryPrimitive, RegistrySnapshot,\n    RegistrySnapshotRequest, RuntimeHealth, RuntimeHealthStatus, RuntimeOwner,\n''',
-        '''    AdapterShutdown, CapabilityDescriptor, ContractVersion, InferenceChunk, InferenceError,\n    InferenceFinishReason, InferenceRequest, InferenceTerminal, InferenceUsageMeasurement,\n    LifecycleMode, NativeRegistryEntry, PlatformConstraint, PrincipalRef, ProvenanceRef,\n    RegistryPrimitive, RegistrySnapshot, RegistrySnapshotRequest, RuntimeHealth,\n    RuntimeHealthStatus, RuntimeOwner,\n''',
+        '''    AdapterShutdown, CapabilityDescriptor, ContractVersion, InferenceChunk, InferenceError,\n    InferenceFinishReason, InferenceRequest, InferenceTerminal, InferenceUsageMeasurement,\n    LifecycleMode, NativeRegistryEntry, PlatformConstraint, ProvenanceRef,\n    RegistryPrimitive, RegistrySnapshot, RegistrySnapshotRequest, RuntimeHealth,\n    RuntimeHealthStatus, RuntimeOwner,\n''',
         "adapter inference contract imports",
     )
     text = replace_once(

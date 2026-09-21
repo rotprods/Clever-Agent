@@ -3,10 +3,14 @@ use std::{
     env,
     path::PathBuf,
     thread,
-    time::{Duration, Instant},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
-use clever_contracts::{CapabilityAvailability, RuntimeHealthStatus};
+use clever_contracts::{
+    CapabilityAvailability, ContractVersion, InferenceConfig, InferenceFinishReason,
+    InferenceInput, InferenceRequest, InferenceRole, InferenceUsageMeasurement, PrincipalRef,
+    RuntimeHealthStatus,
+};
 use clever_kernel::{
     adapter::{
         bridge_registry_snapshot, AdapterCommand, AdapterIdentity, AdapterSupervisor,
@@ -363,4 +367,108 @@ fn outbound_write_timeout_poison_session_when_peer_stops_reading() {
         follow_up,
         AdapterSupervisorError::SessionPoisoned(_)
     ));
+}
+
+#[test]
+fn real_openjarvis_unary_inference_uses_pinned_llamacpp_lane() {
+    let python = required_env("CLEVER_TEST_PYTHON");
+    let upstream_src = required_env("CLEVER_OPENJARVIS_SRC");
+    let model_path = required_env("CLEVER_W02_MODEL_PATH");
+    let llamacpp_host = required_env("LLAMACPP_HOST");
+    let root = repo_root();
+    let script = root.join("adapters/openjarvis/sidecar.py");
+    let generated = root.join("contracts/sdk/python/gen");
+    let pythonpath = format!(
+        "{}:{}:{}",
+        root.display(),
+        generated.display(),
+        upstream_src
+    );
+    let mut command = AdapterCommand::new(python);
+    command.args = vec![script.display().to_string()];
+    command.env = BTreeMap::from([
+        ("HOME".to_owned(), "/tmp".to_owned()),
+        ("PYTHONPATH".to_owned(), pythonpath),
+        ("PYTHONHASHSEED".to_owned(), "0".to_owned()),
+        ("CLEVER_W02_MODEL_PATH".to_owned(), model_path),
+        ("LLAMACPP_HOST".to_owned(), llamacpp_host),
+    ]);
+    let identity = AdapterIdentity::new(
+        "openjarvis.cognition",
+        "openjarvis",
+        "https://github.com/open-jarvis/OpenJarvis.git",
+        "72033b8ec288aa067ce4530ff9d96bf231e9c4e5",
+    );
+    let policy = SupervisorPolicy {
+        handshake_timeout: Duration::from_secs(20),
+        request_timeout: Duration::from_secs(120),
+        write_timeout: Duration::from_secs(10),
+        shutdown_timeout: Duration::from_secs(5),
+        ..SupervisorPolicy::default()
+    };
+    let mut supervisor = AdapterSupervisor::start(command, identity, policy)
+        .expect("connect exact OpenJarvis W02-10 sidecar");
+    assert!(supervisor.negotiated_features().contains("unary-inference"));
+
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system time after epoch");
+    let deadline = now + Duration::from_secs(90);
+    let request = InferenceRequest {
+        contract_version: Some(ContractVersion { major: 1, minor: 2 }),
+        request_id: "w02-10-real-request".to_owned(),
+        attempt_id: "w02-10-attempt-1".to_owned(),
+        principal: Some(PrincipalRef {
+            user_id: "local-test-user".to_owned(),
+            device_id: String::new(),
+            channel_id: String::new(),
+            tenant_id: String::new(),
+        }),
+        session_id: "w02-10-session".to_owned(),
+        engine_id: "llamacpp".to_owned(),
+        model_id: "qwen3:0.6b".to_owned(),
+        inputs: vec![InferenceInput {
+            role: InferenceRole::User as i32,
+            content:
+                "Reply with one short sentence stating that the local inference path is ready."
+                    .to_owned(),
+            name: String::new(),
+        }],
+        config: Some(InferenceConfig {
+            max_output_tokens: 32,
+            temperature: Some(0.0),
+            top_p: None,
+            stop_sequences: Vec::new(),
+            stream: false,
+        }),
+        deadline_at: Some(prost_types::Timestamp {
+            seconds: i64::try_from(deadline.as_secs()).expect("deadline seconds fit i64"),
+            nanos: i32::try_from(deadline.subsec_nanos()).expect("deadline nanos fit i32"),
+        }),
+        idempotency_key: "w02-10-idempotency".to_owned(),
+    };
+    let result = supervisor
+        .infer_unary(request)
+        .expect("real OpenJarvis unary inference through pinned llama.cpp lane");
+    assert!(!result.text.trim().is_empty());
+    assert_eq!(result.terminal.request_id, "w02-10-real-request");
+    assert_eq!(result.terminal.attempt_id, "w02-10-attempt-1");
+    assert_eq!(result.terminal.final_sequence, 1);
+    assert!(matches!(
+        InferenceFinishReason::try_from(result.terminal.finish_reason),
+        Ok(InferenceFinishReason::Stop
+            | InferenceFinishReason::Length
+            | InferenceFinishReason::ContentFilter)
+    ));
+    let usage = result.terminal.usage.expect("terminal carries usage");
+    assert_eq!(
+        InferenceUsageMeasurement::try_from(usage.measurement),
+        Ok(InferenceUsageMeasurement::Exact)
+    );
+    assert!(usage.total_tokens.unwrap_or_default() > 0);
+
+    let stopping = supervisor
+        .shutdown("W02-10 unary proof complete")
+        .expect("sidecar shutdown after real unary inference");
+    assert_eq!(stopping.status, RuntimeHealthStatus::Stopping as i32);
 }
