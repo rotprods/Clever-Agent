@@ -19,6 +19,7 @@ if str(GENERATED) not in sys.path:
     sys.path.insert(0, str(GENERATED))
 
 from adapters.openjarvis import ADAPTER_ID, RUNTIME_ID, UPSTREAM_COMMIT, UPSTREAM_REPOSITORY
+from adapters.openjarvis.streaming_inference import execute_stream
 from adapters.openjarvis.unary_inference import UnaryInferenceRejected, execute_unary
 from clever.v1 import adapter_pb2, common_pb2, inference_pb2, runtime_pb2
 
@@ -289,6 +290,7 @@ def hello_frame() -> adapter_pb2.AdapterFrame:
             "cancel",
             "shutdown",
             "unary-inference",
+            "streaming-inference",
         ],
     )
     return _frame("openjarvis-hello", "hello", hello)
@@ -338,6 +340,36 @@ def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
         elif body == "inference_request":
             native_request = request.inference_request
             try:
+                if native_request.HasField("config") and native_request.config.stream:
+                    def emit_chunk(chunk: inference_pb2.InferenceChunk) -> None:
+                        write_frame(
+                            stdout,
+                            _frame(
+                                f"inference-chunk:{request.frame_id}:{chunk.sequence}",
+                                "inference_chunk",
+                                chunk,
+                                correlation_id=request.frame_id,
+                            ),
+                        )
+
+                    def emit_terminal(terminal: inference_pb2.InferenceTerminal) -> None:
+                        write_frame(
+                            stdout,
+                            _frame(
+                                f"inference-terminal:{request.frame_id}",
+                                "inference_terminal",
+                                terminal,
+                                correlation_id=request.frame_id,
+                            ),
+                        )
+
+                    execute_stream(
+                        native_request,
+                        emit_chunk=emit_chunk,
+                        emit_terminal=emit_terminal,
+                    )
+                    continue
+
                 outcome = execute_unary(native_request)
             except UnaryInferenceRejected as exc:
                 failure = inference_pb2.InferenceError(

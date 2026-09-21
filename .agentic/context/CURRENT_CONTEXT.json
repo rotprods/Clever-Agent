@@ -19,10 +19,10 @@
   ],
   "active_claims": [
     {
-      "claim_id": "CLAIM-CP03-W02-UNARY-RELEASE-REPAIR-20260921",
+      "claim_id": "CLAIM-CP03-W02-STREAMING-20260921",
       "owner": "chatgpt-gpt-5.6-sol",
       "status": "ACTIVE",
-      "wave_id": "CP03-W02-UNARY-RELEASE-REPAIR-20260921"
+      "wave_id": "CP03-W02-STREAMING-20260921"
     }
   ],
   "authority_read_order": [

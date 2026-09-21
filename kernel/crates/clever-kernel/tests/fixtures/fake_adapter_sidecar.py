@@ -5,7 +5,7 @@ import struct
 import sys
 import time
 
-from clever.v1 import adapter_pb2, common_pb2, runtime_pb2
+from clever.v1 import adapter_pb2, common_pb2, inference_pb2, runtime_pb2
 
 MAX = 4 * 1024 * 1024
 
@@ -19,6 +19,69 @@ def write_frame(frame: adapter_pb2.AdapterFrame) -> None:
     sys.stdout.buffer.write(struct.pack(">I", len(payload)))
     sys.stdout.buffer.write(payload)
     sys.stdout.buffer.flush()
+
+
+def framed_bytes(value: adapter_pb2.AdapterFrame) -> bytes:
+    payload = value.SerializeToString(deterministic=True)
+    return struct.pack(">I", len(payload)) + payload
+
+
+def write_fragmented_utf8_frame(value: adapter_pb2.AdapterFrame) -> None:
+    wire = framed_bytes(value)
+    needle = "hé".encode("utf-8")
+    index = wire.find(needle)
+    if index < 0:
+        raise SystemExit(92)
+    split = index + 2  # after ASCII h plus first byte (0xc3) of é
+    sys.stdout.buffer.write(wire[:split])
+    sys.stdout.buffer.flush()
+    time.sleep(0.01)
+    sys.stdout.buffer.write(wire[split:])
+    sys.stdout.buffer.flush()
+
+
+def write_coalesced(*values: adapter_pb2.AdapterFrame) -> None:
+    sys.stdout.buffer.write(b"".join(framed_bytes(value) for value in values))
+    sys.stdout.buffer.flush()
+
+
+def inference_version() -> common_pb2.ContractVersion:
+    return common_pb2.ContractVersion(major=1, minor=2)
+
+
+def stream_chunk(request, sequence: int, text: str) -> adapter_pb2.AdapterFrame:
+    body = inference_pb2.InferenceChunk(
+        contract_version=inference_version(),
+        request_id=request.request_id,
+        attempt_id=request.attempt_id,
+        sequence=sequence,
+        text_delta=text,
+    )
+    return frame(
+        f"stream-chunk-{sequence}",
+        "inference_chunk",
+        body,
+        correlation_id="__REQUEST_FRAME__",
+    )
+
+
+def stream_terminal(request, final_sequence: int) -> adapter_pb2.AdapterFrame:
+    body = inference_pb2.InferenceTerminal(
+        contract_version=inference_version(),
+        request_id=request.request_id,
+        attempt_id=request.attempt_id,
+        final_sequence=final_sequence,
+        finish_reason=inference_pb2.INFERENCE_FINISH_REASON_STOP,
+        usage=inference_pb2.InferenceUsage(
+            measurement=inference_pb2.INFERENCE_USAGE_MEASUREMENT_UNKNOWN
+        ),
+    )
+    return frame(
+        "stream-terminal",
+        "inference_terminal",
+        body,
+        correlation_id="__REQUEST_FRAME__",
+    )
 
 
 def read_frame() -> adapter_pb2.AdapterFrame | None:
@@ -66,6 +129,8 @@ def hello(major: int = 1) -> adapter_pb2.AdapterFrame:
             "runtime-health",
             "cancel",
             "shutdown",
+            "unary-inference",
+            "streaming-inference",
         ],
     )
     return frame("fake-hello", "hello", message, major=major)
@@ -128,6 +193,33 @@ def main() -> int:
     if mode == "no-read-after-hello":
         time.sleep(5)
         return 0
+
+    if mode.startswith("stream-"):
+        envelope = read_frame()
+        if envelope is None or envelope.WhichOneof("body") != "inference_request":
+            return 65
+        request = envelope.inference_request
+        first = stream_chunk(request, 1, "hé")
+        second = stream_chunk(request, 2, "llo")
+        terminal = stream_terminal(request, 2)
+        for value in (first, second, terminal):
+            value.correlation_id = envelope.frame_id
+        if mode == "stream-valid":
+            write_fragmented_utf8_frame(first)
+            write_coalesced(second, terminal)
+            return 0
+        if mode == "stream-duplicate":
+            duplicate = stream_chunk(request, 1, "duplicate")
+            duplicate.correlation_id = envelope.frame_id
+            write_coalesced(first, duplicate, terminal)
+            return 0
+        if mode == "stream-reordered":
+            write_coalesced(second, terminal)
+            return 0
+        if mode == "stream-eof":
+            write_frame(first)
+            return 0
+        return 66
 
     while True:
         request = read_frame()

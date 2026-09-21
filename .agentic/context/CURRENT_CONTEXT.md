@@ -35,7 +35,7 @@
 
 ## Active claims
 
-- `CLAIM-CP03-W02-UNARY-RELEASE-REPAIR-20260921` → `CP03-W02-UNARY-RELEASE-REPAIR-20260921` · `chatgpt-gpt-5.6-sol`
+- `CLAIM-CP03-W02-STREAMING-20260921` → `CP03-W02-STREAMING-20260921` · `chatgpt-gpt-5.6-sol`
 
 ## Open / mitigating risks
 
