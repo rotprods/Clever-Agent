@@ -10,6 +10,8 @@
   "owner": "chatgpt-gpt-5.6-sol",
   "base_head": "0be2f0bf080c78c2bc5897f5214e7564a8f375ff",
   "status": "ACTIVE",
+  "ledger_registered": true,
+  "ledger_registered_commit": "f02d46db4d5365fad55960ca58df4bf6a4f548c6",
   "coordination": "W02-12 only. Prove real request/attempt-scoped cancellation with REQUESTED, ACK and terminal cessation kept distinct; explicit single-flight; cancel-before, cancel-during, already-terminal and ignore-cancel adversarials. Local cessation may be VERIFIED only from a CANCELLED terminal; remote/provider cessation remains UNKNOWN. No tool execution, provider egress, parity promotion, denominator mutation, W02-13+ implementation, or contract-number changes.",
   "scope": [
     "adapters/openjarvis/streaming_inference.py",
