@@ -1,0 +1,505 @@
+name: CP03 W02 Structured Preflight
+
+on:
+  push:
+    branches:
+      - wave/cp03/w02-structured-preflight-20260921
+    paths:
+      - '.github/workflows/cp03-w02-structured-preflight.yml'
+      - 'sessions/20260921-w02-structured-preflight/**'
+      - 'scripts/cp03/w02_structured_preflight_patch.py'
+      - 'tests/test_cp03_w02_structured_output.py'
+      - 'adapters/openjarvis/structured_output.py'
+      - 'adapters/openjarvis/streaming_inference.py'
+      - 'evidence/cp03/cp03-w02/W02-13/preflight/**'
+      - 'ledgers/**'
+      - 'STATE.md'
+      - 'HANDOFF.md'
+      - '.agentic/context/CURRENT_CONTEXT.json'
+      - '.agentic/context/CURRENT_CONTEXT.md'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/cp03-w02-structured-preflight.yml'
+      - 'sessions/20260921-w02-structured-preflight/**'
+      - 'scripts/cp03/w02_structured_preflight_patch.py'
+      - 'tests/test_cp03_w02_structured_output.py'
+      - 'adapters/openjarvis/structured_output.py'
+      - 'adapters/openjarvis/streaming_inference.py'
+      - 'evidence/cp03/cp03-w02/W02-13/preflight/**'
+      - 'ledgers/**'
+      - 'STATE.md'
+      - 'HANDOFF.md'
+      - '.agentic/context/CURRENT_CONTEXT.json'
+      - '.agentic/context/CURRENT_CONTEXT.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cp03-w02-structured-preflight-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  reconcile-claim:
+    if: github.event_name == 'push'
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: wave/cp03/w02-structured-preflight-20260921
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Reconcile exact main and claim
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          claim_base="$(python -c "import json; print(json.load(open('sessions/20260921-w02-structured-preflight/CLAIM.json'))['base_head'])")"
+          test "$(git rev-parse origin/main)" = "$claim_base"
+          test "$(git merge-base HEAD origin/main)" = "$claim_base"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          claim_path = Path('sessions/20260921-w02-structured-preflight/CLAIM.json')
+          ledger_path = Path('ledgers/CLAIM_LEDGER.ndjson')
+          claim = json.loads(claim_path.read_text())
+          rows = [json.loads(line) for line in ledger_path.read_text().splitlines() if line.strip()]
+          latest = {}
+          for row in rows:
+              if row.get('claim_id') and row.get('status'):
+                  latest[row['claim_id']] = row
+          mine = latest.get(claim['claim_id'])
+          others = [
+              row for cid, row in latest.items()
+              if cid != claim['claim_id'] and row.get('status') == 'ACTIVE'
+          ]
+          if others:
+              raise SystemExit('another durable active claim exists; refusing overlapping work: ' + ','.join(sorted(row['claim_id'] for row in others)))
+          if mine is None:
+              row = dict(claim)
+              row['event'] = 'CLAIM'
+              with ledger_path.open('a', encoding='utf-8') as handle:
+                  handle.write(json.dumps(row, sort_keys=True, separators=(',', ':')) + '\n')
+          elif mine.get('status') not in {'ACTIVE', 'RELEASED'}:
+              raise SystemExit(f"unexpected claim state: {mine.get('status')!r}")
+          PY
+          python scripts/context/build_context_pack.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/cp03/validate_w02_plan.py
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          git diff --check
+      - name: CAS persist claim reconciliation
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- ledgers/CLAIM_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md; then
+            exit 0
+          fi
+          branch_head="$(git rev-parse HEAD)"
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-structured-preflight-20260921 | cut -f1)" = "$branch_head"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ledgers/CLAIM_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git commit -m 'claim(cp03-w02): register W02-13 structured preflight'
+          git push origin HEAD:wave/cp03/w02-structured-preflight-20260921
+
+  materialize-and-test:
+    if: github.event_name == 'push'
+    needs: reconcile-claim
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: wave/cp03/w02-structured-preflight-20260921
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - id: state
+        name: Resolve durable claim and source state
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          claim='CLAIM-CP03-W02-STRUCTURED-PREFLIGHT-20260921'
+          rows=[json.loads(line) for line in Path('ledgers/CLAIM_LEDGER.ndjson').read_text().splitlines() if line.strip()]
+          matching=[row for row in rows if row.get('claim_id')==claim and row.get('status')]
+          if not matching:
+              raise SystemExit('durable W02-13 preflight claim missing')
+          print('claim_status=' + matching[-1]['status'])
+          PY
+          if python scripts/cp03/w02_structured_preflight_patch.py --check >/dev/null 2>&1; then
+            echo 'patched=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'patched=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Exact-base and DAG preflight
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          claim_base="$(python -c "import json; print(json.load(open('sessions/20260921-w02-structured-preflight/CLAIM.json'))['base_head'])")"
+          test "$(git rev-parse origin/main)" = "$claim_base"
+          test "$(git merge-base HEAD origin/main)" = "$claim_base"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          tasks={row['id']:row for row in graph['tasks']}
+          assert graph['first_executable_task']=='W02-13'
+          assert graph['global_denominator']==7565
+          assert graph['openjarvis_obligations']==646
+          assert tasks['W02-13']['status']=='READY' and not tasks['W02-13']['proof']
+          assert tasks['W02-11']['status']=='COMPLETE' and tasks['W02-11']['proof']
+          assert tasks['W02-12']['status']=='COMPLETE' and tasks['W02-12']['proof']
+          assert tasks['W02-14']['status']=='BLOCKED' and not tasks['W02-14']['proof']
+          PY
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+      - name: Install bounded Python test dependencies
+        run: python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt 'jsonschema==4.25.1'
+      - name: Confirm committed RED before implementation
+        if: steps.state.outputs.claim_status == 'ACTIVE' && steps.state.outputs.patched == 'false'
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
+        run: |
+          set -euo pipefail
+          set +e
+          python -m unittest -v tests.test_cp03_w02_structured_output > /tmp/w02-13-preflight-red.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/w02-13-preflight-red.log
+          test "$status" -ne 0
+      - name: Apply deterministic W02-13 preflight slice
+        if: steps.state.outputs.claim_status == 'ACTIVE' && steps.state.outputs.patched == 'false'
+        run: |
+          set -euo pipefail
+          python scripts/cp03/w02_structured_preflight_patch.py --apply
+          python scripts/cp03/w02_structured_preflight_patch.py --check
+          python -m py_compile adapters/openjarvis/structured_output.py adapters/openjarvis/streaming_inference.py scripts/cp03/w02_structured_preflight_patch.py tests/test_cp03_w02_structured_output.py
+          git diff --check
+      - name: Targeted structured/tool RED-GREEN and inference regressions
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
+        run: |
+          set -euo pipefail
+          python -m unittest -v \
+            tests.test_cp03_w02_structured_output \
+            tests.test_cp03_w02_streaming \
+            tests.test_cp03_w02_cancellation \
+            tests.test_cp03_w02_unary_inference \
+            tests.test_cp03_openjarvis_sidecar \
+            tests.test_cp03_w02_plan
+      - name: State parity and context gauntlet
+        run: |
+          set -euo pipefail
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          git diff --check
+      - name: Restrict implementation mutation
+        if: steps.state.outputs.claim_status == 'ACTIVE' && steps.state.outputs.patched == 'false'
+        run: |
+          python - <<'PY'
+          import subprocess
+          allowed={
+              'adapters/openjarvis/structured_output.py',
+              'adapters/openjarvis/streaming_inference.py',
+          }
+          paths={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'], text=True).splitlines() if line}
+          unexpected=paths-allowed
+          assert not unexpected, f'out-of-scope W02-13 preflight source mutation: {sorted(unexpected)}'
+          assert paths == allowed, f'expected exact source delta {sorted(allowed)}, got {sorted(paths)}'
+          PY
+      - name: CAS persist tested implementation
+        if: steps.state.outputs.claim_status == 'ACTIVE' && steps.state.outputs.patched == 'false'
+        run: |
+          set -euo pipefail
+          branch_head="$(git rev-parse HEAD)"
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-structured-preflight-20260921 | cut -f1)" = "$branch_head"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add adapters/openjarvis/structured_output.py adapters/openjarvis/streaming_inference.py
+          git commit -m 'feat(cp03-w02): normalize W02-13 structured tool fragments fail closed'
+          git push origin HEAD:wave/cp03/w02-structured-preflight-20260921
+
+  finalize-support:
+    if: github.event_name == 'push'
+    needs: materialize-and-test
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: wave/cp03/w02-structured-preflight-20260921
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - id: state
+        name: Resolve finalization state
+        run: |
+          set -euo pipefail
+          python scripts/cp03/w02_structured_preflight_patch.py --check
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          claim='CLAIM-CP03-W02-STRUCTURED-PREFLIGHT-20260921'
+          evidence='EVID-W02-STRUCTURED-PREFLIGHT-20260921'
+          rows=[json.loads(line) for line in Path('ledgers/CLAIM_LEDGER.ndjson').read_text().splitlines() if line.strip()]
+          matching=[row for row in rows if row.get('claim_id')==claim and row.get('status')]
+          if not matching:
+              raise SystemExit('claim missing')
+          print('claim_status=' + matching[-1]['status'])
+          evidence_rows=[json.loads(line) for line in Path('ledgers/EVIDENCE_LEDGER.ndjson').read_text().splitlines() if line.strip()]
+          print('evidence_present=' + ('true' if any(row.get('evidence_id')==evidence for row in evidence_rows) else 'false'))
+          PY
+      - name: Re-prove committed source before evidence write
+        if: steps.state.outputs.claim_status == 'ACTIVE' && steps.state.outputs.evidence_present == 'false'
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          claim_base="$(python -c "import json; print(json.load(open('sessions/20260921-w02-structured-preflight/CLAIM.json'))['base_head'])")"
+          test "$(git rev-parse origin/main)" = "$claim_base"
+          test "$(git merge-base HEAD origin/main)" = "$claim_base"
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt 'jsonschema==4.25.1'
+          PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/contracts/sdk/python/gen" python -m unittest -v \
+            tests.test_cp03_w02_structured_output \
+            tests.test_cp03_w02_streaming \
+            tests.test_cp03_w02_cancellation \
+            tests.test_cp03_w02_unary_inference \
+            tests.test_cp03_openjarvis_sidecar \
+            tests.test_cp03_w02_plan
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+      - name: Persist support evidence, decision, risk and recovery state
+        if: steps.state.outputs.claim_status == 'ACTIVE' && steps.state.outputs.evidence_present == 'false'
+        env:
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root=Path('.')
+          source_head=os.popen('git rev-parse HEAD').read().strip()
+          run_id=int(os.environ['RUN_ID'])
+          evidence_id='EVID-W02-STRUCTURED-PREFLIGHT-20260921'
+          wave='CP03-W02-STRUCTURED-PREFLIGHT-20260921'
+          claim='CLAIM-CP03-W02-STRUCTURED-PREFLIGHT-20260921'
+
+          receipt={
+              'schema_version':1,
+              'date':'2026-09-21',
+              'evidence_id':evidence_id,
+              'status':'VERIFIED_SUPPORT_SLICE',
+              'type':'cp03_w02_structured_tool_fragment_preflight',
+              'wave_id':'CP03-W02',
+              'support_wave':wave,
+              'canonical_task':'W02-13',
+              'validated_head':source_head,
+              'github_actions_run_id':run_id,
+              'global_denominator':7565,
+              'openjarvis_obligations':646,
+              'w02_proof_units':47,
+              'parity_promotions':0,
+              'verified_capabilities':0,
+              'provider_egress_executions':0,
+              'tool_executions':0,
+              'native_tool_fragment_normalization':'PASS',
+              'fragmented_arguments':'PASS',
+              'malicious_tool_name_preserved_as_data':'PASS',
+              'invalid_json':'REJECTED',
+              'schema_mismatch':'REJECTED',
+              'tool_finish_reason_mapping':'PASS',
+              'canonical_wire_projection':'NOT_RUN',
+              'canonical_task_complete':False,
+              'claim':'Pinned OpenJarvis tool-call fragment shapes are normalized under explicit byte/count bounds, invalid JSON/schema states fail closed, and tool names/arguments remain inert data. The current canonical inference wire cannot represent those data, so the bridge still fails closed instead of dropping or executing them. This is W02-13 support evidence only and does not complete W02-13 or promote parity.'
+          }
+          evidence_dir=root/'evidence/cp03/cp03-w02/W02-13/preflight'
+          evidence_dir.mkdir(parents=True, exist_ok=True)
+          (evidence_dir/'receipt.json').write_text(json.dumps(receipt, indent=2, sort_keys=True)+'\n', encoding='utf-8')
+
+          def append(path, row):
+              with (root/path).open('a', encoding='utf-8') as handle:
+                  handle.write(json.dumps(row, sort_keys=True, separators=(',', ':'))+'\n')
+
+          append('ledgers/EVIDENCE_LEDGER.ndjson', receipt)
+          append('ledgers/DECISION_LEDGER.ndjson', {
+              'schema_version':1,
+              'date':'2026-09-21',
+              'decision_id':'D-0019',
+              'status':'ACCEPTED',
+              'evidence_id':evidence_id,
+              'context':'Pinned OpenJarvis emits provider-specific tool-call fragments before Clever v1.2 has a canonical field that can carry them. Dropping, auto-correcting, stringifying into text_delta, or executing them would falsify semantics or cross the W02 authority boundary.',
+              'decision':'Stage W02-13 in two evidence-backed layers: first normalize and validate pinned native structured/tool fragments as bounded inert data and fail closed at the v1.2 wire boundary; only a later additive canonical wire extension may project those data end-to-end. This support slice cannot complete W02-13 or promote parity.'
+          })
+          append('ledgers/RISK_LEDGER.ndjson', {
+              'schema_version':1,
+              'date':'2026-09-21',
+              'risk_id':'RISK-0013',
+              'severity':'HIGH',
+              'status':'MITIGATING',
+              'evidence_id':evidence_id,
+              'risk':'Canonical inference wire v1.2 cannot represent structured response configuration or assembled tool-call data, creating a loss/ambiguity risk if native fragments are silently dropped, coerced into text, or mistaken for executable authority.',
+              'mitigation':'W02-13 preflight now validates and bounds exact pinned native fragment shapes, preserves provider metadata internally, maps tool finish reason, rejects invalid JSON/schema, and deliberately fails closed before canonical emission. Keep W02-13 READY and parity at zero until an additive canonical wire projection is round-tripped and behaviorally proven.'
+          })
+          append('ledgers/RUN_LOG.ndjson', {
+              'schema_version':1,
+              'date':'2026-09-21',
+              'event_id':'RUN-W02-STRUCTURED-PREFLIGHT-20260921',
+              'event':'WORK_COMPLETED',
+              'goal_id':'CLEVER-JARVIS-001',
+              'checkpoint':'CP03',
+              'iteration':'I03',
+              'wave_id':'CP03-W02',
+              'support_wave':wave,
+              'canonical_task':'W02-13',
+              'status':'ADVANCED',
+              'evidence_id':evidence_id,
+              'head':source_head,
+              'next_task':'W02-13',
+              'K':47,
+              'parity_promotions':0
+          })
+          append('ledgers/WAVE_LEDGER.ndjson', {
+              'schema_version':1,
+              'date':'2026-09-21',
+              'event_id':'WAVE-W02-STRUCTURED-PREFLIGHT-20260921',
+              'event':'VERIFICATION',
+              'wave_id':wave,
+              'parent_wave':'CP03-W02',
+              'canonical_task':'W02-13',
+              'checkpoint':'CP03',
+              'iteration':'I03',
+              'status':'COMPLETE',
+              'evidence_id':evidence_id,
+              'next_task':'W02-13'
+          })
+          append('ledgers/CLAIM_LEDGER.ndjson', {
+              'schema_version':1,
+              'date':'2026-09-21',
+              'claim_id':claim,
+              'event':'RELEASE',
+              'owner':'chatgpt-gpt-5.6-sol',
+              'wave_id':wave,
+              'status':'RELEASED',
+              'release_evidence_id':evidence_id,
+              'coordination':'W02-13 structured preflight support slice verified and released. Canonical W02-13 remains READY because v1.2 wire projection is intentionally NOT_RUN; no parity/denominator mutation.'
+          })
+
+          state_path=root/'STATE.md'
+          state=state_path.read_text(encoding='utf-8')
+          marker='- Canonical task frontier: `W02-13 — Structured output y tools` (`READY`)\n'
+          pointer='- W02-13 support preflight: `EVID-W02-STRUCTURED-PREFLIGHT-20260921` (`VERIFIED_SUPPORT_SLICE`; canonical wire projection `NOT_RUN`)\n'
+          if pointer not in state:
+              if marker not in state:
+                  raise SystemExit('STATE W02-13 frontier marker missing')
+              state=state.replace(marker, marker+pointer, 1)
+              state_path.write_text(state, encoding='utf-8')
+
+          handoff_path=root/'HANDOFF.md'
+          handoff=handoff_path.read_text(encoding='utf-8')
+          section='''\n## W02-13 structured/tool preflight support slice — 2026-09-21\n\n- Evidence: `EVID-W02-STRUCTURED-PREFLIGHT-20260921` (`VERIFIED_SUPPORT_SLICE`).\n- Pinned OpenJarvis source truth shows OpenAI/Anthropic fragmented `tool_calls` keyed by index and Google complete calls in the same shape. The new adapter layer bounds/assembles those fragments, retains provider metadata, validates argument JSON and structured JSON/schema, and maps `tool_calls` finish reason.\n- Tool names/arguments remain inert model data; shell/MCP/browser/tool execution count is `0`; provider egress count is `0`; parity promotions are `0`; denominators remain `7565 / 646 / K=47`.\n- The canonical inference wire remains v1.2 and cannot carry structured response configuration or assembled tool-call records. The bridge therefore fails closed instead of dropping/coercing/executing them. `canonical_wire_projection=NOT_RUN` is not PASS.\n- Canonical `W02-13` remains `READY` with empty canonical proof. `W02-14+` remain blocked. Next exact work: additive typed canonical projection + polyglot round-trip + end-to-end stream evidence for W02-13.\n'''
+          if '## W02-13 structured/tool preflight support slice — 2026-09-21' not in handoff:
+              handoff_path.write_text(handoff.rstrip()+section+'\n', encoding='utf-8')
+          PY
+          python scripts/context/build_context_pack.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/cp03/validate_w02_plan.py
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          git diff --check
+      - name: CAS persist support finalization
+        if: steps.state.outputs.claim_status == 'ACTIVE' && steps.state.outputs.evidence_present == 'false'
+        run: |
+          set -euo pipefail
+          branch_head="$(git rev-parse HEAD)"
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-structured-preflight-20260921 | cut -f1)" = "$branch_head"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            evidence/cp03/cp03-w02/W02-13/preflight/receipt.json \
+            ledgers/CLAIM_LEDGER.ndjson \
+            ledgers/EVIDENCE_LEDGER.ndjson \
+            ledgers/RUN_LOG.ndjson \
+            ledgers/WAVE_LEDGER.ndjson \
+            ledgers/DECISION_LEDGER.ndjson \
+            ledgers/RISK_LEDGER.ndjson \
+            STATE.md HANDOFF.md \
+            .agentic/context/CURRENT_CONTEXT.json \
+            .agentic/context/CURRENT_CONTEXT.md
+          git commit -m 'state(cp03-w02): persist W02-13 structured preflight evidence'
+          git push origin HEAD:wave/cp03/w02-structured-preflight-20260921
+      - name: Verify finalized support state
+        if: steps.state.outputs.claim_status == 'RELEASED' || steps.state.outputs.evidence_present == 'true'
+        run: |
+          set -euo pipefail
+          test -f evidence/cp03/cp03-w02/W02-13/preflight/receipt.json
+          python scripts/cp03/w02_structured_preflight_patch.py --check
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/cp03/validate_w02_plan.py
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+
+  pr-readonly-gauntlet:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install bounded Python test dependencies
+        run: python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt 'jsonschema==4.25.1'
+      - name: Exact PR head W02-13 support gauntlet
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          python scripts/cp03/w02_structured_preflight_patch.py --check
+          python -m unittest -v \
+            tests.test_cp03_w02_structured_output \
+            tests.test_cp03_w02_streaming \
+            tests.test_cp03_w02_cancellation \
+            tests.test_cp03_w02_unary_inference \
+            tests.test_cp03_openjarvis_sidecar \
+            tests.test_cp03_w02_plan
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          git diff --check
