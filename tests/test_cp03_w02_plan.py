@@ -60,8 +60,11 @@ class W02PlanTests(unittest.TestCase):
         self.invalid("missing dependency")
 
     def test_cycle_rejected(self):
-        self.task("W02-07")["status"] = "BLOCKED"
-        self.task("W02-08")["status"] = "BLOCKED"
+        # Keep this structural probe independent from whichever later task is
+        # currently READY. Otherwise the validator can correctly fail earlier
+        # on a now-stale READY descendant before it reaches cycle detection.
+        for index in range(7, 20):
+            self.task(f"W02-{index:02d}")["status"] = "BLOCKED"
         self.task("W02-07")["depends_on"] = ["W02-08"]
         self.task("W02-08")["depends_on"] = ["W02-07"]
         self.invalid("cycle")
