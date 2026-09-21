@@ -25,6 +25,7 @@
     "ledgers/WAVE_LEDGER.ndjson",
     "ledgers/DECISION_LEDGER.ndjson",
     "ledgers/RISK_LEDGER.ndjson",
+    "STATE.md",
     "HANDOFF.md",
     ".agentic/context/CURRENT_CONTEXT.json",
     ".agentic/context/CURRENT_CONTEXT.md"
