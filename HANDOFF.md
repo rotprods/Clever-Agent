@@ -7,7 +7,7 @@
 - W02-10 G3 evidence: `EVID-W02-UNARY-INFERENCE-20260921`; one real model execution, correlated unary chunk+terminal, provider egress 0, tool executions 0, parity promotions 0.
 - Real L2 lane: OpenJarvis `qwen3:0.6b` → `llamacpp`; base revision `66b95ce14c07166297fcbfb54aa20441af8f9d75`; runtime commit `391fac16460f15233a7740550d858ac96df3419d`.
 - Real GGUF artifact: `Qwen_Qwen3-0.6B-Q4_K_M.gguf`, 484220320 bytes, SHA-256 `9acfc1e001311f34b4252001b626f2e466d592a42065f66571bff3790d4e1b14`; controlled acquisition followed by network-none verification PASS.
-- Missing/corrupt/mock artifacts remain fail-closed. No model inference or provider egress occurred; parity promotions 0; denominator unchanged.
+- Missing/corrupt/mock artifacts remain fail-closed. W02-09 acquisition itself executed no model; W02-10 subsequently executed exactly one local pinned-model inference. Provider egress remained 0; parity promotions remained 0; denominator unchanged.
 
 ## Next executable
 
