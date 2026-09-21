@@ -275,6 +275,7 @@ jobs:
       - name: Post-transition regression and gauntlet
         run: |
           set -euo pipefail
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt
           python -m unittest tests.test_cp03_w02_plan tests.test_cp03_w02_unary_inference -v
           python scripts/cp03/validate_w02_plan.py
           python scripts/validate_agentic_state.py
