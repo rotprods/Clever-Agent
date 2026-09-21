@@ -1,0 +1,27 @@
+{
+  "base_head": "37cab264ef7176afa8aebf83b773065518bb55b0",
+  "canonical_task": "W02-08",
+  "claim_id": "CLAIM-CP03-W02-MODEL-BRIDGE-RELEASE-20260921",
+  "coordination": "Release reconciliation for already-evidenced W02-08 only. Repair stale release/PR assertions, re-run exact-head lifecycle/catalog/security/kernel/state/parity gates, and converge W02-08 to main. No W02-09 weights, model execution, provider egress, denominator/parity mutation, or W02-09+ completion.",
+  "date": "2026-09-21",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "parent_wave": "CP03-W02",
+  "schema_version": 1,
+  "scope": [
+    ".github/workflows/cp03-w02-model-bridge.yml",
+    ".github/workflows/cp03-w02-model-bridge-release-claim.yml",
+    ".github/workflows/cp03-w02-model-bridge-release-finalize.yml",
+    "sessions/20260921-w02-model-bridge-release/**",
+    "evidence/cp03/cp03-w02/W02-08/release_reconciliation.json",
+    "ledgers/CLAIM_LEDGER.ndjson",
+    "ledgers/EVIDENCE_LEDGER.ndjson",
+    "ledgers/RUN_LOG.ndjson",
+    "ledgers/WAVE_LEDGER.ndjson",
+    "ledgers/RISK_LEDGER.ndjson",
+    "HANDOFF.md",
+    ".agentic/context/CURRENT_CONTEXT.json",
+    ".agentic/context/CURRENT_CONTEXT.md"
+  ],
+  "status": "ACTIVE",
+  "wave_id": "CP03-W02-MODEL-BRIDGE-RELEASE-20260921"
+}
