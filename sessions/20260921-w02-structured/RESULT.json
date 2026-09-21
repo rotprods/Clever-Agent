@@ -6,6 +6,8 @@
   "next_subslice": "canonical typed transport for W02-13",
   "next_task": "W02-13",
   "schema_version": 1,
+  "state_candidate_base_head": "10394e6e264504b445a5248d7f6d56e5aa7ef4c0",
+  "state_pr": 52,
   "status": "ADVANCED_IN_PROGRESS",
   "task": "W02-13",
   "validated_head": "40285384647ee1aee076b3ab0b0d6ed85d42e434",
