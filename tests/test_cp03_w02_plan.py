@@ -61,8 +61,8 @@ class W02PlanTests(unittest.TestCase):
 
     def test_cycle_rejected(self):
         # Keep this structural probe independent from whichever later task is
-        # currently READY. Otherwise the validator can correctly fail earlier
-        # on a now-stale READY descendant before it reaches cycle detection.
+        # currently READY/IN_PROGRESS. Otherwise the validator can correctly
+        # fail earlier on a now-stale frontier descendant before cycle detection.
         for index in range(7, 20):
             self.task(f"W02-{index:02d}")["status"] = "BLOCKED"
         self.task("W02-07")["depends_on"] = ["W02-08"]
@@ -118,7 +118,7 @@ class W02PlanTests(unittest.TestCase):
             self.assertEqual(unary["status"], "COMPLETE")
             self.assertTrue(unary["proof"])
             frontier = self.task(self.plan["first_executable_task"])
-            self.assertEqual(frontier["status"], "READY")
+            self.assertIn(frontier["status"], {"READY", "IN_PROGRESS"})
             self.assertTrue(
                 all(self.task(dep)["status"] == "COMPLETE" for dep in frontier["depends_on"])
             )
@@ -197,22 +197,29 @@ class W02PlanTests(unittest.TestCase):
             self.assertEqual(unary["status"], "COMPLETE")
             self.assertTrue(unary["proof"])
             frontier = self.task(expected)
-            self.assertEqual(frontier["status"], "READY")
+            self.assertIn(frontier["status"], {"READY", "IN_PROGRESS"})
             self.assertTrue(
                 all(self.task(dep)["status"] == "COMPLETE" for dep in frontier["depends_on"])
             )
 
-    def test_only_one_g2_frontier_is_ready(self):
+    def test_only_one_g2_frontier_is_ready_or_in_progress(self):
         ready = [task["id"] for task in self.plan["tasks"] if task.get("status") == "READY"]
-        self.assertIn(self.plan["first_executable_task"], ready)
-        if self.plan["first_executable_task"] in {"W02-07", "W02-08", "W02-09"}:
+        in_progress = [task["id"] for task in self.plan["tasks"] if task.get("status") == "IN_PROGRESS"]
+        first = self.plan["first_executable_task"]
+        self.assertLessEqual(len(in_progress), 1)
+        if in_progress:
+            self.assertEqual(in_progress, [first])
+            self.assertNotIn(first, ready)
+        else:
+            self.assertIn(first, ready)
+        if first in {"W02-07", "W02-08", "W02-09"}:
             self.assertEqual(
-                [item for item in ready if item in {"W02-07", "W02-08", "W02-09"}],
-                [self.plan["first_executable_task"]],
+                [item for item in ready + in_progress if item in {"W02-07", "W02-08", "W02-09"}],
+                [first],
             )
         else:
             self.assertEqual(
-                [item for item in ready if item in {"W02-07", "W02-08", "W02-09"}],
+                [item for item in ready + in_progress if item in {"W02-07", "W02-08", "W02-09"}],
                 [],
             )
 
