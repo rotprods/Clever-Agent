@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "date": "2026-09-21",
+  "base_head": "c46aca03854e227e236f421d784c05e50691aee9",
   "claim_id": "CLAIM-CP03-W02-STRUCTURED-20260921",
   "wave_id": "CP03-W02-STRUCTURED-20260921",
   "parent_wave": "CP03-W02",
