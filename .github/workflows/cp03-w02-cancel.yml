@@ -1,0 +1,130 @@
+name: CP03 W02 Real Cancellation
+
+on:
+  push:
+    branches: [wave/cp03/w02-real-cancel-20260921]
+    paths:
+      - 'scripts/cp03/w02_cancel_patch.py'
+      - 'adapters/openjarvis/cancellation.py'
+      - 'tests/test_cp03_w02_cancellation.py'
+      - '.github/workflows/cp03-w02-cancel.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'adapters/openjarvis/cancellation.py'
+      - 'adapters/openjarvis/sidecar.py'
+      - 'kernel/crates/clever-kernel/src/adapter.rs'
+      - 'kernel/crates/clever-kernel/tests/adapter_supervisor.rs'
+      - 'kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py'
+      - 'tests/test_cp03_w02_cancellation.py'
+      - 'scripts/cp03/w02_cancel_patch.py'
+      - '.github/workflows/cp03-w02-cancel.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cp03-w02-cancel-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.event_name == 'push'
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Compile W02-12 slice
+        run: |
+          set -euo pipefail
+          python scripts/cp03/w02_cancel_patch.py --apply
+          cargo fmt --manifest-path kernel/Cargo.toml --all
+          python scripts/cp03/w02_cancel_patch.py --check
+          python -m py_compile adapters/openjarvis/cancellation.py adapters/openjarvis/sidecar.py scripts/cp03/w02_cancel_patch.py tests/test_cp03_w02_cancellation.py kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py
+          git diff --check
+      - name: Prove process cancellation and protocol semantics
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check pytest -r contracts/sdk/python/requirements.txt
+          export PYTHONPATH="$PWD:$PWD/contracts/sdk/python/gen"
+          export CLEVER_TEST_PYTHON="$(command -v python)"
+          pytest -q tests/test_cp03_w02_cancellation.py
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor cancel_before_first_chunk_requires_ack_and_cancelled_terminal -- --exact --nocapture
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor cancel_during_stream_preserves_prior_chunks_and_stops_locally -- --exact --nocapture
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor cancel_after_terminal_is_rejected_not_relabelled_success -- --exact --nocapture
+      - name: Regress W02-11 stream and kernel surface
+        run: |
+          set -euo pipefail
+          export CLEVER_TEST_PYTHON="$(command -v python)"
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor stream_handles_fragmented_coalesced_utf8_and_single_terminal -- --exact --nocapture
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor stream_duplicate_sequence_fails_closed -- --exact --nocapture
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor stream_reordered_sequence_fails_closed -- --exact --nocapture
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor stream_eof_before_terminal_fails_closed -- --exact --nocapture
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor -- --nocapture
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+      - name: Restrict generated mutation
+        run: |
+          python - <<'PY'
+          import subprocess
+          allowed={
+            'adapters/openjarvis/sidecar.py',
+            'kernel/crates/clever-kernel/src/adapter.rs',
+            'kernel/crates/clever-kernel/tests/adapter_supervisor.rs',
+            'kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py',
+          }
+          paths={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if line}
+          unexpected=paths-allowed
+          assert not unexpected, f'out-of-scope generated mutation: {sorted(unexpected)}'
+          assert paths == allowed, f'expected exact W02-12 generated delta, got {sorted(paths)}'
+          PY
+      - name: CAS persist generated implementation
+        env:
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-real-cancel-20260921 | cut -f1)" = "$EXPECTED_HEAD"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add adapters/openjarvis/sidecar.py kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/tests/adapter_supervisor.rs kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py
+          git commit -m 'feat(cp03-w02): implement real inference cancellation'
+          git push origin HEAD:wave/cp03/w02-real-cancel-20260921
+
+  validate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Validate source contract
+        run: |
+          set -euo pipefail
+          python scripts/cp03/w02_cancel_patch.py --check
+          cargo fmt --manifest-path kernel/Cargo.toml --all -- --check
+          python -m py_compile adapters/openjarvis/cancellation.py adapters/openjarvis/sidecar.py scripts/cp03/w02_cancel_patch.py tests/test_cp03_w02_cancellation.py kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py
+          git diff --check
+      - name: Re-prove W02-12 and W02-11 regression
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check pytest -r contracts/sdk/python/requirements.txt
+          export PYTHONPATH="$PWD:$PWD/contracts/sdk/python/gen"
+          export CLEVER_TEST_PYTHON="$(command -v python)"
+          pytest -q tests/test_cp03_w02_cancellation.py
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor cancel_before_first_chunk_requires_ack_and_cancelled_terminal -- --exact --nocapture
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor cancel_during_stream_preserves_prior_chunks_and_stops_locally -- --exact --nocapture
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor cancel_after_terminal_is_rejected_not_relabelled_success -- --exact --nocapture
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor stream_handles_fragmented_coalesced_utf8_and_single_terminal -- --exact --nocapture
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor -- --nocapture
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+          python -m scripts.parity.ledger --check --source-repo openjarvis
