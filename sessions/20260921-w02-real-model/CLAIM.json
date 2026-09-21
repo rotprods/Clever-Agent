@@ -3,7 +3,7 @@
   "canonical_task": "W02-09",
   "checkpoint": "CP03",
   "claim_id": "CLAIM-CP03-W02-REAL-MODEL-20260921",
-  "coordination": "W02-09 only: pin one real OpenJarvis catalog model lane, prove immutable real-weight acquisition and offline integrity, and fail closed for absent/corrupt/mock artifacts. No inference execution (W02-10), no provider egress, no denominator/parity mutation, no W02-10 completion.",
+  "coordination": "W02-09 only: pin one real OpenJarvis catalog model lane, prove immutable real-weight acquisition and offline integrity, and fail closed for absent/corrupt/mock artifacts. No inference execution (W02-10), no provider egress, no denominator/parity mutation, no W02-10 completion. Scope amended before mutation of the stale planning-regression assertion so the W02-09 COMPLETE \u2192 W02-10 READY transition is tested without overlapping runtime scope.",
   "date": "2026-09-21",
   "iteration": "I03",
   "owner": "chatgpt-gpt-5.6-sol",
@@ -29,7 +29,8 @@
     "ledgers/RISK_LEDGER.ndjson",
     "HANDOFF.md",
     ".agentic/context/CURRENT_CONTEXT.json",
-    ".agentic/context/CURRENT_CONTEXT.md"
+    ".agentic/context/CURRENT_CONTEXT.md",
+    "tests/test_cp03_w02_plan.py"
   ],
   "status": "ACTIVE",
   "wave_id": "CP03-W02-REAL-MODEL-20260921"
