@@ -60,8 +60,6 @@ class W02PlanTests(unittest.TestCase):
         self.invalid("missing dependency")
 
     def test_cycle_rejected(self):
-        # Keep the current and next G2 tasks blocked while introducing a
-        # dependency cycle, so cycle detection is the first failing invariant.
         self.task("W02-07")["status"] = "BLOCKED"
         self.task("W02-08")["status"] = "BLOCKED"
         self.task("W02-07")["depends_on"] = ["W02-08"]
@@ -82,15 +80,25 @@ class W02PlanTests(unittest.TestCase):
             {"W02-04", "W02-05"}.issubset(self.task("W02-06")["depends_on"])
         )
 
-    def test_egress_can_be_ready_after_inference_contracts_complete(self):
+    def test_g2_egress_frontier_transition_is_consistent(self):
         self.assertEqual(self.task("W02-06")["status"], "COMPLETE")
         self.assertTrue(self.task("W02-06")["proof"])
-        self.assertEqual(self.task("W02-07")["status"], "READY")
-        self.assertEqual(self.plan["first_executable_task"], "W02-07")
-        self.assertEqual(self.check()["first_executable_task"], "W02-07")
+        egress = self.task("W02-07")
+        bridge = self.task("W02-08")
+        if egress["status"] == "READY":
+            self.assertFalse(egress["proof"])
+            self.assertEqual(bridge["status"], "BLOCKED")
+            self.assertEqual(self.plan["first_executable_task"], "W02-07")
+        else:
+            self.assertEqual(egress["status"], "COMPLETE")
+            self.assertTrue(egress["proof"])
+            self.assertEqual(bridge["status"], "READY")
+            self.assertEqual(self.plan["first_executable_task"], "W02-08")
+        self.assertEqual(self.check()["first_executable_task"], self.plan["first_executable_task"])
 
     def test_completion_without_evidence_rejected(self):
         self.task("W02-07")["status"] = "COMPLETE"
+        self.task("W02-07")["proof"] = []
         self.invalid("without proof")
 
     def test_missing_acceptance_rejected(self):
@@ -121,14 +129,28 @@ class W02PlanTests(unittest.TestCase):
         self.plan["first_executable_task"] = "W02-19"
         self.invalid("first executable")
 
-    def test_current_frontier_is_w02_07_and_prior_gates_are_evidenced(self):
-        self.assertEqual(self.plan["first_executable_task"], "W02-07")
-        self.assertEqual(self.task("W02-07")["status"], "READY")
+    def test_current_frontier_and_prior_gates_are_evidenced(self):
         for task_id in ("W02-03", "W02-04", "W02-05", "W02-06"):
             task = self.task(task_id)
             self.assertEqual(task["status"], "COMPLETE", task_id)
             self.assertTrue(task["proof"], task_id)
-        self.assertEqual(self.task("W02-08")["status"], "BLOCKED")
+        egress = self.task("W02-07")
+        bridge = self.task("W02-08")
+        expected = "W02-07" if egress["status"] == "READY" else "W02-08"
+        self.assertEqual(self.plan["first_executable_task"], expected)
+        self.assertEqual(self.check()["first_executable_task"], expected)
+        if expected == "W02-08":
+            self.assertEqual(egress["status"], "COMPLETE")
+            self.assertTrue(egress["proof"])
+            self.assertEqual(bridge["status"], "READY")
+        else:
+            self.assertEqual(bridge["status"], "BLOCKED")
+
+    def test_only_one_g2_frontier_is_ready(self):
+        ready = [task["id"] for task in self.plan["tasks"] if task.get("status") == "READY"]
+        self.assertIn(self.plan["first_executable_task"], ready)
+        if self.plan["first_executable_task"] in {"W02-07", "W02-08"}:
+            self.assertEqual([item for item in ready if item in {"W02-07", "W02-08"}], [self.plan["first_executable_task"]])
 
     def test_deterministic_validation(self):
         self.assertEqual(self.check(), self.check())
