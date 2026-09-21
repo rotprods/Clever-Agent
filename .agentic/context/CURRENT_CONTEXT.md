@@ -35,6 +35,7 @@
 
 ## Active claims
 
+- `CLAIM-CP03-W02-STRUCTURED-TRANSPORT-20260921` → `CP03-W02-STRUCTURED-TRANSPORT-20260921` · `chatgpt-gpt-5.6-sol`
 
 ## Open / mitigating risks
 

@@ -44,6 +44,6 @@
     ".agentic/context/CURRENT_CONTEXT.json",
     ".agentic/context/CURRENT_CONTEXT.md"
   ],
-  "status": "PROPOSED",
+  "status": "ACTIVE",
   "wave_id": "CP03-W02-STRUCTURED-TRANSPORT-20260921"
 }
