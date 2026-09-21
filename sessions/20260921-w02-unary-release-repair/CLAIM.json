@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-21",
+  "project_id": "CLEVER-JARVIS-001",
+  "checkpoint": "CP03",
+  "parent_wave": "CP03-W02",
+  "canonical_task": "W02-10",
+  "claim_id": "CLAIM-CP03-W02-UNARY-RELEASE-REPAIR-20260921",
+  "wave_id": "CP03-W02-UNARY-RELEASE-REPAIR-20260921",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "scope": [
+    ".github/workflows/cp03-w02-control-port.yml",
+    ".github/workflows/cp03-w02-model-bridge.yml",
+    ".github/workflows/cp03-w02-unary-release-repair-claim.yml",
+    "tests/test_cp03_w02_unary_release_regressions.py",
+    "sessions/20260921-w02-unary-release-repair/**",
+    "ledgers/CLAIM_LEDGER.ndjson",
+    ".agentic/context/CURRENT_CONTEXT.json",
+    ".agentic/context/CURRENT_CONTEXT.md"
+  ],
+  "coordination": "W02-10 release convergence only. Repair historical W02-05/W02-08 PR gauntlets that accidentally execute the new real-model W02-10 test without its mandatory pinned-runtime prerequisites, and remove stale future-frontier assertions from the W02-08 regression gate. No runtime inference code changes, no W02-11 implementation, no model/provider execution, no denominator/parity mutation, and no W02 closure.",
+  "status": "ACTIVE"
+}
