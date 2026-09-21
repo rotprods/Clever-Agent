@@ -60,8 +60,11 @@ class W02PlanTests(unittest.TestCase):
         self.invalid("missing dependency")
 
     def test_cycle_rejected(self):
-        self.task("W02-07")["status"] = "BLOCKED"
-        self.task("W02-08")["status"] = "BLOCKED"
+        # Keep this structural probe independent from whichever later task is
+        # currently READY. Otherwise the validator can correctly fail earlier
+        # on a now-stale READY descendant before it reaches cycle detection.
+        for index in range(7, 20):
+            self.task(f"W02-{index:02d}")["status"] = "BLOCKED"
         self.task("W02-07")["depends_on"] = ["W02-08"]
         self.task("W02-08")["depends_on"] = ["W02-07"]
         self.invalid("cycle")
@@ -86,6 +89,7 @@ class W02PlanTests(unittest.TestCase):
         egress = self.task("W02-07")
         bridge = self.task("W02-08")
         weights = self.task("W02-09")
+        unary = self.task("W02-10")
         if egress["status"] == "READY":
             self.assertFalse(egress["proof"])
             self.assertEqual(bridge["status"], "BLOCKED")
@@ -97,14 +101,20 @@ class W02PlanTests(unittest.TestCase):
             self.assertFalse(bridge["proof"])
             self.assertEqual(weights["status"], "BLOCKED")
             self.assertEqual(self.plan["first_executable_task"], "W02-08")
-        else:
+        elif weights["status"] == "READY":
             self.assertEqual(egress["status"], "COMPLETE")
             self.assertTrue(egress["proof"])
             self.assertEqual(bridge["status"], "COMPLETE")
             self.assertTrue(bridge["proof"])
-            self.assertEqual(weights["status"], "READY")
             self.assertFalse(weights["proof"])
+            self.assertEqual(unary["status"], "BLOCKED")
             self.assertEqual(self.plan["first_executable_task"], "W02-09")
+        else:
+            self.assertEqual(weights["status"], "COMPLETE")
+            self.assertTrue(weights["proof"])
+            self.assertEqual(unary["status"], "READY")
+            self.assertFalse(unary["proof"])
+            self.assertEqual(self.plan["first_executable_task"], "W02-10")
         self.assertEqual(self.check()["first_executable_task"], self.plan["first_executable_task"])
 
     def test_completion_without_evidence_rejected(self):
@@ -148,12 +158,15 @@ class W02PlanTests(unittest.TestCase):
         egress = self.task("W02-07")
         bridge = self.task("W02-08")
         weights = self.task("W02-09")
+        unary = self.task("W02-10")
         if egress["status"] == "READY":
             expected = "W02-07"
         elif bridge["status"] == "READY":
             expected = "W02-08"
-        else:
+        elif weights["status"] == "READY":
             expected = "W02-09"
+        else:
+            expected = "W02-10"
         self.assertEqual(self.plan["first_executable_task"], expected)
         self.assertEqual(self.check()["first_executable_task"], expected)
         if expected == "W02-08":
@@ -165,6 +178,12 @@ class W02PlanTests(unittest.TestCase):
             self.assertEqual(bridge["status"], "COMPLETE")
             self.assertTrue(bridge["proof"])
             self.assertEqual(weights["status"], "READY")
+            self.assertEqual(unary["status"], "BLOCKED")
+        elif expected == "W02-10":
+            self.assertEqual(weights["status"], "COMPLETE")
+            self.assertTrue(weights["proof"])
+            self.assertEqual(unary["status"], "READY")
+            self.assertFalse(unary["proof"])
 
     def test_only_one_g2_frontier_is_ready(self):
         ready = [task["id"] for task in self.plan["tasks"] if task.get("status") == "READY"]
@@ -173,6 +192,11 @@ class W02PlanTests(unittest.TestCase):
             self.assertEqual(
                 [item for item in ready if item in {"W02-07", "W02-08", "W02-09"}],
                 [self.plan["first_executable_task"]],
+            )
+        else:
+            self.assertEqual(
+                [item for item in ready if item in {"W02-07", "W02-08", "W02-09"}],
+                [],
             )
 
     def test_deterministic_validation(self):

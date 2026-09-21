@@ -13,7 +13,8 @@
     "D-0011",
     "D-0012",
     "D-0013",
-    "D-0014"
+    "D-0014",
+    "D-0015"
   ],
   "active_claims": [],
   "authority_read_order": [
@@ -64,6 +65,7 @@
     "EVID-W02-IO-20260909",
     "EVID-W02-MODEL-BRIDGE-20260921",
     "EVID-W02-MODEL-BRIDGE-RELEASE-20260921",
+    "EVID-W02-REAL-MODEL-20260921",
     "EVID-W02-SCOPE-LOCK-20260907",
     "EVID-W02-TEARDOWN-20260909"
   ],
@@ -179,6 +181,11 @@
     },
     {
       "risk_id": "RISK-0007",
+      "severity": "HIGH",
+      "status": "MITIGATING"
+    },
+    {
+      "risk_id": "RISK-0009",
       "severity": "HIGH",
       "status": "MITIGATING"
     }
