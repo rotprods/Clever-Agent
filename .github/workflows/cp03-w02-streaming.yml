@@ -2,7 +2,9 @@ name: CP03 W02 Streaming
 
 on:
   push:
-    branches: [wave/cp03/w02-streaming-20260921]
+    branches:
+      - wave/cp03/w02-streaming-20260921
+      - wave/cp03/w02-streaming-finalize-20260921
     paths:
       - '.github/workflows/cp03-w02-streaming.yml'
   pull_request:
@@ -16,6 +18,15 @@ on:
       - 'tests/test_cp03_w02_streaming.py'
       - 'tests/test_cp03_w02_plan.py'
       - 'scripts/cp03/w02_streaming_patch.py'
+      - 'scripts/cp03/finalize_w02_streaming.py'
+      - 'iterations/03/waves/CP03-W02/TASK_GRAPH.json'
+      - 'evidence/cp03/cp03-w02/W02-11/**'
+      - 'sessions/20260921-w02-streaming/**'
+      - 'ledgers/**'
+      - 'STATE.md'
+      - 'HANDOFF.md'
+      - '.agentic/context/CURRENT_CONTEXT.json'
+      - '.agentic/context/CURRENT_CONTEXT.md'
       - '.github/workflows/cp03-w02-streaming.yml'
 
 permissions:
@@ -27,7 +38,7 @@ concurrency:
 
 jobs:
   materialize:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/wave/cp03/w02-streaming-20260921'
     permissions:
       contents: write
     runs-on: ubuntu-24.04
@@ -56,11 +67,7 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
         run: |
           set -euo pipefail
-          python -m unittest -v \
-            tests.test_cp03_w02_streaming \
-            tests.test_cp03_w02_unary_inference \
-            tests.test_cp03_openjarvis_sidecar \
-            tests.test_cp03_w02_plan
+          python -m unittest -v tests.test_cp03_w02_streaming tests.test_cp03_w02_unary_inference tests.test_cp03_openjarvis_sidecar tests.test_cp03_w02_plan
       - name: Rust transport streaming adversarials and regression
         run: |
           set -euo pipefail
@@ -77,50 +84,141 @@ jobs:
           python scripts/validate_agentic_state.py
           python scripts/context/validate_context_pack.py
           python scripts/context/build_context_pack.py --check
+      - name: Restrict generated source mutation
+        run: |
+          python - <<'PY'
+          import subprocess
+          allowed={'adapters/openjarvis/sidecar.py','kernel/crates/clever-kernel/src/adapter.rs','kernel/crates/clever-kernel/tests/adapter_supervisor.rs','kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py','tests/test_cp03_w02_plan.py'}
+          paths={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if line}
+          assert not paths-allowed, f'out-of-scope W02-11 mutation: {sorted(paths-allowed)}'
+          assert paths, 'deterministic W02-11 compiler produced no source delta'
+          PY
+      - name: CAS persist generated W02-11 source
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-streaming-20260921 | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add adapters/openjarvis/sidecar.py kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/tests/adapter_supervisor.rs kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py tests/test_cp03_w02_plan.py
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat(cp03-w02): materialize bounded W02-11 streaming transport'
+          git push origin HEAD:wave/cp03/w02-streaming-20260921
+
+  finalize:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/wave/cp03/w02-streaming-finalize-20260921'
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install bounded test dependencies
+        run: python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt 'httpx>=0.27,<1'
+      - name: Exact-main and pre-transition guard
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = '8657b8c8b5246a6c611c7eea9dc59796bcc13a98'
+          test "$(git merge-base HEAD origin/main)" = '8657b8c8b5246a6c611c7eea9dc59796bcc13a98'
+          python scripts/cp03/w02_streaming_patch.py --check
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
           python - <<'PY'
           import json
           from pathlib import Path
           graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
           tasks={row['id']:row for row in graph['tasks']}
           assert graph['first_executable_task']=='W02-11'
-          assert graph['global_denominator']==7565
-          assert graph['openjarvis_obligations']==646
-          assert tasks['W02-10']['status']=='COMPLETE' and tasks['W02-10']['proof']
+          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646
           assert tasks['W02-11']['status']=='READY' and not tasks['W02-11']['proof']
           assert all(tasks[d]['status']=='COMPLETE' and tasks[d]['proof'] for d in tasks['W02-11']['depends_on'])
+          assert tasks['W02-12']['status']=='BLOCKED' and not tasks['W02-12']['proof']
           PY
-      - name: Restrict generated source mutation
+      - name: Re-prove W02-11 exact-head behavior
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_cp03_w02_streaming tests.test_cp03_w02_unary_inference tests.test_cp03_openjarvis_sidecar tests.test_cp03_w02_plan
+          export CLEVER_TEST_PYTHON="$(command -v python)"
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor -- --skip real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion --skip real_openjarvis_unary_inference_uses_pinned_llamacpp_lane
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_security
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --lib
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+      - name: Build exact-head evidence receipt
+        run: |
+          python - <<'PY'
+          import json, os
+          receipt={
+            'project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','parent_wave':'CP03-W02','task':'W02-11','gate':'G4','status':'PASS',
+            'validated_head':os.environ['GITHUB_SHA'],'github_actions_run_id':int(os.environ['GITHUB_RUN_ID']),
+            'merged_runtime_head':'8657b8c8b5246a6c611c7eea9dc59796bcc13a98','premerge_gauntlet_run_id':35590345760,'pr_gauntlet_run_id':35590473694,
+            'native_stream_full_bridge':'PASS','fragmented_utf8_transport':'PASS','coalesced_frame_transport':'PASS',
+            'duplicate_sequence':'REJECTED','reordered_sequence':'REJECTED','eof_before_terminal':'REJECTED','exactly_one_terminal':'PASS',
+            'provider_egress_executions':0,'tool_executions':0,'cancellation_executions':0,'parity_promotions':0,'verified_capabilities':0,
+            'global_denominator':7565,'openjarvis_obligations':646,'w02_proof_units':47,
+          }
+          open('/tmp/w02-11-receipt.json','w').write(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          PY
+      - name: Exact-head state transition and durable persistence
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-streaming-finalize-20260921 | cut -f1)" = "$GITHUB_SHA"
+          python scripts/cp03/finalize_w02_streaming.py --receipt /tmp/w02-11-receipt.json
+          python scripts/context/build_context_pack.py
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          tasks={row['id']:row for row in graph['tasks']}
+          assert graph['first_executable_task']=='W02-12'
+          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646
+          assert tasks['W02-11']['status']=='COMPLETE' and tasks['W02-11']['proof']
+          assert tasks['W02-12']['status']=='READY' and not tasks['W02-12']['proof']
+          assert all(tasks[d]['status']=='COMPLETE' and tasks[d]['proof'] for d in tasks['W02-12']['depends_on'])
+          goal=json.loads(Path('GOAL_STATE.json').read_text())
+          assert goal['parity']['total']==7565 and goal['parity']['verified']==0
+          PY
+          git diff --check
+      - name: Restrict finalization mutation
         run: |
           python - <<'PY'
           import subprocess
           allowed={
-            'adapters/openjarvis/sidecar.py',
-            'kernel/crates/clever-kernel/src/adapter.rs',
-            'kernel/crates/clever-kernel/tests/adapter_supervisor.rs',
-            'kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py',
-            'tests/test_cp03_w02_plan.py',
+            'iterations/03/waves/CP03-W02/TASK_GRAPH.json','evidence/cp03/cp03-w02/W02-11/receipt.json','evidence/cp03/cp03-w02/W02-11/report.json',
+            'sessions/20260921-w02-streaming/RESULT.json','sessions/20260921-w02-streaming/CLAIM.json','ledgers/EVIDENCE_LEDGER.ndjson',
+            'ledgers/RUN_LOG.ndjson','ledgers/WAVE_LEDGER.ndjson','ledgers/DECISION_LEDGER.ndjson','ledgers/RISK_LEDGER.ndjson','ledgers/CLAIM_LEDGER.ndjson',
+            'HANDOFF.md','STATE.md','.agentic/context/CURRENT_CONTEXT.json','.agentic/context/CURRENT_CONTEXT.md',
           }
           paths={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if line}
           unexpected=paths-allowed
-          assert not unexpected, f'out-of-scope W02-11 mutation: {sorted(unexpected)}'
-          assert paths, 'deterministic W02-11 compiler produced no source delta'
+          assert not unexpected, f'out-of-scope W02-11 finalization mutation: {sorted(unexpected)}'
+          required={'iterations/03/waves/CP03-W02/TASK_GRAPH.json','ledgers/EVIDENCE_LEDGER.ndjson','ledgers/CLAIM_LEDGER.ndjson','HANDOFF.md','STATE.md','.agentic/context/CURRENT_CONTEXT.json','.agentic/context/CURRENT_CONTEXT.md'}
+          assert required.issubset(paths), f'missing durable W02-11 mutation: {sorted(required-paths)}'
           PY
-      - name: CAS persist generated W02-11 source
+      - name: CAS persist W02-11 COMPLETE and open only W02-12
         run: |
           set -euo pipefail
-          remote_head="$(git ls-remote origin refs/heads/wave/cp03/w02-streaming-20260921 | cut -f1)"
-          test "$remote_head" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-streaming-finalize-20260921 | cut -f1)" = "$GITHUB_SHA"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add \
-            adapters/openjarvis/sidecar.py \
-            kernel/crates/clever-kernel/src/adapter.rs \
-            kernel/crates/clever-kernel/tests/adapter_supervisor.rs \
-            kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py \
-            tests/test_cp03_w02_plan.py
-          git diff --cached --quiet && exit 0
-          git commit -m 'feat(cp03-w02): materialize bounded W02-11 streaming transport'
-          git push origin HEAD:wave/cp03/w02-streaming-20260921
+          git add iterations/03/waves/CP03-W02/TASK_GRAPH.json evidence/cp03/cp03-w02/W02-11 sessions/20260921-w02-streaming/RESULT.json sessions/20260921-w02-streaming/CLAIM.json ledgers/EVIDENCE_LEDGER.ndjson ledgers/RUN_LOG.ndjson ledgers/WAVE_LEDGER.ndjson ledgers/DECISION_LEDGER.ndjson ledgers/RISK_LEDGER.ndjson ledgers/CLAIM_LEDGER.ndjson HANDOFF.md STATE.md .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git commit -m 'state(cp03-w02): complete W02-11 and open W02-12'
+          git push origin HEAD:wave/cp03/w02-streaming-finalize-20260921
 
   verify:
     if: github.event_name == 'pull_request'
