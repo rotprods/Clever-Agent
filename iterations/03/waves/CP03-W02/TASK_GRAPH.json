@@ -1,5 +1,5 @@
 {
-  "first_executable_task": "W02-08",
+  "first_executable_task": "W02-09",
   "global_denominator": 7565,
   "iteration": "I03",
   "milestones": {
@@ -319,10 +319,28 @@
       "id": "W02-08",
       "owner_role": "python_builder",
       "priority": "P1",
-      "proof": [],
+      "proof": [
+        {
+          "clippy": "PASS",
+          "evidence_id": "EVID-W02-MODEL-BRIDGE-20260921",
+          "kernel_regression": "PASS",
+          "kernel_security_tests": 9,
+          "lifecycle_tests": 9,
+          "model_executions": 0,
+          "native_engine_count": 15,
+          "native_import_failures": 0,
+          "native_model_count": 69,
+          "parity_promotions": 0,
+          "provider_egress_executions": 0,
+          "result": "PASS",
+          "run_id": 35552788123,
+          "sidecar_regression_tests": 9,
+          "validated_head": "a866c335a0f9cad75122c8eb7c5310d358f6aad4"
+        }
+      ],
       "reviewer_role": "reviewer_gauntlet",
       "rollback": "Revertir adapter sin reescribir upstream.",
-      "status": "READY",
+      "status": "COMPLETE",
       "title": "Bridge models y engines"
     },
     {
@@ -346,7 +364,7 @@
       "proof": [],
       "reviewer_role": "reviewer_gauntlet",
       "rollback": "Retirar artefacto inv\u00e1lido sin sustituir por ref flotante.",
-      "status": "BLOCKED",
+      "status": "READY",
       "title": "Lane con modelo y pesos reales"
     },
     {

@@ -1,0 +1,142 @@
+name: CP03 W02 Model Bridge Claim
+
+on:
+  push:
+    branches: [wave/cp03/w02-model-engine-bridge-20260921]
+    paths:
+      - '.github/workflows/cp03-w02-model-bridge-claim.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cp03-w02-model-bridge-claim
+  cancel-in-progress: false
+
+jobs:
+  claim:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Acquire exact W02-08 claim and rebuild ContextPack
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          claim_id = 'CLAIM-CP03-W02-MODEL-BRIDGE-20260921'
+          wave_id = 'CP03-W02-MODEL-BRIDGE-20260921'
+          task_id = 'W02-08'
+          ledger = Path('ledgers/CLAIM_LEDGER.ndjson')
+          rows = [json.loads(line) for line in ledger.read_text().splitlines() if line.strip()]
+          latest = {}
+          for row in rows:
+              cid = row.get('claim_id')
+              if cid:
+                  latest[cid] = row
+
+          graph = json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          tasks = {row['id']: row for row in graph['tasks']}
+          assert graph['first_executable_task'] == task_id, graph['first_executable_task']
+          assert tasks[task_id]['status'] == 'READY', tasks[task_id]['status']
+          assert tasks['W02-06']['status'] == 'COMPLETE'
+          assert tasks['W02-07']['status'] == 'COMPLETE'
+          assert graph['global_denominator'] == 7565
+          assert graph['openjarvis_obligations'] == 646
+
+          scope = [
+              'adapters/openjarvis/model_bridge.py',
+              'adapters/openjarvis/sidecar.py',
+              'tests/test_cp03_w02_model_bridge.py',
+              'tests/test_cp03_openjarvis_sidecar.py',
+              'scripts/cp03/w02_model_bridge_evidence.py',
+              'scripts/cp03/finalize_w02_model_bridge.py',
+              'tests/test_cp03_w02_model_bridge_finalizer.py',
+              'tests/test_cp03_w02_plan.py',
+              '.github/workflows/cp03-w02-model-bridge-claim.yml',
+              '.github/workflows/cp03-w02-model-bridge.yml',
+              '.github/workflows/cp03-w02-model-bridge-finalize.yml',
+              'evidence/cp03/cp03-w02/W02-08/**',
+              'sessions/20260921-w02-model-engine-bridge/**',
+              'iterations/03/waves/CP03-W02/TASK_GRAPH.json',
+              'ledgers/CLAIM_LEDGER.ndjson',
+              'ledgers/EVIDENCE_LEDGER.ndjson',
+              'ledgers/RUN_LOG.ndjson',
+              'ledgers/WAVE_LEDGER.ndjson',
+              'ledgers/DECISION_LEDGER.ndjson',
+              'ledgers/RISK_LEDGER.ndjson',
+              'HANDOFF.md',
+              '.agentic/context/CURRENT_CONTEXT.json',
+              '.agentic/context/CURRENT_CONTEXT.md',
+          ]
+
+          def prefix(path):
+              return path[:-3] if path.endswith('/**') else path
+          def overlaps(a, b):
+              pa, pb = prefix(a), prefix(b)
+              return pa == pb or pa.startswith(pb.rstrip('/') + '/') or pb.startswith(pa.rstrip('/') + '/')
+
+          conflicts = []
+          for cid, row in latest.items():
+              if row.get('status') != 'ACTIVE' or cid == claim_id:
+                  continue
+              for owned in row.get('scope', []):
+                  if any(overlaps(owned, wanted) for wanted in scope):
+                      conflicts.append({'claim_id': cid, 'owned': owned})
+          if conflicts:
+              raise SystemExit('overlapping active claim(s): ' + json.dumps(conflicts, sort_keys=True))
+
+          current = latest.get(claim_id)
+          if current and current.get('status') == 'ACTIVE':
+              if current.get('scope') != scope:
+                  raise SystemExit('existing active W02-08 claim has different scope')
+          elif current:
+              raise SystemExit('claim id already terminal; refusing reuse')
+          else:
+              claim = {
+                  'schema_version': 1,
+                  'date': '2026-09-21',
+                  'claim_id': claim_id,
+                  'wave_id': wave_id,
+                  'parent_wave': 'CP03-W02',
+                  'canonical_task': task_id,
+                  'owner': 'chatgpt-gpt-5.6-sol',
+                  'scope': scope,
+                  'coordination': 'W02-08 only: bridge native OpenJarvis engine/model registration and lifecycle semantics (prepare/can_serve/list_models/health/close), preserve REGISTERED != SERVING, and keep provider/model execution disabled until a kernel-authorized later lane. No W02-09 weight acquisition, no model generation/streaming, no provider egress, denominator/parity mutation, or W02-09+ completion.',
+                  'status': 'ACTIVE',
+              }
+              with ledger.open('a', encoding='utf-8') as handle:
+                  handle.write(json.dumps(claim, sort_keys=True, separators=(',', ':')) + '\n')
+
+          session = Path('sessions/20260921-w02-model-engine-bridge')
+          session.mkdir(parents=True, exist_ok=True)
+          (session / 'CLAIM.json').write_text(json.dumps({
+              'schema_version': 1,
+              'date': '2026-09-21',
+              'claim_id': claim_id,
+              'wave_id': wave_id,
+              'parent_wave': 'CP03-W02',
+              'canonical_task': task_id,
+              'owner': 'chatgpt-gpt-5.6-sol',
+              'scope': scope,
+              'status': 'ACTIVE',
+              'base_head': 'f7b1e797d212036e08d6ace46b2aa70fead070d9',
+          }, sort_keys=True, indent=2) + '\n', encoding='utf-8')
+          PY
+          python scripts/context/build_context_pack.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/context/validate_next_actions.py
+          git diff --check
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-model-engine-bridge-20260921 | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ledgers/CLAIM_LEDGER.ndjson sessions/20260921-w02-model-engine-bridge/CLAIM.json .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git commit -m 'chore(cp03-w02): acquire W02-08 model bridge claim'
+          git push origin HEAD:wave/cp03/w02-model-engine-bridge-20260921

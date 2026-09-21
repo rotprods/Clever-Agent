@@ -1,0 +1,521 @@
+{
+  "engine_count": 15,
+  "engines": [
+    {
+      "implementation": "abc.AppleFmEngine",
+      "key": "apple_fm",
+      "native_type": "ABCMeta",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.engine.cloud.CloudEngine",
+      "key": "cloud",
+      "native_type": "ABCMeta",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "abc.ExoEngine",
+      "key": "exo",
+      "native_type": "ABCMeta",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.engine.gemma_cpp.GemmaCppEngine",
+      "key": "gemma_cpp",
+      "native_type": "ABCMeta",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "abc.LemonadeEngine",
+      "key": "lemonade",
+      "native_type": "ABCMeta",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.engine.litellm.LiteLLMEngine",
+      "key": "litellm",
+      "native_type": "ABCMeta",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "abc.LlamaCppEngine",
+      "key": "llamacpp",
+      "native_type": "ABCMeta",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "abc.LMStudioEngine",
+      "key": "lmstudio",
+      "native_type": "ABCMeta",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "abc.MLXEngine",
+      "key": "mlx",
+      "native_type": "ABCMeta",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "abc.NexaEngine",
+      "key": "nexa",
+      "native_type": "ABCMeta",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.engine.nim.NIMEngine",
+      "key": "nim",
+      "native_type": "ABCMeta",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.engine.ollama.OllamaEngine",
+      "key": "ollama",
+      "native_type": "ABCMeta",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "abc.SGLangEngine",
+      "key": "sglang",
+      "native_type": "ABCMeta",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "abc.UzuEngine",
+      "key": "uzu",
+      "native_type": "ABCMeta",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "abc.VLLMEngine",
+      "key": "vllm",
+      "native_type": "ABCMeta",
+      "state": "REGISTERED"
+    }
+  ],
+  "import_failures": [],
+  "model_count": 69,
+  "model_executions": 0,
+  "models": [
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "LiquidAI/LFM2.5-1.2B-Instruct-GGUF",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "LiquidAI/LFM2.5-1.2B-Instruct-MLX",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "LiquidAI/LFM2.5-1.2B-Thinking-GGUF",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "LiquidAI/LFM2.5-1.2B-Thinking-MLX",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "MiniMax-M2.5",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "MiniMax-M2.5-highspeed",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "MiniMax-M2.7",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "MiniMax-M2.7-highspeed",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "MiniMax-M3",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "afm-3",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "afm-3-core",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "afm-3-core-advanced",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "claude-haiku-4-5",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "claude-opus-4-20250514",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "claude-opus-4-6",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "claude-sonnet-4-20250514",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "claude-sonnet-4-6",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "codex/gpt-4o",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "codex/gpt-4o-mini",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "codex/gpt-5-mini",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "codex/gpt-5-mini-2025-08-07",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "codex/o3-mini",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "deepseek-coder-v2:16b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "gemini-2.5-flash",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "gemini-2.5-pro",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "gemini-3-flash",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "gemini-3-pro",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "glm-4.7-flash",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "gpt-4o",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "gpt-4o-mini",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "gpt-5-mini",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "gpt-5-mini-2025-08-07",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "gpt-oss:120b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "granite3.3:8b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "granite4.0-h-small",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "granite4.0-micro",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "llama3.2:3b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "llama3.3:70b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "mistral:7b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3.5:0.8b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3.5:122b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3.5:122b-a10b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3.5:27b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3.5:2b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3.5:35b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3.5:35b-a3b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3.5:397b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3.5:397b-a17b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3.5:4b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3.5:9b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3:0.6b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3:1.7b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3:14b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3:30b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3:32b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3:4b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "qwen3:8b",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "teichai/glm-4.7-flash-opus-distill",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "teichai/nemotron-14b-opus-distill",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "teichai/qwen3-14b-gpt5.2-distill",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "trinity-mini",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "unsloth/GLM-4.7-Flash-GGUF",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "unsloth/GLM-5-GGUF",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "unsloth/Kimi-K2.5-GGUF",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "unsloth/MiniMax-M2.5-GGUF",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "unsloth/Qwen3-Coder-Next-GGUF",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "unsloth/Qwen3.5-122B-A10B-GGUF",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "unsloth/Qwen3.5-35B-A3B-GGUF",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    },
+    {
+      "implementation": "openjarvis.core.types.ModelSpec",
+      "key": "unsloth/Qwen3.5-397B-A17B-GGUF",
+      "native_type": "ModelSpec",
+      "state": "REGISTERED"
+    }
+  ],
+  "parity_promotions": 0,
+  "provider_egress_executions": 0,
+  "schema_version": 1,
+  "source_repo": "openjarvis",
+  "upstream_commit": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5",
+  "upstream_execution": false,
+  "upstream_repository": "https://github.com/open-jarvis/OpenJarvis.git"
+}

@@ -1,0 +1,23 @@
+{
+  "claim": "Finalized W02-08 is re-proven at exact release head: lifecycle/catalog behavior, pinned native catalog, W02-07 security, kernel regression, state/ContextPack and parity invariants all pass. The release gate now validates the persisted W02-09 frontier rather than stale pre-finalization W02-08 READY state.",
+  "date": "2026-09-21",
+  "evidence_id": "EVID-W02-MODEL-BRIDGE-RELEASE-20260921",
+  "github_actions_run_id": 35554798247,
+  "global_denominator": 7565,
+  "green_release_run_id": 35554668177,
+  "model_executions": 0,
+  "native_engine_count": 15,
+  "native_model_count": 69,
+  "openjarvis_obligations": 646,
+  "parity_promotions": 0,
+  "prior_red_pr_run_id": 35554377801,
+  "provider_egress_executions": 0,
+  "root_cause": "release workflow asserted pre-finalization W02-08 READY/W02-09 BLOCKED after durable finalizer had already transitioned W02-08 COMPLETE/W02-09 READY",
+  "schema_version": 1,
+  "status": "VERIFIED",
+  "support_wave": "CP03-W02-MODEL-BRIDGE-RELEASE-20260921",
+  "type": "cp03_w02_model_bridge_release_reconciliation",
+  "validated_head": "a7239acbe51091798f5b85984a8496e2fe0b7808",
+  "w02_proof_units": 47,
+  "wave_id": "CP03-W02"
+}

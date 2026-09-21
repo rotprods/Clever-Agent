@@ -1,0 +1,134 @@
+name: CP03 W02 Model Bridge Release Claim
+
+on:
+  push:
+    branches: [release/cp03-w02-model-bridge-20260921]
+    paths:
+      - '.github/workflows/cp03-w02-model-bridge-release-claim.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cp03-w02-model-bridge-release-claim
+  cancel-in-progress: false
+
+jobs:
+  claim:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Acquire release-reconciliation claim
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/release/cp03-w02-model-bridge-20260921 | cut -f1)" = "$GITHUB_SHA"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          claim_id='CLAIM-CP03-W02-MODEL-BRIDGE-RELEASE-20260921'
+          wave_id='CP03-W02-MODEL-BRIDGE-RELEASE-20260921'
+          branch='release/cp03-w02-model-bridge-20260921'
+          ledger=Path('ledgers/CLAIM_LEDGER.ndjson')
+          rows=[json.loads(line) for line in ledger.read_text().splitlines() if line.strip()]
+          latest={}
+          for row in rows:
+              cid=row.get('claim_id')
+              if cid:
+                  latest[cid]=row
+
+          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          tasks={row['id']:row for row in graph['tasks']}
+          assert graph['global_denominator']==7565
+          assert graph['openjarvis_obligations']==646
+          assert graph['first_executable_task']=='W02-09'
+          assert tasks['W02-08']['status']=='COMPLETE' and tasks['W02-08']['proof']
+          assert tasks['W02-09']['status']=='READY' and not tasks['W02-09']['proof']
+          assert tasks['W02-10']['status']=='BLOCKED'
+
+          scope=[
+              '.github/workflows/cp03-w02-model-bridge.yml',
+              '.github/workflows/cp03-w02-model-bridge-release-claim.yml',
+              '.github/workflows/cp03-w02-model-bridge-release-finalize.yml',
+              'sessions/20260921-w02-model-bridge-release/**',
+              'evidence/cp03/cp03-w02/W02-08/release_reconciliation.json',
+              'ledgers/CLAIM_LEDGER.ndjson',
+              'ledgers/EVIDENCE_LEDGER.ndjson',
+              'ledgers/RUN_LOG.ndjson',
+              'ledgers/WAVE_LEDGER.ndjson',
+              'ledgers/RISK_LEDGER.ndjson',
+              'HANDOFF.md',
+              '.agentic/context/CURRENT_CONTEXT.json',
+              '.agentic/context/CURRENT_CONTEXT.md',
+          ]
+          def prefix(path):
+              return path[:-3] if path.endswith('/**') else path
+          def overlaps(a,b):
+              pa,pb=prefix(a),prefix(b)
+              return pa==pb or pa.startswith(pb.rstrip('/')+'/') or pb.startswith(pa.rstrip('/')+'/')
+          conflicts=[]
+          for cid,row in latest.items():
+              if cid==claim_id or row.get('status')!='ACTIVE':
+                  continue
+              for owned in row.get('scope',[]):
+                  if any(overlaps(owned,wanted) for wanted in scope):
+                      conflicts.append({'claim_id':cid,'owned':owned})
+          if conflicts:
+              raise SystemExit('overlapping active claim(s): '+json.dumps(conflicts,sort_keys=True))
+          if claim_id in latest:
+              raise SystemExit('release claim id already exists; refusing reuse')
+
+          claim={
+              'schema_version':1,
+              'date':'2026-09-21',
+              'claim_id':claim_id,
+              'wave_id':wave_id,
+              'parent_wave':'CP03-W02',
+              'canonical_task':'W02-08',
+              'owner':'chatgpt-gpt-5.6-sol',
+              'scope':scope,
+              'coordination':'Release reconciliation for already-evidenced W02-08 only. Repair stale release/PR assertions, re-run exact-head lifecycle/catalog/security/kernel/state/parity gates, and converge W02-08 to main. No W02-09 weights, model execution, provider egress, denominator/parity mutation, or W02-09+ completion.',
+              'status':'ACTIVE',
+          }
+          with ledger.open('a',encoding='utf-8') as handle:
+              handle.write(json.dumps(claim,sort_keys=True,separators=(',',':'))+'\n')
+
+          run_log=Path('ledgers/RUN_LOG.ndjson')
+          with run_log.open('a',encoding='utf-8') as handle:
+              handle.write(json.dumps({
+                  'schema_version':1,'date':'2026-09-21','event':'WORK_STARTED',
+                  'event_id':'RUN-W02-MODEL-BRIDGE-RELEASE-20260921',
+                  'goal_id':'CLEVER-JARVIS-001','checkpoint':'CP03','iteration':'I03',
+                  'parent_wave':'CP03-W02','wave_id':wave_id,'canonical_task':'W02-08',
+                  'branch':branch,'head':__import__('os').environ['GITHUB_SHA'],
+                  'parity_promotions':0
+              },sort_keys=True,separators=(',',':'))+'\n')
+          wave=Path('ledgers/WAVE_LEDGER.ndjson')
+          with wave.open('a',encoding='utf-8') as handle:
+              handle.write(json.dumps({
+                  'schema_version':1,'date':'2026-09-21','checkpoint':'CP03','iteration':'I03',
+                  'wave_id':wave_id,'parent_wave':'CP03-W02','canonical_task':'W02-08',
+                  'event':'RELEASE_RECONCILIATION','status':'IN_PROGRESS',
+                  'objective':'Repair stale W02-08 release gate and re-prove finalized state before main convergence.'
+              },sort_keys=True,separators=(',',':'))+'\n')
+          session=Path('sessions/20260921-w02-model-bridge-release')
+          session.mkdir(parents=True,exist_ok=True)
+          (session/'CLAIM.json').write_text(json.dumps({**claim,'base_head':__import__('os').environ['GITHUB_SHA']},sort_keys=True,indent=2)+'\n',encoding='utf-8')
+          PY
+          python scripts/context/build_context_pack.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/context/validate_next_actions.py
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          git diff --check
+          test "$(git ls-remote origin refs/heads/release/cp03-w02-model-bridge-20260921 | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ledgers/CLAIM_LEDGER.ndjson ledgers/RUN_LOG.ndjson ledgers/WAVE_LEDGER.ndjson sessions/20260921-w02-model-bridge-release/CLAIM.json .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git commit -m 'chore(cp03-w02): acquire W02-08 release reconciliation claim'
+          git push origin HEAD:release/cp03-w02-model-bridge-20260921
