@@ -4,11 +4,16 @@ import asyncio
 import contextlib
 from pathlib import Path
 import time
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 from urllib.parse import urlparse
 
 from clever.v1 import inference_pb2
 
+from adapters.openjarvis.structured_output import (
+    StructuredOutputRejected,
+    StructuredStreamAssembler,
+    ToolCallData,
+)
 from adapters.openjarvis.unary_inference import (
     PINNED_ENGINE_ID,
     PINNED_MODEL_ID,
@@ -90,6 +95,7 @@ def _finish_reason(value: object) -> int:
         "stop": inference_pb2.INFERENCE_FINISH_REASON_STOP,
         "length": inference_pb2.INFERENCE_FINISH_REASON_LENGTH,
         "content_filter": inference_pb2.INFERENCE_FINISH_REASON_CONTENT_FILTER,
+        "tool_calls": inference_pb2.INFERENCE_FINISH_REASON_TOOL_CALL,
     }
     reason = mapping.get(str(value))
     if reason is None:
@@ -129,6 +135,9 @@ def execute_stream(
     *,
     emit_chunk: Callable[[inference_pb2.InferenceChunk], None],
     emit_terminal: Callable[[inference_pb2.InferenceTerminal], None],
+    emit_tool_call: Callable[[ToolCallData], None] | None = None,
+    response_schema: Mapping[str, Any] | None = None,
+    emit_structured_output: Callable[[Any], None] | None = None,
     engine_factory: Callable[[str], tuple[Any, type, type]] = _native_engine_factory,
     artifact_path: Path | None = None,
     host: str | None = None,
@@ -136,13 +145,20 @@ def execute_stream(
     wait_for_cancel_ack: Callable[[float], bool] | None = None,
     cancel_ack_timeout: float = 1.0,
 ) -> None:
-    """Bridge native ``stream_full`` while preserving cancellation truth.
+    """Bridge native ``stream_full`` while preserving cancellation and typed data truth.
 
     REQUESTED, ACK and terminal cessation are distinct. A CANCELLED terminal is
     emitted only after the cancellation signal is observed locally and the
-    transport ACK is confirmed. Provider/remote cessation is not inferred.
+    transport ACK is confirmed. Model-emitted tool calls are inert data: this
+    function can assemble them into an explicit sink but has no execution path.
+    Structured output is accepted only with a caller-supplied schema and sink.
     """
     validate_stream_request(request)
+    if response_schema is not None and emit_structured_output is None:
+        raise _reject("response_schema requires an explicit structured-output sink")
+    if response_schema is None and emit_structured_output is not None:
+        raise _reject("structured-output sink requires a caller-supplied response_schema")
+
     attest_pinned_artifact(artifact_path or _artifact_path())
     resolved_host = host or _loopback_host()
     parsed = urlparse(resolved_host)
@@ -179,6 +195,11 @@ def execute_stream(
         engine, message_type, role_type = engine_factory(resolved_host)
         messages = _messages(request, message_type, role_type)
         temperature = request.config.temperature if request.config.HasField("temperature") else 0.0
+        typed_assembler = (
+            StructuredStreamAssembler()
+            if emit_tool_call is not None or response_schema is not None
+            else None
+        )
 
         async def consume() -> None:
             sequence = 0
@@ -217,12 +238,20 @@ def execute_stream(
                         "native stream emitted data after finish_reason",
                         retryable=False,
                     )
-                if tool_calls or content_blocks or tool_results:
+                if content_blocks or tool_results:
                     raise UnaryInferenceRejected(
                         inference_pb2.INFERENCE_ERROR_CODE_INTERNAL,
-                        "typed/tool streaming fragments are deferred to W02-13",
+                        "content_blocks/tool_results are not yet mapped into the canonical W02-13 transport",
                         retryable=False,
                     )
+                if tool_calls:
+                    if emit_tool_call is None or typed_assembler is None:
+                        raise UnaryInferenceRejected(
+                            inference_pb2.INFERENCE_ERROR_CODE_INTERNAL,
+                            "W02-13 requires an explicit inert tool-call sink; model-emitted tools are never executed here",
+                            retryable=False,
+                        )
+                    typed_assembler.feed_tool_calls(tool_calls)
                 if content is not None:
                     if not isinstance(content, str):
                         raise UnaryInferenceRejected(
@@ -231,6 +260,9 @@ def execute_stream(
                             retryable=False,
                         )
                     if content:
+                        if response_schema is not None:
+                            assert typed_assembler is not None
+                            typed_assembler.feed_text(content)
                         sequence += 1
                         emit_chunk(
                             inference_pb2.InferenceChunk(
@@ -259,10 +291,27 @@ def execute_stream(
             if cancellation_is_requested():
                 emit_cancelled(sequence, usage)
                 return
-            if sequence == 0:
+
+            assembled_calls: tuple[ToolCallData, ...] = ()
+            if typed_assembler is not None:
+                structured_value, assembled_calls = typed_assembler.finalize(
+                    response_schema=response_schema
+                )
+                if finish_reason == inference_pb2.INFERENCE_FINISH_REASON_TOOL_CALL and not assembled_calls:
+                    raise StructuredOutputRejected(
+                        "tool-call finish_reason was emitted without any assembled tool call"
+                    )
+                if emit_tool_call is not None:
+                    for call in assembled_calls:
+                        emit_tool_call(call)
+                if response_schema is not None:
+                    assert emit_structured_output is not None
+                    emit_structured_output(structured_value)
+
+            if sequence == 0 and not assembled_calls:
                 raise UnaryInferenceRejected(
                     inference_pb2.INFERENCE_ERROR_CODE_INTERNAL,
-                    "native stream ended without content chunks",
+                    "native stream ended without content chunks or typed tool-call data",
                     retryable=False,
                 )
             emit_terminal(
@@ -277,6 +326,12 @@ def execute_stream(
             )
 
         asyncio.run(consume())
+    except StructuredOutputRejected as exc:
+        raise UnaryInferenceRejected(
+            inference_pb2.INFERENCE_ERROR_CODE_INTERNAL,
+            f"structured model output rejected: {exc}",
+            retryable=False,
+        ) from exc
     except UnaryInferenceRejected:
         raise
     except Exception as exc:
