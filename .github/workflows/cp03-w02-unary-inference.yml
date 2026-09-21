@@ -5,6 +5,11 @@ on:
     branches: [wave/cp03/w02-unary-inference-20260921]
     paths:
       - '.github/workflows/cp03-w02-unary-inference.yml'
+      - 'adapters/openjarvis/unary_inference.py'
+      - 'adapters/openjarvis/sidecar.py'
+      - 'kernel/crates/clever-kernel/src/adapter.rs'
+      - 'kernel/crates/clever-kernel/tests/adapter_supervisor.rs'
+      - 'tests/test_cp03_w02_unary_inference.py'
 
 permissions:
   contents: read
