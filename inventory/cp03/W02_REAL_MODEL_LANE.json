@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "project_id": "CLEVER-JARVIS-001",
+  "checkpoint": "CP03",
+  "parent_wave": "CP03-W02",
+  "task": "W02-09",
+  "lane": "L2_REAL_MODEL_PINNED_WEIGHTS",
+  "status": "PINNED_NOT_EXECUTED",
+  "upstream": {
+    "repository": "https://github.com/open-jarvis/OpenJarvis.git",
+    "commit": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5",
+    "catalog_path": "src/openjarvis/intelligence/model_catalog.py"
+  },
+  "model": {
+    "catalog_model_id": "qwen3:0.6b",
+    "name": "Qwen3 0.6B",
+    "provider": "alibaba",
+    "base_repository": "Qwen/Qwen3-0.6B",
+    "base_revision": "66b95ce14c07166297fcbfb54aa20441af8f9d75",
+    "license": "Apache-2.0",
+    "license_source": "https://huggingface.co/Qwen/Qwen3-0.6B/tree/66b95ce14c07166297fcbfb54aa20441af8f9d75"
+  },
+  "engine": {
+    "openjarvis_key": "llamacpp",
+    "runtime_repository": "https://github.com/ggml-org/llama.cpp.git",
+    "runtime_tag": "v0.4.1",
+    "runtime_commit": "391fac16460f15233a7740550d858ac96df3419d",
+    "runtime_license": "MIT",
+    "runtime_execution_in_w02_09": false
+  },
+  "artifact": {
+    "kind": "REAL_MODEL_WEIGHTS",
+    "format": "GGUF",
+    "quantization": "Q4_K_M",
+    "repository": "bartowski/Qwen_Qwen3-0.6B-GGUF",
+    "revision": "7bcae0bc7b0606f1e948f8cdb31b98a2c10635db",
+    "filename": "Qwen_Qwen3-0.6B-Q4_K_M.gguf",
+    "size_bytes": 484220320,
+    "sha256": "9acfc1e001311f34b4252001b626f2e466d592a42065f66571bff3790d4e1b14",
+    "magic_hex": "47475546",
+    "download_url": "https://huggingface.co/bartowski/Qwen_Qwen3-0.6B-GGUF/resolve/7bcae0bc7b0606f1e948f8cdb31b98a2c10635db/Qwen_Qwen3-0.6B-Q4_K_M.gguf?download=true"
+  },
+  "acquisition": {
+    "network_allowed_only_during_acquire": true,
+    "explicit_grant_env": "CLEVER_ALLOW_MODEL_ACQUISITION",
+    "explicit_grant_value": "1",
+    "atomic_partial_suffix": ".part",
+    "offline_verify_required": true,
+    "persist_weights_in_git": false
+  },
+  "forbidden_in_this_task": [
+    "model_generation",
+    "provider_egress",
+    "tool_execution",
+    "parity_promotion",
+    "denominator_mutation",
+    "W02-10_completion"
+  ],
+  "counters": {
+    "global_denominator": 7565,
+    "openjarvis_obligations": 646,
+    "w02_proof_units": 47,
+    "verified_capabilities": 0,
+    "parity_promotions": 0,
+    "model_executions": 0,
+    "provider_egress_executions": 0
+  }
+}
