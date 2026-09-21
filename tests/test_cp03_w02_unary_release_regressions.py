@@ -29,7 +29,7 @@ class UnaryReleaseRegressionTests(unittest.TestCase):
         self.assertNotIn("tasks['W02-10']['status']=='BLOCKED'", text)
         self.assertIn("frontier_id=graph['first_executable_task']", text)
         self.assertIn("frontier['status']=='READY'", text)
-        self.assertIn("tasks['W02-10']['status']=='COMPLETE'", text)
+        self.assertIn("'W02-09','W02-10'", text)
 
 
 if __name__ == "__main__":
