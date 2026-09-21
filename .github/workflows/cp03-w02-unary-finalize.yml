@@ -1,0 +1,34 @@
+name: CP03 W02 Unary Driver Integrity
+
+on:
+  push:
+    branches: [wave/cp03/w02-unary-inference-20260921]
+    paths:
+      - '.github/workflows/cp03-w02-unary-finalize.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cp03-w02-unary-driver-integrity-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Verify materialized driver is format-stable
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('.github/workflows/cp03-w02-unary-driver.yml')
+          text=path.read_text(encoding='utf-8')
+          stable='python sessions/20260921-w02-unary-inference/check_applied.py'
+          stale='python scripts/cp03/w02_unary_patch.py --check'
+          assert stable in text, 'format-stable source check missing from unary driver'
+          assert stale not in text, 'stale unary patch self-check still present'
+          PY
+          git diff --check

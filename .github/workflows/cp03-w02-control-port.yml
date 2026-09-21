@@ -111,7 +111,8 @@ jobs:
           for iteration in 1 2 3 4 5; do
             cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test control_regressions --quiet
           done
-          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor -- --skip real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor -- --skip real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion --skip real_openjarvis_unary_inference_uses_pinned_llamacpp_lane
+          python -m unittest tests.test_cp03_w02_unary_release_regressions -v
           cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
           python -m scripts.parity.ledger --check --source-repo openjarvis
           python scripts/validate_agentic_state.py
@@ -169,7 +170,8 @@ jobs:
           for iteration in 1 2 3 4 5; do
             cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test control_regressions --quiet
           done
-          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor -- --skip real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor -- --skip real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion --skip real_openjarvis_unary_inference_uses_pinned_llamacpp_lane
+          python -m unittest tests.test_cp03_w02_unary_release_regressions -v
           cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
           python -m scripts.parity.ledger --check --source-repo openjarvis
           python scripts/validate_agentic_state.py

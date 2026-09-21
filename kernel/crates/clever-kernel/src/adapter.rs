@@ -18,14 +18,18 @@ use std::os::unix::process::CommandExt;
 
 use clever_contracts::{
     adapter_frame, AdapterCancel, AdapterFrame, AdapterHealthRequest, AdapterHelloAck,
-    AdapterShutdown, CapabilityDescriptor, ContractVersion, LifecycleMode, NativeRegistryEntry,
-    PlatformConstraint, ProvenanceRef, RegistryPrimitive, RegistrySnapshot,
-    RegistrySnapshotRequest, RuntimeHealth, RuntimeHealthStatus, RuntimeOwner,
+    AdapterShutdown, CapabilityDescriptor, ContractVersion, InferenceChunk, InferenceError,
+    InferenceFinishReason, InferenceRequest, InferenceTerminal, InferenceUsageMeasurement,
+    LifecycleMode, NativeRegistryEntry, PlatformConstraint, ProvenanceRef, RegistryPrimitive,
+    RegistrySnapshot, RegistrySnapshotRequest, RuntimeHealth, RuntimeHealthStatus, RuntimeOwner,
 };
 use prost::Message;
 
 use crate::{
-    capabilities::CapabilityRegistry, error::KernelError, version::validate_contract_version,
+    capabilities::CapabilityRegistry,
+    error::KernelError,
+    inference_security::{authorize_inference_egress, InferenceReservation, InferenceTarget},
+    version::validate_contract_version,
 };
 
 pub const DEFAULT_MAX_FRAME_BYTES: usize = 4 * 1024 * 1024;
@@ -40,6 +44,9 @@ const REQUIRED_FEATURES: [&str; 5] = [
     "cancel",
     "shutdown",
 ];
+const OPTIONAL_FEATURES: [&str; 1] = ["unary-inference"];
+const W02_UNARY_ENGINE_ID: &str = "llamacpp";
+const W02_UNARY_MODEL_ID: &str = "qwen3:0.6b";
 const RESERVED_METADATA_TOKENS: [&str; 6] = [
     "permission",
     "scope",
@@ -57,8 +64,13 @@ pub enum AdapterSupervisorError {
     FrameTooLarge(usize),
     EmptyFrame,
     TruncatedFrame,
-    InboundQueueFull { max_frames: usize },
-    InboundBytesExceeded { attempted: usize, max_bytes: usize },
+    InboundQueueFull {
+        max_frames: usize,
+    },
+    InboundBytesExceeded {
+        attempted: usize,
+        max_bytes: usize,
+    },
     OutboundQueueFull,
     SessionPoisoned(String),
     Timeout(&'static str),
@@ -67,7 +79,16 @@ pub enum AdapterSupervisorError {
     InvalidHello(String),
     InvalidSnapshot(String),
     InvalidRuntimeResponse(String),
-    RestartBudgetExhausted { attempts: u32, last_error: String },
+    InvalidInferenceRequest(String),
+    InferenceFailed {
+        code: i32,
+        message: String,
+        retryable: bool,
+    },
+    RestartBudgetExhausted {
+        attempts: u32,
+        last_error: String,
+    },
     Kernel(KernelError),
 }
 
@@ -114,6 +135,17 @@ impl Display for AdapterSupervisorError {
             Self::InvalidRuntimeResponse(message) => {
                 write!(formatter, "invalid runtime response: {message}")
             }
+            Self::InvalidInferenceRequest(message) => {
+                write!(formatter, "invalid inference request: {message}")
+            }
+            Self::InferenceFailed {
+                code,
+                message,
+                retryable,
+            } => write!(
+                formatter,
+                "inference failed code={code} retryable={retryable}: {message}"
+            ),
             Self::RestartBudgetExhausted {
                 attempts,
                 last_error,
@@ -240,6 +272,12 @@ struct QueuedInboundFrame {
 struct WriterRequest {
     bytes: Vec<u8>,
     completion: SyncSender<Result<(), AdapterSupervisorError>>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct UnaryInferenceResult {
+    pub text: String,
+    pub terminal: InferenceTerminal,
 }
 
 struct InboundState {
@@ -572,6 +610,184 @@ impl AdapterSupervisor {
         self.extract_health(response, "cancel")
     }
 
+    pub fn infer_unary(
+        &mut self,
+        request: InferenceRequest,
+    ) -> Result<UnaryInferenceResult, AdapterSupervisorError> {
+        self.ensure_io_healthy()?;
+        if !self.negotiated_features.contains("unary-inference") {
+            return self.fail_protocol(AdapterSupervisorError::InvalidInferenceRequest(
+                "peer did not negotiate unary-inference".to_owned(),
+            ));
+        }
+        let reservation = InferenceReservation {
+            estimated_input_tokens: 0,
+            estimated_cost_microusd: 0,
+        };
+        let local_target = InferenceTarget {
+            provider_id: "openjarvis.llamacpp".to_owned(),
+            origin: "loopback".to_owned(),
+            external: false,
+        };
+        authorize_inference_egress(&request, &local_target, None, &reservation, 0)
+            .map_err(|error| AdapterSupervisorError::InvalidInferenceRequest(error.to_string()))?;
+        let config = request.config.as_ref().ok_or_else(|| {
+            AdapterSupervisorError::InvalidInferenceRequest("config is required".to_owned())
+        })?;
+        if request.engine_id != W02_UNARY_ENGINE_ID
+            || request.model_id != W02_UNARY_MODEL_ID
+            || request.idempotency_key.trim().is_empty()
+            || request.inputs.is_empty()
+            || request.deadline_at.is_none()
+            || config.stream
+            || config.max_output_tokens == 0
+            || config.max_output_tokens > 256
+            || request
+                .inputs
+                .iter()
+                .any(|input| input.role == 0 || input.content.trim().is_empty())
+        {
+            return self.fail_protocol(AdapterSupervisorError::InvalidInferenceRequest(
+                "request is outside the bounded W02-10 unary lane".to_owned(),
+            ));
+        }
+
+        let frame = self.next_control_frame(
+            adapter_frame::Body::InferenceRequest(request.clone()),
+            self.policy.request_timeout,
+        );
+        let frame_id = frame.frame_id.clone();
+        if let Err(error) = self.write_frame(&frame) {
+            return self.fail_protocol(error);
+        }
+
+        let first = match self.receive_frame(self.policy.request_timeout, "unary inference chunk") {
+            Ok(response) => response,
+            Err(error) => return self.fail_protocol(error),
+        };
+        self.validate_inference_outer(&first, &frame_id)?;
+        let chunk = match first.body {
+            Some(adapter_frame::Body::InferenceChunk(chunk)) => chunk,
+            Some(adapter_frame::Body::InferenceError(error)) => {
+                return self.inference_failure(error, &request)
+            }
+            _ => {
+                return self.fail_protocol(AdapterSupervisorError::UnexpectedFrame(
+                    "unary inference chunk",
+                ))
+            }
+        };
+        self.validate_inference_chunk(&chunk, &request)?;
+
+        let second =
+            match self.receive_frame(self.policy.request_timeout, "unary inference terminal") {
+                Ok(response) => response,
+                Err(error) => return self.fail_protocol(error),
+            };
+        self.validate_inference_outer(&second, &frame_id)?;
+        let terminal = match second.body {
+            Some(adapter_frame::Body::InferenceTerminal(terminal)) => terminal,
+            Some(adapter_frame::Body::InferenceError(error)) => {
+                return self.inference_failure(error, &request)
+            }
+            _ => {
+                return self.fail_protocol(AdapterSupervisorError::UnexpectedFrame(
+                    "unary inference terminal",
+                ))
+            }
+        };
+        self.validate_inference_terminal(&terminal, &request)?;
+        Ok(UnaryInferenceResult {
+            text: chunk.text_delta,
+            terminal,
+        })
+    }
+
+    fn validate_inference_outer(
+        &mut self,
+        frame: &AdapterFrame,
+        request_frame_id: &str,
+    ) -> Result<(), AdapterSupervisorError> {
+        if frame.frame_id.trim().is_empty() || frame.correlation_id != request_frame_id {
+            return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                "inference response correlation mismatch".to_owned(),
+            ));
+        }
+        Ok(())
+    }
+
+    fn validate_inference_chunk(
+        &mut self,
+        chunk: &InferenceChunk,
+        request: &InferenceRequest,
+    ) -> Result<(), AdapterSupervisorError> {
+        if let Err(error) = validate_contract_version(chunk.contract_version.as_ref()) {
+            return self.fail_protocol(error.into());
+        }
+        if chunk.request_id != request.request_id
+            || chunk.attempt_id != request.attempt_id
+            || chunk.sequence != 1
+            || chunk.text_delta.trim().is_empty()
+        {
+            return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                "invalid unary inference chunk identity/sequence/content".to_owned(),
+            ));
+        }
+        Ok(())
+    }
+
+    fn validate_inference_terminal(
+        &mut self,
+        terminal: &InferenceTerminal,
+        request: &InferenceRequest,
+    ) -> Result<(), AdapterSupervisorError> {
+        if let Err(error) = validate_contract_version(terminal.contract_version.as_ref()) {
+            return self.fail_protocol(error.into());
+        }
+        let finish = InferenceFinishReason::try_from(terminal.finish_reason).ok();
+        let usage = terminal.usage.as_ref();
+        let measurement =
+            usage.and_then(|value| InferenceUsageMeasurement::try_from(value.measurement).ok());
+        if terminal.request_id != request.request_id
+            || terminal.attempt_id != request.attempt_id
+            || terminal.final_sequence != 1
+            || !matches!(
+                finish,
+                Some(InferenceFinishReason::Stop)
+                    | Some(InferenceFinishReason::Length)
+                    | Some(InferenceFinishReason::ContentFilter)
+            )
+            || measurement != Some(InferenceUsageMeasurement::Exact)
+            || usage.is_none_or(|value| {
+                value.input_tokens.is_none()
+                    || value.output_tokens.is_none()
+                    || value.total_tokens.is_none()
+            })
+        {
+            return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                "invalid unary inference terminal identity/finish/usage".to_owned(),
+            ));
+        }
+        Ok(())
+    }
+
+    fn inference_failure<T>(
+        &mut self,
+        error: InferenceError,
+        request: &InferenceRequest,
+    ) -> Result<T, AdapterSupervisorError> {
+        if error.request_id != request.request_id || error.attempt_id != request.attempt_id {
+            return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                "inference error identity mismatch".to_owned(),
+            ));
+        }
+        self.fail_protocol(AdapterSupervisorError::InferenceFailed {
+            code: error.code,
+            message: error.message,
+            retryable: error.retryable,
+        })
+    }
+
     pub fn shutdown(
         mut self,
         reason: impl Into<String>,
@@ -667,10 +883,15 @@ impl AdapterSupervisor {
                 )));
             }
         }
-        let negotiated = REQUIRED_FEATURES
+        let mut negotiated: BTreeSet<String> = REQUIRED_FEATURES
             .iter()
             .map(|feature| (*feature).to_owned())
             .collect();
+        for optional in OPTIONAL_FEATURES {
+            if advertised.contains(optional) {
+                negotiated.insert(optional.to_owned());
+            }
+        }
         Ok((peer_max.min(self.policy.max_frame_bytes), negotiated))
     }
 

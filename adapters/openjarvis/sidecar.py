@@ -19,7 +19,8 @@ if str(GENERATED) not in sys.path:
     sys.path.insert(0, str(GENERATED))
 
 from adapters.openjarvis import ADAPTER_ID, RUNTIME_ID, UPSTREAM_COMMIT, UPSTREAM_REPOSITORY
-from clever.v1 import adapter_pb2, common_pb2, runtime_pb2
+from adapters.openjarvis.unary_inference import UnaryInferenceRejected, execute_unary
+from clever.v1 import adapter_pb2, common_pb2, inference_pb2, runtime_pb2
 
 MAX_FRAME_BYTES = 4 * 1024 * 1024
 WIRE_MAJOR = 1
@@ -287,6 +288,7 @@ def hello_frame() -> adapter_pb2.AdapterFrame:
             "runtime-health",
             "cancel",
             "shutdown",
+            "unary-inference",
         ],
     )
     return _frame("openjarvis-hello", "hello", hello)
@@ -333,6 +335,47 @@ def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
         elif body == "cancel":
             # W01 has no long-running executable requests; cancellation is accepted as a no-op.
             write_frame(stdout, health_frame(correlation_id=request.frame_id))
+        elif body == "inference_request":
+            native_request = request.inference_request
+            try:
+                outcome = execute_unary(native_request)
+            except UnaryInferenceRejected as exc:
+                failure = inference_pb2.InferenceError(
+                    contract_version=common_pb2.ContractVersion(major=1, minor=2),
+                    request_id=native_request.request_id,
+                    attempt_id=native_request.attempt_id,
+                    code=exc.code,
+                    message=str(exc),
+                    retryable=exc.retryable,
+                )
+                write_frame(
+                    stdout,
+                    _frame(
+                        f"inference-error:{request.frame_id}",
+                        "inference_error",
+                        failure,
+                        correlation_id=request.frame_id,
+                    ),
+                )
+                continue
+            write_frame(
+                stdout,
+                _frame(
+                    f"inference-chunk:{request.frame_id}",
+                    "inference_chunk",
+                    outcome.chunk,
+                    correlation_id=request.frame_id,
+                ),
+            )
+            write_frame(
+                stdout,
+                _frame(
+                    f"inference-terminal:{request.frame_id}",
+                    "inference_terminal",
+                    outcome.terminal,
+                    correlation_id=request.frame_id,
+                ),
+            )
         elif body == "shutdown":
             seconds, nanos = _now_timestamp()
             stopping = runtime_pb2.RuntimeHealth(

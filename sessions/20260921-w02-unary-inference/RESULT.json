@@ -1,0 +1,12 @@
+{
+  "claim_id": "CLAIM-CP03-W02-UNARY-INFERENCE-20260921",
+  "date": "2026-09-21",
+  "evidence_id": "EVID-W02-UNARY-INFERENCE-20260921",
+  "github_actions_run_id": 35574901192,
+  "next_task": "W02-11",
+  "schema_version": 1,
+  "status": "COMPLETE",
+  "task": "W02-10",
+  "validated_head": "a29389d41642ca74ed9c09ccfb9ec9f1725b48d7",
+  "wave_id": "CP03-W02-UNARY-INFERENCE-20260921"
+}
