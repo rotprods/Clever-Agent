@@ -272,6 +272,12 @@ def execute_unary(
             model=PINNED_MODEL_ID,
             temperature=float(temperature),
             max_tokens=int(request.config.max_output_tokens),
+            # The W02-10 canonical contract has no reasoning-content surface. The
+            # pinned Qwen3 template otherwise defaults to thinking mode, which can
+            # consume the entire bounded completion in reasoning_content and leave
+            # OpenJarvis' canonical `content` empty. Disable template thinking for
+            # this unary lane so terminal visible text is preserved end-to-end.
+            chat_template_kwargs={"enable_thinking": False},
         )
         if not isinstance(result, dict):
             raise UnaryInferenceRejected(
