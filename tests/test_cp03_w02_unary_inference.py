@@ -4,6 +4,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from clever.v1 import common_pb2, identity_pb2, inference_pb2
 
@@ -43,6 +44,67 @@ def valid_request() -> inference_pb2.InferenceRequest:
 class UnaryInferenceValidationTests(unittest.TestCase):
     def test_valid_contract_shape_is_accepted_before_runtime_attestation(self) -> None:
         validate_unary_request(valid_request())
+
+    def test_qwen3_unary_disables_native_thinking_to_preserve_visible_content(self) -> None:
+        request = valid_request()
+
+        class FakeMessage:
+            def __init__(self, **kwargs) -> None:
+                self.__dict__.update(kwargs)
+
+        class FakeRole:
+            SYSTEM = "system"
+            USER = "user"
+            ASSISTANT = "assistant"
+            TOOL = "tool"
+
+        class FakeEngine:
+            def __init__(self) -> None:
+                self.generate_kwargs = None
+                self.closed = False
+
+            def generate(self, _messages, **kwargs):
+                self.generate_kwargs = kwargs
+                content = (
+                    "READY"
+                    if kwargs.get("chat_template_kwargs") == {"enable_thinking": False}
+                    else ""
+                )
+                return {
+                    "content": content,
+                    "finish_reason": "stop",
+                    "usage": {
+                        "prompt_tokens": 7,
+                        "completion_tokens": 1,
+                        "total_tokens": 8,
+                    },
+                }
+
+            def close(self) -> None:
+                self.closed = True
+
+        engine = FakeEngine()
+
+        def factory(_host: str):
+            return engine, FakeMessage, FakeRole
+
+        with patch("adapters.openjarvis.unary_inference.attest_pinned_artifact"):
+            outcome = execute_unary(
+                request,
+                engine_factory=factory,
+                artifact_path=Path("/ignored/Qwen_Qwen3-0.6B-Q4_K_M.gguf"),
+                host="http://127.0.0.1:8080",
+            )
+
+        self.assertEqual(outcome.chunk.text_delta, "READY")
+        self.assertEqual(outcome.chunk.request_id, request.request_id)
+        self.assertEqual(outcome.terminal.request_id, request.request_id)
+        self.assertEqual(outcome.terminal.attempt_id, request.attempt_id)
+        self.assertEqual(
+            engine.generate_kwargs["chat_template_kwargs"],
+            {"enable_thinking": False},
+        )
+        self.assertTrue(engine.closed)
 
     def test_missing_inputs_rejected_before_engine_creation(self) -> None:
         request = valid_request()
