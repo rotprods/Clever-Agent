@@ -35,7 +35,8 @@
         "temperature": {"type": "number", "minimum": 0},
         "topP": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
         "stopSequences": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-        "stream": {"type": "boolean"}
+        "stream": {"type": "boolean"},
+        "responseSchemaJson": {"type": "string", "minLength": 2, "maxLength": 1048576}
       }
     },
     "deadlineAt": {"$ref": "https://schemas.rotprods.dev/clever/v1/common.schema.json#/$defs/timestamp"},
