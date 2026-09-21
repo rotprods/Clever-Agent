@@ -2,7 +2,9 @@ name: CP03 W02 Model Engine Bridge
 
 on:
   push:
-    branches: [wave/cp03/w02-model-engine-bridge-20260921]
+    branches:
+      - wave/cp03/w02-model-engine-bridge-20260921
+      - release/cp03-w02-model-bridge-20260921
     paths:
       - 'adapters/openjarvis/model_bridge.py'
       - 'adapters/openjarvis/sidecar.py'
@@ -129,11 +131,16 @@ jobs:
           tasks={row['id']:row for row in graph['tasks']}
           assert graph['global_denominator']==7565
           assert graph['openjarvis_obligations']==646
-          assert graph['first_executable_task']=='W02-08'
-          assert tasks['W02-06']['status']=='COMPLETE'
-          assert tasks['W02-07']['status']=='COMPLETE'
-          assert tasks['W02-08']['status']=='READY'
-          assert tasks['W02-09']['status']=='BLOCKED'
-          assert not tasks['W02-08']['proof']
+          assert graph['first_executable_task']=='W02-09'
+          assert tasks['W02-06']['status']=='COMPLETE' and tasks['W02-06']['proof']
+          assert tasks['W02-07']['status']=='COMPLETE' and tasks['W02-07']['proof']
+          assert tasks['W02-08']['status']=='COMPLETE' and tasks['W02-08']['proof']
+          proof=tasks['W02-08']['proof'][-1]
+          assert proof['evidence_id']=='EVID-W02-MODEL-BRIDGE-20260921'
+          assert proof['parity_promotions']==0
+          assert proof['model_executions']==0
+          assert proof['provider_egress_executions']==0
+          assert tasks['W02-09']['status']=='READY' and not tasks['W02-09']['proof']
+          assert tasks['W02-10']['status']=='BLOCKED' and not tasks['W02-10']['proof']
           PY
           git diff --check
