@@ -35,13 +35,13 @@
 
 ## Active claims
 
-- `CLAIM-CP03-W02-EGRESS-BUDGET-20260921` → `CP03-W02-EGRESS-BUDGET-20260921` · `chatgpt-gpt-5.6-sol`
 
 ## Open / mitigating risks
 
 - `RISK-0001` · `MEDIUM` · `OPEN` · detail in `ledgers/RISK_LEDGER.ndjson`
 - `RISK-0002` · `HIGH` · `OPEN` · detail in `ledgers/RISK_LEDGER.ndjson`
 - `RISK-0003` · `HIGH` · `OPEN` · detail in `ledgers/RISK_LEDGER.ndjson`
+- `RISK-0006` · `HIGH` · `MITIGATING` · detail in `ledgers/RISK_LEDGER.ndjson`
 
 ## Recovery order
 
