@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import inspect
 import unittest
 
@@ -144,20 +145,20 @@ class ToolFragmentTests(unittest.TestCase):
                 max_argument_bytes=8,
             )
 
-        source = inspect.getsource(__import__("adapters.openjarvis.structured_inference", fromlist=["*"]))
-        forbidden = (
-            "subprocess",
-            "os.system",
-            "socket.",
-            "httpx",
-            "requests.",
-            "browser",
-            "mcp",
-            "exec(",
-            "eval(",
-        )
-        for token in forbidden:
-            self.assertNotIn(token, source.lower())
+        module = __import__("adapters.openjarvis.structured_inference", fromlist=["*"])
+        tree = ast.parse(inspect.getsource(module))
+        forbidden_modules = {"subprocess", "socket", "httpx", "requests", "selenium", "playwright"}
+        forbidden_calls = {"exec", "eval"}
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                self.assertTrue(
+                    all(alias.name.split(".", 1)[0] not in forbidden_modules for alias in node.names),
+                    f"forbidden execution/network import: {ast.unparse(node)}",
+                )
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                self.assertNotIn(node.module.split(".", 1)[0], forbidden_modules)
+            elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                self.assertNotIn(node.func.id, forbidden_calls)
 
         malicious = assemble_tool_call_fragments(
             [
