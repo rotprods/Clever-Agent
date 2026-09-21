@@ -177,7 +177,7 @@ class SingleFlightCoordinatorTests(unittest.TestCase):
         self.assertIs(target, first)
         self.assertTrue(first.cancel_requested.is_set())
         first.cancel_acknowledged.set()
-        coordinator.complete(first)
+        coordinator.complete_cancelled(first)
         status, target = coordinator.request_cancel("req-1", "attempt-1")
         self.assertEqual(status, "ALREADY_TERMINAL")
         self.assertIsNone(target)
