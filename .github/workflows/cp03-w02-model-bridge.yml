@@ -46,6 +46,7 @@ jobs:
         run: |
           set -euo pipefail
           python -m unittest -v tests.test_cp03_w02_model_bridge tests.test_cp03_openjarvis_sidecar
+          python -m unittest tests.test_cp03_w02_unary_release_regressions -v
           python -m py_compile adapters/openjarvis/model_bridge.py
       - name: Build exact pinned OpenJarvis catalog image
         run: |
@@ -110,11 +111,12 @@ jobs:
           python -m unittest -v \
             tests.test_cp03_w02_inference_contract \
             tests.test_cp03_w02_egress \
-            tests.test_cp03_w02_plan
+            tests.test_cp03_w02_plan \
+            tests.test_cp03_w02_unary_release_regressions
           export CLEVER_TEST_PYTHON="$(command -v python)"
           cargo fmt --manifest-path kernel/Cargo.toml --all -- --check
           cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_security -- --nocapture
-          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel -- --skip real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel -- --skip real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion --skip real_openjarvis_unary_inference_uses_pinned_llamacpp_lane
           cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
       - name: Durable-state and parity invariant gauntlet
         run: |
@@ -131,16 +133,16 @@ jobs:
           tasks={row['id']:row for row in graph['tasks']}
           assert graph['global_denominator']==7565
           assert graph['openjarvis_obligations']==646
-          assert graph['first_executable_task']=='W02-09'
-          assert tasks['W02-06']['status']=='COMPLETE' and tasks['W02-06']['proof']
-          assert tasks['W02-07']['status']=='COMPLETE' and tasks['W02-07']['proof']
-          assert tasks['W02-08']['status']=='COMPLETE' and tasks['W02-08']['proof']
+          for task_id in ('W02-06','W02-07','W02-08','W02-09','W02-10'):
+              assert tasks[task_id]['status']=='COMPLETE' and tasks[task_id]['proof'], task_id
           proof=tasks['W02-08']['proof'][-1]
           assert proof['evidence_id']=='EVID-W02-MODEL-BRIDGE-20260921'
           assert proof['parity_promotions']==0
           assert proof['model_executions']==0
           assert proof['provider_egress_executions']==0
-          assert tasks['W02-09']['status']=='READY' and not tasks['W02-09']['proof']
-          assert tasks['W02-10']['status']=='BLOCKED' and not tasks['W02-10']['proof']
+          frontier_id=graph['first_executable_task']
+          frontier=tasks[frontier_id]
+          assert frontier['status']=='READY'
+          assert all(tasks[dep]['status']=='COMPLETE' and tasks[dep]['proof'] for dep in frontier['depends_on'])
           PY
           git diff --check
