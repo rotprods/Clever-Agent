@@ -533,10 +533,33 @@
       "id": "W02-13",
       "owner_role": "python_builder",
       "priority": "P1",
-      "proof": [],
+      "proof": [
+        {
+          "byte_budgets": "PASS",
+          "canonical_transport_exposure": "NOT_RUN",
+          "duplicate_keys": "REJECTED",
+          "evidence_id": "EVID-W02-STRUCTURED-CORE-20260921",
+          "gate": "G4",
+          "json_schema_validation": "PASS",
+          "non_finite_json": "REJECTED",
+          "parity_promotions": 0,
+          "provider_egress_executions": 0,
+          "regression_tests": 33,
+          "result": "PARTIAL_PASS",
+          "run_id": 35612350144,
+          "scope": "CORE_STRUCTURED_DATA_ONLY",
+          "structured_json_assembly": "PASS",
+          "targeted_tests": 8,
+          "tool_argument_fragment_assembly": "PASS",
+          "tool_executions": 0,
+          "tool_identity_mutation": "REJECTED",
+          "undeclared_tool": "REJECTED",
+          "validated_head": "604b9fd95fca2da2f5e76adf7dd3acba9b156278"
+        }
+      ],
       "reviewer_role": "protocol_engineer",
       "rollback": "Retirar decoder defectuoso sin inventar salida.",
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "title": "Structured output y tool-call fragments"
     },
     {

@@ -1,0 +1,13 @@
+{
+  "claim_id": "CLAIM-CP03-W02-STRUCTURED-20260921",
+  "date": "2026-09-21",
+  "evidence_id": "EVID-W02-STRUCTURED-CORE-20260921",
+  "github_actions_run_id": 35612350144,
+  "next_task": "W02-13",
+  "residual": "canonical typed structured/tool fragments over streaming transport",
+  "schema_version": 1,
+  "status": "PARTIAL_PASS",
+  "task": "W02-13",
+  "validated_head": "604b9fd95fca2da2f5e76adf7dd3acba9b156278",
+  "wave_id": "CP03-W02-STRUCTURED-20260921"
+}
