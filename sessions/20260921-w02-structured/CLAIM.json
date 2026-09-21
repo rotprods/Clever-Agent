@@ -1,16 +1,15 @@
 {
-  "schema_version": 1,
-  "project_id": "CLEVER-JARVIS-001",
-  "checkpoint": "CP03",
-  "parent_wave": "CP03-W02",
-  "canonical_task": "W02-13",
-  "wave_id": "CP03-W02-STRUCTURED-20260921",
-  "claim_id": "CLAIM-CP03-W02-STRUCTURED-20260921",
-  "owner": "chatgpt-gpt-5.6-sol",
-  "date": "2026-09-21",
   "base_head": "c46aca03854e227e236f421d784c05e50691aee9",
-  "status": "ACTIVE",
+  "canonical_task": "W02-13",
+  "checkpoint": "CP03",
+  "claim_id": "CLAIM-CP03-W02-STRUCTURED-20260921",
   "coordination": "W02-13 only. Implement typed structured-output validation and fragmented native tool-call assembly while preserving model-emitted tools strictly as inert data. Zero shell/MCP/browser/tool execution; no W02-14 fallback/retry implementation, no provider egress, no parity promotion, no denominator mutation, no W02 closure. State transition is permitted only after exact-head G4 evidence and must open only W02-14.",
+  "date": "2026-09-21",
+  "last_evidence_id": "EVID-W02-STRUCTURED-CORE-20260921",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "parent_wave": "CP03-W02",
+  "project_id": "CLEVER-JARVIS-001",
+  "schema_version": 1,
   "scope": [
     "sessions/20260921-w02-structured/**",
     "adapters/openjarvis/streaming_inference.py",
@@ -33,5 +32,8 @@
     "HANDOFF.md",
     ".agentic/context/CURRENT_CONTEXT.json",
     ".agentic/context/CURRENT_CONTEXT.md"
-  ]
+  ],
+  "status": "ACTIVE",
+  "validated_head": "5ed3896a7d3117b4e3764719d7b970fd20301848",
+  "wave_id": "CP03-W02-STRUCTURED-20260921"
 }
