@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import struct
 import sys
+import threading
 import time
 from typing import BinaryIO, Iterable
 
@@ -26,6 +27,68 @@ from clever.v1 import adapter_pb2, common_pb2, inference_pb2, runtime_pb2
 MAX_FRAME_BYTES = 4 * 1024 * 1024
 WIRE_MAJOR = 1
 WIRE_MINOR = 1
+class _ActiveInference:
+    def __init__(self, request_id: str, attempt_id: str, frame_id: str) -> None:
+        self.request_id = request_id
+        self.attempt_id = attempt_id
+        self.frame_id = frame_id
+        self.cancel_requested = threading.Event()
+        self.cancel_acknowledged = threading.Event()
+
+
+class _InferenceCoordinator:
+    """Single-flight request/attempt ownership for the W02-12 streaming lane."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._active: _ActiveInference | None = None
+        self._last_terminal: tuple[str, str] | None = None
+
+    def begin(self, request_id: str, attempt_id: str, frame_id: str) -> _ActiveInference | None:
+        with self._lock:
+            if self._active is not None:
+                return None
+            state = _ActiveInference(request_id, attempt_id, frame_id)
+            self._active = state
+            return state
+
+    def busy(self) -> bool:
+        with self._lock:
+            return self._active is not None
+
+    def request_cancel(self, request_id: str, attempt_id: str) -> tuple[str, _ActiveInference | None]:
+        with self._lock:
+            if (
+                self._active is not None
+                and self._active.request_id == request_id
+                and self._active.attempt_id == attempt_id
+            ):
+                self._active.cancel_requested.set()
+                return "REQUESTED", self._active
+            if self._last_terminal == (request_id, attempt_id):
+                return "ALREADY_TERMINAL", None
+            return "NOT_ACTIVE", None
+
+    def complete_normal(self, state: _ActiveInference) -> bool:
+        with self._lock:
+            if self._active is not state or state.cancel_requested.is_set():
+                return False
+            self._active = None
+            self._last_terminal = (state.request_id, state.attempt_id)
+            return True
+
+    def complete_cancelled(self, state: _ActiveInference) -> None:
+        with self._lock:
+            if self._active is state:
+                self._active = None
+            self._last_terminal = (state.request_id, state.attempt_id)
+
+    def fail(self, state: _ActiveInference) -> None:
+        with self._lock:
+            if self._active is state:
+                self._active = None
+
+
 _RESERVED_METADATA_TOKENS = (
     "permission",
     "scope",
@@ -291,6 +354,7 @@ def hello_frame() -> adapter_pb2.AdapterFrame:
             "shutdown",
             "unary-inference",
             "streaming-inference",
+            "streaming-cancellation",
         ],
     )
     return _frame("openjarvis-hello", "hello", hello)
@@ -324,89 +388,248 @@ def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
     if first is None or first.WhichOneof("body") != "hello_ack" or not first.hello_ack.accepted:
         return 64
 
+    write_lock = threading.Lock()
+    coordinator = _InferenceCoordinator()
+
+    def send(frame: adapter_pb2.AdapterFrame) -> None:
+        with write_lock:
+            write_frame(stdout, frame)
+
+    def adapter_error(request: adapter_pb2.AdapterFrame, code: str, message: str) -> None:
+        send(
+            _frame(
+                f"adapter-error:{request.frame_id}",
+                "error",
+                adapter_pb2.AdapterError(code=code, message=message, retryable=False),
+                correlation_id=request.frame_id,
+            )
+        )
+
+    def inference_error(request: adapter_pb2.AdapterFrame, code: int, message: str) -> None:
+        native = request.inference_request
+        send(
+            _frame(
+                f"inference-error:{request.frame_id}",
+                "inference_error",
+                inference_pb2.InferenceError(
+                    contract_version=common_pb2.ContractVersion(major=1, minor=2),
+                    request_id=native.request_id,
+                    attempt_id=native.attempt_id,
+                    code=code,
+                    message=message,
+                    retryable=False,
+                ),
+                correlation_id=request.frame_id,
+            )
+        )
+
+    def start_stream(request: adapter_pb2.AdapterFrame) -> bool:
+        native_request = request.inference_request
+        state = coordinator.begin(native_request.request_id, native_request.attempt_id, request.frame_id)
+        if state is None:
+            inference_error(
+                request,
+                inference_pb2.INFERENCE_ERROR_CODE_BUSY,
+                "W02-12 sidecar is explicit single-flight; another inference is active",
+            )
+            return False
+
+        def worker() -> None:
+            def emit_chunk(chunk: inference_pb2.InferenceChunk) -> None:
+                send(
+                    _frame(
+                        f"inference-chunk:{request.frame_id}:{chunk.sequence}",
+                        "inference_chunk",
+                        chunk,
+                        correlation_id=request.frame_id,
+                    )
+                )
+
+            def emit_terminal(terminal: inference_pb2.InferenceTerminal) -> None:
+                if terminal.finish_reason == inference_pb2.INFERENCE_FINISH_REASON_CANCELLED:
+                    if not state.cancel_acknowledged.wait(1.0):
+                        raise UnaryInferenceRejected(
+                            inference_pb2.INFERENCE_ERROR_CODE_INTERNAL,
+                            "cancelled terminal attempted before transport ACK",
+                            retryable=False,
+                        )
+                    coordinator.complete_cancelled(state)
+                    send(
+                        _frame(
+                            f"inference-terminal:{request.frame_id}",
+                            "inference_terminal",
+                            terminal,
+                            correlation_id=request.frame_id,
+                        )
+                    )
+                    return
+
+                if coordinator.complete_normal(state):
+                    send(
+                        _frame(
+                            f"inference-terminal:{request.frame_id}",
+                            "inference_terminal",
+                            terminal,
+                            correlation_id=request.frame_id,
+                        )
+                    )
+                    return
+
+                if not state.cancel_requested.is_set() or not state.cancel_acknowledged.wait(1.0):
+                    raise UnaryInferenceRejected(
+                        inference_pb2.INFERENCE_ERROR_CODE_INTERNAL,
+                        "stream terminal raced cancellation without an ACK",
+                        retryable=False,
+                    )
+                cancelled = inference_pb2.InferenceTerminal(
+                    contract_version=common_pb2.ContractVersion(major=1, minor=2),
+                    request_id=native_request.request_id,
+                    attempt_id=native_request.attempt_id,
+                    final_sequence=terminal.final_sequence,
+                    finish_reason=inference_pb2.INFERENCE_FINISH_REASON_CANCELLED,
+                    usage=inference_pb2.InferenceUsage(
+                        measurement=inference_pb2.INFERENCE_USAGE_MEASUREMENT_UNKNOWN
+                    ),
+                )
+                coordinator.complete_cancelled(state)
+                send(
+                    _frame(
+                        f"inference-terminal:{request.frame_id}",
+                        "inference_terminal",
+                        cancelled,
+                        correlation_id=request.frame_id,
+                    )
+                )
+
+            try:
+                execute_stream(
+                    native_request,
+                    emit_chunk=emit_chunk,
+                    emit_terminal=emit_terminal,
+                    cancel_requested=state.cancel_requested.is_set,
+                    wait_for_cancel_ack=state.cancel_acknowledged.wait,
+                )
+            except UnaryInferenceRejected as exc:
+                send(
+                    _frame(
+                        f"inference-error:{request.frame_id}",
+                        "inference_error",
+                        inference_pb2.InferenceError(
+                            contract_version=common_pb2.ContractVersion(major=1, minor=2),
+                            request_id=native_request.request_id,
+                            attempt_id=native_request.attempt_id,
+                            code=exc.code,
+                            message=str(exc),
+                            retryable=exc.retryable,
+                        ),
+                        correlation_id=request.frame_id,
+                    )
+                )
+            finally:
+                coordinator.fail(state)
+
+        threading.Thread(target=worker, name=f"openjarvis-stream-{native_request.attempt_id}", daemon=True).start()
+        return True
+
     while True:
         request = read_frame(stdin)
         if request is None:
             return 0
         body = request.WhichOneof("body")
         if body == "registry_snapshot_request":
-            response = _frame(f"registry:{request.frame_id}", "registry_snapshot", snapshot, correlation_id=request.frame_id)
-            write_frame(stdout, response)
+            response = _frame(
+                f"registry:{request.frame_id}",
+                "registry_snapshot",
+                snapshot,
+                correlation_id=request.frame_id,
+            )
+            send(response)
         elif body == "health_request":
-            write_frame(stdout, health_frame(reasons=diagnostics["unsupported_registries"], correlation_id=request.frame_id))
+            send(health_frame(reasons=diagnostics["unsupported_registries"], correlation_id=request.frame_id))
         elif body == "cancel":
-            # W01 has no long-running executable requests; cancellation is accepted as a no-op.
-            write_frame(stdout, health_frame(correlation_id=request.frame_id))
+            # Legacy adapter-control cancellation remains a no-op health acknowledgement.
+            send(health_frame(correlation_id=request.frame_id))
+        elif body == "inference_cancel":
+            cancel = request.inference_cancel
+            if (
+                not cancel.HasField("contract_version")
+                or cancel.contract_version.major != 1
+                or cancel.contract_version.minor > 2
+                or not cancel.target_request_id.strip()
+                or not cancel.target_attempt_id.strip()
+                or not cancel.reason.strip()
+            ):
+                adapter_error(request, "CANCEL_INVALID", "inference cancellation target/reason is invalid")
+                continue
+            status, state = coordinator.request_cancel(cancel.target_request_id, cancel.target_attempt_id)
+            if status == "REQUESTED" and state is not None:
+                send(
+                    _frame(
+                        f"inference-cancel-ack:{request.frame_id}",
+                        "inference_cancel",
+                        cancel,
+                        correlation_id=request.frame_id,
+                    )
+                )
+                state.cancel_acknowledged.set()
+            elif status == "ALREADY_TERMINAL":
+                adapter_error(
+                    request,
+                    "CANCEL_ALREADY_TERMINAL",
+                    "target request/attempt already reached a terminal state",
+                )
+            else:
+                adapter_error(
+                    request,
+                    "CANCEL_NOT_ACTIVE",
+                    "target request/attempt is not the active single-flight inference",
+                )
         elif body == "inference_request":
             native_request = request.inference_request
+            if native_request.HasField("config") and native_request.config.stream:
+                start_stream(request)
+                continue
+            if coordinator.busy():
+                inference_error(
+                    request,
+                    inference_pb2.INFERENCE_ERROR_CODE_BUSY,
+                    "W02-12 sidecar is explicit single-flight; another inference is active",
+                )
+                continue
             try:
-                if native_request.HasField("config") and native_request.config.stream:
-                    def emit_chunk(chunk: inference_pb2.InferenceChunk) -> None:
-                        write_frame(
-                            stdout,
-                            _frame(
-                                f"inference-chunk:{request.frame_id}:{chunk.sequence}",
-                                "inference_chunk",
-                                chunk,
-                                correlation_id=request.frame_id,
-                            ),
-                        )
-
-                    def emit_terminal(terminal: inference_pb2.InferenceTerminal) -> None:
-                        write_frame(
-                            stdout,
-                            _frame(
-                                f"inference-terminal:{request.frame_id}",
-                                "inference_terminal",
-                                terminal,
-                                correlation_id=request.frame_id,
-                            ),
-                        )
-
-                    execute_stream(
-                        native_request,
-                        emit_chunk=emit_chunk,
-                        emit_terminal=emit_terminal,
-                    )
-                    continue
-
                 outcome = execute_unary(native_request)
             except UnaryInferenceRejected as exc:
-                failure = inference_pb2.InferenceError(
-                    contract_version=common_pb2.ContractVersion(major=1, minor=2),
-                    request_id=native_request.request_id,
-                    attempt_id=native_request.attempt_id,
-                    code=exc.code,
-                    message=str(exc),
-                    retryable=exc.retryable,
-                )
-                write_frame(
-                    stdout,
+                send(
                     _frame(
                         f"inference-error:{request.frame_id}",
                         "inference_error",
-                        failure,
+                        inference_pb2.InferenceError(
+                            contract_version=common_pb2.ContractVersion(major=1, minor=2),
+                            request_id=native_request.request_id,
+                            attempt_id=native_request.attempt_id,
+                            code=exc.code,
+                            message=str(exc),
+                            retryable=exc.retryable,
+                        ),
                         correlation_id=request.frame_id,
-                    ),
+                    )
                 )
                 continue
-            write_frame(
-                stdout,
+            send(
                 _frame(
                     f"inference-chunk:{request.frame_id}",
                     "inference_chunk",
                     outcome.chunk,
                     correlation_id=request.frame_id,
-                ),
+                )
             )
-            write_frame(
-                stdout,
+            send(
                 _frame(
                     f"inference-terminal:{request.frame_id}",
                     "inference_terminal",
                     outcome.terminal,
                     correlation_id=request.frame_id,
-                ),
+                )
             )
         elif body == "shutdown":
             seconds, nanos = _now_timestamp()
@@ -417,16 +640,10 @@ def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
             )
             stopping.observed_at.seconds = seconds
             stopping.observed_at.nanos = nanos
-            write_frame(stdout, _frame("openjarvis-stopping", "health", stopping, correlation_id=request.frame_id))
+            send(_frame("openjarvis-stopping", "health", stopping, correlation_id=request.frame_id))
             return 0
         else:
-            error = adapter_pb2.AdapterError(
-                code="UNSUPPORTED_W01_FRAME",
-                message=f"W01 sidecar does not execute frame body {body!r}",
-                retryable=False,
-            )
-            write_frame(stdout, _frame(f"error:{request.frame_id}", "error", error, correlation_id=request.frame_id))
-
+            adapter_error(request, "UNSUPPORTED_BODY", str(body))
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Clever OpenJarvis supervised sidecar")

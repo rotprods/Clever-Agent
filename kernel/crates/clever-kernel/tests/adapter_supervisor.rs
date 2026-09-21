@@ -14,7 +14,7 @@ use clever_contracts::{
 use clever_kernel::{
     adapter::{
         bridge_registry_snapshot, AdapterCommand, AdapterIdentity, AdapterSupervisor,
-        AdapterSupervisorError, SupervisorPolicy,
+        AdapterSupervisorError, InferenceCancelOutcome, SupervisorPolicy,
     },
     capabilities::CapabilityRegistry,
     error::KernelError,
@@ -475,6 +475,81 @@ fn stream_eof_before_terminal_fails_closed() {
         .expect_err("EOF before terminal must not produce success");
     assert_eq!(error, AdapterSupervisorError::ProcessExited);
     assert!(supervisor.is_poisoned());
+}
+
+#[test]
+fn cancellation_before_first_chunk_requires_ack_and_cancelled_terminal() {
+    let command = fake_command("stream-cancel-before");
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
+        .expect("connect cancel-before fake sidecar");
+    let result = supervisor
+        .infer_stream_with_cancellation(fake_stream_request(), 0, "cancel before first token")
+        .expect("cancel-before must reach an acknowledged CANCELLED terminal");
+    assert!(result.cancellation_requested);
+    assert!(result.cancellation_acknowledged);
+    assert!(result.chunks.is_empty());
+    assert_eq!(result.terminal.final_sequence, 0);
+    assert_eq!(
+        InferenceFinishReason::try_from(result.terminal.finish_reason),
+        Ok(InferenceFinishReason::Cancelled)
+    );
+}
+
+#[test]
+fn cancellation_during_stream_requires_ack_then_local_terminal() {
+    let command = fake_command("stream-cancel-during");
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
+        .expect("connect cancel-during fake sidecar");
+    let result = supervisor
+        .infer_stream_with_cancellation(fake_stream_request(), 1, "cancel after first token")
+        .expect("cancel-during must reach an acknowledged CANCELLED terminal");
+    assert!(result.cancellation_requested);
+    assert!(result.cancellation_acknowledged);
+    assert_eq!(result.chunks.len(), 1);
+    assert_eq!(result.terminal.final_sequence, 1);
+    assert_eq!(
+        InferenceFinishReason::try_from(result.terminal.finish_reason),
+        Ok(InferenceFinishReason::Cancelled)
+    );
+}
+
+#[test]
+fn cancellation_ack_without_worker_termination_fails_closed() {
+    let command = fake_command("stream-cancel-ignore");
+    let mut policy = fast_policy();
+    policy.request_timeout = Duration::from_millis(120);
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), policy)
+        .expect("connect ignore-cancel fake sidecar");
+    let error = supervisor
+        .infer_stream_with_cancellation(fake_stream_request(), 1, "worker ignores cancel")
+        .expect_err("ACK without terminal cessation must never count as cancellation success");
+    assert_eq!(
+        error,
+        AdapterSupervisorError::Timeout("inference cancellation termination")
+    );
+    assert!(supervisor.is_poisoned());
+}
+
+#[test]
+fn cancellation_after_terminal_is_rejected_not_retroactive_success() {
+    let command = fake_command("stream-cancel-after-terminal");
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
+        .expect("connect after-terminal fake sidecar");
+    let request = fake_stream_request();
+    let request_id = request.request_id.clone();
+    let attempt_id = request.attempt_id.clone();
+    let result = supervisor
+        .infer_stream(request)
+        .expect("stream reaches terminal before cancellation");
+    assert_eq!(
+        InferenceFinishReason::try_from(result.terminal.finish_reason),
+        Ok(InferenceFinishReason::Stop)
+    );
+    let outcome = supervisor
+        .cancel_inference(request_id, attempt_id, "too late")
+        .expect("already-terminal cancellation response is a typed non-success outcome");
+    assert_eq!(outcome, InferenceCancelOutcome::AlreadyTerminal);
+    assert!(!supervisor.is_poisoned());
 }
 
 #[test]

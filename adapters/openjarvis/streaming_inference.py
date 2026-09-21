@@ -132,11 +132,15 @@ def execute_stream(
     engine_factory: Callable[[str], tuple[Any, type, type]] = _native_engine_factory,
     artifact_path: Path | None = None,
     host: str | None = None,
+    cancel_requested: Callable[[], bool] | None = None,
+    wait_for_cancel_ack: Callable[[float], bool] | None = None,
+    cancel_ack_timeout: float = 1.0,
 ) -> None:
-    """Bridge native ``stream_full`` to canonical chunks without buffering the stream.
+    """Bridge native ``stream_full`` while preserving cancellation truth.
 
-    W02-11 intentionally keeps tool-call/structured fragments fail-closed for W02-13.
-    A terminal is emitted only after the native iterator completes successfully.
+    REQUESTED, ACK and terminal cessation are distinct. A CANCELLED terminal is
+    emitted only after the cancellation signal is observed locally and the
+    transport ACK is confirmed. Provider/remote cessation is not inferred.
     """
     validate_stream_request(request)
     attest_pinned_artifact(artifact_path or _artifact_path())
@@ -147,6 +151,27 @@ def execute_stream(
             inference_pb2.INFERENCE_ERROR_CODE_ENGINE_UNAVAILABLE,
             "non-loopback native endpoint rejected",
             retryable=False,
+        )
+
+    def cancellation_is_requested() -> bool:
+        return bool(cancel_requested is not None and cancel_requested())
+
+    def emit_cancelled(sequence: int, usage: inference_pb2.InferenceUsage) -> None:
+        if wait_for_cancel_ack is None or not wait_for_cancel_ack(cancel_ack_timeout):
+            raise UnaryInferenceRejected(
+                inference_pb2.INFERENCE_ERROR_CODE_INTERNAL,
+                "local cancellation observed but transport ACK was not confirmed",
+                retryable=False,
+            )
+        emit_terminal(
+            inference_pb2.InferenceTerminal(
+                contract_version=contract_version(),
+                request_id=request.request_id,
+                attempt_id=request.attempt_id,
+                final_sequence=sequence,
+                finish_reason=inference_pb2.INFERENCE_FINISH_REASON_CANCELLED,
+                usage=usage,
+            )
         )
 
     engine = None
@@ -162,6 +187,9 @@ def execute_stream(
                 measurement=inference_pb2.INFERENCE_USAGE_MEASUREMENT_UNKNOWN
             )
             saw_finish = False
+            if cancellation_is_requested():
+                emit_cancelled(sequence, usage)
+                return
             async for native in engine.stream_full(
                 messages,
                 model=PINNED_MODEL_ID,
@@ -169,6 +197,10 @@ def execute_stream(
                 max_tokens=int(request.config.max_output_tokens),
                 chat_template_kwargs={"enable_thinking": False},
             ):
+                if cancellation_is_requested():
+                    emit_cancelled(sequence, usage)
+                    return
+
                 content = getattr(native, "content", None)
                 tool_calls = getattr(native, "tool_calls", None)
                 content_blocks = getattr(native, "content_blocks", None)
@@ -220,7 +252,13 @@ def execute_stream(
                         )
                     finish_reason = _finish_reason(native_finish)
                     saw_finish = True
+                if cancellation_is_requested():
+                    emit_cancelled(sequence, usage)
+                    return
 
+            if cancellation_is_requested():
+                emit_cancelled(sequence, usage)
+                return
             if sequence == 0:
                 raise UnaryInferenceRejected(
                     inference_pb2.INFERENCE_ERROR_CODE_INTERNAL,

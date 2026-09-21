@@ -84,6 +84,42 @@ def stream_terminal(request, final_sequence: int) -> adapter_pb2.AdapterFrame:
     )
 
 
+def cancelled_terminal(request, final_sequence: int) -> adapter_pb2.AdapterFrame:
+    body = inference_pb2.InferenceTerminal(
+        contract_version=inference_version(),
+        request_id=request.request_id,
+        attempt_id=request.attempt_id,
+        final_sequence=final_sequence,
+        finish_reason=inference_pb2.INFERENCE_FINISH_REASON_CANCELLED,
+        usage=inference_pb2.InferenceUsage(
+            measurement=inference_pb2.INFERENCE_USAGE_MEASUREMENT_UNKNOWN
+        ),
+    )
+    return frame(
+        "stream-cancelled-terminal",
+        "inference_terminal",
+        body,
+        correlation_id="__REQUEST_FRAME__",
+    )
+
+
+def require_cancel(envelope, request):
+    cancel_frame = read_frame()
+    if cancel_frame is None or cancel_frame.WhichOneof("body") != "inference_cancel":
+        raise SystemExit(93)
+    cancel = cancel_frame.inference_cancel
+    if cancel.target_request_id != request.request_id or cancel.target_attempt_id != request.attempt_id:
+        raise SystemExit(94)
+    ack = frame(
+        f"cancel-ack:{cancel_frame.frame_id}",
+        "inference_cancel",
+        cancel,
+        correlation_id=cancel_frame.frame_id,
+    )
+    write_frame(ack)
+    return cancel_frame
+
+
 def read_frame() -> adapter_pb2.AdapterFrame | None:
     prefix = sys.stdin.buffer.read(4)
     if not prefix:
@@ -131,6 +167,7 @@ def hello(major: int = 1) -> adapter_pb2.AdapterFrame:
             "shutdown",
             "unary-inference",
             "streaming-inference",
+            "streaming-cancellation",
         ],
     )
     return frame("fake-hello", "hello", message, major=major)
@@ -218,6 +255,46 @@ def main() -> int:
             return 0
         if mode == "stream-eof":
             write_frame(first)
+            return 0
+        if mode == "stream-cancel-before":
+            require_cancel(envelope, request)
+            cancelled = cancelled_terminal(request, 0)
+            cancelled.correlation_id = envelope.frame_id
+            write_frame(cancelled)
+            return 0
+        if mode == "stream-cancel-during":
+            write_frame(first)
+            require_cancel(envelope, request)
+            cancelled = cancelled_terminal(request, 1)
+            cancelled.correlation_id = envelope.frame_id
+            write_frame(cancelled)
+            return 0
+        if mode == "stream-cancel-ignore":
+            write_frame(first)
+            require_cancel(envelope, request)
+            time.sleep(2)
+            return 0
+        if mode == "stream-cancel-after-terminal":
+            one_terminal = stream_terminal(request, 1)
+            one_terminal.correlation_id = envelope.frame_id
+            write_coalesced(first, one_terminal)
+            cancel_frame = read_frame()
+            if cancel_frame is None or cancel_frame.WhichOneof("body") != "inference_cancel":
+                return 67
+            error = adapter_pb2.AdapterError(
+                code="CANCEL_ALREADY_TERMINAL",
+                message="target already terminal",
+                retryable=False,
+            )
+            write_frame(
+                frame(
+                    f"cancel-error:{cancel_frame.frame_id}",
+                    "error",
+                    error,
+                    correlation_id=cancel_frame.frame_id,
+                )
+            )
+            time.sleep(0.2)
             return 0
         return 66
 
