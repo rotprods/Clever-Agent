@@ -31,9 +31,27 @@
     "STATE.md",
     "HANDOFF.md",
     ".agentic/context/CURRENT_CONTEXT.json",
-    ".agentic/context/CURRENT_CONTEXT.md"
+    ".agentic/context/CURRENT_CONTEXT.md",
+    "contracts/proto/clever/v1/inference.proto",
+    "contracts/jsonschema/inference.schema.json",
+    "contracts/sdk/python/gen/**",
+    "contracts/sdk/typescript/src/gen/**",
+    "contracts/sdk/rust/src/gen/**",
+    "contracts/sdk/swift/Sources/CleverContracts/Gen/**",
+    "contracts/generated_manifest.json",
+    "adapters/openjarvis/sidecar.py",
+    "kernel/crates/clever-kernel/src/adapter.rs",
+    "kernel/crates/clever-kernel/tests/adapter_supervisor.rs",
+    "kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py",
+    "tests/test_cp03_openjarvis_sidecar.py",
+    "tests/test_cp03_w02_inference_contract.py",
+    "tests/test_cp03_w02_structured_transport.py",
+    "docs/adr/ADR-CP03-W02-013-STRUCTURED-TRANSPORT.md",
+    "scripts/cp03/finalize_w02_structured_transport.py"
   ],
   "status": "ACTIVE",
+  "transport_base_head": "2b1c6d19ae1e6cee08381c993855dfcd813ddd68",
+  "transport_branch": "wave/cp03-w02-structured-typed-transport-20260921",
   "validated_head": "5ed3896a7d3117b4e3764719d7b970fd20301848",
   "wave_id": "CP03-W02-STRUCTURED-20260921"
 }
