@@ -44,7 +44,7 @@ const REQUIRED_FEATURES: [&str; 5] = [
     "cancel",
     "shutdown",
 ];
-const OPTIONAL_FEATURES: [&str; 1] = ["unary-inference"];
+const OPTIONAL_FEATURES: [&str; 2] = ["unary-inference", "streaming-inference"];
 const W02_UNARY_ENGINE_ID: &str = "llamacpp";
 const W02_UNARY_MODEL_ID: &str = "qwen3:0.6b";
 const RESERVED_METADATA_TOKENS: [&str; 6] = [
@@ -276,6 +276,13 @@ struct WriterRequest {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct UnaryInferenceResult {
+    pub text: String,
+    pub terminal: InferenceTerminal,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct StreamingInferenceResult {
+    pub chunks: Vec<InferenceChunk>,
     pub text: String,
     pub terminal: InferenceTerminal,
 }
@@ -701,6 +708,166 @@ impl AdapterSupervisor {
             text: chunk.text_delta,
             terminal,
         })
+    }
+
+    pub fn infer_stream(
+        &mut self,
+        request: InferenceRequest,
+    ) -> Result<StreamingInferenceResult, AdapterSupervisorError> {
+        self.ensure_io_healthy()?;
+        if !self.negotiated_features.contains("streaming-inference") {
+            return self.fail_protocol(AdapterSupervisorError::InvalidInferenceRequest(
+                "peer did not negotiate streaming-inference".to_owned(),
+            ));
+        }
+        let reservation = InferenceReservation {
+            estimated_input_tokens: 0,
+            estimated_cost_microusd: 0,
+        };
+        let local_target = InferenceTarget {
+            provider_id: "openjarvis.llamacpp".to_owned(),
+            origin: "loopback".to_owned(),
+            external: false,
+        };
+        authorize_inference_egress(&request, &local_target, None, &reservation, 0)
+            .map_err(|error| AdapterSupervisorError::InvalidInferenceRequest(error.to_string()))?;
+        let config = request.config.as_ref().ok_or_else(|| {
+            AdapterSupervisorError::InvalidInferenceRequest("config is required".to_owned())
+        })?;
+        if request.engine_id != W02_UNARY_ENGINE_ID
+            || request.model_id != W02_UNARY_MODEL_ID
+            || request.idempotency_key.trim().is_empty()
+            || request.inputs.is_empty()
+            || request.deadline_at.is_none()
+            || !config.stream
+            || config.max_output_tokens == 0
+            || config.max_output_tokens > 256
+            || request
+                .inputs
+                .iter()
+                .any(|input| input.role == 0 || input.content.trim().is_empty())
+        {
+            return self.fail_protocol(AdapterSupervisorError::InvalidInferenceRequest(
+                "request is outside the bounded W02-11 streaming lane".to_owned(),
+            ));
+        }
+
+        let frame = self.next_control_frame(
+            adapter_frame::Body::InferenceRequest(request.clone()),
+            self.policy.request_timeout,
+        );
+        let frame_id = frame.frame_id.clone();
+        if let Err(error) = self.write_frame(&frame) {
+            return self.fail_protocol(error);
+        }
+
+        let mut chunks = Vec::new();
+        let mut text = String::new();
+        let mut expected_sequence = 1_u64;
+        loop {
+            let response =
+                match self.receive_frame(self.policy.request_timeout, "streaming inference") {
+                    Ok(response) => response,
+                    Err(error) => return self.fail_protocol(error),
+                };
+            self.validate_inference_outer(&response, &frame_id)?;
+            match response.body {
+                Some(adapter_frame::Body::InferenceChunk(chunk)) => {
+                    self.validate_stream_chunk(&chunk, &request, expected_sequence)?;
+                    text.push_str(&chunk.text_delta);
+                    chunks.push(chunk);
+                    expected_sequence = expected_sequence.saturating_add(1);
+                }
+                Some(adapter_frame::Body::InferenceTerminal(terminal)) => {
+                    if chunks.is_empty() {
+                        return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                            "stream terminal arrived before any content chunk".to_owned(),
+                        ));
+                    }
+                    let final_sequence = expected_sequence.saturating_sub(1);
+                    self.validate_stream_terminal(&terminal, &request, final_sequence)?;
+                    return Ok(StreamingInferenceResult {
+                        chunks,
+                        text,
+                        terminal,
+                    });
+                }
+                Some(adapter_frame::Body::InferenceError(error)) => {
+                    return self.inference_failure(error, &request)
+                }
+                _ => {
+                    return self.fail_protocol(AdapterSupervisorError::UnexpectedFrame(
+                        "streaming inference",
+                    ))
+                }
+            }
+        }
+    }
+
+    fn validate_stream_chunk(
+        &mut self,
+        chunk: &InferenceChunk,
+        request: &InferenceRequest,
+        expected_sequence: u64,
+    ) -> Result<(), AdapterSupervisorError> {
+        if let Err(error) = validate_contract_version(chunk.contract_version.as_ref()) {
+            return self.fail_protocol(error.into());
+        }
+        if chunk.request_id != request.request_id
+            || chunk.attempt_id != request.attempt_id
+            || chunk.sequence != expected_sequence
+            || chunk.text_delta.is_empty()
+        {
+            return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(format!(
+                "invalid streaming chunk identity/sequence/content: expected sequence {expected_sequence}"
+            )));
+        }
+        Ok(())
+    }
+
+    fn validate_stream_terminal(
+        &mut self,
+        terminal: &InferenceTerminal,
+        request: &InferenceRequest,
+        expected_final_sequence: u64,
+    ) -> Result<(), AdapterSupervisorError> {
+        if let Err(error) = validate_contract_version(terminal.contract_version.as_ref()) {
+            return self.fail_protocol(error.into());
+        }
+        let finish = InferenceFinishReason::try_from(terminal.finish_reason).ok();
+        let usage = terminal.usage.as_ref();
+        let measurement =
+            usage.and_then(|value| InferenceUsageMeasurement::try_from(value.measurement).ok());
+        let usage_valid = match (measurement, usage) {
+            (Some(InferenceUsageMeasurement::Exact), Some(value)) => {
+                value.input_tokens.is_some()
+                    && value.output_tokens.is_some()
+                    && value.total_tokens.is_some()
+            }
+            (Some(InferenceUsageMeasurement::Unknown), Some(value)) => {
+                value.input_tokens.is_none()
+                    && value.output_tokens.is_none()
+                    && value.total_tokens.is_none()
+            }
+            _ => false,
+        };
+        if terminal.request_id != request.request_id
+            || terminal.attempt_id != request.attempt_id
+            || terminal.final_sequence != expected_final_sequence
+            || !matches!(
+                finish,
+                Some(InferenceFinishReason::Unspecified)
+                    | Some(InferenceFinishReason::Stop)
+                    | Some(InferenceFinishReason::Length)
+                    | Some(InferenceFinishReason::ContentFilter)
+            )
+            || !usage_valid
+        {
+            return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                "invalid streaming terminal identity/sequence/finish/usage".to_owned(),
+            ));
+        }
+        Ok(())
     }
 
     fn validate_inference_outer(

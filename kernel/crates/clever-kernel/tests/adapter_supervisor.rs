@@ -68,6 +68,44 @@ fn fast_policy() -> SupervisorPolicy {
     }
 }
 
+fn fake_stream_request() -> InferenceRequest {
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system time after epoch");
+    let deadline = now + Duration::from_secs(10);
+    InferenceRequest {
+        contract_version: Some(ContractVersion { major: 1, minor: 2 }),
+        request_id: "w02-11-request".to_owned(),
+        attempt_id: "w02-11-attempt".to_owned(),
+        principal: Some(PrincipalRef {
+            user_id: "local-test-user".to_owned(),
+            device_id: String::new(),
+            channel_id: String::new(),
+            tenant_id: String::new(),
+        }),
+        session_id: "w02-11-session".to_owned(),
+        engine_id: "llamacpp".to_owned(),
+        model_id: "qwen3:0.6b".to_owned(),
+        inputs: vec![InferenceInput {
+            role: InferenceRole::User as i32,
+            content: "stream utf8".to_owned(),
+            name: String::new(),
+        }],
+        config: Some(InferenceConfig {
+            max_output_tokens: 16,
+            temperature: Some(0.0),
+            top_p: None,
+            stop_sequences: Vec::new(),
+            stream: true,
+        }),
+        deadline_at: Some(prost_types::Timestamp {
+            seconds: i64::try_from(deadline.as_secs()).expect("deadline seconds fit i64"),
+            nanos: i32::try_from(deadline.subsec_nanos()).expect("deadline nanos fit i32"),
+        }),
+        idempotency_key: "w02-11-idempotency".to_owned(),
+    }
+}
+
 #[test]
 fn rejects_relative_adapter_programs_before_spawn() {
     let command = AdapterCommand::new("python3");
@@ -367,6 +405,76 @@ fn outbound_write_timeout_poison_session_when_peer_stops_reading() {
         follow_up,
         AdapterSupervisorError::SessionPoisoned(_)
     ));
+}
+
+#[test]
+fn stream_handles_fragmented_coalesced_utf8_and_single_terminal() {
+    let command = fake_command("stream-valid");
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
+        .expect("connect streaming fake sidecar");
+    assert!(supervisor
+        .negotiated_features()
+        .contains("streaming-inference"));
+    let result = supervisor
+        .infer_stream(fake_stream_request())
+        .expect("fragmented/coalesced UTF-8 stream must succeed");
+    assert_eq!(result.chunks.len(), 2);
+    assert_eq!(result.chunks[0].sequence, 1);
+    assert_eq!(result.chunks[1].sequence, 2);
+    assert_eq!(result.text, "héllo");
+    assert_eq!(result.terminal.final_sequence, 2);
+    assert_eq!(
+        InferenceFinishReason::try_from(result.terminal.finish_reason),
+        Ok(InferenceFinishReason::Stop)
+    );
+    let usage = result.terminal.usage.expect("stream terminal usage");
+    assert_eq!(
+        InferenceUsageMeasurement::try_from(usage.measurement),
+        Ok(InferenceUsageMeasurement::Unknown)
+    );
+    assert!(!supervisor.is_poisoned());
+}
+
+#[test]
+fn stream_duplicate_sequence_fails_closed() {
+    let command = fake_command("stream-duplicate");
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
+        .expect("connect duplicate stream sidecar");
+    let error = supervisor
+        .infer_stream(fake_stream_request())
+        .expect_err("duplicate sequence must not produce success");
+    assert!(matches!(
+        error,
+        AdapterSupervisorError::InvalidRuntimeResponse(_)
+    ));
+    assert!(supervisor.is_poisoned());
+}
+
+#[test]
+fn stream_reordered_sequence_fails_closed() {
+    let command = fake_command("stream-reordered");
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
+        .expect("connect reordered stream sidecar");
+    let error = supervisor
+        .infer_stream(fake_stream_request())
+        .expect_err("reordered sequence must not produce success");
+    assert!(matches!(
+        error,
+        AdapterSupervisorError::InvalidRuntimeResponse(_)
+    ));
+    assert!(supervisor.is_poisoned());
+}
+
+#[test]
+fn stream_eof_before_terminal_fails_closed() {
+    let command = fake_command("stream-eof");
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
+        .expect("connect EOF stream sidecar");
+    let error = supervisor
+        .infer_stream(fake_stream_request())
+        .expect_err("EOF before terminal must not produce success");
+    assert_eq!(error, AdapterSupervisorError::ProcessExited);
+    assert!(supervisor.is_poisoned());
 }
 
 #[test]

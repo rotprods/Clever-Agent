@@ -117,8 +117,11 @@ class W02PlanTests(unittest.TestCase):
         else:
             self.assertEqual(unary["status"], "COMPLETE")
             self.assertTrue(unary["proof"])
-            self.assertEqual(self.task("W02-11")["status"], "READY")
-            self.assertEqual(self.plan["first_executable_task"], "W02-11")
+            frontier = self.task(self.plan["first_executable_task"])
+            self.assertEqual(frontier["status"], "READY")
+            self.assertTrue(
+                all(self.task(dep)["status"] == "COMPLETE" for dep in frontier["depends_on"])
+            )
         self.assertEqual(self.check()["first_executable_task"], self.plan["first_executable_task"])
 
     def test_completion_without_evidence_rejected(self):
@@ -172,7 +175,7 @@ class W02PlanTests(unittest.TestCase):
         elif unary["status"] == "READY":
             expected = "W02-10"
         else:
-            expected = "W02-11"
+            expected = self.plan["first_executable_task"]
         self.assertEqual(self.plan["first_executable_task"], expected)
         self.assertEqual(self.check()["first_executable_task"], expected)
         if expected == "W02-08":
@@ -190,10 +193,14 @@ class W02PlanTests(unittest.TestCase):
             self.assertTrue(weights["proof"])
             self.assertEqual(unary["status"], "READY")
             self.assertFalse(unary["proof"])
-        elif expected == "W02-11":
+        else:
             self.assertEqual(unary["status"], "COMPLETE")
             self.assertTrue(unary["proof"])
-            self.assertEqual(self.task("W02-11")["status"], "READY")
+            frontier = self.task(expected)
+            self.assertEqual(frontier["status"], "READY")
+            self.assertTrue(
+                all(self.task(dep)["status"] == "COMPLETE" for dep in frontier["depends_on"])
+            )
 
     def test_only_one_g2_frontier_is_ready(self):
         ready = [task["id"] for task in self.plan["tasks"] if task.get("status") == "READY"]
