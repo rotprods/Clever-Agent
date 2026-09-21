@@ -44,6 +44,12 @@ jobs:
           from pathlib import Path
           claim_path=Path('sessions/20260921-w02-structured-transport/CLAIM.json')
           claim=json.loads(claim_path.read_text())
+          extra='kernel/crates/clever-kernel/tests/inference_security.rs'
+          scope_amended=False
+          if extra not in claim['scope']:
+              claim['scope'].append(extra)
+              claim_path.write_text(json.dumps(claim,indent=2,sort_keys=True)+'\n')
+              scope_amended=True
           graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
           tasks={row['id']:row for row in graph['tasks']}
           assert graph['first_executable_task']=='W02-13'
@@ -71,6 +77,23 @@ jobs:
               claim_path.write_text(json.dumps(claim,indent=2,sort_keys=True)+'\n')
           elif latest != 'ACTIVE':
               raise SystemExit(f'unexpected W02-13 transport claim state: {latest!r}')
+          if scope_amended:
+              event={
+                  'schema_version':1,
+                  'date':'2026-09-21',
+                  'event':'SCOPE_AMENDED',
+                  'claim_id':claim['claim_id'],
+                  'canonical_task':'W02-13',
+                  'checkpoint':'CP03',
+                  'parent_wave':'CP03-W02',
+                  'owner':claim['owner'],
+                  'wave_id':claim['wave_id'],
+                  'status':'ACTIVE',
+                  'scope':[extra],
+                  'coordination':'Compile-regression scope only: add the existing Rust inference-security fixture because additive InferenceConfig fields require explicit zero-value initialization. No security-policy semantic change, provider egress, parity promotion, denominator mutation, or W02-14 work.'
+              }
+              with ledger.open('a',encoding='utf-8') as handle:
+                  handle.write(json.dumps(event,sort_keys=True,separators=(',',':'))+'\n')
           PY
           python scripts/context/build_context_pack.py
           python scripts/validate_agentic_state.py
@@ -87,5 +110,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add sessions/20260921-w02-structured-transport/CLAIM.json ledgers/CLAIM_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
-          git commit -m 'claim(cp03-w02): activate W02-13 typed transport claim'
+          git commit -m 'claim(cp03-w02): amend W02-13 compile-regression scope'
           git push origin HEAD:wave/cp03/w02-structured-transport-20260921
