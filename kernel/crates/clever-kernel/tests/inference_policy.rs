@@ -137,7 +137,10 @@ fn grant_is_bound_to_exact_principal_and_session() {
         now,
     )
     .expect_err("another principal must not reuse the grant");
-    assert_eq!(principal_error, InferenceAdmissionError::GrantPrincipalMismatch);
+    assert_eq!(
+        principal_error,
+        InferenceAdmissionError::GrantPrincipalMismatch
+    );
     assert!(!principal_error.to_string().contains("user-a"));
     assert!(!principal_error.to_string().contains("user-b"));
 
