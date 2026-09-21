@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-21",
+  "claim_id": "CLAIM-CP03-W02-STRUCTURED-20260921",
+  "wave_id": "CP03-W02-STRUCTURED-20260921",
+  "parent_wave": "CP03-W02",
+  "canonical_task": "W02-13",
+  "checkpoint": "CP03",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "scope": [
+    "adapters/openjarvis/structured_inference.py",
+    "tests/test_cp03_w02_structured.py",
+    "sessions/20260921-w02-structured/**",
+    "scripts/cp03/finalize_w02_structured_slice.py",
+    ".github/workflows/cp03-w02-structured-slice.yml",
+    "iterations/03/waves/CP03-W02/TASK_GRAPH.json",
+    "ledgers/CLAIM_LEDGER.ndjson",
+    "ledgers/RUN_LOG.ndjson",
+    "ledgers/WAVE_LEDGER.ndjson",
+    "ledgers/DECISION_LEDGER.ndjson",
+    "ledgers/RISK_LEDGER.ndjson",
+    "ledgers/EVIDENCE_LEDGER.ndjson",
+    "STATE.md",
+    "HANDOFF.md",
+    ".agentic/context/CURRENT_CONTEXT.json",
+    ".agentic/context/CURRENT_CONTEXT.md"
+  ],
+  "coordination": "W02-13 core structured-data slice only: assemble fragmented JSON/tool-call arguments, validate JSON Schema, preserve tool calls as inert data, and prove zero tool execution. No shell/MCP/browser invocation, no W02-14 fallback, no provider egress, no parity promotion, no denominator mutation, and no W02 closure. This slice may leave W02-13 IN_PROGRESS if canonical transport exposure is not yet proven.",
+  "status": "ACTIVE"
+}
