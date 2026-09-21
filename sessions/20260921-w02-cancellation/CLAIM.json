@@ -1,18 +1,17 @@
 {
-  "schema_version": 1,
-  "date": "2026-09-21",
-  "project_id": "CLEVER-JARVIS-001",
-  "checkpoint": "CP03",
-  "parent_wave": "CP03-W02",
-  "wave_id": "CP03-W02-CANCELLATION-20260921",
-  "canonical_task": "W02-12",
-  "claim_id": "CLAIM-CP03-W02-CANCELLATION-20260921",
-  "owner": "chatgpt-gpt-5.6-sol",
   "base_head": "0be2f0bf080c78c2bc5897f5214e7564a8f375ff",
-  "status": "ACTIVE",
+  "canonical_task": "W02-12",
+  "checkpoint": "CP03",
+  "claim_id": "CLAIM-CP03-W02-CANCELLATION-20260921",
+  "coordination": "W02-12 only. Prove real request/attempt-scoped cancellation with REQUESTED, ACK and terminal cessation kept distinct; explicit single-flight; cancel-before, cancel-during, already-terminal and ignore-cancel adversarials. Local cessation may be VERIFIED only from a CANCELLED terminal; remote/provider cessation remains UNKNOWN. No tool execution, provider egress, parity promotion, denominator mutation, W02-13+ implementation, or contract-number changes.",
+  "date": "2026-09-21",
   "ledger_registered": true,
   "ledger_registered_commit": "f02d46db4d5365fad55960ca58df4bf6a4f548c6",
-  "coordination": "W02-12 only. Prove real request/attempt-scoped cancellation with REQUESTED, ACK and terminal cessation kept distinct; explicit single-flight; cancel-before, cancel-during, already-terminal and ignore-cancel adversarials. Local cessation may be VERIFIED only from a CANCELLED terminal; remote/provider cessation remains UNKNOWN. No tool execution, provider egress, parity promotion, denominator mutation, W02-13+ implementation, or contract-number changes.",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "parent_wave": "CP03-W02",
+  "project_id": "CLEVER-JARVIS-001",
+  "release_evidence_id": "EVID-W02-CANCELLATION-20260921",
+  "schema_version": 1,
   "scope": [
     "adapters/openjarvis/streaming_inference.py",
     "adapters/openjarvis/sidecar.py",
@@ -37,5 +36,7 @@
     "HANDOFF.md",
     ".agentic/context/CURRENT_CONTEXT.json",
     ".agentic/context/CURRENT_CONTEXT.md"
-  ]
+  ],
+  "status": "RELEASED",
+  "wave_id": "CP03-W02-CANCELLATION-20260921"
 }
