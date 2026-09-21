@@ -22,20 +22,28 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: true
-      - name: Repair static job permission and verify workflow text
+      - name: Repair materialize job permission and verify exact block
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
           p=Path('.github/workflows/cp03-w02-unary-inference.yml')
           text=p.read_text()
-          old="      contents: $" + "{{ github.event_name == 'push' && 'write' || 'read' }}"
-          new="      contents: write"
-          if new not in text:
-              assert text.count(old)==1, f'permission anchor count={text.count(old)}'
-              p.write_text(text.replace(old,new,1))
+          old="  materialize:\n    permissions:\n      contents: $" + "{{ github.event_name == 'push' && 'write' || 'read' }}\n"
+          new="  materialize:\n    permissions:\n      contents: write\n"
+          if old in text:
+              assert text.count(old)==1, f'materialize permission anchor count={text.count(old)}'
+              text=text.replace(old,new,1)
+              p.write_text(text)
+          else:
+              assert text.count(new)==1, f'materialize static permission block count={text.count(new)}'
           PY
-          grep -q '^      contents: write$' .github/workflows/cp03-w02-unary-inference.yml
+          python - <<'PY'
+          from pathlib import Path
+          text=Path('.github/workflows/cp03-w02-unary-inference.yml').read_text()
+          expected="  materialize:\n    permissions:\n      contents: write\n"
+          assert text.count(expected)==1, f'materialize static permission block count={text.count(expected)}'
+          PY
           git diff --check
       - name: CAS persist workflow repair
         run: |
@@ -48,5 +56,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add .github/workflows/cp03-w02-unary-inference.yml
-          git commit -m 'fix(cp03-w02): use static workflow contents permission'
+          git commit -m 'fix(cp03-w02): use static materialize contents permission'
           git push origin HEAD:wave/cp03/w02-unary-inference-20260921
