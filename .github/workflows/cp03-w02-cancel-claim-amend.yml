@@ -1,0 +1,47 @@
+name: CP03 W02 Cancellation Claim Amendment
+on:
+  push:
+    branches: [wave/cp03/w02-real-cancel-20260921]
+    paths: ['.github/workflows/cp03-w02-cancel-claim-amend.yml']
+permissions:
+  contents: write
+jobs:
+  amend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Amend active claim before fixture mutation
+        env:
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          ledger=Path('ledgers/CLAIM_LEDGER.ndjson')
+          rows=[json.loads(x) for x in ledger.read_text(encoding='utf-8').splitlines() if x.strip()]
+          cid='CLAIM-CP03-W02-CANCEL-20260921'
+          latest=[r for r in rows if r.get('claim_id')==cid][-1]
+          assert latest.get('status')=='ACTIVE', latest
+          amendment={
+            'schema_version':1,'date':'2026-09-21','event':'SCOPE_AMENDED','claim_id':cid,
+            'wave_id':'CP03-W02-CANCEL-20260921','parent_wave':'CP03-W02','canonical_task':'W02-12',
+            'owner':'chatgpt-gpt-5.6-sol','status':'ACTIVE',
+            'scope':['kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py'],
+            'coordination':'Adds only the adversarial fake sidecar surface needed to prove kernel cancel-before/during/after-terminal and stubborn-worker semantics. No expansion into W02-13+.'
+          }
+          with ledger.open('a',encoding='utf-8') as h:
+              h.write(json.dumps(amendment,sort_keys=True,separators=(',',':'))+'\n')
+          p=Path('sessions/20260921-w02-cancel/CLAIM_AMENDMENT.json')
+          p.write_text(json.dumps(amendment,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          PY
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-real-cancel-20260921 | cut -f1)" = "$EXPECTED_HEAD"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ledgers/CLAIM_LEDGER.ndjson sessions/20260921-w02-cancel/CLAIM_AMENDMENT.json
+          git commit -m 'chore(cp03-w02): amend W02-12 claim scope'
+          git push origin HEAD:wave/cp03/w02-real-cancel-20260921
