@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json
 from pathlib import Path
 import time
 from typing import Any, Callable, Mapping
@@ -10,6 +11,7 @@ from urllib.parse import urlparse
 from clever.v1 import inference_pb2
 
 from adapters.openjarvis.structured_output import (
+    MAX_STRUCTURED_OUTPUT_BYTES,
     StructuredOutputRejected,
     StructuredStreamAssembler,
     ToolCallData,
@@ -33,6 +35,23 @@ def _reject(message: str) -> UnaryInferenceRejected:
         message,
         retryable=False,
     )
+
+
+def _request_response_schema(request: inference_pb2.InferenceRequest) -> Mapping[str, Any] | None:
+    if not request.HasField("config") or not request.config.HasField("response_schema_json"):
+        return None
+    raw = request.config.response_schema_json
+    if not raw.strip():
+        raise _reject("response_schema_json must be non-empty when present")
+    if len(raw.encode("utf-8")) > MAX_STRUCTURED_OUTPUT_BYTES:
+        raise _reject("response_schema_json exceeds byte budget")
+    try:
+        schema = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise _reject("response_schema_json is not valid JSON") from exc
+    if not isinstance(schema, dict):
+        raise _reject("response_schema_json must decode to a JSON object")
+    return schema
 
 
 def validate_stream_request(request: inference_pb2.InferenceRequest) -> None:
@@ -64,6 +83,7 @@ def validate_stream_request(request: inference_pb2.InferenceRequest) -> None:
         raise _reject("stream=false belongs to the unary W02-10 lane")
     if request.config.max_output_tokens <= 0 or request.config.max_output_tokens > 256:
         raise _reject("W02-11 max_output_tokens must be in 1..=256")
+    _request_response_schema(request)
     if not request.inputs:
         raise _reject("at least one inference input is required")
     valid_roles = {
@@ -130,6 +150,42 @@ def _usage(raw: object) -> inference_pb2.InferenceUsage:
     )
 
 
+def _typed_terminal(
+    *,
+    request: inference_pb2.InferenceRequest,
+    sequence: int,
+    finish_reason: int,
+    usage: inference_pb2.InferenceUsage,
+    calls: tuple[ToolCallData, ...],
+    structured_value: Any | None,
+) -> inference_pb2.InferenceTerminal:
+    terminal = inference_pb2.InferenceTerminal(
+        contract_version=contract_version(),
+        request_id=request.request_id,
+        attempt_id=request.attempt_id,
+        final_sequence=sequence,
+        finish_reason=finish_reason,
+        usage=usage,
+        tool_calls=[
+            inference_pb2.InferenceToolCall(
+                index=call.index,
+                call_id=call.call_id,
+                name=call.name,
+                arguments_json=call.arguments_json,
+            )
+            for call in calls
+        ],
+    )
+    if structured_value is not None:
+        terminal.structured_output.json_value = json.dumps(
+            structured_value,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    return terminal
+
+
 def execute_stream(
     request: inference_pb2.InferenceRequest,
     *,
@@ -145,19 +201,26 @@ def execute_stream(
     wait_for_cancel_ack: Callable[[float], bool] | None = None,
     cancel_ack_timeout: float = 1.0,
 ) -> None:
-    """Bridge native ``stream_full`` while preserving cancellation and typed data truth.
+    """Bridge native ``stream_full`` with typed, inert structured data.
 
     REQUESTED, ACK and terminal cessation are distinct. A CANCELLED terminal is
     emitted only after the cancellation signal is observed locally and the
-    transport ACK is confirmed. Model-emitted tool calls are inert data: this
-    function can assemble them into an explicit sink but has no execution path.
-    Structured output is accepted only with a caller-supplied schema and sink.
+    transport ACK is confirmed. Model-emitted tool calls are assembled into
+    explicit protobuf fields and are never executed here. Structured output is
+    accepted only against a caller-authored schema and is transported as
+    deterministic canonical JSON on the terminal frame.
     """
     validate_stream_request(request)
-    if response_schema is not None and emit_structured_output is None:
-        raise _reject("response_schema requires an explicit structured-output sink")
-    if response_schema is None and emit_structured_output is not None:
-        raise _reject("structured-output sink requires a caller-supplied response_schema")
+    request_schema = _request_response_schema(request)
+    if response_schema is not None and request_schema is not None and dict(response_schema) != request_schema:
+        raise _reject("explicit response schema conflicts with request response_schema_json")
+    effective_schema = response_schema if response_schema is not None else request_schema
+    if effective_schema is not None and emit_structured_output is None:
+        # The protobuf terminal is always an explicit structured-output sink. The
+        # callback is optional and exists only for direct bridge consumers/tests.
+        pass
+    if effective_schema is None and emit_structured_output is not None:
+        raise _reject("structured-output sink requires a caller-supplied response schema")
 
     attest_pinned_artifact(artifact_path or _artifact_path())
     resolved_host = host or _loopback_host()
@@ -195,11 +258,7 @@ def execute_stream(
         engine, message_type, role_type = engine_factory(resolved_host)
         messages = _messages(request, message_type, role_type)
         temperature = request.config.temperature if request.config.HasField("temperature") else 0.0
-        typed_assembler = (
-            StructuredStreamAssembler()
-            if emit_tool_call is not None or response_schema is not None
-            else None
-        )
+        typed_assembler = StructuredStreamAssembler()
 
         async def consume() -> None:
             sequence = 0
@@ -245,12 +304,6 @@ def execute_stream(
                         retryable=False,
                     )
                 if tool_calls:
-                    if emit_tool_call is None or typed_assembler is None:
-                        raise UnaryInferenceRejected(
-                            inference_pb2.INFERENCE_ERROR_CODE_INTERNAL,
-                            "W02-13 requires an explicit inert tool-call sink; model-emitted tools are never executed here",
-                            retryable=False,
-                        )
                     typed_assembler.feed_tool_calls(tool_calls)
                 if content is not None:
                     if not isinstance(content, str):
@@ -260,8 +313,7 @@ def execute_stream(
                             retryable=False,
                         )
                     if content:
-                        if response_schema is not None:
-                            assert typed_assembler is not None
+                        if effective_schema is not None:
                             typed_assembler.feed_text(content)
                         sequence += 1
                         emit_chunk(
@@ -292,21 +344,22 @@ def execute_stream(
                 emit_cancelled(sequence, usage)
                 return
 
-            assembled_calls: tuple[ToolCallData, ...] = ()
-            if typed_assembler is not None:
-                structured_value, assembled_calls = typed_assembler.finalize(
-                    response_schema=response_schema
+            structured_value, assembled_calls = typed_assembler.finalize(
+                response_schema=effective_schema
+            )
+            if finish_reason == inference_pb2.INFERENCE_FINISH_REASON_TOOL_CALL and not assembled_calls:
+                raise StructuredOutputRejected(
+                    "tool-call finish_reason was emitted without any assembled tool call"
                 )
-                if finish_reason == inference_pb2.INFERENCE_FINISH_REASON_TOOL_CALL and not assembled_calls:
-                    raise StructuredOutputRejected(
-                        "tool-call finish_reason was emitted without any assembled tool call"
-                    )
-                if emit_tool_call is not None:
-                    for call in assembled_calls:
-                        emit_tool_call(call)
-                if response_schema is not None:
-                    assert emit_structured_output is not None
-                    emit_structured_output(structured_value)
+            if assembled_calls and finish_reason != inference_pb2.INFERENCE_FINISH_REASON_TOOL_CALL:
+                raise StructuredOutputRejected(
+                    "assembled tool-call data requires tool_calls finish_reason"
+                )
+            if emit_tool_call is not None:
+                for call in assembled_calls:
+                    emit_tool_call(call)
+            if effective_schema is not None and emit_structured_output is not None:
+                emit_structured_output(structured_value)
 
             if sequence == 0 and not assembled_calls:
                 raise UnaryInferenceRejected(
@@ -315,13 +368,13 @@ def execute_stream(
                     retryable=False,
                 )
             emit_terminal(
-                inference_pb2.InferenceTerminal(
-                    contract_version=contract_version(),
-                    request_id=request.request_id,
-                    attempt_id=request.attempt_id,
-                    final_sequence=sequence,
+                _typed_terminal(
+                    request=request,
+                    sequence=sequence,
                     finish_reason=finish_reason,
                     usage=usage,
+                    calls=assembled_calls,
+                    structured_value=structured_value,
                 )
             )
 
