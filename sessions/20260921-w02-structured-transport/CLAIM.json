@@ -42,7 +42,8 @@
     "ledgers/DECISION_LEDGER.ndjson",
     "ledgers/RISK_LEDGER.ndjson",
     ".agentic/context/CURRENT_CONTEXT.json",
-    ".agentic/context/CURRENT_CONTEXT.md"
+    ".agentic/context/CURRENT_CONTEXT.md",
+    "kernel/crates/clever-kernel/tests/inference_security.rs"
   ],
   "status": "ACTIVE",
   "wave_id": "CP03-W02-STRUCTURED-TRANSPORT-20260921"
