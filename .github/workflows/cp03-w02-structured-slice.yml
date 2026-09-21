@@ -55,7 +55,8 @@ jobs:
           assert all(tasks[d]['status']=='COMPLETE' and tasks[d]['proof'] for d in tasks['W02-13']['depends_on'])
           assert tasks['W02-14']['status']=='BLOCKED'
           context=json.loads(Path('.agentic/context/CURRENT_CONTEXT.json').read_text())
-          assert context['active_claims']==[], context['active_claims']
+          active={row['claim_id'] for row in context['active_claims']}
+          assert active in (set(), {claim['claim_id']}), context['active_claims']
           ledger=Path('ledgers/CLAIM_LEDGER.ndjson')
           rows=[json.loads(line) for line in ledger.read_text().splitlines() if line.strip()]
           matching=[row for row in rows if row.get('claim_id')==claim['claim_id']]
@@ -84,3 +85,40 @@ jobs:
           git add ledgers/CLAIM_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
           git commit -m 'claim(cp03-w02): register active W02-13 claim'
           git push origin HEAD:wave/cp03/w02-structured-output-20260921
+
+  verify-structured:
+    if: github.event_name == 'push'
+    needs: reconcile-claim
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install bounded test dependencies
+        run: python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt 'jsonschema>=4.23,<5'
+      - name: Targeted structured-data adversarials
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
+        run: |
+          set -euo pipefail
+          python -m py_compile adapters/openjarvis/structured_inference.py tests/test_cp03_w02_structured.py
+          python -m unittest -v tests.test_cp03_w02_structured
+      - name: Touched-family regression
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_cp03_w02_streaming tests.test_cp03_w02_cancellation tests.test_cp03_w02_plan
+      - name: Durable-state and parity gauntlet
+        run: |
+          set -euo pipefail
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          git diff --check
