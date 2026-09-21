@@ -1,0 +1,420 @@
+name: CP03 W02 Cancellation
+
+on:
+  push:
+    branches:
+      - wave/cp03/w02-cancellation-20260921
+      - wave/cp03/w02-cancellation-finalize-20260921
+    paths:
+      - '.github/workflows/cp03-w02-cancellation.yml'
+      - 'sessions/20260921-w02-cancellation/**'
+      - 'scripts/cp03/w02_cancellation_patch.py'
+      - 'scripts/cp03/finalize_w02_cancellation.py'
+      - 'tests/test_cp03_w02_cancellation.py'
+      - 'adapters/openjarvis/streaming_inference.py'
+      - 'adapters/openjarvis/sidecar.py'
+      - 'kernel/crates/clever-kernel/src/adapter.rs'
+      - 'kernel/crates/clever-kernel/tests/adapter_supervisor.rs'
+      - 'kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py'
+      - 'iterations/03/waves/CP03-W02/TASK_GRAPH.json'
+      - 'evidence/cp03/cp03-w02/W02-12/**'
+      - 'ledgers/**'
+      - 'STATE.md'
+      - 'HANDOFF.md'
+      - '.agentic/context/CURRENT_CONTEXT.json'
+      - '.agentic/context/CURRENT_CONTEXT.md'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/cp03-w02-cancellation.yml'
+      - 'sessions/20260921-w02-cancellation/**'
+      - 'scripts/cp03/w02_cancellation_patch.py'
+      - 'scripts/cp03/finalize_w02_cancellation.py'
+      - 'tests/test_cp03_w02_cancellation.py'
+      - 'adapters/openjarvis/streaming_inference.py'
+      - 'adapters/openjarvis/sidecar.py'
+      - 'kernel/crates/clever-kernel/src/adapter.rs'
+      - 'kernel/crates/clever-kernel/tests/adapter_supervisor.rs'
+      - 'kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py'
+      - 'tests/test_cp03_w02_plan.py'
+      - 'iterations/03/waves/CP03-W02/TASK_GRAPH.json'
+      - 'evidence/cp03/cp03-w02/W02-12/**'
+      - 'ledgers/**'
+      - 'STATE.md'
+      - 'HANDOFF.md'
+      - '.agentic/context/CURRENT_CONTEXT.json'
+      - '.agentic/context/CURRENT_CONTEXT.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cp03-w02-cancellation-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  reconcile-claim:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/wave/cp03/w02-cancellation-20260921'
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Reconcile exact main and W02-12 claim
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          claim_base="$(python -c "import json; print(json.load(open('sessions/20260921-w02-cancellation/CLAIM.json'))['base_head'])")"
+          test "$(git rev-parse origin/main)" = "$claim_base"
+          test "$(git merge-base HEAD origin/main)" = "$claim_base"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          claim_path=Path('sessions/20260921-w02-cancellation/CLAIM.json')
+          ledger_path=Path('ledgers/CLAIM_LEDGER.ndjson')
+          claim=json.loads(claim_path.read_text())
+          rows=[json.loads(line) for line in ledger_path.read_text().splitlines() if line.strip()]
+          matching=[row for row in rows if row.get('claim_id')==claim['claim_id']]
+          latest=matching[-1].get('status') if matching else None
+          if latest == 'RELEASED':
+              raise SystemExit('W02-12 claim already released; refusing reacquisition')
+          if latest is None:
+              row=dict(claim)
+              row['event']='CLAIM'
+              with ledger_path.open('a',encoding='utf-8') as handle:
+                  handle.write(json.dumps(row,sort_keys=True,separators=(',',':'))+'\n')
+          elif latest != 'ACTIVE':
+              raise SystemExit(f'unexpected W02-12 claim state: {latest!r}')
+          PY
+          python scripts/context/build_context_pack.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/cp03/validate_w02_plan.py
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          git diff --check
+      - name: CAS persist claim reconciliation
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- ledgers/CLAIM_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md; then
+            exit 0
+          fi
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-cancellation-20260921 | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ledgers/CLAIM_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git commit -m 'claim(cp03-w02): register active W02-12 claim'
+          git push origin HEAD:wave/cp03/w02-cancellation-20260921
+
+  materialize:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/wave/cp03/w02-cancellation-20260921'
+    needs: reconcile-claim
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - id: state
+        name: Resolve claim and materialization state
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          claim='CLAIM-CP03-W02-CANCELLATION-20260921'
+          rows=[json.loads(line) for line in Path('ledgers/CLAIM_LEDGER.ndjson').read_text().splitlines() if line.strip()]
+          matching=[row for row in rows if row.get('claim_id')==claim and row.get('status')]
+          print('claim_active=' + ('true' if matching and matching[-1]['status']=='ACTIVE' else 'false'))
+          PY
+          if python scripts/cp03/w02_cancellation_patch.py --check >/dev/null 2>&1; then
+            echo 'patched=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'patched=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Exact-base preflight
+        if: steps.state.outputs.claim_active == 'true'
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          claim_base="$(python -c "import json; print(json.load(open('sessions/20260921-w02-cancellation/CLAIM.json'))['base_head'])")"
+          test "$(git rev-parse origin/main)" = "$claim_base"
+          test "$(git merge-base HEAD origin/main)" = "$claim_base"
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          tasks={row['id']:row for row in graph['tasks']}
+          assert graph['first_executable_task']=='W02-12'
+          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646
+          assert tasks['W02-12']['status']=='READY' and not tasks['W02-12']['proof']
+          assert all(tasks[d]['status']=='COMPLETE' and tasks[d]['proof'] for d in tasks['W02-12']['depends_on'])
+          assert tasks['W02-13']['status']=='BLOCKED' and not tasks['W02-13']['proof']
+          PY
+      - name: Install bounded test dependencies
+        if: steps.state.outputs.claim_active == 'true'
+        run: python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt 'httpx>=0.27,<1'
+      - name: Confirm committed RED before implementation
+        if: steps.state.outputs.claim_active == 'true' && steps.state.outputs.patched == 'false'
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
+        run: |
+          set -euo pipefail
+          set +e
+          python -m unittest -v tests.test_cp03_w02_cancellation > /tmp/w02-12-red.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/w02-12-red.log
+          test "$status" -ne 0
+      - name: Apply deterministic W02-12 slice
+        if: steps.state.outputs.claim_active == 'true' && steps.state.outputs.patched == 'false'
+        run: |
+          set -euo pipefail
+          python scripts/cp03/w02_cancellation_patch.py --apply
+          cargo fmt --manifest-path kernel/Cargo.toml --all
+          python scripts/cp03/w02_cancellation_patch.py --check
+          python -m py_compile adapters/openjarvis/streaming_inference.py adapters/openjarvis/sidecar.py scripts/cp03/w02_cancellation_patch.py kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py tests/test_cp03_w02_cancellation.py
+          git diff --check
+      - name: Targeted Python cancellation and regression tests
+        if: steps.state.outputs.claim_active == 'true'
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_cp03_w02_cancellation tests.test_cp03_w02_streaming tests.test_cp03_w02_unary_inference tests.test_cp03_openjarvis_sidecar tests.test_cp03_w02_plan
+      - name: Rust cancellation adversarials and regression
+        if: steps.state.outputs.claim_active == 'true'
+        run: |
+          set -euo pipefail
+          export CLEVER_TEST_PYTHON="$(command -v python)"
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor -- --skip real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion --skip real_openjarvis_unary_inference_uses_pinned_llamacpp_lane
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_security
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --lib
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+      - name: Durable-state parity and ContextPack gauntlet
+        if: steps.state.outputs.claim_active == 'true'
+        run: |
+          set -euo pipefail
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+      - name: Restrict generated source mutation
+        if: steps.state.outputs.claim_active == 'true' && steps.state.outputs.patched == 'false'
+        run: |
+          python - <<'PY'
+          import subprocess
+          allowed={
+            'adapters/openjarvis/streaming_inference.py',
+            'adapters/openjarvis/sidecar.py',
+            'kernel/crates/clever-kernel/src/adapter.rs',
+            'kernel/crates/clever-kernel/tests/adapter_supervisor.rs',
+            'kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py',
+          }
+          paths={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if line}
+          unexpected=paths-allowed
+          assert not unexpected, f'out-of-scope W02-12 source mutation: {sorted(unexpected)}'
+          assert paths, 'deterministic W02-12 compiler produced no source delta'
+          PY
+      - name: CAS persist generated W02-12 source
+        if: steps.state.outputs.claim_active == 'true' && steps.state.outputs.patched == 'false'
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-cancellation-20260921 | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add adapters/openjarvis/streaming_inference.py adapters/openjarvis/sidecar.py kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/tests/adapter_supervisor.rs kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py
+          git commit -m 'feat(cp03-w02): materialize real W02-12 cancellation'
+          git push origin HEAD:wave/cp03/w02-cancellation-20260921
+
+  finalize:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/wave/cp03/w02-cancellation-finalize-20260921'
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - id: state
+        name: Resolve finalization state
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          claim='CLAIM-CP03-W02-CANCELLATION-20260921'
+          rows=[json.loads(line) for line in Path('ledgers/CLAIM_LEDGER.ndjson').read_text().splitlines() if line.strip()]
+          matching=[row for row in rows if row.get('claim_id')==claim and row.get('status')]
+          print('released=' + ('true' if matching and matching[-1]['status']=='RELEASED' else 'false'))
+          PY
+      - name: Install bounded test dependencies
+        if: steps.state.outputs.released == 'false'
+        run: python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt 'httpx>=0.27,<1'
+      - name: Exact-main and pre-transition guard
+        if: steps.state.outputs.released == 'false'
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$GITHUB_SHA"
+          python scripts/cp03/w02_cancellation_patch.py --check
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          tasks={row['id']:row for row in graph['tasks']}
+          goal=json.loads(Path('GOAL_STATE.json').read_text())
+          assert graph['first_executable_task']=='W02-12'
+          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646
+          assert tasks['W02-12']['status']=='READY' and not tasks['W02-12']['proof']
+          assert all(tasks[d]['status']=='COMPLETE' and tasks[d]['proof'] for d in tasks['W02-12']['depends_on'])
+          assert tasks['W02-13']['status']=='BLOCKED' and not tasks['W02-13']['proof']
+          assert goal['parity']['total']==7565 and goal['parity']['verified']==0
+          PY
+      - name: Re-prove W02-12 exact-head behavior
+        if: steps.state.outputs.released == 'false'
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_cp03_w02_cancellation tests.test_cp03_w02_streaming tests.test_cp03_w02_unary_inference tests.test_cp03_openjarvis_sidecar tests.test_cp03_w02_plan
+          export CLEVER_TEST_PYTHON="$(command -v python)"
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor -- --skip real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion --skip real_openjarvis_unary_inference_uses_pinned_llamacpp_lane
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_security
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --lib
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+      - name: Build exact-head evidence receipt
+        if: steps.state.outputs.released == 'false'
+        run: |
+          python - <<'PY'
+          import json, os
+          receipt={
+            'project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','parent_wave':'CP03-W02','task':'W02-12','gate':'G4','status':'PASS',
+            'validated_head':os.environ['GITHUB_SHA'],'github_actions_run_id':int(os.environ['GITHUB_RUN_ID']),'runtime_head':os.environ['GITHUB_SHA'],
+            'cancel_before_first_chunk':'PASS','cancel_during_stream':'PASS','cancel_after_terminal':'REJECTED','ack_without_termination':'FAIL_CLOSED',
+            'requested_ack_terminal_distinct':'PASS','single_flight':'PASS','local_worker_cessation':'PASS','remote_provider_cancellation_effect':'UNKNOWN',
+            'provider_egress_executions':0,'tool_executions':0,'parity_promotions':0,'verified_capabilities':0,
+            'global_denominator':7565,'openjarvis_obligations':646,'w02_proof_units':47,
+          }
+          open('/tmp/w02-12-receipt.json','w').write(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          PY
+      - name: Exact-head state transition and durable persistence
+        if: steps.state.outputs.released == 'false'
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-cancellation-finalize-20260921 | cut -f1)" = "$GITHUB_SHA"
+          python scripts/cp03/finalize_w02_cancellation.py --receipt /tmp/w02-12-receipt.json
+          python scripts/context/build_context_pack.py
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          tasks={row['id']:row for row in graph['tasks']}
+          goal=json.loads(Path('GOAL_STATE.json').read_text())
+          assert graph['first_executable_task']=='W02-13'
+          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646
+          assert tasks['W02-12']['status']=='COMPLETE' and tasks['W02-12']['proof']
+          assert tasks['W02-13']['status']=='READY' and not tasks['W02-13']['proof']
+          assert goal['parity']['total']==7565 and goal['parity']['verified']==0
+          PY
+          git diff --check
+      - name: Restrict finalization mutation
+        if: steps.state.outputs.released == 'false'
+        run: |
+          python - <<'PY'
+          import subprocess
+          allowed={
+            'iterations/03/waves/CP03-W02/TASK_GRAPH.json','evidence/cp03/cp03-w02/W02-12/receipt.json','evidence/cp03/cp03-w02/W02-12/report.json',
+            'sessions/20260921-w02-cancellation/RESULT.json','sessions/20260921-w02-cancellation/CLAIM.json','ledgers/EVIDENCE_LEDGER.ndjson',
+            'ledgers/RUN_LOG.ndjson','ledgers/WAVE_LEDGER.ndjson','ledgers/DECISION_LEDGER.ndjson','ledgers/RISK_LEDGER.ndjson','ledgers/CLAIM_LEDGER.ndjson',
+            'HANDOFF.md','STATE.md','.agentic/context/CURRENT_CONTEXT.json','.agentic/context/CURRENT_CONTEXT.md',
+          }
+          paths={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if line}
+          unexpected=paths-allowed
+          assert not unexpected, f'out-of-scope W02-12 finalization mutation: {sorted(unexpected)}'
+          required={'iterations/03/waves/CP03-W02/TASK_GRAPH.json','ledgers/EVIDENCE_LEDGER.ndjson','ledgers/CLAIM_LEDGER.ndjson','HANDOFF.md','STATE.md','.agentic/context/CURRENT_CONTEXT.json','.agentic/context/CURRENT_CONTEXT.md'}
+          assert required.issubset(paths), f'missing durable W02-12 mutation: {sorted(required-paths)}'
+          PY
+      - name: CAS persist W02-12 COMPLETE and open only W02-13
+        if: steps.state.outputs.released == 'false'
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-cancellation-finalize-20260921 | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add iterations/03/waves/CP03-W02/TASK_GRAPH.json evidence/cp03/cp03-w02/W02-12 sessions/20260921-w02-cancellation/RESULT.json sessions/20260921-w02-cancellation/CLAIM.json ledgers/EVIDENCE_LEDGER.ndjson ledgers/RUN_LOG.ndjson ledgers/WAVE_LEDGER.ndjson ledgers/DECISION_LEDGER.ndjson ledgers/RISK_LEDGER.ndjson ledgers/CLAIM_LEDGER.ndjson HANDOFF.md STATE.md .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git commit -m 'state(cp03-w02): complete W02-12 and open W02-13'
+          git push origin HEAD:wave/cp03/w02-cancellation-finalize-20260921
+
+  verify:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install bounded test dependencies
+        run: python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt 'httpx>=0.27,<1'
+      - name: Verify deterministic source contract
+        run: |
+          set -euo pipefail
+          python scripts/cp03/w02_cancellation_patch.py --check
+          cargo fmt --manifest-path kernel/Cargo.toml --all -- --check
+          python -m py_compile adapters/openjarvis/streaming_inference.py adapters/openjarvis/sidecar.py scripts/cp03/w02_cancellation_patch.py kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py tests/test_cp03_w02_cancellation.py
+          git diff --check
+      - name: Re-prove W02-12 cancellation semantics
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_cp03_w02_cancellation tests.test_cp03_w02_streaming tests.test_cp03_w02_unary_inference tests.test_cp03_openjarvis_sidecar tests.test_cp03_w02_plan
+          export CLEVER_TEST_PYTHON="$(command -v python)"
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor -- --skip real_openjarvis_sidecar_is_supervised_and_bridged_without_promotion --skip real_openjarvis_unary_inference_uses_pinned_llamacpp_lane
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_security
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --lib
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+      - name: Verify no parity or durable-state drift
+        run: |
+          set -euo pipefail
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
