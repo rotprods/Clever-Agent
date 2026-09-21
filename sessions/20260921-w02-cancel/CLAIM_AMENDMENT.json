@@ -1,0 +1,15 @@
+{
+  "canonical_task": "W02-12",
+  "claim_id": "CLAIM-CP03-W02-CANCEL-20260921",
+  "coordination": "Adds only the adversarial fake sidecar surface needed to prove kernel cancel-before/during/after-terminal and stubborn-worker semantics. No expansion into W02-13+.",
+  "date": "2026-09-21",
+  "event": "SCOPE_AMENDED",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "parent_wave": "CP03-W02",
+  "schema_version": 1,
+  "scope": [
+    "kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py"
+  ],
+  "status": "ACTIVE",
+  "wave_id": "CP03-W02-CANCEL-20260921"
+}
