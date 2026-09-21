@@ -47,7 +47,8 @@
     "tests/test_cp03_w02_inference_contract.py",
     "tests/test_cp03_w02_structured_transport.py",
     "docs/adr/ADR-CP03-W02-013-STRUCTURED-TRANSPORT.md",
-    "scripts/cp03/finalize_w02_structured_transport.py"
+    "scripts/cp03/finalize_w02_structured_transport.py",
+    "kernel/crates/clever-kernel/tests/inference_security.rs"
   ],
   "status": "ACTIVE",
   "transport_base_head": "2b1c6d19ae1e6cee08381c993855dfcd813ddd68",
