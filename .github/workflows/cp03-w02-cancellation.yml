@@ -3,6 +3,7 @@ name: CP03 W02 Cancellation
 on:
   push:
     branches:
+      - main
       - wave/cp03/w02-cancellation-20260921
       - wave/cp03/w02-cancellation-finalize-20260921
     paths:
@@ -248,7 +249,7 @@ jobs:
           git push origin HEAD:wave/cp03/w02-cancellation-20260921
 
   finalize:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/wave/cp03/w02-cancellation-finalize-20260921'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/wave/cp03/w02-cancellation-finalize-20260921')
     permissions:
       contents: write
     runs-on: ubuntu-24.04
