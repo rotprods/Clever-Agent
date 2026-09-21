@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import sys
 import tempfile
 import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[1]
+GENERATED_SDK = ROOT / "contracts" / "sdk" / "python" / "gen"
+if str(GENERATED_SDK) not in sys.path:
+    sys.path.insert(0, str(GENERATED_SDK))
 
 from clever.v1 import common_pb2, identity_pb2, inference_pb2
 
