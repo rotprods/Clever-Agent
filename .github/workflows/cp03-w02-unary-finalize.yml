@@ -1,4 +1,4 @@
-name: CP03 W02 Unary Workflow Repair
+name: CP03 W02 Unary Scope Amendment
 
 on:
   push:
@@ -10,11 +10,11 @@ permissions:
   contents: write
 
 concurrency:
-  group: cp03-w02-unary-workflow-repair-${{ github.ref }}
+  group: cp03-w02-unary-scope-amend-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  repair:
+  amend:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -22,39 +22,52 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: true
-      - name: Repair materialize job permission and verify exact block
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Persist non-conflicting W02-10 driver scope amendment
         run: |
           set -euo pipefail
           python - <<'PY'
+          import json
           from pathlib import Path
-          p=Path('.github/workflows/cp03-w02-unary-inference.yml')
-          text=p.read_text()
-          old="  materialize:\n    permissions:\n      contents: $" + "{{ github.event_name == 'push' && 'write' || 'read' }}\n"
-          new="  materialize:\n    permissions:\n      contents: write\n"
-          if old in text:
-              assert text.count(old)==1, f'materialize permission anchor count={text.count(old)}'
-              text=text.replace(old,new,1)
-              p.write_text(text)
-          else:
-              assert text.count(new)==1, f'materialize static permission block count={text.count(new)}'
+          cid='CLAIM-CP03-W02-UNARY-INFERENCE-20260921'
+          extra='.github/workflows/cp03-w02-unary-driver.yml'
+          cp=Path('sessions/20260921-w02-unary-inference/CLAIM.json')
+          claim=json.loads(cp.read_text())
+          assert claim['claim_id']==cid and claim['status']=='ACTIVE'
+          if extra not in claim['scope']:
+              claim['scope'].append(extra)
+              claim['coordination'] += ' Scope amended before creating a replacement static-permission execution driver after GitHub App workflow-write restrictions prevented the in-workflow repair path; canonical W02-10 product/runtime scope is unchanged.'
+              cp.write_text(json.dumps(claim,indent=2,sort_keys=True)+'\n')
+          lp=Path('ledgers/CLAIM_LEDGER.ndjson')
+          rows=[json.loads(x) for x in lp.read_text().splitlines() if x.strip()]
+          if not any(r.get('claim_id')==cid and r.get('event')=='SCOPE_AMENDED' and extra in r.get('scope',[]) for r in rows):
+              row={
+                'schema_version':1,'date':'2026-09-21','claim_id':cid,
+                'event':'SCOPE_AMENDED','wave_id':'CP03-W02-UNARY-INFERENCE-20260921',
+                'parent_wave':'CP03-W02','canonical_task':'W02-10','owner':'chatgpt-gpt-5.6-sol',
+                'scope':[extra],
+                'coordination':'Replacement CI execution driver only. Required because Actions GITHUB_TOKEN cannot modify workflow files. No scope expansion into W02-11+, provider egress, tools, parity, denominator or W02 closure.',
+                'status':'ACTIVE'
+              }
+              with lp.open('a',encoding='utf-8') as f:
+                  f.write(json.dumps(row,separators=(',',':'))+'\n')
           PY
-          python - <<'PY'
-          from pathlib import Path
-          text=Path('.github/workflows/cp03-w02-unary-inference.yml').read_text()
-          expected="  materialize:\n    permissions:\n      contents: write\n"
-          assert text.count(expected)==1, f'materialize static permission block count={text.count(expected)}'
-          PY
+          python scripts/context/build_context_pack.py
+          python scripts/context/validate_context_pack.py
+          python scripts/validate_agentic_state.py
           git diff --check
-      - name: CAS persist workflow repair
+      - name: CAS persist scope amendment
         run: |
           set -euo pipefail
           test "$(git ls-remote origin refs/heads/wave/cp03/w02-unary-inference-20260921 | cut -f1)" = "$GITHUB_SHA"
-          if git diff --quiet -- .github/workflows/cp03-w02-unary-inference.yml; then
-            echo 'workflow already repaired'
-            exit 0
-          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/workflows/cp03-w02-unary-inference.yml
-          git commit -m 'fix(cp03-w02): use static materialize contents permission'
+          git add sessions/20260921-w02-unary-inference/CLAIM.json ledgers/CLAIM_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          if git diff --cached --quiet; then
+            echo 'scope already amended'
+            exit 0
+          fi
+          git commit -m 'chore(cp03-w02): amend W02-10 execution-driver scope'
           git push origin HEAD:wave/cp03/w02-unary-inference-20260921
