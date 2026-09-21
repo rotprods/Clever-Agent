@@ -1,0 +1,12 @@
+{
+  "claim_id": "CLAIM-CP03-W02-STREAMING-20260921",
+  "date": "2026-09-21",
+  "evidence_id": "EVID-W02-STREAMING-20260921",
+  "github_actions_run_id": 35591204757,
+  "next_task": "W02-12",
+  "schema_version": 1,
+  "status": "COMPLETE",
+  "task": "W02-11",
+  "validated_head": "b2994a9850e12850f703d7d8523e07e4d8704101",
+  "wave_id": "CP03-W02-STREAMING-20260921"
+}
