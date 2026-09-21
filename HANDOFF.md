@@ -13,3 +13,12 @@
 `W02-09 — Lane con modelo y pesos reales`.
 
 W02-09 is now the sole READY G2 frontier. It must pin engine/model/runtime/license/digests and separate controlled artifact acquisition from offline execution. Missing or corrupt real weights must produce BLOCKED; mocks do not satisfy this lane. `W02-10 — Inferencia unary end-to-end` remains BLOCKED until W02-09 has real-model evidence.
+
+
+## W02-08 release reconciliation — 2026-09-21
+
+- PR #41 release gate exposed one stale state assertion: it expected W02-08 `READY` / W02-09 `BLOCKED` after the exact-head finalizer had already persisted W02-08 `COMPLETE` / W02-09 `READY`.
+- The failing PR run `35554377801` was RED only in the durable-state assertion; lifecycle, pinned native catalog, W02-07 security, Rust regression and Clippy were green.
+- The release gate now validates the finalized frontier and exact-head release finalizer run `35554798247` re-proved lifecycle/catalog, pinned OpenJarvis (15 engines / 69 models), security/kernel/state/ContextPack/parity with model executions = 0, provider egress executions = 0 and parity promotions = 0.
+- Evidence: `EVID-W02-MODEL-BRIDGE-RELEASE-20260921`. Claim `CLAIM-CP03-W02-MODEL-BRIDGE-RELEASE-20260921` is RELEASED.
+- Canonical next task remains **W02-09 — Lane con modelo y pesos reales**; this release wave did not begin W02-09.

@@ -6,6 +6,7 @@
   "date": "2026-09-21",
   "owner": "chatgpt-gpt-5.6-sol",
   "parent_wave": "CP03-W02",
+  "release_evidence_id": "EVID-W02-MODEL-BRIDGE-RELEASE-20260921",
   "schema_version": 1,
   "scope": [
     ".github/workflows/cp03-w02-model-bridge.yml",
@@ -22,6 +23,7 @@
     ".agentic/context/CURRENT_CONTEXT.json",
     ".agentic/context/CURRENT_CONTEXT.md"
   ],
-  "status": "ACTIVE",
+  "status": "RELEASED",
+  "validated_head": "a7239acbe51091798f5b85984a8496e2fe0b7808",
   "wave_id": "CP03-W02-MODEL-BRIDGE-RELEASE-20260921"
 }
