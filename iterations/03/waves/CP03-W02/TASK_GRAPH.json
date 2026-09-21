@@ -536,7 +536,7 @@
       "proof": [],
       "reviewer_role": "protocol_engineer",
       "rollback": "Retirar decoder defectuoso sin inventar salida.",
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "title": "Structured output y tool-call fragments"
     },
     {
