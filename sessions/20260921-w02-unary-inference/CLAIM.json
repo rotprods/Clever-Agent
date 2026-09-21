@@ -1,14 +1,14 @@
 {
-  "schema_version": 1,
-  "date": "2026-09-21",
-  "project_id": "CLEVER-JARVIS-001",
-  "checkpoint": "CP03",
-  "parent_wave": "CP03-W02",
-  "canonical_task": "W02-10",
-  "claim_id": "CLAIM-CP03-W02-UNARY-INFERENCE-20260921",
-  "wave_id": "CP03-W02-UNARY-INFERENCE-20260921",
-  "owner": "chatgpt-gpt-5.6-sol",
   "base_head": "e7b56d0580a22456d06443a05dcace5e37549dba",
+  "canonical_task": "W02-10",
+  "checkpoint": "CP03",
+  "claim_id": "CLAIM-CP03-W02-UNARY-INFERENCE-20260921",
+  "coordination": "W02-10 only: first real unary inference through Rust -> canonical AdapterFrame/InferenceRequest -> OpenJarvis sidecar -> pinned OpenJarvis llamacpp engine -> exact W02-09 qwen3:0.6b real GGUF -> correlated chunk+terminal. Reject invalid requests before engine execution. No streaming W02-11, cancellation W02-12, fallback W02-14, provider egress, tool execution, parity promotion, denominator mutation, or W02 closure. Scope amended before creating a replacement static-permission execution driver after GitHub App workflow-write restrictions prevented the in-workflow repair path; canonical W02-10 product/runtime scope is unchanged.",
+  "date": "2026-09-21",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "parent_wave": "CP03-W02",
+  "project_id": "CLEVER-JARVIS-001",
+  "schema_version": 1,
   "scope": [
     "kernel/crates/clever-kernel/src/adapter.rs",
     "kernel/crates/clever-kernel/tests/adapter_supervisor.rs",
@@ -32,8 +32,9 @@
     "ledgers/RISK_LEDGER.ndjson",
     "HANDOFF.md",
     ".agentic/context/CURRENT_CONTEXT.json",
-    ".agentic/context/CURRENT_CONTEXT.md"
+    ".agentic/context/CURRENT_CONTEXT.md",
+    ".github/workflows/cp03-w02-unary-driver.yml"
   ],
-  "coordination": "W02-10 only: first real unary inference through Rust -> canonical AdapterFrame/InferenceRequest -> OpenJarvis sidecar -> pinned OpenJarvis llamacpp engine -> exact W02-09 qwen3:0.6b real GGUF -> correlated chunk+terminal. Reject invalid requests before engine execution. No streaming W02-11, cancellation W02-12, fallback W02-14, provider egress, tool execution, parity promotion, denominator mutation, or W02 closure.",
-  "status": "ACTIVE"
+  "status": "ACTIVE",
+  "wave_id": "CP03-W02-UNARY-INFERENCE-20260921"
 }
