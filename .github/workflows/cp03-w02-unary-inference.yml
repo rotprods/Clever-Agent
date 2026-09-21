@@ -1,0 +1,502 @@
+name: CP03 W02 Unary Inference
+
+on:
+  push:
+    branches: [wave/cp03/w02-unary-inference-20260921]
+    paths:
+      - 'adapters/openjarvis/unary_inference.py'
+      - 'adapters/openjarvis/sidecar.py'
+      - 'kernel/crates/clever-kernel/src/adapter.rs'
+      - 'kernel/crates/clever-kernel/tests/adapter_supervisor.rs'
+      - 'tests/test_cp03_w02_unary_inference.py'
+      - 'scripts/cp03/w02_unary_patch.py'
+      - '.github/workflows/cp03-w02-unary-inference.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'adapters/openjarvis/unary_inference.py'
+      - 'adapters/openjarvis/sidecar.py'
+      - 'kernel/crates/clever-kernel/src/adapter.rs'
+      - 'kernel/crates/clever-kernel/tests/adapter_supervisor.rs'
+      - 'tests/test_cp03_w02_unary_inference.py'
+      - 'scripts/cp03/w02_unary_patch.py'
+      - '.github/workflows/cp03-w02-unary-inference.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cp03-w02-unary-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  OPENJARVIS_PIN: 72033b8ec288aa067ce4530ff9d96bf231e9c4e5
+  LLAMACPP_PIN: 391fac16460f15233a7740550d858ac96df3419d
+  MODEL_PATH: /tmp/clever-w02-10/Qwen_Qwen3-0.6B-Q4_K_M.gguf
+
+jobs:
+  materialize:
+    permissions:
+      contents: ${{ github.event_name == 'push' && 'write' || 'read' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      source_changed: ${{ steps.source.outputs.changed }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: ${{ github.event_name == 'push' }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install contract/runtime-light test dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt 'httpx>=0.27,<1'
+      - name: Apply or verify deterministic W02-10 source slice
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" = push ]; then
+            python scripts/cp03/w02_unary_patch.py --apply
+            cargo fmt --manifest-path kernel/Cargo.toml --all
+          else
+            python scripts/cp03/w02_unary_patch.py --check
+            cargo fmt --manifest-path kernel/Cargo.toml --all -- --check
+          fi
+          python scripts/cp03/w02_unary_patch.py --check
+          python -m py_compile adapters/openjarvis/unary_inference.py adapters/openjarvis/sidecar.py scripts/cp03/w02_unary_patch.py
+          git diff --check
+      - name: RED/GREEN fail-closed request characterization
+        run: |
+          set -euo pipefail
+          PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/contracts/sdk/python/gen" \
+            python -m unittest tests.test_cp03_w02_unary_inference -v
+      - name: Compile Rust unary transport and run static gauntlet
+        run: |
+          set -euo pipefail
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor --no-run
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_security
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --lib
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+      - id: source
+        name: Detect generated source delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- \
+            adapters/openjarvis/sidecar.py \
+            kernel/crates/clever-kernel/src/adapter.rs \
+            kernel/crates/clever-kernel/tests/adapter_supervisor.rs; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Restrict materialized source delta
+        if: steps.source.outputs.changed == 'true'
+        run: |
+          python - <<'PY'
+          import subprocess
+          allowed={
+            'adapters/openjarvis/sidecar.py',
+            'kernel/crates/clever-kernel/src/adapter.rs',
+            'kernel/crates/clever-kernel/tests/adapter_supervisor.rs',
+          }
+          paths={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if line}
+          unexpected=paths-allowed
+          assert not unexpected, f'out-of-scope W02-10 materialization: {sorted(unexpected)}'
+          assert paths == allowed, f'incomplete W02-10 materialization: {sorted(paths)}'
+          PY
+      - name: CAS persist proved source materialization
+        if: github.event_name == 'push' && steps.source.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          remote_head="$(git ls-remote origin refs/heads/wave/cp03/w02-unary-inference-20260921 | cut -f1)"
+          test "$remote_head" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            adapters/openjarvis/sidecar.py \
+            kernel/crates/clever-kernel/src/adapter.rs \
+            kernel/crates/clever-kernel/tests/adapter_supervisor.rs
+          git commit -m 'feat(cp03-w02): materialize unary inference transport'
+          git push origin HEAD:wave/cp03/w02-unary-inference-20260921
+
+  real_unary:
+    if: needs.materialize.outputs.source_changed == 'false'
+    needs: materialize
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install minimal Python execution dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt 'httpx>=0.27,<1'
+      - name: Reacquire and attest exact W02-09 real weights
+        env:
+          CLEVER_ALLOW_MODEL_ACQUISITION: '1'
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "$MODEL_PATH")"
+          python scripts/cp03/w02_real_model.py acquire --artifact "$MODEL_PATH" --receipt /tmp/w02-10-model.json
+          python - <<'PY'
+          import json
+          row=json.load(open('/tmp/w02-10-model.json'))
+          assert row['status']=='PASS', row
+          assert row['observed_size_bytes']==484220320
+          assert row['observed_sha256']=='9acfc1e001311f34b4252001b626f2e466d592a42065f66571bff3790d4e1b14'
+          assert row['observed_magic_hex']=='47475546'
+          assert row['model_executions']==0
+          assert row['provider_egress_executions']==0
+          assert row['parity_promotions']==0
+          PY
+      - name: Materialize exact OpenJarvis and llama.cpp runtime pins
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/openjarvis-w02-10 /tmp/llama-w02-10
+          git init -q /tmp/openjarvis-w02-10
+          git -C /tmp/openjarvis-w02-10 remote add origin https://github.com/open-jarvis/OpenJarvis.git
+          git -C /tmp/openjarvis-w02-10 fetch -q --depth=1 origin "$OPENJARVIS_PIN"
+          git -C /tmp/openjarvis-w02-10 checkout -q --detach FETCH_HEAD
+          test "$(git -C /tmp/openjarvis-w02-10 rev-parse HEAD)" = "$OPENJARVIS_PIN"
+          git init -q /tmp/llama-w02-10
+          git -C /tmp/llama-w02-10 remote add origin https://github.com/ggml-org/llama.cpp.git
+          git -C /tmp/llama-w02-10 fetch -q --depth=1 origin "$LLAMACPP_PIN"
+          git -C /tmp/llama-w02-10 checkout -q --detach FETCH_HEAD
+          test "$(git -C /tmp/llama-w02-10 rev-parse HEAD)" = "$LLAMACPP_PIN"
+          grep -q -- '--alias' /tmp/llama-w02-10/tools/server/README.md
+      - name: Build exact CPU llama-server
+        run: |
+          set -euo pipefail
+          cmake -S /tmp/llama-w02-10 -B /tmp/llama-w02-10/build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DGGML_NATIVE=OFF \
+            -DGGML_OPENMP=OFF \
+            -DLLAMA_CURL=OFF
+          cmake --build /tmp/llama-w02-10/build --target llama-server -j2
+          test -x /tmp/llama-w02-10/build/bin/llama-server
+      - name: Real Rust → Protobuf → sidecar → OpenJarvis → llama.cpp → Qwen3 unary inference
+        shell: bash
+        run: |
+          set -euo pipefail
+          export CLEVER_TEST_PYTHON="$(command -v python)"
+          export CLEVER_OPENJARVIS_SRC=/tmp/openjarvis-w02-10/src
+          export CLEVER_W02_MODEL_PATH="$MODEL_PATH"
+          export LLAMACPP_HOST=http://127.0.0.1:8080
+          /tmp/llama-w02-10/build/bin/llama-server \
+            --model "$MODEL_PATH" \
+            --alias qwen3:0.6b \
+            --host 127.0.0.1 \
+            --port 8080 \
+            --ctx-size 2048 \
+            --threads 2 \
+            --n-gpu-layers 0 \
+            > /tmp/w02-10-llama.log 2>&1 &
+          server_pid=$!
+          cleanup() { kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true; }
+          trap cleanup EXIT
+          python - <<'PY'
+          import time, urllib.request
+          deadline=time.time()+120
+          last=None
+          while time.time()<deadline:
+              try:
+                  with urllib.request.urlopen('http://127.0.0.1:8080/v1/models', timeout=2) as r:
+                      if r.status==200:
+                          raise SystemExit(0)
+              except Exception as exc:
+                  last=exc
+                  time.sleep(1)
+          raise SystemExit(f'llama-server readiness timeout: {last}')
+          PY
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel \
+            --test adapter_supervisor real_openjarvis_unary_inference_uses_pinned_llamacpp_lane \
+            -- --exact --nocapture
+      - name: Regression and gauntlet after real execution
+        run: |
+          set -euo pipefail
+          PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/contracts/sdk/python/gen" \
+            python -m unittest \
+              tests.test_cp03_w02_unary_inference \
+              tests.test_cp03_openjarvis_sidecar \
+              tests.test_cp03_w02_model_bridge -v
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_security
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --lib
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          git diff --check
+      - name: Build exact-head G3 evidence receipt
+        run: |
+          python - <<'PY'
+          import json, os
+          model=json.load(open('/tmp/w02-10-model.json'))
+          receipt={
+            'schema_version':1,
+            'project_id':'CLEVER-JARVIS-001',
+            'checkpoint':'CP03',
+            'parent_wave':'CP03-W02',
+            'task':'W02-10',
+            'gate':'G3',
+            'status':'PASS',
+            'validated_head':os.environ['GITHUB_SHA'],
+            'github_actions_run_id':int(os.environ['GITHUB_RUN_ID']),
+            'openjarvis_commit':os.environ['OPENJARVIS_PIN'],
+            'engine':'llamacpp',
+            'runtime_commit':os.environ['LLAMACPP_PIN'],
+            'model_id':'qwen3:0.6b',
+            'artifact_filename':model['artifact_filename'],
+            'artifact_size_bytes':model['observed_size_bytes'],
+            'artifact_sha256':model['observed_sha256'],
+            'pipeline':['rust','protobuf','openjarvis-sidecar','openjarvis-native-engine','llama.cpp','qwen3:0.6b'],
+            'correlated_chunk_terminal':True,
+            'invalid_input_pre_engine_test':'PASS',
+            'runtime_executed':True,
+            'model_executions':1,
+            'provider_egress_executions':0,
+            'tool_executions':0,
+            'streaming_executions':0,
+            'parity_promotions':0,
+            'verified_capabilities':0,
+            'global_denominator':7565,
+            'openjarvis_obligations':646,
+            'w02_proof_units':47,
+          }
+          open('/tmp/w02-10-receipt.json','w').write(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cp03-w02-unary-${{ github.sha }}
+          path: /tmp/w02-10-receipt.json
+          retention-days: 14
+          if-no-files-found: error
+
+  finalize:
+    if: github.event_name == 'push' && needs.materialize.outputs.source_changed == 'false'
+    needs: [materialize, real_unary]
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cp03-w02-unary-${{ github.sha }}
+          path: /tmp/w02-10-evidence
+      - name: Exact-head durable W02-10 transition
+        env:
+          VALIDATED_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python - <<'PY'
+          import json, os, re
+          from pathlib import Path
+
+          root=Path('.')
+          task_id='W02-10'; next_id='W02-11'
+          claim_id='CLAIM-CP03-W02-UNARY-INFERENCE-20260921'
+          evidence_id='EVID-W02-UNARY-INFERENCE-20260921'
+          support_wave='CP03-W02-UNARY-INFERENCE-20260921'
+          receipt=json.loads(Path('/tmp/w02-10-evidence/w02-10-receipt.json').read_text())
+          expected={
+            'project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','parent_wave':'CP03-W02',
+            'task':task_id,'gate':'G3','status':'PASS','validated_head':os.environ['GITHUB_SHA'],
+            'github_actions_run_id':int(os.environ['GITHUB_RUN_ID']),'openjarvis_commit':os.environ['OPENJARVIS_PIN'],
+            'engine':'llamacpp','runtime_commit':os.environ['LLAMACPP_PIN'],'model_id':'qwen3:0.6b',
+            'artifact_filename':'Qwen_Qwen3-0.6B-Q4_K_M.gguf','artifact_size_bytes':484220320,
+            'artifact_sha256':'9acfc1e001311f34b4252001b626f2e466d592a42065f66571bff3790d4e1b14',
+            'correlated_chunk_terminal':True,'invalid_input_pre_engine_test':'PASS','runtime_executed':True,
+            'model_executions':1,'provider_egress_executions':0,'tool_executions':0,
+            'streaming_executions':0,'parity_promotions':0,'verified_capabilities':0,
+            'global_denominator':7565,'openjarvis_obligations':646,'w02_proof_units':47,
+          }
+          for key,value in expected.items():
+              assert receipt.get(key)==value, (key,receipt.get(key),value)
+
+          def readj(path): return json.loads((root/path).read_text())
+          def writej(path,value):
+              target=root/path; target.parent.mkdir(parents=True,exist_ok=True)
+              target.write_text(json.dumps(value,indent=2,sort_keys=True)+'\n')
+          def rows(path):
+              target=root/path
+              return [json.loads(x) for x in target.read_text().splitlines() if x.strip()] if target.exists() else []
+          def append_unique(path,key,value,row):
+              if any(x.get(key)==value for x in rows(path)): return
+              with (root/path).open('a',encoding='utf-8') as f:
+                  f.write(json.dumps(row,sort_keys=True,separators=(',',':'))+'\n')
+
+          lock=readj('inventory/cp03/W02_SCOPE_LOCK.json')
+          assert lock['global_denominator']==7565 and lock['openjarvis_obligations']==646
+          assert lock['w02_proof_units']==47
+          goal=readj('GOAL_STATE.json')
+          assert goal['parity']['total']==7565 and goal['parity']['verified']==0
+          plan=readj('iterations/03/waves/CP03-W02/TASK_GRAPH.json')
+          assert plan['global_denominator']==7565 and plan['openjarvis_obligations']==646
+          assert plan['first_executable_task']==task_id
+          tasks={x['id']:x for x in plan['tasks']}
+          task=tasks[task_id]
+          assert task['status']=='READY' and not task['proof']
+          assert all(tasks[d]['status']=='COMPLETE' and tasks[d]['proof'] for d in task['depends_on'])
+          latest=None
+          for row in rows('ledgers/CLAIM_LEDGER.ndjson'):
+              if row.get('claim_id')==claim_id and row.get('status'): latest=row['status']
+          assert latest=='ACTIVE', latest
+
+          task['status']='COMPLETE'
+          task['proof']=[{
+            'evidence_id':evidence_id,'result':'PASS','validated_head':os.environ['GITHUB_SHA'],
+            'run_id':int(os.environ['GITHUB_RUN_ID']),'gate':'G3','engine':'llamacpp','model_id':'qwen3:0.6b',
+            'artifact_sha256':expected['artifact_sha256'],'runtime_executed':True,'model_executions':1,
+            'correlated_chunk_terminal':True,'invalid_input_pre_engine_test':'PASS',
+            'provider_egress_executions':0,'tool_executions':0,'streaming_executions':0,'parity_promotions':0,
+          }]
+          assert tasks[next_id]['status']=='BLOCKED' and not tasks[next_id]['proof']
+          assert all(tasks[d]['status']=='COMPLETE' for d in tasks[next_id]['depends_on'])
+          tasks[next_id]['status']='READY'
+          plan['first_executable_task']=next_id
+          writej('iterations/03/waves/CP03-W02/TASK_GRAPH.json',plan)
+
+          writej('evidence/cp03/cp03-w02/W02-10/receipt.json',receipt)
+          report=dict(receipt)
+          report.update({'date':'2026-09-21','evidence_id':evidence_id,'support_wave':support_wave,'next_task':next_id})
+          writej('evidence/cp03/cp03-w02/W02-10/report.json',report)
+          writej('sessions/20260921-w02-unary-inference/RESULT.json',{
+            'schema_version':1,'date':'2026-09-21','claim_id':claim_id,'wave_id':support_wave,
+            'task':task_id,'status':'COMPLETE','evidence_id':evidence_id,'validated_head':os.environ['GITHUB_SHA'],
+            'github_actions_run_id':int(os.environ['GITHUB_RUN_ID']),'next_task':next_id,
+          })
+          append_unique('ledgers/EVIDENCE_LEDGER.ndjson','evidence_id',evidence_id,{
+            'schema_version':1,'date':'2026-09-21','evidence_id':evidence_id,'status':'VERIFIED',
+            'type':'cp03_w02_real_unary_inference','wave_id':'CP03-W02','support_wave':support_wave,
+            'github_actions_run_id':int(os.environ['GITHUB_RUN_ID']),'validated_head':os.environ['GITHUB_SHA'],
+            'engine':'llamacpp','model_id':'qwen3:0.6b','artifact_sha256':expected['artifact_sha256'],
+            'runtime_executed':True,'model_executions':1,'correlated_chunk_terminal':True,
+            'invalid_input_pre_engine_test':'PASS','provider_egress_executions':0,'tool_executions':0,
+            'streaming_executions':0,'parity_promotions':0,'verified_capabilities':0,
+            'global_denominator':7565,'openjarvis_obligations':646,'w02_proof_units':47,
+            'claim':'Exact-head G3 proves the first real unary inference through Rust, canonical protobuf transport, the OpenJarvis sidecar, the pinned native llamacpp engine and the exact W02-09 Qwen3 real GGUF. Output is judged structurally, not by exact prose. This is M1 only and does not close W02 or promote parity.'
+          })
+          append_unique('ledgers/RUN_LOG.ndjson','event_id','RUN-W02-UNARY-20260921',{
+            'schema_version':1,'date':'2026-09-21','event_id':'RUN-W02-UNARY-20260921',
+            'event':'CP03_W02_UNARY_INFERENCE_ADVANCED','goal_id':'CLEVER-JARVIS-001','checkpoint':'CP03',
+            'iteration':'I03','wave_id':'CP03-W02','support_wave':support_wave,'status':'ADVANCED',
+            'evidence_id':evidence_id,'next_task':next_id,'K':47,'parity_promotions':0,
+          })
+          append_unique('ledgers/WAVE_LEDGER.ndjson','event_id','WAVE-W02-UNARY-20260921',{
+            'schema_version':1,'date':'2026-09-21','event_id':'WAVE-W02-UNARY-20260921',
+            'wave_id':support_wave,'parent_wave':'CP03-W02','iteration':'I03','checkpoint':'CP03',
+            'event':'VERIFICATION','status':'COMPLETE','evidence_id':evidence_id,'next_task':next_id,
+          })
+          append_unique('ledgers/DECISION_LEDGER.ndjson','decision_id','D-0016',{
+            'schema_version':1,'date':'2026-09-21','decision_id':'D-0016','status':'ACCEPTED',
+            'decision':'G3 unary inference is a single-flight, loopback-only OpenJarvis llamacpp lane bound to the exact W02-09 model artifact. Rust retains admission, identity, correlation and terminal validation; the Python sidecar translates only after fail-closed request and artifact attestation. Text content is not compared to an exact expected sentence.',
+            'context':'This is the minimum real end-to-end M1 proof without prematurely implementing streaming, cancellation, fallback, tools or parity promotion.',
+            'evidence_id':evidence_id,
+          })
+          append_unique('ledgers/RISK_LEDGER.ndjson','risk_id','RISK-0010',{
+            'schema_version':1,'date':'2026-09-21','risk_id':'RISK-0010','status':'MITIGATING','severity':'HIGH',
+            'risk':'A successful unary CPU/loopback G3 lane can be misread as complete inference parity or proof of streaming, cancellation, external-provider effects and platform-specific behavior.',
+            'mitigation':'Record G3 as M1 only; keep parity promotions at zero; open only W02-11; retain W02-12+ BLOCKED; preserve exact runtime/model digests and explicit zero counters for provider egress, tools and streaming.',
+            'evidence_id':evidence_id,
+          })
+          with (root/'ledgers/CLAIM_LEDGER.ndjson').open('a',encoding='utf-8') as f:
+              f.write(json.dumps({'schema_version':1,'date':'2026-09-21','claim_id':claim_id,'event':'RELEASE','owner':'chatgpt-gpt-5.6-sol','status':'RELEASED','release_evidence_id':evidence_id,'wave_id':support_wave},sort_keys=True,separators=(',',':'))+'\n')
+
+          handoff=(root/'HANDOFF.md').read_text()
+          handoff=handoff.replace('- COMPLETE: `W02-00..W02-09`.','- COMPLETE: `W02-00..W02-10`.')
+          handoff=handoff.replace('- W02-09 evidence: `EVID-W02-REAL-MODEL-20260921`.','- W02-09 evidence: `EVID-W02-REAL-MODEL-20260921`.\n- W02-10 G3 evidence: `EVID-W02-UNARY-INFERENCE-20260921`; one real model execution, correlated unary chunk+terminal, provider egress 0, tool executions 0, parity promotions 0.')
+          old='''## Next executable\n\n`W02-10 — Inferencia unary end-to-end`.\n\nW02-10 is now the sole READY G3 frontier. It must execute the first real unary inference through Rust → canonical contract → OpenJarvis sidecar → pinned native engine/model and prove correlated terminal output. It must consume the exact W02-09 model identity/digest; a mock or a floating/redownloaded artifact cannot satisfy G3. M1 does not close W02.'''
+          new='''## Next executable\n\n`W02-11 — Stream y stream_full`.\n\nW02-10/M1 is evidence-backed COMPLETE but does not close W02. W02-11 is the sole READY G4 frontier and must prove fragmented/coalesced streaming semantics, UTF-8 boundaries, sequence integrity and exactly one terminal without converting EOF, duplicates or reordering into false success. Cancellation and later G4 tasks remain BLOCKED by the DAG.'''
+          assert old in handoff
+          (root/'HANDOFF.md').write_text(handoff.replace(old,new,1))
+
+          plan_test=root/'tests/test_cp03_w02_plan.py'
+          text=plan_test.read_text()
+          old='''        else:\n            self.assertEqual(weights["status"], "COMPLETE")\n            self.assertTrue(weights["proof"])\n            self.assertEqual(unary["status"], "READY")\n            self.assertFalse(unary["proof"])\n            self.assertEqual(self.plan["first_executable_task"], "W02-10")\n'''
+          new='''        elif unary["status"] == "READY":\n            self.assertEqual(weights["status"], "COMPLETE")\n            self.assertTrue(weights["proof"])\n            self.assertFalse(unary["proof"])\n            self.assertEqual(self.plan["first_executable_task"], "W02-10")\n        else:\n            self.assertEqual(unary["status"], "COMPLETE")\n            self.assertTrue(unary["proof"])\n            self.assertEqual(self.task("W02-11")["status"], "READY")\n            self.assertEqual(self.plan["first_executable_task"], "W02-11")\n'''
+          assert old in text
+          text=text.replace(old,new,1)
+          old2='''        else:\n            expected = "W02-10"\n'''
+          new2='''        elif unary["status"] == "READY":\n            expected = "W02-10"\n        else:\n            expected = "W02-11"\n'''
+          assert old2 in text
+          text=text.replace(old2,new2,1)
+          marker='''        elif expected == "W02-10":\n            self.assertEqual(weights["status"], "COMPLETE")\n            self.assertTrue(weights["proof"])\n            self.assertEqual(unary["status"], "READY")\n            self.assertFalse(unary["proof"])\n'''
+          expanded=marker+'''        elif expected == "W02-11":\n            self.assertEqual(unary["status"], "COMPLETE")\n            self.assertTrue(unary["proof"])\n            self.assertEqual(self.task("W02-11")["status"], "READY")\n'''
+          assert marker in text
+          plan_test.write_text(text.replace(marker,expanded,1))
+          PY
+          python scripts/context/build_context_pack.py
+      - name: Post-transition regression and gauntlet
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_cp03_w02_plan -v
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python - <<'PY'
+          import json
+          p=json.load(open('iterations/03/waves/CP03-W02/TASK_GRAPH.json'))
+          t={x['id']:x for x in p['tasks']}
+          assert p['first_executable_task']=='W02-11'
+          assert t['W02-10']['status']=='COMPLETE' and t['W02-10']['proof']
+          assert t['W02-11']['status']=='READY' and not t['W02-11']['proof']
+          assert all(t[x]['status']=='BLOCKED' for x in ('W02-12','W02-13','W02-14'))
+          assert p['global_denominator']==7565 and p['openjarvis_obligations']==646
+          PY
+          git diff --check
+      - name: Restrict durable W02-10 transition mutation
+        run: |
+          python - <<'PY'
+          import subprocess
+          allowed_prefixes=('evidence/cp03/cp03-w02/W02-10/','sessions/20260921-w02-unary-inference/')
+          allowed_exact={
+            'iterations/03/waves/CP03-W02/TASK_GRAPH.json','tests/test_cp03_w02_plan.py',
+            'ledgers/CLAIM_LEDGER.ndjson','ledgers/EVIDENCE_LEDGER.ndjson','ledgers/RUN_LOG.ndjson',
+            'ledgers/WAVE_LEDGER.ndjson','ledgers/DECISION_LEDGER.ndjson','ledgers/RISK_LEDGER.ndjson',
+            'HANDOFF.md','.agentic/context/CURRENT_CONTEXT.json','.agentic/context/CURRENT_CONTEXT.md',
+          }
+          paths={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if line}
+          unexpected={p for p in paths if p not in allowed_exact and not p.startswith(allowed_prefixes)}
+          assert not unexpected, f'out-of-scope W02-10 transition mutation: {sorted(unexpected)}'
+          required={'iterations/03/waves/CP03-W02/TASK_GRAPH.json','tests/test_cp03_w02_plan.py','ledgers/CLAIM_LEDGER.ndjson','ledgers/EVIDENCE_LEDGER.ndjson','ledgers/DECISION_LEDGER.ndjson','ledgers/RISK_LEDGER.ndjson','HANDOFF.md','.agentic/context/CURRENT_CONTEXT.json'}
+          assert not (required-paths), f'missing durable transition surfaces: {sorted(required-paths)}'
+          PY
+      - name: CAS persist exact-head W02-10 transition
+        run: |
+          set -euo pipefail
+          remote_head="$(git ls-remote origin refs/heads/wave/cp03/w02-unary-inference-20260921 | cut -f1)"
+          test "$remote_head" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            iterations/03/waves/CP03-W02/TASK_GRAPH.json \
+            tests/test_cp03_w02_plan.py \
+            evidence/cp03/cp03-w02/W02-10 \
+            sessions/20260921-w02-unary-inference \
+            ledgers/CLAIM_LEDGER.ndjson ledgers/EVIDENCE_LEDGER.ndjson ledgers/RUN_LOG.ndjson \
+            ledgers/WAVE_LEDGER.ndjson ledgers/DECISION_LEDGER.ndjson ledgers/RISK_LEDGER.ndjson \
+            HANDOFF.md .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git commit -m 'state(cp03-w02): complete W02-10 real unary inference'
+          git push origin HEAD:wave/cp03/w02-unary-inference-20260921
