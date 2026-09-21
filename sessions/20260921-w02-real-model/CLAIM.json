@@ -1,15 +1,15 @@
 {
-  "schema_version": 1,
-  "date": "2026-09-21",
-  "project_id": "CLEVER-JARVIS-001",
-  "checkpoint": "CP03",
-  "iteration": "I03",
-  "parent_wave": "CP03-W02",
-  "canonical_task": "W02-09",
-  "wave_id": "CP03-W02-REAL-MODEL-20260921",
-  "claim_id": "CLAIM-CP03-W02-REAL-MODEL-20260921",
-  "owner": "chatgpt-gpt-5.6-sol",
   "base_head": "74cc4e01d1443bac41427b9e91b38ef7337e2520",
+  "canonical_task": "W02-09",
+  "checkpoint": "CP03",
+  "claim_id": "CLAIM-CP03-W02-REAL-MODEL-20260921",
+  "coordination": "W02-09 only: pin one real OpenJarvis catalog model lane, prove immutable real-weight acquisition and offline integrity, and fail closed for absent/corrupt/mock artifacts. No inference execution (W02-10), no provider egress, no denominator/parity mutation, no W02-10 completion.",
+  "date": "2026-09-21",
+  "iteration": "I03",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "parent_wave": "CP03-W02",
+  "project_id": "CLEVER-JARVIS-001",
+  "schema_version": 1,
   "scope": [
     "inventory/cp03/W02_REAL_MODEL_LANE.json",
     "scripts/cp03/w02_real_model.py",
@@ -31,6 +31,6 @@
     ".agentic/context/CURRENT_CONTEXT.json",
     ".agentic/context/CURRENT_CONTEXT.md"
   ],
-  "coordination": "W02-09 only: pin one real OpenJarvis catalog model lane, prove immutable real-weight acquisition and offline integrity, and fail closed for absent/corrupt/mock artifacts. No inference execution (W02-10), no provider egress, no denominator/parity mutation, no W02-10 completion.",
-  "status": "PROPOSED"
+  "status": "ACTIVE",
+  "wave_id": "CP03-W02-REAL-MODEL-20260921"
 }
