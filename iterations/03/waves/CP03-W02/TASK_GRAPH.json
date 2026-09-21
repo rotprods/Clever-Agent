@@ -1,5 +1,5 @@
 {
-  "first_executable_task": "W02-12",
+  "first_executable_task": "W02-13",
   "global_denominator": 7565,
   "iteration": "I03",
   "milestones": {
@@ -491,10 +491,29 @@
       "id": "W02-12",
       "owner_role": "rust_builder",
       "priority": "P0",
-      "proof": [],
+      "proof": [
+        {
+          "ack_without_termination": "FAIL_CLOSED",
+          "cancel_after_terminal": "REJECTED",
+          "cancel_before_first_chunk": "PASS",
+          "cancel_during_stream": "PASS",
+          "evidence_id": "EVID-W02-CANCELLATION-20260921",
+          "gate": "G4",
+          "local_worker_cessation": "PASS",
+          "parity_promotions": 0,
+          "provider_egress_executions": 0,
+          "remote_provider_cancellation_effect": "UNKNOWN",
+          "requested_ack_terminal_distinct": "PASS",
+          "result": "PASS",
+          "run_id": 35606146861,
+          "single_flight": "PASS",
+          "tool_executions": 0,
+          "validated_head": "50c356bed7348d6ddc37995ce9696655a615c206"
+        }
+      ],
       "reviewer_role": "python_builder",
       "rollback": "Desactivar concurrencia/ruta no cancelable.",
-      "status": "READY",
+      "status": "COMPLETE",
       "title": "Cancelaci\u00f3n real"
     },
     {
@@ -517,7 +536,7 @@
       "proof": [],
       "reviewer_role": "protocol_engineer",
       "rollback": "Retirar decoder defectuoso sin inventar salida.",
-      "status": "BLOCKED",
+      "status": "READY",
       "title": "Structured output y tool-call fragments"
     },
     {

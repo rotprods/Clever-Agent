@@ -1,0 +1,12 @@
+{
+  "claim_id": "CLAIM-CP03-W02-CANCELLATION-20260921",
+  "date": "2026-09-21",
+  "evidence_id": "EVID-W02-CANCELLATION-20260921",
+  "github_actions_run_id": 35606146861,
+  "next_task": "W02-13",
+  "schema_version": 1,
+  "status": "COMPLETE",
+  "task": "W02-12",
+  "validated_head": "50c356bed7348d6ddc37995ce9696655a615c206",
+  "wave_id": "CP03-W02-CANCELLATION-20260921"
+}

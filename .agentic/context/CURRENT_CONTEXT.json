@@ -16,16 +16,10 @@
     "D-0014",
     "D-0015",
     "D-0016",
-    "D-0017"
+    "D-0017",
+    "D-0018"
   ],
-  "active_claims": [
-    {
-      "claim_id": "CLAIM-CP03-W02-CANCELLATION-20260921",
-      "owner": "chatgpt-gpt-5.6-sol",
-      "status": "ACTIVE",
-      "wave_id": "CP03-W02-CANCELLATION-20260921"
-    }
-  ],
+  "active_claims": [],
   "authority_read_order": [
     "GOAL.md",
     "SECURITY_MODEL.md",
@@ -66,6 +60,7 @@
     "EVID-0012",
     "EVID-0013",
     "EVID-0014",
+    "EVID-W02-CANCELLATION-20260921",
     "EVID-W02-CONTROL-ATOMIC-20260909",
     "EVID-W02-EGRESS-BUDGET-20260921",
     "EVID-W02-FACETS-20260907",
@@ -209,6 +204,11 @@
       "risk_id": "RISK-0011",
       "severity": "HIGH",
       "status": "MITIGATING"
+    },
+    {
+      "risk_id": "RISK-0012",
+      "severity": "HIGH",
+      "status": "OPEN"
     }
   ],
   "planning": {
