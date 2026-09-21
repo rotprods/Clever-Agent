@@ -36,5 +36,5 @@
     ".agentic/context/CURRENT_CONTEXT.md"
   ],
   "coordination": "W02-11 only. Prove bounded streaming semantics over the exact W02-10 local lane: native OpenJarvis stream_full -> canonical sequenced chunks -> exactly one terminal, with fail-closed EOF/duplicate/reorder behavior and UTF-8/framing adversarials. No cancellation implementation (W02-12), no structured/tool execution (W02-13), no fallback (W02-14), no provider egress, no parity promotion, no denominator mutation, and no W02 closure.",
-  "status": "PROPOSED"
+  "status": "ACTIVE"
 }
