@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "project_id": "CLEVER-JARVIS-001",
+  "checkpoint": "CP03",
+  "parent_wave": "CP03-W02",
+  "canonical_task": "W02-13",
+  "wave_id": "CP03-W02-STRUCTURED-PREFLIGHT-20260921",
+  "claim_id": "CLAIM-CP03-W02-STRUCTURED-PREFLIGHT-20260921",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "date": "2026-09-21",
+  "base_head": "c46aca03854e227e236f421d784c05e50691aee9",
+  "status": "ACTIVE",
+  "coordination": "Narrow W02-13 support slice only: source-backed native structured-output/tool-call fragment normalization and fail-closed validation before the canonical wire extension. No tool execution, provider egress, inference-contract field-number/version mutation, TASK_GRAPH status/proof mutation, denominator/parity mutation, W02-14+ work, or W02 closure. W02-13 remains canonical READY until tool/structured data are representable end-to-end on the canonical wire with exact-head evidence.",
+  "scope": [
+    "adapters/openjarvis/structured_output.py",
+    "adapters/openjarvis/streaming_inference.py",
+    "tests/test_cp03_w02_structured_output.py",
+    "scripts/cp03/w02_structured_preflight_patch.py",
+    ".github/workflows/cp03-w02-structured-preflight.yml",
+    "sessions/20260921-w02-structured-preflight/**",
+    "evidence/cp03/cp03-w02/W02-13/preflight/**",
+    "ledgers/CLAIM_LEDGER.ndjson",
+    "ledgers/EVIDENCE_LEDGER.ndjson",
+    "ledgers/RUN_LOG.ndjson",
+    "ledgers/WAVE_LEDGER.ndjson",
+    "ledgers/DECISION_LEDGER.ndjson",
+    "ledgers/RISK_LEDGER.ndjson",
+    "HANDOFF.md",
+    ".agentic/context/CURRENT_CONTEXT.json",
+    ".agentic/context/CURRENT_CONTEXT.md"
+  ]
+}
