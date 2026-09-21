@@ -9,6 +9,7 @@
   "owner": "chatgpt-gpt-5.6-sol",
   "parent_wave": "CP03-W02",
   "project_id": "CLEVER-JARVIS-001",
+  "release_evidence_id": "EVID-W02-REAL-MODEL-20260921",
   "schema_version": 1,
   "scope": [
     "inventory/cp03/W02_REAL_MODEL_LANE.json",
@@ -32,6 +33,6 @@
     ".agentic/context/CURRENT_CONTEXT.md",
     "tests/test_cp03_w02_plan.py"
   ],
-  "status": "ACTIVE",
+  "status": "RELEASED",
   "wave_id": "CP03-W02-REAL-MODEL-20260921"
 }

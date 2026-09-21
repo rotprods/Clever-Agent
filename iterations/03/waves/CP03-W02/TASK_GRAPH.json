@@ -1,5 +1,5 @@
 {
-  "first_executable_task": "W02-09",
+  "first_executable_task": "W02-10",
   "global_denominator": 7565,
   "iteration": "I03",
   "milestones": {
@@ -361,10 +361,27 @@
       "id": "W02-09",
       "owner_role": "runtime_engineer",
       "priority": "P1",
-      "proof": [],
+      "proof": [
+        {
+          "artifact_sha256": "9acfc1e001311f34b4252001b626f2e466d592a42065f66571bff3790d4e1b14",
+          "artifact_size_bytes": 484220320,
+          "engine": "llamacpp",
+          "evidence_id": "EVID-W02-REAL-MODEL-20260921",
+          "lane": "L2_REAL_MODEL_PINNED_WEIGHTS",
+          "model_executions": 0,
+          "model_id": "qwen3:0.6b",
+          "offline_verification": "PASS",
+          "parity_promotions": 0,
+          "provider_egress_executions": 0,
+          "result": "PASS",
+          "run_id": 35558711768,
+          "runtime_executed": false,
+          "validated_head": "9609bc5221bdf878b652eaa958da4e7cd9ef18aa"
+        }
+      ],
       "reviewer_role": "reviewer_gauntlet",
       "rollback": "Retirar artefacto inv\u00e1lido sin sustituir por ref flotante.",
-      "status": "READY",
+      "status": "COMPLETE",
       "title": "Lane con modelo y pesos reales"
     },
     {
@@ -390,7 +407,7 @@
       "proof": [],
       "reviewer_role": "python_builder",
       "rollback": "Deshabilitar inferencia; M1 no cierra W02.",
-      "status": "BLOCKED",
+      "status": "READY",
       "title": "Inferencia unary end-to-end"
     },
     {
