@@ -204,6 +204,81 @@ def main() -> int:
         terminal = stream_terminal(request, 2)
         for value in (first, second, terminal):
             value.correlation_id = envelope.frame_id
+
+        def cancelled(final_sequence: int) -> adapter_pb2.AdapterFrame:
+            body = inference_pb2.InferenceTerminal(
+                contract_version=inference_version(),
+                request_id=request.request_id,
+                attempt_id=request.attempt_id,
+                final_sequence=final_sequence,
+                finish_reason=inference_pb2.INFERENCE_FINISH_REASON_CANCELLED,
+                usage=inference_pb2.InferenceUsage(
+                    measurement=inference_pb2.INFERENCE_USAGE_MEASUREMENT_UNKNOWN
+                ),
+            )
+            return frame(
+                "stream-cancelled",
+                "inference_terminal",
+                body,
+                correlation_id=envelope.frame_id,
+            )
+
+        def read_cancel() -> adapter_pb2.AdapterFrame:
+            cancel = read_frame()
+            if cancel is None or cancel.WhichOneof("body") != "inference_cancel":
+                raise SystemExit(93)
+            return cancel
+
+        def ack_cancel(cancel: adapter_pb2.AdapterFrame) -> None:
+            write_frame(
+                frame(
+                    f"cancel-ack:{cancel.frame_id}",
+                    "health",
+                    health(runtime_pb2.RUNTIME_HEALTH_STATUS_READY),
+                    correlation_id=cancel.frame_id,
+                )
+            )
+
+        if mode == "stream-cancel-before":
+            cancel = read_cancel()
+            if (
+                cancel.inference_cancel.target_request_id != request.request_id
+                or cancel.inference_cancel.target_attempt_id != request.attempt_id
+            ):
+                return 94
+            ack_cancel(cancel)
+            write_frame(cancelled(0))
+            return 0
+        if mode == "stream-cancel-during":
+            write_frame(first)
+            cancel = read_cancel()
+            if (
+                cancel.inference_cancel.target_request_id != request.request_id
+                or cancel.inference_cancel.target_attempt_id != request.attempt_id
+            ):
+                return 94
+            ack_cancel(cancel)
+            write_frame(cancelled(1))
+            return 0
+        if mode == "stream-cancel-after-terminal":
+            one_terminal = stream_terminal(request, 1)
+            one_terminal.correlation_id = envelope.frame_id
+            write_coalesced(first, one_terminal)
+            cancel = read_cancel()
+            error = adapter_pb2.AdapterError(
+                code="CANCEL_AFTER_TERMINAL",
+                message="inference already terminal",
+                retryable=False,
+            )
+            write_frame(
+                frame(
+                    f"cancel-error:{cancel.frame_id}",
+                    "error",
+                    error,
+                    correlation_id=cancel.frame_id,
+                )
+            )
+            return 0
         if mode == "stream-valid":
             write_fragmented_utf8_frame(first)
             write_coalesced(second, terminal)

@@ -6,8 +6,10 @@ import importlib
 import inspect
 import json
 from pathlib import Path
+import queue
 import struct
 import sys
+import threading
 import time
 from typing import BinaryIO, Iterable
 
@@ -19,6 +21,13 @@ if str(GENERATED) not in sys.path:
     sys.path.insert(0, str(GENERATED))
 
 from adapters.openjarvis import ADAPTER_ID, RUNTIME_ID, UPSTREAM_COMMIT, UPSTREAM_REPOSITORY
+from adapters.openjarvis.cancellation import (
+    cancelled_terminal,
+    decode_worker_event,
+    poll_worker_event,
+    start_stream_worker,
+    terminate_worker_bounded,
+)
 from adapters.openjarvis.streaming_inference import execute_stream
 from adapters.openjarvis.unary_inference import UnaryInferenceRejected, execute_unary
 from clever.v1 import adapter_pb2, common_pb2, inference_pb2, runtime_pb2
@@ -324,10 +333,41 @@ def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
     if first is None or first.WhichOneof("body") != "hello_ack" or not first.hello_ack.accepted:
         return 64
 
+    inbox: queue.Queue[tuple[str, object]] = queue.Queue()
+
+    def reader_loop() -> None:
+        while True:
+            try:
+                frame = read_frame(stdin)
+            except BaseException as exc:
+                inbox.put(("error", exc))
+                return
+            if frame is None:
+                inbox.put(("eof", None))
+                return
+            inbox.put(("frame", frame))
+
+    threading.Thread(target=reader_loop, name="clever-sidecar-control-reader", daemon=True).start()
+    recent_terminal: tuple[str, str] | None = None
+
+    def next_inbound(timeout: float | None = None) -> tuple[str, object]:
+        return inbox.get(timeout=timeout) if timeout is not None else inbox.get()
+
+    def adapter_error(code: str, message: str, request_frame_id: str) -> None:
+        error = adapter_pb2.AdapterError(code=code, message=message, retryable=False)
+        write_frame(
+            stdout,
+            _frame(f"error:{request_frame_id}", "error", error, correlation_id=request_frame_id),
+        )
+
     while True:
-        request = read_frame(stdin)
-        if request is None:
+        kind, payload = next_inbound()
+        if kind == "eof":
             return 0
+        if kind == "error":
+            return 74
+        request = payload
+        assert isinstance(request, adapter_pb2.AdapterFrame)
         body = request.WhichOneof("body")
         if body == "registry_snapshot_request":
             response = _frame(f"registry:{request.frame_id}", "registry_snapshot", snapshot, correlation_id=request.frame_id)
@@ -335,39 +375,158 @@ def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
         elif body == "health_request":
             write_frame(stdout, health_frame(reasons=diagnostics["unsupported_registries"], correlation_id=request.frame_id))
         elif body == "cancel":
-            # W01 has no long-running executable requests; cancellation is accepted as a no-op.
+            # Legacy adapter cancellation remains control-plane only; it is never inference-stop proof.
             write_frame(stdout, health_frame(correlation_id=request.frame_id))
+        elif body == "inference_cancel":
+            target = request.inference_cancel
+            if recent_terminal == (target.target_request_id, target.target_attempt_id):
+                adapter_error("CANCEL_AFTER_TERMINAL", "inference already reached a terminal state", request.frame_id)
+            else:
+                adapter_error("CANCEL_TARGET_NOT_ACTIVE", "no matching active inference request/attempt", request.frame_id)
         elif body == "inference_request":
             native_request = request.inference_request
             try:
                 if native_request.HasField("config") and native_request.config.stream:
-                    def emit_chunk(chunk: inference_pb2.InferenceChunk) -> None:
-                        write_frame(
-                            stdout,
-                            _frame(
-                                f"inference-chunk:{request.frame_id}:{chunk.sequence}",
-                                "inference_chunk",
-                                chunk,
-                                correlation_id=request.frame_id,
-                            ),
-                        )
+                    active = start_stream_worker(native_request, request_frame_id=request.frame_id)
+                    completed = False
+                    while not completed:
+                        # Control gets priority so cancel-before cannot be starved by a fast worker.
+                        try:
+                            control_kind, control_payload = next_inbound(timeout=0.005)
+                        except queue.Empty:
+                            control_kind, control_payload = "none", None
+                        if control_kind == "eof":
+                            terminate_worker_bounded(active)
+                            return 0
+                        if control_kind == "error":
+                            terminate_worker_bounded(active)
+                            return 74
+                        if control_kind == "frame":
+                            control = control_payload
+                            assert isinstance(control, adapter_pb2.AdapterFrame)
+                            control_body = control.WhichOneof("body")
+                            if control_body == "inference_cancel":
+                                cancel = control.inference_cancel
+                                if (
+                                    not cancel.HasField("contract_version")
+                                    or cancel.contract_version.major != 1
+                                    or not cancel.target_request_id.strip()
+                                    or not cancel.target_attempt_id.strip()
+                                    or cancel.target_request_id != active.request_id
+                                    or cancel.target_attempt_id != active.attempt_id
+                                ):
+                                    adapter_error(
+                                        "CANCEL_TARGET_MISMATCH",
+                                        "cancel request/attempt does not match active inference",
+                                        control.frame_id,
+                                    )
+                                    continue
+                                receipt = terminate_worker_bounded(active)
+                                if not receipt.process_stopped:
+                                    adapter_error(
+                                        "CANCEL_TERMINATION_FAILED",
+                                        "local inference worker did not stop inside bounded kill window",
+                                        control.frame_id,
+                                    )
+                                    return 75
+                                # ACK means the local worker is no longer alive. It does not attest any
+                                # remote provider/billing effect; W02-12 records that separately as UNKNOWN.
+                                write_frame(stdout, health_frame(correlation_id=control.frame_id))
+                                terminal = cancelled_terminal(active)
+                                write_frame(
+                                    stdout,
+                                    _frame(
+                                        f"inference-cancelled:{request.frame_id}",
+                                        "inference_terminal",
+                                        terminal,
+                                        correlation_id=request.frame_id,
+                                    ),
+                                )
+                                recent_terminal = (active.request_id, active.attempt_id)
+                                completed = True
+                                continue
+                            busy = adapter_pb2.AdapterBusy(
+                                retry_after_ms=25,
+                                reason="single-flight inference active; only matching inference_cancel is accepted",
+                            )
+                            write_frame(
+                                stdout,
+                                _frame(f"busy:{control.frame_id}", "busy", busy, correlation_id=control.frame_id),
+                            )
+                            continue
 
-                    def emit_terminal(terminal: inference_pb2.InferenceTerminal) -> None:
-                        write_frame(
-                            stdout,
-                            _frame(
-                                f"inference-terminal:{request.frame_id}",
-                                "inference_terminal",
-                                terminal,
-                                correlation_id=request.frame_id,
-                            ),
-                        )
-
-                    execute_stream(
-                        native_request,
-                        emit_chunk=emit_chunk,
-                        emit_terminal=emit_terminal,
-                    )
+                        event = poll_worker_event(active, timeout=0.005)
+                        if event is None:
+                            if not active.process.is_alive():
+                                # One final queue poll closes the race between process exit and feeder flush.
+                                event = poll_worker_event(active, timeout=0.05)
+                                if event is None:
+                                    failure = inference_pb2.InferenceError(
+                                        contract_version=common_pb2.ContractVersion(major=1, minor=2),
+                                        request_id=active.request_id,
+                                        attempt_id=active.attempt_id,
+                                        code=inference_pb2.INFERENCE_ERROR_CODE_INTERNAL,
+                                        message="stream worker exited without terminal/error",
+                                        retryable=False,
+                                    )
+                                    write_frame(
+                                        stdout,
+                                        _frame(
+                                            f"inference-error:{request.frame_id}",
+                                            "inference_error",
+                                            failure,
+                                            correlation_id=request.frame_id,
+                                        ),
+                                    )
+                                    recent_terminal = (active.request_id, active.attempt_id)
+                                    completed = True
+                            continue
+                        event_kind, event_payload = event
+                        message = decode_worker_event(event_kind, event_payload)
+                        if event_kind == "worker_exit":
+                            continue
+                        if event_kind == "chunk":
+                            assert isinstance(message, inference_pb2.InferenceChunk)
+                            active.last_sequence = message.sequence
+                            write_frame(
+                                stdout,
+                                _frame(
+                                    f"inference-chunk:{request.frame_id}:{message.sequence}",
+                                    "inference_chunk",
+                                    message,
+                                    correlation_id=request.frame_id,
+                                ),
+                            )
+                            continue
+                        if event_kind == "terminal":
+                            assert isinstance(message, inference_pb2.InferenceTerminal)
+                            active.process.join(timeout=0.25)
+                            write_frame(
+                                stdout,
+                                _frame(
+                                    f"inference-terminal:{request.frame_id}",
+                                    "inference_terminal",
+                                    message,
+                                    correlation_id=request.frame_id,
+                                ),
+                            )
+                            recent_terminal = (active.request_id, active.attempt_id)
+                            completed = True
+                            continue
+                        if event_kind == "error":
+                            assert isinstance(message, inference_pb2.InferenceError)
+                            active.process.join(timeout=0.25)
+                            write_frame(
+                                stdout,
+                                _frame(
+                                    f"inference-error:{request.frame_id}",
+                                    "inference_error",
+                                    message,
+                                    correlation_id=request.frame_id,
+                                ),
+                            )
+                            recent_terminal = (active.request_id, active.attempt_id)
+                            completed = True
                     continue
 
                 outcome = execute_unary(native_request)
@@ -389,6 +548,7 @@ def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
                         correlation_id=request.frame_id,
                     ),
                 )
+                recent_terminal = (native_request.request_id, native_request.attempt_id)
                 continue
             write_frame(
                 stdout,
@@ -408,6 +568,7 @@ def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
                     correlation_id=request.frame_id,
                 ),
             )
+            recent_terminal = (native_request.request_id, native_request.attempt_id)
         elif body == "shutdown":
             seconds, nanos = _now_timestamp()
             stopping = runtime_pb2.RuntimeHealth(
@@ -421,8 +582,8 @@ def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
             return 0
         else:
             error = adapter_pb2.AdapterError(
-                code="UNSUPPORTED_W01_FRAME",
-                message=f"W01 sidecar does not execute frame body {body!r}",
+                code="UNSUPPORTED_W02_FRAME",
+                message=f"W02 sidecar does not execute frame body {body!r}",
                 retryable=False,
             )
             write_frame(stdout, _frame(f"error:{request.frame_id}", "error", error, correlation_id=request.frame_id))

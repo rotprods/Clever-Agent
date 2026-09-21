@@ -478,6 +478,65 @@ fn stream_eof_before_terminal_fails_closed() {
 }
 
 #[test]
+fn cancel_before_first_chunk_requires_ack_and_cancelled_terminal() {
+    let command = fake_command("stream-cancel-before");
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
+        .expect("connect cancel-before fake sidecar");
+    let result = supervisor
+        .infer_stream_cancel_after_sequence(fake_stream_request(), 0, "operator cancel")
+        .expect("cancel-before must be acknowledged and terminated");
+    assert!(result.chunks.is_empty());
+    assert!(result.text.is_empty());
+    assert_eq!(result.cancel_ack.status, RuntimeHealthStatus::Ready as i32);
+    assert_eq!(result.terminal.final_sequence, 0);
+    assert_eq!(
+        InferenceFinishReason::try_from(result.terminal.finish_reason),
+        Ok(InferenceFinishReason::Cancelled)
+    );
+    assert!(!supervisor.is_poisoned());
+}
+
+#[test]
+fn cancel_during_stream_preserves_prior_chunks_and_stops_locally() {
+    let command = fake_command("stream-cancel-during");
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
+        .expect("connect cancel-during fake sidecar");
+    let result = supervisor
+        .infer_stream_cancel_after_sequence(fake_stream_request(), 1, "operator cancel")
+        .expect("cancel-during must be acknowledged and terminated");
+    assert_eq!(result.chunks.len(), 1);
+    assert_eq!(result.text, "hé");
+    assert_eq!(result.terminal.final_sequence, 1);
+    assert_eq!(
+        InferenceFinishReason::try_from(result.terminal.finish_reason),
+        Ok(InferenceFinishReason::Cancelled)
+    );
+    assert_eq!(result.cancel_ack.status, RuntimeHealthStatus::Ready as i32);
+}
+
+#[test]
+fn cancel_after_terminal_is_rejected_not_relabelled_success() {
+    let command = fake_command("stream-cancel-after-terminal");
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
+        .expect("connect post-terminal fake sidecar");
+    let result = supervisor
+        .infer_stream(fake_stream_request())
+        .expect("stream must first reach its real terminal");
+    assert_eq!(
+        InferenceFinishReason::try_from(result.terminal.finish_reason),
+        Ok(InferenceFinishReason::Stop)
+    );
+    let error = supervisor
+        .cancel_inference("w02-11-request", "w02-11-attempt", "too late")
+        .expect_err("post-terminal cancel must be rejected");
+    assert!(matches!(
+        error,
+        AdapterSupervisorError::InvalidRuntimeResponse(_)
+    ));
+    assert!(supervisor.is_poisoned());
+}
+
+#[test]
 fn real_openjarvis_unary_inference_uses_pinned_llamacpp_lane() {
     let python = required_env("CLEVER_TEST_PYTHON");
     let upstream_src = required_env("CLEVER_OPENJARVIS_SRC");
