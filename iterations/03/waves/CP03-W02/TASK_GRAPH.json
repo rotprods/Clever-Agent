@@ -1,5 +1,5 @@
 {
-  "first_executable_task": "W02-11",
+  "first_executable_task": "W02-12",
   "global_denominator": 7565,
   "iteration": "I03",
   "milestones": {
@@ -446,10 +446,32 @@
       "id": "W02-11",
       "owner_role": "rust_builder",
       "priority": "P1",
-      "proof": [],
+      "proof": [
+        {
+          "cancellation_executions": 0,
+          "coalesced_frame_transport": "PASS",
+          "duplicate_sequence": "REJECTED",
+          "eof_before_terminal": "REJECTED",
+          "evidence_id": "EVID-W02-STREAMING-20260921",
+          "exactly_one_terminal": "PASS",
+          "fragmented_utf8_transport": "PASS",
+          "gate": "G4",
+          "merged_runtime_head": "8657b8c8b5246a6c611c7eea9dc59796bcc13a98",
+          "native_stream_full_bridge": "PASS",
+          "parity_promotions": 0,
+          "pr_gauntlet_run_id": 35590473694,
+          "premerge_gauntlet_run_id": 35590345760,
+          "provider_egress_executions": 0,
+          "reordered_sequence": "REJECTED",
+          "result": "PASS",
+          "run_id": 35591204757,
+          "tool_executions": 0,
+          "validated_head": "b2994a9850e12850f703d7d8523e07e4d8704101"
+        }
+      ],
       "reviewer_role": "python_builder",
       "rollback": "Volver al camino unary seguro.",
-      "status": "READY",
+      "status": "COMPLETE",
       "title": "Stream y stream_full"
     },
     {
@@ -472,7 +494,7 @@
       "proof": [],
       "reviewer_role": "python_builder",
       "rollback": "Desactivar concurrencia/ruta no cancelable.",
-      "status": "BLOCKED",
+      "status": "READY",
       "title": "Cancelaci\u00f3n real"
     },
     {
