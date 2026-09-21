@@ -7,6 +7,7 @@ pub mod capabilities;
 pub mod error;
 pub mod events;
 pub mod identity;
+pub mod inference_security;
 pub mod lifecycle;
 pub mod memory;
 pub mod policy;

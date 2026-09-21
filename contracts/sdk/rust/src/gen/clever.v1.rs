@@ -284,6 +284,283 @@ impl ActionReceiptStatus {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct InferenceInput {
+    #[prost(enumeration="InferenceRole", tag="1")]
+    pub role: i32,
+    #[prost(string, tag="2")]
+    pub content: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub name: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct InferenceConfig {
+    #[prost(uint64, tag="1")]
+    pub max_output_tokens: u64,
+    #[prost(float, optional, tag="2")]
+    pub temperature: ::core::option::Option<f32>,
+    #[prost(float, optional, tag="3")]
+    pub top_p: ::core::option::Option<f32>,
+    #[prost(string, repeated, tag="4")]
+    pub stop_sequences: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(bool, tag="5")]
+    pub stream: bool,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct InferenceUsage {
+    #[prost(enumeration="InferenceUsageMeasurement", tag="1")]
+    pub measurement: i32,
+    #[prost(uint64, optional, tag="2")]
+    pub input_tokens: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="3")]
+    pub output_tokens: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="4")]
+    pub total_tokens: ::core::option::Option<u64>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct InferenceRequest {
+    #[prost(message, optional, tag="1")]
+    pub contract_version: ::core::option::Option<ContractVersion>,
+    #[prost(string, tag="2")]
+    pub request_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub attempt_id: ::prost::alloc::string::String,
+    #[prost(message, optional, tag="4")]
+    pub principal: ::core::option::Option<PrincipalRef>,
+    #[prost(string, tag="5")]
+    pub session_id: ::prost::alloc::string::String,
+    #[prost(string, tag="6")]
+    pub engine_id: ::prost::alloc::string::String,
+    #[prost(string, tag="7")]
+    pub model_id: ::prost::alloc::string::String,
+    #[prost(message, repeated, tag="8")]
+    pub inputs: ::prost::alloc::vec::Vec<InferenceInput>,
+    #[prost(message, optional, tag="9")]
+    pub config: ::core::option::Option<InferenceConfig>,
+    #[prost(message, optional, tag="10")]
+    pub deadline_at: ::core::option::Option<::prost_types::Timestamp>,
+    #[prost(string, tag="11")]
+    pub idempotency_key: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct InferenceChunk {
+    #[prost(message, optional, tag="1")]
+    pub contract_version: ::core::option::Option<ContractVersion>,
+    #[prost(string, tag="2")]
+    pub request_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub attempt_id: ::prost::alloc::string::String,
+    #[prost(uint64, tag="4")]
+    pub sequence: u64,
+    #[prost(string, tag="5")]
+    pub text_delta: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct InferenceTerminal {
+    #[prost(message, optional, tag="1")]
+    pub contract_version: ::core::option::Option<ContractVersion>,
+    #[prost(string, tag="2")]
+    pub request_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub attempt_id: ::prost::alloc::string::String,
+    #[prost(uint64, tag="4")]
+    pub final_sequence: u64,
+    #[prost(enumeration="InferenceFinishReason", tag="5")]
+    pub finish_reason: i32,
+    #[prost(message, optional, tag="6")]
+    pub usage: ::core::option::Option<InferenceUsage>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct InferenceError {
+    #[prost(message, optional, tag="1")]
+    pub contract_version: ::core::option::Option<ContractVersion>,
+    #[prost(string, tag="2")]
+    pub request_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub attempt_id: ::prost::alloc::string::String,
+    #[prost(enumeration="InferenceErrorCode", tag="4")]
+    pub code: i32,
+    #[prost(string, tag="5")]
+    pub message: ::prost::alloc::string::String,
+    #[prost(bool, tag="6")]
+    pub retryable: bool,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct InferenceCancel {
+    #[prost(message, optional, tag="1")]
+    pub contract_version: ::core::option::Option<ContractVersion>,
+    #[prost(string, tag="2")]
+    pub target_request_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub target_attempt_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub reason: ::prost::alloc::string::String,
+}
+/// Inference messages carry cognition data only. They cannot grant egress,
+/// budget, tool-execution or parity authority.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum InferenceRole {
+    Unspecified = 0,
+    System = 1,
+    User = 2,
+    Assistant = 3,
+    Tool = 4,
+}
+impl InferenceRole {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            InferenceRole::Unspecified => "INFERENCE_ROLE_UNSPECIFIED",
+            InferenceRole::System => "INFERENCE_ROLE_SYSTEM",
+            InferenceRole::User => "INFERENCE_ROLE_USER",
+            InferenceRole::Assistant => "INFERENCE_ROLE_ASSISTANT",
+            InferenceRole::Tool => "INFERENCE_ROLE_TOOL",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "INFERENCE_ROLE_UNSPECIFIED" => Some(Self::Unspecified),
+            "INFERENCE_ROLE_SYSTEM" => Some(Self::System),
+            "INFERENCE_ROLE_USER" => Some(Self::User),
+            "INFERENCE_ROLE_ASSISTANT" => Some(Self::Assistant),
+            "INFERENCE_ROLE_TOOL" => Some(Self::Tool),
+            _ => None,
+        }
+    }
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum InferenceFinishReason {
+    Unspecified = 0,
+    Stop = 1,
+    Length = 2,
+    Cancelled = 3,
+    ContentFilter = 4,
+    ToolCall = 5,
+    Error = 6,
+}
+impl InferenceFinishReason {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            InferenceFinishReason::Unspecified => "INFERENCE_FINISH_REASON_UNSPECIFIED",
+            InferenceFinishReason::Stop => "INFERENCE_FINISH_REASON_STOP",
+            InferenceFinishReason::Length => "INFERENCE_FINISH_REASON_LENGTH",
+            InferenceFinishReason::Cancelled => "INFERENCE_FINISH_REASON_CANCELLED",
+            InferenceFinishReason::ContentFilter => "INFERENCE_FINISH_REASON_CONTENT_FILTER",
+            InferenceFinishReason::ToolCall => "INFERENCE_FINISH_REASON_TOOL_CALL",
+            InferenceFinishReason::Error => "INFERENCE_FINISH_REASON_ERROR",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "INFERENCE_FINISH_REASON_UNSPECIFIED" => Some(Self::Unspecified),
+            "INFERENCE_FINISH_REASON_STOP" => Some(Self::Stop),
+            "INFERENCE_FINISH_REASON_LENGTH" => Some(Self::Length),
+            "INFERENCE_FINISH_REASON_CANCELLED" => Some(Self::Cancelled),
+            "INFERENCE_FINISH_REASON_CONTENT_FILTER" => Some(Self::ContentFilter),
+            "INFERENCE_FINISH_REASON_TOOL_CALL" => Some(Self::ToolCall),
+            "INFERENCE_FINISH_REASON_ERROR" => Some(Self::Error),
+            _ => None,
+        }
+    }
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum InferenceErrorCode {
+    Unspecified = 0,
+    InvalidRequest = 1,
+    EngineUnavailable = 2,
+    ModelUnavailable = 3,
+    DeadlineExceeded = 4,
+    BudgetExceeded = 5,
+    Cancelled = 6,
+    Busy = 7,
+    Internal = 8,
+}
+impl InferenceErrorCode {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            InferenceErrorCode::Unspecified => "INFERENCE_ERROR_CODE_UNSPECIFIED",
+            InferenceErrorCode::InvalidRequest => "INFERENCE_ERROR_CODE_INVALID_REQUEST",
+            InferenceErrorCode::EngineUnavailable => "INFERENCE_ERROR_CODE_ENGINE_UNAVAILABLE",
+            InferenceErrorCode::ModelUnavailable => "INFERENCE_ERROR_CODE_MODEL_UNAVAILABLE",
+            InferenceErrorCode::DeadlineExceeded => "INFERENCE_ERROR_CODE_DEADLINE_EXCEEDED",
+            InferenceErrorCode::BudgetExceeded => "INFERENCE_ERROR_CODE_BUDGET_EXCEEDED",
+            InferenceErrorCode::Cancelled => "INFERENCE_ERROR_CODE_CANCELLED",
+            InferenceErrorCode::Busy => "INFERENCE_ERROR_CODE_BUSY",
+            InferenceErrorCode::Internal => "INFERENCE_ERROR_CODE_INTERNAL",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "INFERENCE_ERROR_CODE_UNSPECIFIED" => Some(Self::Unspecified),
+            "INFERENCE_ERROR_CODE_INVALID_REQUEST" => Some(Self::InvalidRequest),
+            "INFERENCE_ERROR_CODE_ENGINE_UNAVAILABLE" => Some(Self::EngineUnavailable),
+            "INFERENCE_ERROR_CODE_MODEL_UNAVAILABLE" => Some(Self::ModelUnavailable),
+            "INFERENCE_ERROR_CODE_DEADLINE_EXCEEDED" => Some(Self::DeadlineExceeded),
+            "INFERENCE_ERROR_CODE_BUDGET_EXCEEDED" => Some(Self::BudgetExceeded),
+            "INFERENCE_ERROR_CODE_CANCELLED" => Some(Self::Cancelled),
+            "INFERENCE_ERROR_CODE_BUSY" => Some(Self::Busy),
+            "INFERENCE_ERROR_CODE_INTERNAL" => Some(Self::Internal),
+            _ => None,
+        }
+    }
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum InferenceUsageMeasurement {
+    Unspecified = 0,
+    Unknown = 1,
+    Estimated = 2,
+    Exact = 3,
+}
+impl InferenceUsageMeasurement {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            InferenceUsageMeasurement::Unspecified => "INFERENCE_USAGE_MEASUREMENT_UNSPECIFIED",
+            InferenceUsageMeasurement::Unknown => "INFERENCE_USAGE_MEASUREMENT_UNKNOWN",
+            InferenceUsageMeasurement::Estimated => "INFERENCE_USAGE_MEASUREMENT_ESTIMATED",
+            InferenceUsageMeasurement::Exact => "INFERENCE_USAGE_MEASUREMENT_EXACT",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "INFERENCE_USAGE_MEASUREMENT_UNSPECIFIED" => Some(Self::Unspecified),
+            "INFERENCE_USAGE_MEASUREMENT_UNKNOWN" => Some(Self::Unknown),
+            "INFERENCE_USAGE_MEASUREMENT_ESTIMATED" => Some(Self::Estimated),
+            "INFERENCE_USAGE_MEASUREMENT_EXACT" => Some(Self::Exact),
+            _ => None,
+        }
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RuntimeDescriptor {
     #[prost(message, optional, tag="1")]
     pub contract_version: ::core::option::Option<ContractVersion>,
@@ -473,7 +750,7 @@ pub struct AdapterFrame {
     pub sent_at: ::core::option::Option<::prost_types::Timestamp>,
     #[prost(message, optional, tag="5")]
     pub deadline_at: ::core::option::Option<::prost_types::Timestamp>,
-    #[prost(oneof="adapter_frame::Body", tags="10, 11, 12, 13, 14, 15, 16, 17, 18, 19")]
+    #[prost(oneof="adapter_frame::Body", tags="10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24")]
     pub body: ::core::option::Option<adapter_frame::Body>,
 }
 /// Nested message and enum types in `AdapterFrame`.
@@ -501,6 +778,16 @@ pub mod adapter_frame {
         Busy(super::AdapterBusy),
         #[prost(message, tag="19")]
         Error(super::AdapterError),
+        #[prost(message, tag="20")]
+        InferenceRequest(super::InferenceRequest),
+        #[prost(message, tag="21")]
+        InferenceChunk(super::InferenceChunk),
+        #[prost(message, tag="22")]
+        InferenceTerminal(super::InferenceTerminal),
+        #[prost(message, tag="23")]
+        InferenceError(super::InferenceError),
+        #[prost(message, tag="24")]
+        InferenceCancel(super::InferenceCancel),
     }
 }
 /// Adapter transport is control-plane plumbing, not a source of authorization.
