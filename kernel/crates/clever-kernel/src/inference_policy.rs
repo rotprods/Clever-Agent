@@ -5,9 +5,7 @@ use std::{
 
 use clever_contracts::{InferenceRequest, PrincipalRef};
 
-use crate::{
-    error::KernelError, identity::validate_principal, version::validate_contract_version,
-};
+use crate::{error::KernelError, identity::validate_principal, version::validate_contract_version};
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct SecretHandle(String);
@@ -175,17 +173,37 @@ impl Display for InferenceAdmissionError {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Kernel(error) => Display::fmt(error, formatter),
-            Self::RemoteGrantRequired => formatter.write_str("remote inference requires a trusted grant"),
+            Self::RemoteGrantRequired => {
+                formatter.write_str("remote inference requires a trusted grant")
+            }
             Self::GrantExpired => formatter.write_str("remote inference grant is expired"),
-            Self::GrantPrincipalMismatch => formatter.write_str("remote inference grant principal mismatch"),
-            Self::GrantSessionMismatch => formatter.write_str("remote inference grant session mismatch"),
-            Self::DestinationNotAllowed => formatter.write_str("remote inference destination is not allowed"),
-            Self::SecretHandleMismatch => formatter.write_str("remote inference secret handle is not allowed"),
-            Self::InputTokenBudgetExceeded => formatter.write_str("remote inference input-token budget exceeded"),
-            Self::OutputTokenBudgetExceeded => formatter.write_str("remote inference output-token budget exceeded"),
-            Self::TotalTokenBudgetExceeded => formatter.write_str("remote inference total-token budget exceeded"),
-            Self::CostBudgetExceeded => formatter.write_str("remote inference cost budget exceeded"),
-            Self::InvalidDestination => formatter.write_str("remote inference destination is invalid"),
+            Self::GrantPrincipalMismatch => {
+                formatter.write_str("remote inference grant principal mismatch")
+            }
+            Self::GrantSessionMismatch => {
+                formatter.write_str("remote inference grant session mismatch")
+            }
+            Self::DestinationNotAllowed => {
+                formatter.write_str("remote inference destination is not allowed")
+            }
+            Self::SecretHandleMismatch => {
+                formatter.write_str("remote inference secret handle is not allowed")
+            }
+            Self::InputTokenBudgetExceeded => {
+                formatter.write_str("remote inference input-token budget exceeded")
+            }
+            Self::OutputTokenBudgetExceeded => {
+                formatter.write_str("remote inference output-token budget exceeded")
+            }
+            Self::TotalTokenBudgetExceeded => {
+                formatter.write_str("remote inference total-token budget exceeded")
+            }
+            Self::CostBudgetExceeded => {
+                formatter.write_str("remote inference cost budget exceeded")
+            }
+            Self::InvalidDestination => {
+                formatter.write_str("remote inference destination is invalid")
+            }
             Self::InvalidGrant => formatter.write_str("remote inference grant is invalid"),
         }
     }
@@ -229,7 +247,7 @@ pub fn authorize_inference(
                 None,
                 false,
                 reservation,
-            ))
+            )?)
         }
         InferenceRoute::Remote {
             destination,
@@ -284,7 +302,7 @@ pub fn authorize_inference(
                 Some(grant.destination.clone()),
                 true,
                 reservation,
-            ))
+            )?)
         }
     }
 }
@@ -308,8 +326,11 @@ fn build_admission(
     destination: Option<String>,
     secret_handle_used: bool,
     reservation: InferenceBudgetReservation,
-) -> InferenceAdmission {
-    let principal = request.principal.as_ref().expect("principal validated");
+) -> Result<InferenceAdmission, InferenceAdmissionError> {
+    let principal = request
+        .principal
+        .as_ref()
+        .ok_or(KernelError::MissingField("principal"))?;
     let audit = InferenceAuditRecord {
         request_id: request.request_id.clone(),
         attempt_id: request.attempt_id.clone(),
@@ -321,11 +342,11 @@ fn build_admission(
         secret_handle_used,
         reservation: reservation.clone(),
     };
-    InferenceAdmission {
+    Ok(InferenceAdmission {
         mode,
         reservation,
         audit,
-    }
+    })
 }
 
 fn same_principal(left: &PrincipalRef, right: &PrincipalRef) -> bool {
@@ -339,7 +360,9 @@ fn validate_remote_destination(value: &str) -> Result<(), InferenceAdmissionErro
     if value.is_empty()
         || value.trim() != value
         || !value.starts_with("https://")
-        || value.chars().any(|character| character.is_whitespace() || character.is_control())
+        || value
+            .chars()
+            .any(|character| character.is_whitespace() || character.is_control())
         || value.contains('\\')
         || value.contains('@')
         || value.contains('?')
