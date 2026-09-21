@@ -1,0 +1,47 @@
+name: CP03 W02 Unary Workflow Repair
+
+on:
+  push:
+    branches: [wave/cp03/w02-unary-inference-20260921]
+    paths:
+      - '.github/workflows/cp03-w02-unary-finalize.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cp03-w02-unary-workflow-repair-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Repair static job permission and verify workflow text
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/cp03-w02-unary-inference.yml')
+          text=p.read_text()
+          old="      contents: ${{ github.event_name == 'push' && 'write' || 'read' }}"
+          new="      contents: write"
+          assert text.count(old)==1, f'permission anchor count={text.count(old)}'
+          p.write_text(text.replace(old,new,1))
+          PY
+          grep -q '^      contents: write$' .github/workflows/cp03-w02-unary-inference.yml
+          git diff --check
+      - name: CAS persist workflow repair
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-unary-inference-20260921 | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/cp03-w02-unary-inference.yml
+          git commit -m 'fix(cp03-w02): use static workflow contents permission'
+          git push origin HEAD:wave/cp03/w02-unary-inference-20260921
