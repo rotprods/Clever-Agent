@@ -18,10 +18,11 @@ use std::os::unix::process::CommandExt;
 
 use clever_contracts::{
     adapter_frame, AdapterCancel, AdapterFrame, AdapterHealthRequest, AdapterHelloAck,
-    AdapterShutdown, CapabilityDescriptor, ContractVersion, InferenceChunk, InferenceError,
-    InferenceFinishReason, InferenceRequest, InferenceTerminal, InferenceUsageMeasurement,
-    LifecycleMode, NativeRegistryEntry, PlatformConstraint, ProvenanceRef, RegistryPrimitive,
-    RegistrySnapshot, RegistrySnapshotRequest, RuntimeHealth, RuntimeHealthStatus, RuntimeOwner,
+    AdapterShutdown, CapabilityDescriptor, ContractVersion, InferenceCancel, InferenceChunk,
+    InferenceError, InferenceFinishReason, InferenceRequest, InferenceTerminal,
+    InferenceUsageMeasurement, LifecycleMode, NativeRegistryEntry, PlatformConstraint,
+    ProvenanceRef, RegistryPrimitive, RegistrySnapshot, RegistrySnapshotRequest, RuntimeHealth,
+    RuntimeHealthStatus, RuntimeOwner,
 };
 use prost::Message;
 
@@ -44,7 +45,11 @@ const REQUIRED_FEATURES: [&str; 5] = [
     "cancel",
     "shutdown",
 ];
-const OPTIONAL_FEATURES: [&str; 2] = ["unary-inference", "streaming-inference"];
+const OPTIONAL_FEATURES: [&str; 3] = [
+    "unary-inference",
+    "streaming-inference",
+    "streaming-cancellation",
+];
 const W02_UNARY_ENGINE_ID: &str = "llamacpp";
 const W02_UNARY_MODEL_ID: &str = "qwen3:0.6b";
 const RESERVED_METADATA_TOKENS: [&str; 6] = [
@@ -285,6 +290,21 @@ pub struct StreamingInferenceResult {
     pub chunks: Vec<InferenceChunk>,
     pub text: String,
     pub terminal: InferenceTerminal,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct CancelledStreamingInferenceResult {
+    pub chunks: Vec<InferenceChunk>,
+    pub text: String,
+    pub terminal: InferenceTerminal,
+    pub cancellation_requested: bool,
+    pub cancellation_acknowledged: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum InferenceCancelOutcome {
+    Acknowledged,
+    AlreadyTerminal,
 }
 
 struct InboundState {
@@ -802,6 +822,334 @@ impl AdapterSupervisor {
                 }
             }
         }
+    }
+
+    fn send_inference_cancel_frame(
+        &mut self,
+        target_request_id: &str,
+        target_attempt_id: &str,
+        reason: &str,
+    ) -> Result<String, AdapterSupervisorError> {
+        if target_request_id.trim().is_empty()
+            || target_attempt_id.trim().is_empty()
+            || reason.trim().is_empty()
+        {
+            return Err(AdapterSupervisorError::InvalidInferenceRequest(
+                "cancellation request_id, attempt_id and reason must be non-empty".to_owned(),
+            ));
+        }
+        let frame = self.next_control_frame(
+            adapter_frame::Body::InferenceCancel(InferenceCancel {
+                contract_version: Some(ContractVersion { major: 1, minor: 2 }),
+                target_request_id: target_request_id.to_owned(),
+                target_attempt_id: target_attempt_id.to_owned(),
+                reason: reason.to_owned(),
+            }),
+            self.policy.request_timeout,
+        );
+        let frame_id = frame.frame_id.clone();
+        if let Err(error) = self.write_frame(&frame) {
+            return self.fail_protocol(error);
+        }
+        Ok(frame_id)
+    }
+
+    fn validate_inference_cancel_ack(
+        &mut self,
+        frame: &AdapterFrame,
+        cancel_frame_id: &str,
+        request: &InferenceRequest,
+    ) -> Result<(), AdapterSupervisorError> {
+        if frame.frame_id.trim().is_empty() || frame.correlation_id != cancel_frame_id {
+            return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                "cancellation ACK correlation mismatch".to_owned(),
+            ));
+        }
+        let ack = match frame.body.as_ref() {
+            Some(adapter_frame::Body::InferenceCancel(value)) => value,
+            _ => {
+                return self.fail_protocol(AdapterSupervisorError::UnexpectedFrame(
+                    "inference cancellation ACK",
+                ))
+            }
+        };
+        if let Err(error) = validate_contract_version(ack.contract_version.as_ref()) {
+            return self.fail_protocol(error.into());
+        }
+        if ack.target_request_id != request.request_id
+            || ack.target_attempt_id != request.attempt_id
+            || ack.reason.trim().is_empty()
+        {
+            return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                "cancellation ACK target/reason mismatch".to_owned(),
+            ));
+        }
+        Ok(())
+    }
+
+    pub fn cancel_inference(
+        &mut self,
+        target_request_id: impl Into<String>,
+        target_attempt_id: impl Into<String>,
+        reason: impl Into<String>,
+    ) -> Result<InferenceCancelOutcome, AdapterSupervisorError> {
+        self.ensure_io_healthy()?;
+        if !self.negotiated_features.contains("streaming-cancellation") {
+            return Err(AdapterSupervisorError::InvalidInferenceRequest(
+                "peer did not negotiate streaming-cancellation".to_owned(),
+            ));
+        }
+        let request_id = target_request_id.into();
+        let attempt_id = target_attempt_id.into();
+        let reason = reason.into();
+        let cancel_frame_id =
+            self.send_inference_cancel_frame(&request_id, &attempt_id, &reason)?;
+        let response =
+            match self.receive_frame(self.policy.request_timeout, "inference cancellation ACK") {
+                Ok(response) => response,
+                Err(error) => return self.fail_protocol(error),
+            };
+        if response.frame_id.trim().is_empty() || response.correlation_id != cancel_frame_id {
+            return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                "cancellation response correlation mismatch".to_owned(),
+            ));
+        }
+        match response.body {
+            Some(adapter_frame::Body::InferenceCancel(ack)) => {
+                if let Err(error) = validate_contract_version(ack.contract_version.as_ref()) {
+                    return self.fail_protocol(error.into());
+                }
+                if ack.target_request_id != request_id || ack.target_attempt_id != attempt_id {
+                    return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                        "cancellation ACK target mismatch".to_owned(),
+                    ));
+                }
+                Ok(InferenceCancelOutcome::Acknowledged)
+            }
+            Some(adapter_frame::Body::Error(error)) if error.code == "CANCEL_ALREADY_TERMINAL" => {
+                Ok(InferenceCancelOutcome::AlreadyTerminal)
+            }
+            Some(adapter_frame::Body::Error(error)) => {
+                Err(AdapterSupervisorError::InvalidRuntimeResponse(format!(
+                    "cancellation rejected {}: {}",
+                    error.code, error.message
+                )))
+            }
+            _ => self.fail_protocol(AdapterSupervisorError::UnexpectedFrame(
+                "inference cancellation response",
+            )),
+        }
+    }
+
+    pub fn infer_stream_with_cancellation(
+        &mut self,
+        request: InferenceRequest,
+        cancel_after_chunks: usize,
+        reason: impl Into<String>,
+    ) -> Result<CancelledStreamingInferenceResult, AdapterSupervisorError> {
+        self.ensure_io_healthy()?;
+        if !self.negotiated_features.contains("streaming-inference")
+            || !self.negotiated_features.contains("streaming-cancellation")
+        {
+            return self.fail_protocol(AdapterSupervisorError::InvalidInferenceRequest(
+                "peer did not negotiate streaming inference cancellation".to_owned(),
+            ));
+        }
+        let reason = reason.into();
+        if reason.trim().is_empty() {
+            return Err(AdapterSupervisorError::InvalidInferenceRequest(
+                "cancellation reason must be non-empty".to_owned(),
+            ));
+        }
+        let reservation = InferenceReservation {
+            estimated_input_tokens: 0,
+            estimated_cost_microusd: 0,
+        };
+        let local_target = InferenceTarget {
+            provider_id: "openjarvis.llamacpp".to_owned(),
+            origin: "loopback".to_owned(),
+            external: false,
+        };
+        authorize_inference_egress(&request, &local_target, None, &reservation, 0)
+            .map_err(|error| AdapterSupervisorError::InvalidInferenceRequest(error.to_string()))?;
+        let config = request.config.as_ref().ok_or_else(|| {
+            AdapterSupervisorError::InvalidInferenceRequest("config is required".to_owned())
+        })?;
+        if request.engine_id != W02_UNARY_ENGINE_ID
+            || request.model_id != W02_UNARY_MODEL_ID
+            || request.idempotency_key.trim().is_empty()
+            || request.inputs.is_empty()
+            || request.deadline_at.is_none()
+            || !config.stream
+            || config.max_output_tokens == 0
+            || config.max_output_tokens > 256
+            || request
+                .inputs
+                .iter()
+                .any(|input| input.role == 0 || input.content.trim().is_empty())
+        {
+            return self.fail_protocol(AdapterSupervisorError::InvalidInferenceRequest(
+                "request is outside the bounded W02-12 cancellation lane".to_owned(),
+            ));
+        }
+
+        let frame = self.next_control_frame(
+            adapter_frame::Body::InferenceRequest(request.clone()),
+            self.policy.request_timeout,
+        );
+        let request_frame_id = frame.frame_id.clone();
+        if let Err(error) = self.write_frame(&frame) {
+            return self.fail_protocol(error);
+        }
+
+        let mut chunks = Vec::new();
+        let mut text = String::new();
+        let mut expected_sequence = 1_u64;
+        let mut cancel_frame_id = None;
+        let mut cancellation_acknowledged = false;
+        if cancel_after_chunks == 0 {
+            cancel_frame_id = Some(self.send_inference_cancel_frame(
+                &request.request_id,
+                &request.attempt_id,
+                &reason,
+            )?);
+        }
+
+        loop {
+            let response = match self.receive_frame(
+                self.policy.request_timeout,
+                "inference cancellation termination",
+            ) {
+                Ok(response) => response,
+                Err(error) => return self.fail_protocol(error),
+            };
+            match response.body.as_ref() {
+                Some(adapter_frame::Body::InferenceCancel(_)) => {
+                    let expected = match cancel_frame_id.as_deref() {
+                        Some(value) => value,
+                        None => {
+                            return self.fail_protocol(
+                                AdapterSupervisorError::InvalidRuntimeResponse(
+                                    "unsolicited cancellation ACK".to_owned(),
+                                ),
+                            )
+                        }
+                    };
+                    self.validate_inference_cancel_ack(&response, expected, &request)?;
+                    if cancellation_acknowledged {
+                        return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                            "duplicate cancellation ACK".to_owned(),
+                        ));
+                    }
+                    cancellation_acknowledged = true;
+                }
+                Some(adapter_frame::Body::InferenceChunk(_)) => {
+                    self.validate_inference_outer(&response, &request_frame_id)?;
+                    let chunk = match response.body {
+                        Some(adapter_frame::Body::InferenceChunk(chunk)) => chunk,
+                        _ => unreachable!(),
+                    };
+                    self.validate_stream_chunk(&chunk, &request, expected_sequence)?;
+                    text.push_str(&chunk.text_delta);
+                    chunks.push(chunk);
+                    expected_sequence = expected_sequence.saturating_add(1);
+                    if cancel_frame_id.is_none() && chunks.len() >= cancel_after_chunks {
+                        cancel_frame_id = Some(self.send_inference_cancel_frame(
+                            &request.request_id,
+                            &request.attempt_id,
+                            &reason,
+                        )?);
+                    }
+                }
+                Some(adapter_frame::Body::InferenceTerminal(_)) => {
+                    self.validate_inference_outer(&response, &request_frame_id)?;
+                    if cancel_frame_id.is_none() {
+                        return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                            "stream reached terminal state before cancellation was requested"
+                                .to_owned(),
+                        ));
+                    }
+                    if !cancellation_acknowledged {
+                        return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                            "cancellation termination arrived before ACK".to_owned(),
+                        ));
+                    }
+                    let terminal = match response.body {
+                        Some(adapter_frame::Body::InferenceTerminal(terminal)) => terminal,
+                        _ => unreachable!(),
+                    };
+                    let final_sequence = expected_sequence.saturating_sub(1);
+                    self.validate_cancelled_terminal(&terminal, &request, final_sequence)?;
+                    return Ok(CancelledStreamingInferenceResult {
+                        chunks,
+                        text,
+                        terminal,
+                        cancellation_requested: true,
+                        cancellation_acknowledged,
+                    });
+                }
+                Some(adapter_frame::Body::InferenceError(_)) => {
+                    self.validate_inference_outer(&response, &request_frame_id)?;
+                    let failure = match response.body {
+                        Some(adapter_frame::Body::InferenceError(error)) => error,
+                        _ => unreachable!(),
+                    };
+                    return self.inference_failure(failure, &request);
+                }
+                Some(adapter_frame::Body::Error(error)) => {
+                    return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                        format!(
+                            "cancellation transport error {}: {}",
+                            error.code, error.message
+                        ),
+                    ))
+                }
+                _ => {
+                    return self.fail_protocol(AdapterSupervisorError::UnexpectedFrame(
+                        "inference cancellation",
+                    ))
+                }
+            }
+        }
+    }
+
+    fn validate_cancelled_terminal(
+        &mut self,
+        terminal: &InferenceTerminal,
+        request: &InferenceRequest,
+        expected_final_sequence: u64,
+    ) -> Result<(), AdapterSupervisorError> {
+        if let Err(error) = validate_contract_version(terminal.contract_version.as_ref()) {
+            return self.fail_protocol(error.into());
+        }
+        let usage = terminal.usage.as_ref();
+        let measurement =
+            usage.and_then(|value| InferenceUsageMeasurement::try_from(value.measurement).ok());
+        let usage_valid = match (measurement, usage) {
+            (Some(InferenceUsageMeasurement::Exact), Some(value)) => {
+                value.input_tokens.is_some()
+                    && value.output_tokens.is_some()
+                    && value.total_tokens.is_some()
+            }
+            (Some(InferenceUsageMeasurement::Unknown), Some(value)) => {
+                value.input_tokens.is_none()
+                    && value.output_tokens.is_none()
+                    && value.total_tokens.is_none()
+            }
+            _ => false,
+        };
+        if terminal.request_id != request.request_id
+            || terminal.attempt_id != request.attempt_id
+            || terminal.final_sequence != expected_final_sequence
+            || InferenceFinishReason::try_from(terminal.finish_reason)
+                != Ok(InferenceFinishReason::Cancelled)
+            || !usage_valid
+        {
+            return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                "invalid cancellation terminal identity/sequence/finish/usage".to_owned(),
+            ));
+        }
+        Ok(())
     }
 
     fn validate_stream_chunk(
