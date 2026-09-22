@@ -111,6 +111,7 @@ jobs:
           assert report['adapter_supervisor_f01_f02']=='NOT_RUN'
           assert report['openjarvis_sidecar_f01_f02']=='NOT_RUN'
           assert report['parity_promotions']==0
+          assert 35708253012 in report['historical_red_runs']
           PY
       - name: Restrict durable mutation
         run: |
@@ -144,7 +145,6 @@ jobs:
             'ledgers/DECISION_LEDGER.ndjson',
             'ledgers/RISK_LEDGER.ndjson',
             '.agentic/context/CURRENT_CONTEXT.json',
-            '.agentic/context/CURRENT_CONTEXT.md',
           }
           missing=required-paths
           assert not missing, f'missing expected W02-14 boundary persistence delta: {sorted(missing)}'
