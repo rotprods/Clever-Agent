@@ -35,7 +35,6 @@
 
 ## Active claims
 
-- `CLAIM-CP03-W02-FALLBACK-20260922` → `CP03-W02-FALLBACK-20260922` · `chatgpt-gpt-5.6-sol`
 
 ## Open / mitigating risks
 
@@ -49,6 +48,7 @@
 - `RISK-0011` · `HIGH` · `MITIGATING` · detail in `ledgers/RISK_LEDGER.ndjson`
 - `RISK-0012` · `HIGH` · `OPEN` · detail in `ledgers/RISK_LEDGER.ndjson`
 - `RISK-0014` · `HIGH` · `OPEN` · detail in `ledgers/RISK_LEDGER.ndjson`
+- `RISK-W02-FALLBACK-REAL-MODEL-NOT-RUN-20260922` · `P2` · `OPEN` · detail in `ledgers/RISK_LEDGER.ndjson`
 
 ## Recovery order
 

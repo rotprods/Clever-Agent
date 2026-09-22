@@ -15,15 +15,16 @@
 
 ## Next executable
 
-`W02-14 — Fallback retry y salida parcial` (`IN_PROGRESS`).
+`W02-15 — Regresión de seguridad` (`READY`).
 
-W02-13 is evidence-backed COMPLETE. The next and only active DAG frontier is W02-14; W02-15+ remain BLOCKED. No parity promotion, denominator mutation, provider egress, or tool execution occurred in the W02-14 boundary sub-slice.
+W02-14 is evidence-backed COMPLETE. The next and only READY DAG frontier is W02-15; W02-16+ remain BLOCKED. No parity promotion, denominator mutation, provider egress, model execution, or tool execution occurred in the W02-14 adapter closure.
 
-## W02-14 fallback — active
+## W02-14 fallback — COMPLETE
 
-- Active claim: `CLAIM-CP03-W02-FALLBACK-20260922` on `wave/cp03/w02-fallback-20260922`; no overlapping active claim was accepted. The claim is reanchored after PR #56 to merged `main` head `39e16b4b88aab6aff4a4b342547cc015f1e6fe7b` before further mutation.
-- Preserved core evidence: `EVID-W02-FALLBACK-CORE-20260922` proves the authority-free fallback decision core: fresh attempt IDs, cumulative reservation ceiling, repeated-target rejection, explicit target-class authorization, non-retryable stop, and mandatory no-retry after partial output.
-- New partial evidence: `EVID-W02-FALLBACK-BOUNDARY-20260922` proves the generic supervised streaming attempt state machine around that core. A retryable pre-first-token failure may invoke exactly a fresh fallback attempt; an initial partial-output failure never invokes a fallback; and if a retry itself emits partial output before failing, no third attempt is invoked and streams are never spliced.
-- RED evidence is retained rather than rewritten: run `35704980485` exposed self-induced stale event-SHA CAS after legal claim reconciliation; run `35706711804` exposed a wrong one-vs-two structured-frontier assertion cardinality assumption; PR run `35707116490` exposed missing workspace rustfmt conformance; run `35708253012` proved the persistence guard was over-specified by requiring `CURRENT_CONTEXT.md` to be dirty even when a deterministic rebuild legitimately left it byte-identical. Each root cause was diagnosed and corrected in the same W02-14 wave.
-- W02-14 remains `IN_PROGRESS` with no task proof. The generic boundary is verified, but actual `AdapterSupervisor`/OpenJarvis sidecar F01/F02 wiring is still `NOT_RUN`; provider egress is 0, model executions in this sub-slice are 0, tool executions are 0, parity promotions are 0, denominator remains 7565, and OpenJarvis obligations remain 646.
-- Exact next sub-slice: wire the proven state machine into the real `AdapterSupervisor` streaming transport boundary and prove, with correlated fake-sidecar/adversarial transport tests, retry only after a retryable failure before the first token plus a hard partial-output/no-splice terminal path. Do not open W02-15 until that evidence closes W02-14.
+- Evidence: `EVID-W02-FALLBACK-ADAPTER-20260922` on exact tested head `503d683df9107519956f976ad8db1fc9c09509b1` / run `35724141588`.
+- `AdapterSupervisor` now invokes the already-proven bounded fallback state machine at the canonical streaming transport boundary. Retry is possible only for a correlated retryable `InferenceError` before the first emitted chunk; protocol/I/O failures are non-retryable.
+- Every fallback uses a generated fresh attempt ID, remains on the local `llamacpp` engine class, preserves cumulative reservation accounting, and repeated targets/attempt ceilings remain enforced by the core policy.
+- Adversarial fake-sidecar transport proves: pre-token retry recovers on a fresh attempt; primary partial output stops with no retry/no splice; retry partial output blocks a third attempt.
+- Real OpenJarvis fallback model execution is still `NOT_RUN`; this wave does not turn that into PASS. Provider egress 0; model executions 0; tool executions 0; parity promotions 0; denominator 7565; OpenJarvis obligations 646.
+- Claim `CLAIM-CP03-W02-FALLBACK-20260922` is released after evidence-backed W02-14 completion. W02-15 is only opened as `READY`; it is not claimed or implemented here.
+- Exact next task: `W02-15 — Regresión de seguridad` (G5), dependencies W02-07/W02-12/W02-13/W02-14 all COMPLETE.
