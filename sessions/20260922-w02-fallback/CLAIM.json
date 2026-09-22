@@ -10,9 +10,11 @@
   "date": "2026-09-22",
   "base_head": "b90c23f6c96f3a8d821921172bdba1f257a3fbf1",
   "status": "ACTIVE",
-  "coordination": "W02-14 only: bounded retry/fallback and truthful partial-stream outcome. Retries require a fresh attempt_id, may occur only before any output chunk and only on explicitly retryable inference errors; after-first-token failure must surface partial output without a second attempt. Attempts must preserve request/principal/session/input/config/privacy scope, no stream splicing, no external/provider downgrade, no tool execution, no parity promotion, no denominator mutation, and no W02-15+ implementation.",
+  "coordination": "W02-14 only: bounded retry/fallback and truthful partial-stream outcome. Retries require a fresh attempt_id, may occur only before any output chunk and only on explicitly retryable inference errors; after-first-token failure must surface partial output without a second attempt. Attempts must preserve request/principal/session/input/config/privacy scope, no stream splicing, no external/provider downgrade, no tool execution, no parity promotion, no denominator mutation, and no W02-15+ implementation. This claim is amended before mutation to include the isolated kernel fallback-policy core and crate export; adapter integration remains separately gated and may not be claimed complete without partial-stream evidence.",
   "scope": [
     "kernel/crates/clever-kernel/src/adapter.rs",
+    "kernel/crates/clever-kernel/src/inference_fallback.rs",
+    "kernel/crates/clever-kernel/src/lib.rs",
     "kernel/crates/clever-kernel/tests/adapter_supervisor.rs",
     "kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py",
     "tests/test_cp03_w02_fallback.py",
