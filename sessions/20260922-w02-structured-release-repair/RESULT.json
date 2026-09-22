@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "project_id": "CLEVER-JARVIS-001",
+  "checkpoint": "CP03",
+  "parent_wave": "CP03-W02",
+  "canonical_task": "W02-13",
+  "wave_id": "CP03-W02-STRUCTURED-RELEASE-REPAIR-20260922",
+  "claim_id": "CLAIM-CP03-W02-STRUCTURED-RELEASE-REPAIR-20260922",
+  "evidence_id": "EVID-W02-STRUCTURED-RELEASE-REPAIR-20260922",
+  "status": "PASS",
+  "date": "2026-09-22",
+  "red": {
+    "pull_request": 54,
+    "workflow_run_id": 35687118583,
+    "job_id": 106616215485,
+    "failed_step": "Kernel regression (hermetic lane)",
+    "failure": "real_openjarvis_unary_inference_uses_pinned_llamacpp_lane was executed without CLEVER_OPENJARVIS_SRC"
+  },
+  "root_cause": [
+    "The historical W02-07 hermetic kernel regression skipped the native sidecar test but not the later W02-10 real-model unary test, so a mandatory native prerequisite was incorrectly demanded inside a hermetic lane.",
+    "The historical W02-07 frontier guard pinned first_executable_task=W02-07 and W02-07=READY, which became stale after evidence-backed DAG advancement."
+  ],
+  "fix": [
+    "Explicitly exclude both native OpenJarvis runtime tests from the historical hermetic kernel regression without fabricating native prerequisites.",
+    "Replace the stale W02-07 READY assertion with a DAG-relative legal-frontier guard that still freezes denominator/parity and requires all dependencies of the active frontier to be COMPLETE with proof.",
+    "Add regression assertions preventing accidental execution of native real-model tests and historical frontier pinning."
+  ],
+  "green": {
+    "validated_head": "a2fcc7a7359b243b6f2a20de19f571ebb45c50a4",
+    "workflow_run_id": 35688501751,
+    "job_id": 106620320948,
+    "format": "PASS",
+    "w02_07_adversarial_security": "PASS",
+    "kernel_regression_hermetic": "PASS",
+    "native_lane_classification": "PASS",
+    "clippy": "PASS",
+    "planning_and_durable_state": "PASS",
+    "legal_frontier_guard": "PASS"
+  },
+  "invariants": {
+    "global_denominator": 7565,
+    "openjarvis_obligations": 646,
+    "verified_capabilities": 0,
+    "parity_promotions": 0,
+    "provider_egress_executions": 0,
+    "tool_executions": 0
+  },
+  "scope_boundary": "No W02-14 implementation, no runtime inference behavior change, no model/provider/tool execution, no denominator/parity mutation, no historical evidence deletion."
+}
