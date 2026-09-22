@@ -1,0 +1,269 @@
+name: CP03 W02 G6 Parity Proof Plane
+
+on:
+  push:
+    branches: [wave/cp03/w02-parity-graph-20260922]
+    paths:
+      - '.github/workflows/cp03-w02-parity-graph.yml'
+      - 'scripts/cp03/w02_parity_graph.py'
+      - 'tests/test_cp03_w02_parity_graph.py'
+      - 'inventory/cp03/w02_evidence_bindings.jsonl'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cp03-w02-parity-graph
+  cancel-in-progress: false
+
+jobs:
+  verify-and-persist:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Exact-head claim DAG and immutable denominator guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-parity-graph-20260922 | cut -f1)" = "$GITHUB_SHA"
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "465fe294e28fd683c7683aaca1e0acfcb03052a9"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          claim=json.loads(Path('sessions/20260922-w02-parity-graph/CLAIM.json').read_text())
+          assert claim['claim_id']=='CLAIM-CP03-W02-PARITY-GRAPH-20260922' and claim['status']=='ACTIVE'
+          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          tasks={t['id']:t for t in graph['tasks']}
+          assert graph['first_executable_task']=='W02-17'
+          assert tasks['W02-17']['status']=='IN_PROGRESS' and not tasks['W02-17']['proof']
+          assert tasks['W02-17']['depends_on']==['W02-01','W02-13','W02-14','W02-16']
+          assert all(tasks[x]['status']=='COMPLETE' for x in tasks['W02-17']['depends_on'])
+          assert tasks['W02-18']['status']=='BLOCKED' and not tasks['W02-18']['proof']
+          assert tasks['W02-19']['status']=='BLOCKED' and not tasks['W02-19']['proof']
+          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646 and graph['w02_obligation_count']==47
+          goal=json.loads(Path('GOAL_STATE.json').read_text())
+          assert goal['parity']['total']==7565 and goal['parity']['verified']==0
+          scope=json.loads(Path('inventory/cp03/W02_SCOPE_LOCK.json').read_text())
+          assert scope['w02_proof_units']==47 and scope['w02_owned_capabilities']==37 and scope['w02_shared_capabilities']==10
+          assert scope['semantics']['parity_promotions']==0 and scope['semantics']['denominator_mutation_authorized'] is False
+          PY
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/context/validate_next_actions.py
+          python scripts/cp03/validate_w02_plan.py
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          git diff --check
+
+      - name: G6 RED guards and compiler unit suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_cp03_w02_parity_graph
+          python scripts/cp03/w02_parity_graph.py
+
+      - name: Materialize deterministic P0 to P3 proof plane
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/cp03/w02_parity_graph.py --write
+          python scripts/cp03/w02_parity_graph.py --check
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          summary=json.loads(Path('reports/cp03/w02_parity/SUMMARY.json').read_text())
+          rows=[json.loads(x) for x in Path('reports/cp03/w02_parity/PROOF_MATRIX.jsonl').read_text().splitlines() if x.strip()]
+          graph=json.loads(Path('graphs/cp03/w02_parity/PARITY_TEST_GRAPH.json').read_text())
+          assert summary['w02_proof_units']==47 and summary['owned']==37 and summary['shared']==10
+          assert summary['binding_counts']=={'EVIDENCE_BACKED_CANDIDATE':0,'UNBOUND':47}
+          assert summary['verified_capabilities']==0 and summary['parity_promotions']==0
+          assert len(rows)==47 and all(r['verified'] is False and r['parity_promotion'] is False for r in rows)
+          assert len(graph['nodes'])==188 and len(graph['edges'])==141
+          assert graph['parity_promotions']==0 and graph['verified_capabilities']==0
+          PY
+
+      - name: Targeted regression and G6 gauntlet
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_cp03_w02_parity_graph tests.test_cp03_w02_plan tests.test_cp03_w02_scope_lock
+          python scripts/cp03/w02_parity_graph.py --check
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/context/validate_next_actions.py
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          goal=json.loads(Path('GOAL_STATE.json').read_text())
+          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          tasks={t['id']:t for t in graph['tasks']}
+          assert goal['parity']['total']==7565 and goal['parity']['verified']==0
+          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646 and graph['w02_obligation_count']==47
+          assert tasks['W02-17']['status']=='IN_PROGRESS' and not tasks['W02-17']['proof']
+          assert tasks['W02-18']['status']=='BLOCKED' and tasks['W02-19']['status']=='BLOCKED'
+          PY
+          git diff --check
+
+      - name: Persist partial G6 evidence decision risk handoff and ContextPack
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          summary=json.loads(Path('reports/cp03/w02_parity/SUMMARY.json').read_text())
+          evidence_id='EVID-W02-PARITY-GRAPH-CORE-20260922'
+          result={
+            'schema_version':1,
+            'project_id':'CLEVER-JARVIS-001',
+            'checkpoint':'CP03',
+            'task':'W02-17',
+            'gate':'G6',
+            'wave_id':'CP03-W02-PARITY-GRAPH-20260922',
+            'claim_id':'CLAIM-CP03-W02-PARITY-GRAPH-20260922',
+            'result':'PASS_PARTIAL',
+            'task_status':'IN_PROGRESS',
+            'evidence_id':evidence_id,
+            'global_denominator':7565,
+            'openjarvis_obligations':646,
+            'w02_proof_units':47,
+            'owned':37,
+            'shared':10,
+            'bindings_validated':summary['binding_counts']['EVIDENCE_BACKED_CANDIDATE'],
+            'unbound_proof_units':summary['binding_counts']['UNBOUND'],
+            'verified_capabilities':0,
+            'parity_promotions':0,
+            'provider_egress_executions':0,
+            'tool_executions':0,
+            'real_openjarvis_fallback_model_execution':'NOT_RUN',
+            'red_claim_run_id':35776345385,
+            'claim_retest_run_id':35776622678,
+            'claim_red_root_cause':'HANDOFF trailing blank line rejected by git diff --check',
+            'claim_red_fix':'single final newline retained; git diff --check reused and passed',
+            'products':['reports/cp03/w02_parity/SUMMARY.json','reports/cp03/w02_parity/PROOF_MATRIX.jsonl','graphs/cp03/w02_parity/PARITY_TEST_GRAPH.json'],
+          }
+          out=Path('evidence/cp03/cp03-w02/W02-17/proof_plane_report.json')
+          out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_text(json.dumps(result,ensure_ascii=False,indent=2,sort_keys=True)+'\n')
+          session=Path('sessions/20260922-w02-parity-graph/RESULT.json')
+          session.write_text(json.dumps(result,ensure_ascii=False,indent=2,sort_keys=True)+'\n')
+          evidence={
+            'schema_version':1,'date':'2026-09-22','evidence_id':evidence_id,'task':'W02-17','gate':'G6',
+            'claim':'Fail-closed G6 proof-plane compiler joins frozen K=47 source/obligation truth into deterministic P0->P1->P2->P3 projections and rejects forged/stale evidence, non-run/blocked/platform-gated/waived proof states and shared terminal attribution. No capability is promoted by this partial slice.',
+            'result':'PASS_PARTIAL','global_denominator':7565,'openjarvis_obligations':646,'w02_proof_units':47,
+            'owned':37,'shared':10,'bindings_validated':0,'unbound_proof_units':47,'verified_capabilities':0,'parity_promotions':0,
+            'provider_egress_executions':0,'tool_executions':0,'real_openjarvis_fallback_model_execution':'NOT_RUN',
+            'red_run_id':35776345385,'claim_retest_run_id':35776622678,
+          }
+          decision={
+            'schema_version':1,'date':'2026-09-22','decision_id':'DEC-W02-G6-EXPLICIT-EVIDENCE-BINDINGS-20260922','status':'ACCEPTED','task':'W02-17','evidence_id':evidence_id,
+            'decision':'W02-17 may create only evidence-backed parity candidates from explicit per-capability bindings that name a completed-task PASS receipt, exact validated SHA, concrete test_id and field-level expectations. PASS receipts never promote parity by themselves; shared W02 capabilities cannot become terminal in W02.',
+            'context':'This prevents task-level green receipts or partial evidence containing NOT_RUN fields from being widened into unsupported capability parity and preserves the frozen 7565/646 denominators.'
+          }
+          risk={
+            'schema_version':1,'date':'2026-09-22','risk_id':'RISK-W02-G6-K47-BINDINGS-PENDING-20260922','status':'OPEN','severity':'P1','task':'W02-17','evidence_id':evidence_id,
+            'risk':'The G6 proof plane is now deterministic and fail-closed, but all 47 W02 proof units remain explicitly UNBOUND to capability-specific executed-test evidence; treating the compiler itself as parity would be a false promotion.',
+            'mitigation':'Keep W02-17 IN_PROGRESS, parity verified at 0 and W02-18 BLOCKED. Next slice must author explicit K bindings and satisfy each through exact-head field-level evidence validation; shared units remain non-terminal.'
+          }
+          run={
+            'schema_version':1,'date':'2026-09-22','event':'PARTIAL_VERIFIED','event_id':'RUN-W02-PARITY-GRAPH-CORE-20260922','project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','iteration':'I03','canonical_task':'W02-17','wave_id':'CP03-W02-PARITY-GRAPH-20260922','claim_id':'CLAIM-CP03-W02-PARITY-GRAPH-20260922','evidence_id':evidence_id,'status':'IN_PROGRESS','verified_capabilities':0,'parity_promotions':0
+          }
+          wave={
+            'schema_version':1,'date':'2026-09-22','event':'WAVE_PROGRESS','event_id':'WAVE-W02-PARITY-GRAPH-CORE-20260922','project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','iteration':'I03','canonical_task':'W02-17','wave_id':'CP03-W02-PARITY-GRAPH-20260922','claim_id':'CLAIM-CP03-W02-PARITY-GRAPH-20260922','evidence_id':evidence_id,'gate':'G6','K':47,'owned':37,'shared':10,'unbound':47,'verified_capabilities':0,'parity_promotions':0,'status':'IN_PROGRESS'
+          }
+          for rel,row in [
+            ('ledgers/EVIDENCE_LEDGER.ndjson',evidence),
+            ('ledgers/DECISION_LEDGER.ndjson',decision),
+            ('ledgers/RISK_LEDGER.ndjson',risk),
+            ('ledgers/RUN_LOG.ndjson',run),
+            ('ledgers/WAVE_LEDGER.ndjson',wave),
+          ]:
+              p=Path(rel)
+              text=p.read_text(encoding='utf-8') if p.exists() else ''
+              marker=row.get('evidence_id') if rel.endswith('EVIDENCE_LEDGER.ndjson') else row.get('decision_id') or row.get('risk_id') or row.get('event_id')
+              assert marker not in text, f'duplicate durable marker {marker}'
+              with p.open('a',encoding='utf-8') as f:
+                  f.write(json.dumps(row,ensure_ascii=False,sort_keys=True,separators=(',',':'))+'\n')
+          handoff=Path('HANDOFF.md').read_text(encoding='utf-8')
+          note='## W02-17 G6 proof plane — partial verified\n\n- `EVID-W02-PARITY-GRAPH-CORE-20260922`: deterministic K=47 P0→P1→P2→P3 proof matrix/graph is implemented and fail-closed against forged/stale evidence, NOT_RUN/BLOCKED/PLATFORM_GATED/waivers and shared terminal attribution.\n- This is not parity: 47/47 proof units remain `UNBOUND`, verified capabilities remain 0 and parity promotions remain 0. `W02-17` stays `IN_PROGRESS`; `W02-18` and `W02-19` stay `BLOCKED`.\n- Exact next slice: author explicit capability→test→evidence bindings, validated against completed-task PASS proof + exact evidence SHA + field-level expectations; preserve the real OpenJarvis fallback model lane as `NOT_RUN`.\n'
+          assert evidence_id not in handoff
+          Path('HANDOFF.md').write_text(handoff.rstrip()+'\n\n'+note,encoding='utf-8')
+          PY
+          # EVIDENCE_LEDGER is an input digest, so regenerate the derived products after the append.
+          python scripts/cp03/w02_parity_graph.py --write
+          python scripts/context/build_context_pack.py
+          python scripts/cp03/w02_parity_graph.py --check
+          python -m unittest -v tests.test_cp03_w02_parity_graph tests.test_cp03_w02_plan tests.test_cp03_w02_scope_lock
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/context/validate_next_actions.py
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result=json.loads(Path('sessions/20260922-w02-parity-graph/RESULT.json').read_text())
+          summary=json.loads(Path('reports/cp03/w02_parity/SUMMARY.json').read_text())
+          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          tasks={t['id']:t for t in graph['tasks']}
+          goal=json.loads(Path('GOAL_STATE.json').read_text())
+          context=json.loads(Path('.agentic/context/CURRENT_CONTEXT.json').read_text())
+          assert result['result']=='PASS_PARTIAL' and result['unbound_proof_units']==47
+          assert summary['binding_counts']['UNBOUND']==47 and summary['parity_promotions']==0
+          assert tasks['W02-17']['status']=='IN_PROGRESS' and not tasks['W02-17']['proof']
+          assert tasks['W02-18']['status']=='BLOCKED' and tasks['W02-19']['status']=='BLOCKED'
+          assert goal['parity']['total']==7565 and goal['parity']['verified']==0
+          assert any(c.get('claim_id')=='CLAIM-CP03-W02-PARITY-GRAPH-20260922' for c in context.get('active_claims',[]))
+          PY
+          git diff --check
+
+      - name: Restrict durable mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess
+          allowed={
+            'reports/cp03/w02_parity/SUMMARY.json','reports/cp03/w02_parity/PROOF_MATRIX.jsonl','graphs/cp03/w02_parity/PARITY_TEST_GRAPH.json',
+            'evidence/cp03/cp03-w02/W02-17/proof_plane_report.json','sessions/20260922-w02-parity-graph/RESULT.json','HANDOFF.md',
+            'ledgers/EVIDENCE_LEDGER.ndjson','ledgers/DECISION_LEDGER.ndjson','ledgers/RISK_LEDGER.ndjson','ledgers/RUN_LOG.ndjson','ledgers/WAVE_LEDGER.ndjson',
+            '.agentic/context/CURRENT_CONTEXT.json','.agentic/context/CURRENT_CONTEXT.md',
+          }
+          changed={x[3:] for x in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if x}
+          assert changed <= allowed, sorted(changed-allowed)
+          required={
+            'reports/cp03/w02_parity/SUMMARY.json','reports/cp03/w02_parity/PROOF_MATRIX.jsonl','graphs/cp03/w02_parity/PARITY_TEST_GRAPH.json',
+            'evidence/cp03/cp03-w02/W02-17/proof_plane_report.json','sessions/20260922-w02-parity-graph/RESULT.json','HANDOFF.md',
+            'ledgers/EVIDENCE_LEDGER.ndjson','ledgers/DECISION_LEDGER.ndjson','ledgers/RISK_LEDGER.ndjson','ledgers/RUN_LOG.ndjson','ledgers/WAVE_LEDGER.ndjson',
+            '.agentic/context/CURRENT_CONTEXT.json',
+          }
+          assert required <= changed, sorted(required-changed)
+          PY
+
+      - name: CAS persist G6 partial evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-parity-graph-20260922 | cut -f1)" = "$expected"
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "465fe294e28fd683c7683aaca1e0acfcb03052a9"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add reports/cp03/w02_parity graphs/cp03/w02_parity evidence/cp03/cp03-w02/W02-17/proof_plane_report.json sessions/20260922-w02-parity-graph/RESULT.json HANDOFF.md ledgers/EVIDENCE_LEDGER.ndjson ledgers/DECISION_LEDGER.ndjson ledgers/RISK_LEDGER.ndjson ledgers/RUN_LOG.ndjson ledgers/WAVE_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git commit -m 'CP03 W02-17: persist fail-closed G6 proof plane'
+          git push origin HEAD:wave/cp03/w02-parity-graph-20260922

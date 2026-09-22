@@ -1,0 +1,33 @@
+{
+  "bindings_validated": 0,
+  "checkpoint": "CP03",
+  "claim_id": "CLAIM-CP03-W02-PARITY-GRAPH-20260922",
+  "claim_red_fix": "single final newline retained; git diff --check reused and passed",
+  "claim_red_root_cause": "HANDOFF trailing blank line rejected by git diff --check",
+  "claim_retest_run_id": 35776622678,
+  "evidence_id": "EVID-W02-PARITY-GRAPH-CORE-20260922",
+  "gate": "G6",
+  "global_denominator": 7565,
+  "openjarvis_obligations": 646,
+  "owned": 37,
+  "parity_promotions": 0,
+  "products": [
+    "reports/cp03/w02_parity/SUMMARY.json",
+    "reports/cp03/w02_parity/PROOF_MATRIX.jsonl",
+    "graphs/cp03/w02_parity/PARITY_TEST_GRAPH.json"
+  ],
+  "project_id": "CLEVER-JARVIS-001",
+  "provider_egress_executions": 0,
+  "real_openjarvis_fallback_model_execution": "NOT_RUN",
+  "red_claim_run_id": 35776345385,
+  "result": "PASS_PARTIAL",
+  "schema_version": 1,
+  "shared": 10,
+  "task": "W02-17",
+  "task_status": "IN_PROGRESS",
+  "tool_executions": 0,
+  "unbound_proof_units": 47,
+  "verified_capabilities": 0,
+  "w02_proof_units": 47,
+  "wave_id": "CP03-W02-PARITY-GRAPH-20260922"
+}

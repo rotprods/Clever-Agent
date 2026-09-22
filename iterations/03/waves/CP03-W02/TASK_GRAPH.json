@@ -22,7 +22,7 @@
       ],
       "deliverables": [
         "HEAD/state/claims reconciliados",
-        "Entornos y required checks; administraci\u00f3n separada"
+        "Entornos y required checks; administración separada"
       ],
       "depends_on": [],
       "evidence_path": "evidence/cp03/cp03-w02/W02-00/",
@@ -51,7 +51,7 @@
     },
     {
       "acceptance_tests": [
-        "Duplicados/hu\u00e9rfanos/omisiones rechazados; 7565/646 intactos"
+        "Duplicados/huérfanos/omisiones rechazados; 7565/646 intactos"
       ],
       "deliverables": [
         "W02_OBLIGATIONS con K, IDs, source paths, plataforma y hashes"
@@ -81,14 +81,14 @@
         }
       ],
       "reviewer_role": "reviewer_gauntlet",
-      "rollback": "Revertir selecci\u00f3n sin mutar ledger fuente.",
+      "rollback": "Revertir selección sin mutar ledger fuente.",
       "status": "COMPLETE",
       "title": "Compilar obligaciones W02"
     },
     {
       "acceptance_tests": [
         "Sin CLEVER_TEST_PYTHON falla preflight",
-        "JUnit vac\u00edo/skip requerido no satisface gate"
+        "JUnit vacío/skip requerido no satisface gate"
       ],
       "deliverables": [
         "Lanes y JUnit/JSON con casos realmente ejecutados"
@@ -120,7 +120,7 @@
     },
     {
       "acceptance_tests": [
-        "Flood/slow consumer mantiene l\u00edmites",
+        "Flood/slow consumer mantiene límites",
         "Peer no lee stdin => timeout acotado"
       ],
       "deliverables": [
@@ -192,7 +192,7 @@
     {
       "acceptance_tests": [
         "Respuesta ajena rechazada",
-        "Snapshot inv\u00e1lido deja estado intacto"
+        "Snapshot inválido deja estado intacto"
       ],
       "deliverables": [
         "Request/attempt/replay validados",
@@ -220,17 +220,17 @@
         }
       ],
       "reviewer_role": "reviewer_gauntlet",
-      "rollback": "Revertir transacci\u00f3n conservando registry anterior.",
+      "rollback": "Revertir transacción conservando registry anterior.",
       "status": "COMPLETE",
-      "title": "Correlaci\u00f3n y registry at\u00f3mico"
+      "title": "Correlación y registry atómico"
     },
     {
       "acceptance_tests": [
         "Round-trip Python/Rust/TS/Swift",
-        "Unknown major y fixtures hist\u00f3ricas"
+        "Unknown major y fixtures históricas"
       ],
       "deliverables": [
-        "ADR y mensajes m\u00ednimos request/chunk/terminal/error/cancel",
+        "ADR y mensajes mínimos request/chunk/terminal/error/cancel",
         "Identidad, secuencia, uso, deadline y finish reason"
       ],
       "depends_on": [
@@ -261,7 +261,7 @@
         }
       ],
       "reviewer_role": "reviewer_gauntlet",
-      "rollback": "Revertir extensi\u00f3n compatible y regenerar SDK anteriores.",
+      "rollback": "Revertir extensión compatible y regenerar SDK anteriores.",
       "status": "COMPLETE",
       "title": "Contratos tipados de inferencia"
     },
@@ -271,7 +271,7 @@
         "Canary no sale a logs/otro principal"
       ],
       "deliverables": [
-        "Policy/grant y l\u00edmites para inferencia externa",
+        "Policy/grant y límites para inferencia externa",
         "Secretos opacos y logs redactados"
       ],
       "depends_on": [
@@ -350,7 +350,7 @@
       ],
       "deliverables": [
         "Engine/modelo/runtime/licencia/digests fijados",
-        "Adquisici\u00f3n controlada separada de ejecuci\u00f3n offline"
+        "Adquisición controlada separada de ejecución offline"
       ],
       "depends_on": [
         "W02-01",
@@ -380,17 +380,17 @@
         }
       ],
       "reviewer_role": "reviewer_gauntlet",
-      "rollback": "Retirar artefacto inv\u00e1lido sin sustituir por ref flotante.",
+      "rollback": "Retirar artefacto inválido sin sustituir por ref flotante.",
       "status": "COMPLETE",
       "title": "Lane con modelo y pesos reales"
     },
     {
       "acceptance_tests": [
-        "End-to-end real sin comparar prosa id\u00e9ntica",
-        "Entrada inv\u00e1lida rechazada antes del engine"
+        "End-to-end real sin comparar prosa idéntica",
+        "Entrada inválida rechazada antes del engine"
       ],
       "deliverables": [
-        "Rust\u2192Protobuf\u2192sidecar\u2192OpenJarvis\u2192modelo real\u2192resultado",
+        "Rust→Protobuf→sidecar→OpenJarvis→modelo real→resultado",
         "Traza correlacionada y terminal"
       ],
       "depends_on": [
@@ -432,7 +432,7 @@
     {
       "acceptance_tests": [
         "Frames fragmentados/coalescidos, UTF-8 cortado",
-        "EOF/duplicado/reordenaci\u00f3n no produce falso \u00e9xito"
+        "EOF/duplicado/reordenación no produce falso éxito"
       ],
       "deliverables": [
         "Chunks secuenciados y un terminal",
@@ -480,8 +480,8 @@
         "Cese local probado; efecto remoto UNKNOWN si no se acredita"
       ],
       "deliverables": [
-        "REQUESTED/ACK/terminaci\u00f3n diferenciados",
-        "Aislamiento por request o single-flight expl\u00edcito"
+        "REQUESTED/ACK/terminación diferenciados",
+        "Aislamiento por request o single-flight explícito"
       ],
       "depends_on": [
         "W02-11"
@@ -514,15 +514,15 @@
       "reviewer_role": "python_builder",
       "rollback": "Desactivar concurrencia/ruta no cancelable.",
       "status": "COMPLETE",
-      "title": "Cancelaci\u00f3n real"
+      "title": "Cancelación real"
     },
     {
       "acceptance_tests": [
-        "JSON inv\u00e1lido y argumentos fragmentados",
+        "JSON inválido y argumentos fragmentados",
         "Cero shell/MCP/browser ejecutado"
       ],
       "deliverables": [
-        "Ensamblado tipado y validaci\u00f3n de schema",
+        "Ensamblado tipado y validación de schema",
         "Tools permanecen datos"
       ],
       "depends_on": [
@@ -563,12 +563,12 @@
     },
     {
       "acceptance_tests": [
-        "Fallo antes/despu\u00e9s del primer token",
+        "Fallo antes/después del primer token",
         "Sin loops/rebaja de privacidad/duplicados ocultos"
       ],
       "deliverables": [
         "Attempt ID nuevo y coste acumulado",
-        "No concatenaci\u00f3n de streams de engines distintos"
+        "No concatenación de streams de engines distintos"
       ],
       "depends_on": [
         "W02-11",
@@ -597,7 +597,7 @@
         }
       ],
       "reviewer_role": "reviewer_gauntlet",
-      "rollback": "Desactivar fallback autom\u00e1tico conservando receipts.",
+      "rollback": "Desactivar fallback automático conservando receipts.",
       "status": "COMPLETE",
       "title": "Fallback retry y salida parcial"
     },
@@ -644,7 +644,7 @@
       "reviewer_role": "reviewer_gauntlet",
       "rollback": "Denegar ruta afectada y conservar finding abierto.",
       "status": "COMPLETE",
-      "title": "Regresi\u00f3n de seguridad"
+      "title": "Regresión de seguridad"
     },
     {
       "acceptance_tests": [
@@ -652,7 +652,7 @@
         "No elegir el mejor rerun para ocultar flakiness"
       ],
       "deliverables": [
-        "Repeticiones cr\u00edticas con seeds y fallos conservados",
+        "Repeticiones críticas con seeds y fallos conservados",
         "Baseline same-host con presupuestos fijados antes de medir"
       ],
       "depends_on": [
@@ -678,7 +678,7 @@
         }
       ],
       "reviewer_role": "runtime_engineer",
-      "rollback": "Conservar baseline y detener release ante regresi\u00f3n.",
+      "rollback": "Conservar baseline y detener release ante regresión.",
       "status": "COMPLETE",
       "title": "Retest recovery performance"
     },
@@ -689,7 +689,7 @@
       ],
       "deliverables": [
         "K mappings con contrato/test ejecutado/evidence",
-        "P0\u2192P1\u2192P2\u2192P3 y overlay sin alterar denominator"
+        "P0→P1→P2→P3 y overlay sin alterar denominator"
       ],
       "depends_on": [
         "W02-01",
@@ -705,7 +705,7 @@
       "proof": [],
       "reviewer_role": "release_reconciler",
       "rollback": "Revertir solo proyecciones derivadas; preservar fuente.",
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "title": "Paridad y grafo W02"
     },
     {
@@ -738,7 +738,7 @@
       ],
       "deliverables": [
         "W02 completo solo con K demostrado",
-        "State/DAG/ledgers/context at\u00f3micos y claims liberados"
+        "State/DAG/ledgers/context atómicos y claims liberados"
       ],
       "depends_on": [
         "W02-18"
