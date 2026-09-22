@@ -582,7 +582,7 @@
       "proof": [],
       "reviewer_role": "reviewer_gauntlet",
       "rollback": "Desactivar fallback autom\u00e1tico conservando receipts.",
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "title": "Fallback retry y salida parcial"
     },
     {

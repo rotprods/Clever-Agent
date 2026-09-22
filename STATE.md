@@ -9,7 +9,7 @@
 - Active subcheckpoint: `I03.2`
 - Next executable wave: `CP03-W02 — Models engines and inference behavior`
 - Capability denominator: `7565`
-- Canonical task frontier: `W02-14 — Fallback retry y salida parcial` (`READY`)
+- Canonical task frontier: `W02-14 — Fallback retry y salida parcial` (`IN_PROGRESS`)
 
 ## Canonical frontier
 

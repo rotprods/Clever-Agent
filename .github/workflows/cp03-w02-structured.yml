@@ -325,7 +325,7 @@ jobs:
           if tasks['W02-13']['status']=='COMPLETE':
               assert tasks['W02-13']['proof']
               assert graph['first_executable_task']=='W02-14'
-              assert tasks['W02-14']['status']=='READY' and not tasks['W02-14']['proof']
+              assert tasks['W02-14']['status'] in {'READY','IN_PROGRESS'} and not tasks['W02-14']['proof']
           else:
               assert tasks['W02-13']['status']=='IN_PROGRESS' and not tasks['W02-13']['proof']
               assert graph['first_executable_task']=='W02-13'
@@ -526,7 +526,7 @@ jobs:
           tasks={row['id']:row for row in graph['tasks']}
           assert graph['first_executable_task']=='W02-14'
           assert tasks['W02-13']['status']=='COMPLETE' and tasks['W02-13']['proof']
-          assert tasks['W02-14']['status']=='READY' and not tasks['W02-14']['proof']
+          assert tasks['W02-14']['status'] in {'READY','IN_PROGRESS'} and not tasks['W02-14']['proof']
           assert goal['parity']['total']==7565 and goal['parity']['verified']==0
           assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646 and graph['w02_obligation_count']==47
           assert 'D-0020' in context['accepted_decision_ids']
