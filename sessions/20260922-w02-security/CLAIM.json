@@ -1,17 +1,24 @@
 {
-  "schema_version": 1,
-  "project_id": "CLEVER-JARVIS-001",
-  "checkpoint": "CP03",
-  "parent_wave": "CP03-W02",
-  "wave_id": "CP03-W02-SECURITY-20260922",
-  "canonical_task": "W02-15",
-  "claim_id": "CLAIM-CP03-W02-SECURITY-20260922",
-  "owner": "chatgpt-gpt-5.6-sol",
-  "date": "2026-09-22",
-  "event": "CLAIM",
-  "status": "ACTIVE",
   "base_head": "9dee62f1493e1529a71e7dd705bd0acdbcf2d653",
+  "canonical_task": "W02-15",
+  "checkpoint": "CP03",
+  "claim_id": "CLAIM-CP03-W02-SECURITY-20260922",
   "coordination": "W02-15 only. Run the G5 security regression over the exposed inference path and close the unauthorized standalone cancellation authority gap while preserving deny-by-default egress, tenant/principal isolation, reserved-metadata stripping, bounded transport and zero tool authority. No W02-16 repetition/performance implementation, no provider egress, no real model execution, no tool execution, no parity promotion, no denominator mutation and no CP03/W02 closure.",
+  "date": "2026-09-22",
+  "dependencies": [
+    "W02-07",
+    "W02-12",
+    "W02-13",
+    "W02-14"
+  ],
+  "event": "CLAIM",
+  "last_evidence_id": "EVID-W02-SECURITY-20260922",
+  "next_if_complete": "W02-16",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "parent_wave": "CP03-W02",
+  "project_id": "CLEVER-JARVIS-001",
+  "release_run_id": 35744047938,
+  "schema_version": 1,
   "scope": [
     ".github/workflows/cp03-w02-security-claim.yml",
     ".github/workflows/cp03-w02-security.yml",
@@ -36,11 +43,7 @@
     ".agentic/context/CURRENT_CONTEXT.json",
     ".agentic/context/CURRENT_CONTEXT.md"
   ],
-  "dependencies": [
-    "W02-07",
-    "W02-12",
-    "W02-13",
-    "W02-14"
-  ],
-  "next_if_complete": "W02-16"
+  "status": "RELEASED",
+  "validated_head": "9415e72774768fa71fc6c8077ac8c9322b58c8fc",
+  "wave_id": "CP03-W02-SECURITY-20260922"
 }
