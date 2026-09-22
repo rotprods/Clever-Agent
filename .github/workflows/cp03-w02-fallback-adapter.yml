@@ -1,0 +1,252 @@
+name: CP03 W02 Fallback Adapter Runtime
+
+on:
+  push:
+    branches:
+      - wave/cp03/w02-fallback-20260922
+    paths:
+      - '.github/workflows/cp03-w02-fallback-adapter.yml'
+      - 'scripts/cp03/w02_fallback_adapter_patch.py'
+      - 'scripts/cp03/finalize_w02_fallback_adapter.py'
+      - 'sessions/20260922-w02-fallback/CLAIM_AMENDMENT-005.json'
+      - 'sessions/20260922-w02-fallback/CLAIM_AMENDMENT-006.json'
+      - 'kernel/crates/clever-kernel/src/adapter.rs'
+      - 'kernel/crates/clever-kernel/tests/adapter_supervisor.rs'
+      - 'kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cp03-w02-fallback-adapter-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify-and-persist:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Exact-head, base and claim guard
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git fetch origin main
+          claim_base="$(python -c "import json; print(json.load(open('sessions/20260922-w02-fallback/CLAIM.json'))['base_head'])")"
+          test "$(git rev-parse origin/main)" = "$claim_base"
+          test "$(git merge-base HEAD origin/main)" = "$claim_base"
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-fallback-20260922 | cut -f1)" = "$GITHUB_SHA"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          claim=json.loads(Path('sessions/20260922-w02-fallback/CLAIM.json').read_text())
+          amendment=json.loads(Path('sessions/20260922-w02-fallback/CLAIM_AMENDMENT-005.json').read_text())
+          reanchor=json.loads(Path('sessions/20260922-w02-fallback/CLAIM_AMENDMENT-006.json').read_text())
+          assert claim['claim_id']=='CLAIM-CP03-W02-FALLBACK-20260922'
+          assert claim['status']=='ACTIVE'
+          assert claim['canonical_task']=='W02-14'
+          assert amendment['event']=='SCOPE_AMENDED' and amendment['status']=='ACTIVE'
+          required={
+              '.github/workflows/cp03-w02-fallback-adapter.yml',
+              'scripts/cp03/w02_fallback_adapter_patch.py',
+              'scripts/cp03/finalize_w02_fallback_adapter.py',
+              'kernel/crates/clever-kernel/src/adapter.rs',
+              'kernel/crates/clever-kernel/tests/adapter_supervisor.rs',
+              'kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py',
+          }
+          assert required <= set(amendment['scope'])
+          assert reanchor['event']=='BASE_REANCHORED'
+          assert reanchor['new_base_head']==claim['base_head']
+          PY
+
+      - name: Baseline durable-state guard
+        run: |
+          set -euo pipefail
+          python -m unittest -v tests.test_cp03_w02_plan
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/context/validate_next_actions.py
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          goal=json.loads(Path('GOAL_STATE.json').read_text())
+          tasks={row['id']:row for row in graph['tasks']}
+          assert graph['global_denominator']==7565
+          assert graph['openjarvis_obligations']==646
+          assert graph['w02_obligation_count']==47
+          assert graph['first_executable_task']=='W02-14'
+          assert tasks['W02-14']['status']=='IN_PROGRESS' and not tasks['W02-14']['proof']
+          assert tasks['W02-15']['status']=='BLOCKED' and not tasks['W02-15']['proof']
+          assert tasks['W02-11']['status']=='COMPLETE' and tasks['W02-12']['status']=='COMPLETE'
+          assert goal['parity']['total']==7565 and goal['parity']['verified']==0
+          PY
+
+      - name: Apply scoped adapter runtime patch
+        id: patch
+        run: |
+          set -euo pipefail
+          python scripts/cp03/w02_fallback_adapter_patch.py
+          cargo fmt --manifest-path kernel/Cargo.toml --all
+          python -m py_compile kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py
+          git diff --check
+          python - <<'PY'
+          import subprocess
+          allowed={
+              'kernel/crates/clever-kernel/src/adapter.rs',
+              'kernel/crates/clever-kernel/tests/adapter_supervisor.rs',
+              'kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py',
+          }
+          changed={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if line}
+          unexpected=changed-allowed
+          assert not unexpected, f'out-of-scope adapter patch mutation: {sorted(unexpected)}'
+          PY
+          if git diff --quiet -- kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/tests/adapter_supervisor.rs kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py; then
+            echo 'code_changed=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'code_changed=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Targeted fallback runtime tests
+        env:
+          CLEVER_TEST_PYTHON: /opt/hostedtoolcache/Python/3.12.0/x64/bin/python
+        run: |
+          set -euo pipefail
+          export CLEVER_TEST_PYTHON="$(command -v python)"
+          cargo fmt --manifest-path kernel/Cargo.toml --all -- --check
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_fallback
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor fallback_transport_
+
+      - name: Regression and gauntlet
+        env:
+          CLEVER_TEST_PYTHON: /opt/hostedtoolcache/Python/3.12.0/x64/bin/python
+        run: |
+          set -euo pipefail
+          export CLEVER_TEST_PYTHON="$(command -v python)"
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --lib
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_security
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test adapter_supervisor stream_
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+
+      - name: CAS persist verified code slice
+        if: steps.patch.outputs.code_changed == 'true'
+        run: |
+          set -euo pipefail
+          expected_head="$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-fallback-20260922 | cut -f1)" = "$expected_head"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add kernel/crates/clever-kernel/src/adapter.rs kernel/crates/clever-kernel/tests/adapter_supervisor.rs kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py
+          git commit -m 'build(cp03-w02): wire bounded fallback into AdapterSupervisor'
+          git push origin HEAD:wave/cp03/w02-fallback-20260922
+
+      - name: Persist W02-14 evidence and DAG transition
+        if: steps.patch.outputs.code_changed == 'false'
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          python scripts/cp03/finalize_w02_fallback_adapter.py
+          python scripts/context/build_context_pack.py
+          python -m unittest -v tests.test_cp03_w02_plan
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/context/validate_next_actions.py
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          git diff --check
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          goal=json.loads(Path('GOAL_STATE.json').read_text())
+          tasks={row['id']:row for row in graph['tasks']}
+          assert graph['global_denominator']==7565
+          assert graph['openjarvis_obligations']==646
+          assert graph['w02_obligation_count']==47
+          assert graph['first_executable_task']=='W02-15'
+          assert tasks['W02-14']['status']=='COMPLETE' and len(tasks['W02-14']['proof'])==1
+          assert tasks['W02-14']['proof'][0]['result']=='PASS'
+          assert tasks['W02-14']['proof'][0]['real_openjarvis_fallback_model_execution']=='NOT_RUN'
+          assert tasks['W02-15']['status']=='READY' and not tasks['W02-15']['proof']
+          assert tasks['W02-16']['status']=='BLOCKED' and not tasks['W02-16']['proof']
+          assert goal['parity']['total']==7565 and goal['parity']['verified']==0
+          report=json.loads(Path('evidence/cp03/cp03-w02/W02-14/adapter_runtime_report.json').read_text())
+          assert report['adapter_supervisor_f01_f02']=='PASS'
+          assert report['partial_output_no_retry_no_splice']=='PASS'
+          assert report['real_openjarvis_fallback_model_execution']=='NOT_RUN'
+          assert report['provider_egress_executions']==0
+          assert report['tool_executions']==0
+          PY
+
+      - name: Restrict durable state mutation
+        if: steps.patch.outputs.code_changed == 'false'
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess
+          allowed={
+              'iterations/03/waves/CP03-W02/TASK_GRAPH.json',
+              'STATE.md',
+              'HANDOFF.md',
+              'sessions/20260922-w02-fallback/CLAIM.json',
+              'sessions/20260922-w02-fallback/RESULT.json',
+              'evidence/cp03/cp03-w02/W02-14/adapter_runtime_report.json',
+              'ledgers/CLAIM_LEDGER.ndjson',
+              'ledgers/EVIDENCE_LEDGER.ndjson',
+              'ledgers/RUN_LOG.ndjson',
+              'ledgers/WAVE_LEDGER.ndjson',
+              'ledgers/DECISION_LEDGER.ndjson',
+              'ledgers/RISK_LEDGER.ndjson',
+              '.agentic/context/CURRENT_CONTEXT.json',
+              '.agentic/context/CURRENT_CONTEXT.md',
+          }
+          changed={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if line}
+          unexpected=changed-allowed
+          assert not unexpected, f'out-of-scope W02-14 persistence mutation: {sorted(unexpected)}'
+          required={
+              'iterations/03/waves/CP03-W02/TASK_GRAPH.json',
+              'STATE.md',
+              'HANDOFF.md',
+              'sessions/20260922-w02-fallback/CLAIM.json',
+              'sessions/20260922-w02-fallback/RESULT.json',
+              'evidence/cp03/cp03-w02/W02-14/adapter_runtime_report.json',
+              'ledgers/CLAIM_LEDGER.ndjson',
+              'ledgers/EVIDENCE_LEDGER.ndjson',
+              'ledgers/RUN_LOG.ndjson',
+              'ledgers/WAVE_LEDGER.ndjson',
+              'ledgers/DECISION_LEDGER.ndjson',
+              'ledgers/RISK_LEDGER.ndjson',
+              '.agentic/context/CURRENT_CONTEXT.json',
+          }
+          missing=required-changed
+          assert not missing, f'missing expected W02-14 persistence delta: {sorted(missing)}'
+          PY
+
+      - name: CAS persist exact verified W02-14 state
+        if: steps.patch.outputs.code_changed == 'false'
+        run: |
+          set -euo pipefail
+          expected_head="$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-fallback-20260922 | cut -f1)" = "$expected_head"
+          git fetch origin main
+          claim_base="$(python -c "import json; print(json.load(open('sessions/20260922-w02-fallback/CLAIM.json'))['base_head'])")"
+          test "$(git rev-parse origin/main)" = "$claim_base"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add iterations/03/waves/CP03-W02/TASK_GRAPH.json STATE.md HANDOFF.md sessions/20260922-w02-fallback/CLAIM.json sessions/20260922-w02-fallback/RESULT.json evidence/cp03/cp03-w02/W02-14/adapter_runtime_report.json ledgers/CLAIM_LEDGER.ndjson ledgers/EVIDENCE_LEDGER.ndjson ledgers/RUN_LOG.ndjson ledgers/WAVE_LEDGER.ndjson ledgers/DECISION_LEDGER.ndjson ledgers/RISK_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git commit -m 'state(cp03-w02): complete W02-14 fallback runtime proof'
+          git push origin HEAD:wave/cp03/w02-fallback-20260922
