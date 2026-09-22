@@ -1,0 +1,150 @@
+{
+  "artifact_sha256": "9acfc1e001311f34b4252001b626f2e466d592a42065f66571bff3790d4e1b14",
+  "budget": {
+    "ctx_size": 2048,
+    "llama_parallel": 1,
+    "llama_threads": 2,
+    "max_output_tokens": 32,
+    "order": [
+      "direct",
+      "adapted",
+      "adapted",
+      "direct",
+      "direct",
+      "adapted"
+    ],
+    "prompt": "Reply with exactly four words: clever jarvis performance baseline",
+    "samples_per_path": 3,
+    "temperature": 0.0,
+    "warmups_per_path": 1
+  },
+  "checkpoint": "CP03",
+  "date": "2026-09-22",
+  "engine": "llamacpp",
+  "evidence_id": "EVID-W02-PERFORMANCE-BASELINE-20260922",
+  "gate": "G5",
+  "github_actions_run_id": 35769847083,
+  "global_denominator": 7565,
+  "host_class": "GitHub Actions 1000069960",
+  "model_id": "qwen3:0.6b",
+  "openjarvis_commit": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5",
+  "openjarvis_obligations": 646,
+  "parent_wave": "CP03-W02",
+  "parity_promotions": 0,
+  "paths": [
+    "direct_openjarvis_stream_full",
+    "canonical_adapterframe_sidecar_stream"
+  ],
+  "performance_threshold": "MEASUREMENT_ONLY_NO_POST_HOC_THRESHOLD",
+  "prior_p02_evidence_id": "EVID-W02-RECOVERY-RETEST-20260922",
+  "project_id": "CLEVER-JARVIS-001",
+  "provider_egress_executions": 0,
+  "result": "PASS",
+  "runtime_commit": "391fac16460f15233a7740550d858ac96df3419d",
+  "same_host": true,
+  "samples": [
+    {
+      "latency_ms": 133.022839,
+      "output_tokens": 6,
+      "path": "direct",
+      "peak_rss_kib": {
+        "client": 43856,
+        "llama_server": 1002480
+      },
+      "throughput_tokens_per_s": 45.10503643663777,
+      "token_count_source": "llama_server_tokenize_output_text",
+      "ttft_ms": 49.793593
+    },
+    {
+      "latency_ms": 424.319759,
+      "output_tokens": 6,
+      "path": "adapted",
+      "peak_rss_kib": {
+        "client": 56252,
+        "llama_server": 1002628
+      },
+      "throughput_tokens_per_s": 14.140279524432893,
+      "token_count_source": "llama_server_tokenize_output_text",
+      "ttft_ms": 340.192443
+    },
+    {
+      "latency_ms": 423.905796,
+      "output_tokens": 6,
+      "path": "adapted",
+      "peak_rss_kib": {
+        "client": 57660,
+        "llama_server": 1002772
+      },
+      "throughput_tokens_per_s": 14.154088140847218,
+      "token_count_source": "llama_server_tokenize_output_text",
+      "ttft_ms": 339.179222
+    },
+    {
+      "latency_ms": 132.490461,
+      "output_tokens": 6,
+      "path": "direct",
+      "peak_rss_kib": {
+        "client": 46064,
+        "llama_server": 1002784
+      },
+      "throughput_tokens_per_s": 45.286279138239244,
+      "token_count_source": "llama_server_tokenize_output_text",
+      "ttft_ms": 47.578272
+    },
+    {
+      "latency_ms": 131.963941,
+      "output_tokens": 6,
+      "path": "direct",
+      "peak_rss_kib": {
+        "client": 46068,
+        "llama_server": 1002800
+      },
+      "throughput_tokens_per_s": 45.46696585849918,
+      "token_count_source": "llama_server_tokenize_output_text",
+      "ttft_ms": 47.464903
+    },
+    {
+      "latency_ms": 430.912013,
+      "output_tokens": 6,
+      "path": "adapted",
+      "peak_rss_kib": {
+        "client": 59148,
+        "llama_server": 1002804
+      },
+      "throughput_tokens_per_s": 13.923956211450527,
+      "token_count_source": "llama_server_tokenize_output_text",
+      "ttft_ms": 344.360185
+    }
+  ],
+  "schema_version": 1,
+  "source_head": "701a86a1c044bb69693034f78e58e3124346437b",
+  "status": "PASS",
+  "suite": "P01_SAME_HOST_PERFORMANCE_BASELINE",
+  "suite_version": 1,
+  "summary": {
+    "adapted": {
+      "client_peak_rss_kib_max": 59148,
+      "latency_ms_median": 424.319759,
+      "llama_server_peak_rss_kib_max": 1002804,
+      "sample_count": 3,
+      "throughput_tokens_per_s_median": 14.140279524432893,
+      "ttft_ms_median": 340.192443
+    },
+    "adapted_over_direct": {
+      "latency_ratio": 3.2026438416574,
+      "throughput_ratio": 0.3122420254768291,
+      "ttft_ratio": 7.150163902547786
+    },
+    "direct": {
+      "client_peak_rss_kib_max": 46068,
+      "latency_ms_median": 132.490461,
+      "llama_server_peak_rss_kib_max": 1002800,
+      "sample_count": 3,
+      "throughput_tokens_per_s_median": 45.286279138239244,
+      "ttft_ms_median": 47.578272
+    }
+  },
+  "task": "W02-16",
+  "tool_executions": 0,
+  "verified_capabilities": 0
+}
