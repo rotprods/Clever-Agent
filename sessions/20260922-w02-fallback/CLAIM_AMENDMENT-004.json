@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-22",
+  "event": "BASE_REANCHORED",
+  "claim_id": "CLAIM-CP03-W02-FALLBACK-20260922",
+  "project_id": "CLEVER-JARVIS-001",
+  "checkpoint": "CP03",
+  "parent_wave": "CP03-W02",
+  "wave_id": "CP03-W02-FALLBACK-20260922",
+  "canonical_task": "W02-14",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "status": "ACTIVE",
+  "old_base_head": "2e2bcc4666b912e04aedb1948f389771972ad7fa",
+  "new_base_head": "39e16b4b88aab6aff4a4b342547cc015f1e6fe7b",
+  "merged_partial_pr": 56,
+  "merged_partial_head": "1b78a2f36b8a6921d2e0b636761178d0b87b9fdc",
+  "coordination": "PR #56 merged the verified supervised fallback boundary while W02-14 deliberately remains IN_PROGRESS. Reanchor the still-active claim onto the exact merged main head before any further W02-14 mutation. No ownership or scope widening, parity promotion, denominator mutation, provider/model/tool execution authority, W02-14 completion, or W02-15 opening is implied.",
+  "scope": []
+}

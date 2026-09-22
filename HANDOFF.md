@@ -15,13 +15,13 @@
 
 ## Next executable
 
-`W02-14 — Fallback retry y salida parcial` (`READY`).
+`W02-14 — Fallback retry y salida parcial` (`IN_PROGRESS`).
 
-W02-13 is evidence-backed COMPLETE. The next and only opened DAG frontier is W02-14; W02-15+ remain BLOCKED. No parity promotion, denominator mutation, provider egress, or tool execution occurred in the W02-13 completion wave.
+W02-13 is evidence-backed COMPLETE. The next and only active DAG frontier is W02-14; W02-15+ remain BLOCKED. No parity promotion, denominator mutation, provider egress, or tool execution occurred in the W02-14 boundary sub-slice.
 
 ## W02-14 fallback — active
 
-- Active claim: `CLAIM-CP03-W02-FALLBACK-20260922` on `wave/cp03/w02-fallback-20260922`; no overlapping active claim was accepted.
+- Active claim: `CLAIM-CP03-W02-FALLBACK-20260922` on `wave/cp03/w02-fallback-20260922`; no overlapping active claim was accepted. The claim is reanchored after PR #56 to merged `main` head `39e16b4b88aab6aff4a4b342547cc015f1e6fe7b` before further mutation.
 - Preserved core evidence: `EVID-W02-FALLBACK-CORE-20260922` proves the authority-free fallback decision core: fresh attempt IDs, cumulative reservation ceiling, repeated-target rejection, explicit target-class authorization, non-retryable stop, and mandatory no-retry after partial output.
 - New partial evidence: `EVID-W02-FALLBACK-BOUNDARY-20260922` proves the generic supervised streaming attempt state machine around that core. A retryable pre-first-token failure may invoke exactly a fresh fallback attempt; an initial partial-output failure never invokes a fallback; and if a retry itself emits partial output before failing, no third attempt is invoked and streams are never spliced.
 - RED evidence is retained rather than rewritten: run `35704980485` exposed self-induced stale event-SHA CAS after legal claim reconciliation; run `35706711804` exposed a wrong one-vs-two structured-frontier assertion cardinality assumption; PR run `35707116490` exposed missing workspace rustfmt conformance; run `35708253012` proved the persistence guard was over-specified by requiring `CURRENT_CONTEXT.md` to be dirty even when a deterministic rebuild legitimately left it byte-identical. Each root cause was diagnosed and corrected in the same W02-14 wave.
