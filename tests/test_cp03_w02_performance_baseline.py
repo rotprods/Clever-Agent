@@ -3,7 +3,13 @@ from __future__ import annotations
 import copy
 import unittest
 
-from scripts.cp03.w02_performance_baseline import BUDGET, _request, _summary, validate
+from scripts.cp03.w02_performance_baseline import (
+    BUDGET,
+    _request,
+    _resolve_output_tokens,
+    _summary,
+    validate,
+)
 
 
 class W02PerformanceBaselineTests(unittest.TestCase):
@@ -13,6 +19,7 @@ class W02PerformanceBaselineTests(unittest.TestCase):
             "latency_ms": latency,
             "ttft_ms": ttft,
             "output_tokens": tokens,
+            "token_count_source": "llama_server_tokenize_output_text",
             "throughput_tokens_per_s": tokens / (latency / 1000.0),
             "peak_rss_kib": {"client": 1000, "llama_server": 2000},
         }
@@ -59,6 +66,35 @@ class W02PerformanceBaselineTests(unittest.TestCase):
         self.assertEqual(request.model_id, "qwen3:0.6b")
         self.assertEqual(len(request.inputs), 1)
 
+    def test_missing_stream_usage_uses_same_host_model_tokenizer(self) -> None:
+        calls: list[tuple[str, str]] = []
+
+        def tokenizer(host: str, text: str) -> int:
+            calls.append((host, text))
+            return 7
+
+        count, source = _resolve_output_tokens(
+            None,
+            "clever jarvis performance baseline",
+            "http://127.0.0.1:8080",
+            tokenizer=tokenizer,
+        )
+        self.assertEqual(count, 7)
+        self.assertEqual(source, "llama_server_tokenize_output_text")
+        self.assertEqual(calls, [("http://127.0.0.1:8080", "clever jarvis performance baseline")])
+
+    def test_stream_usage_is_preferred_when_present(self) -> None:
+        def tokenizer(_host: str, _text: str) -> int:
+            raise AssertionError("tokenizer fallback must not run when stream usage is exact")
+
+        count, source = _resolve_output_tokens(
+            5,
+            "ignored",
+            "http://127.0.0.1:8080",
+            tokenizer=tokenizer,
+        )
+        self.assertEqual((count, source), (5, "stream_usage"))
+
     def test_summary_keeps_direct_and_adapted_samples_separate(self) -> None:
         report = self.report()
         self.assertEqual(report["summary"]["direct"]["sample_count"], 3)
@@ -88,6 +124,12 @@ class W02PerformanceBaselineTests(unittest.TestCase):
             validate(report)
         report = self.report()
         report["samples"][0]["ttft_ms"] = 0
+        with self.assertRaises(AssertionError):
+            validate(report)
+
+    def test_validator_rejects_unproven_token_count_source(self) -> None:
+        report = self.report()
+        report["samples"][0]["token_count_source"] = "character_count"
         with self.assertRaises(AssertionError):
             validate(report)
 
