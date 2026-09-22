@@ -3,10 +3,14 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from scripts.cp03.w02_recovery_retest import validate_report
 
-ROOT = Path(__file__).resolve().parents[2]
 TASK = "W02-16"
 CLAIM = "CLAIM-CP03-W02-RECOVERY-PERF-20260922"
 EVIDENCE = "EVID-W02-RECOVERY-RETEST-20260922"
