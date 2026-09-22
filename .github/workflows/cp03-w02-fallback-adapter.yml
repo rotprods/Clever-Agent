@@ -1,4 +1,5 @@
 name: CP03 W02 Fallback Adapter Runtime
+# Second-pass trigger: persist evidence after the verified bot CAS code commit.
 
 on:
   push:
