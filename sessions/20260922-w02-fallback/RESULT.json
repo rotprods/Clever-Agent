@@ -1,13 +1,13 @@
 {
   "claim_id": "CLAIM-CP03-W02-FALLBACK-20260922",
   "date": "2026-09-22",
-  "evidence_id": "EVID-W02-FALLBACK-CORE-20260922",
-  "github_actions_run_id": 35699064265,
-  "next_subslice": "Integrate the policy at the supervised streaming attempt boundary and prove retry-before-first-token plus partial-output-no-splice end-to-end.",
+  "evidence_id": "EVID-W02-FALLBACK-BOUNDARY-20260922",
+  "github_actions_run_id": 35708650228,
+  "next_subslice": "Wire execute_streaming_fallbacks into the real AdapterSupervisor streaming transport and prove correlated pre-token retry plus post-partial no-splice end-to-end with the fake sidecar/adversarial harness.",
   "next_task": "W02-14",
   "schema_version": 1,
   "status": "ADVANCED_IN_PROGRESS",
   "task": "W02-14",
-  "validated_head": "fdaa8cb706de70384b5f1823aea4672fa0021177",
-  "wave_id": "CP03-W02-FALLBACK-20260922"
+  "validated_head": "232f2fc6918a63fe179676f8959273ba684ce547",
+  "wave_id": "CP03-W02-FALLBACK-BOUNDARY-20260922"
 }

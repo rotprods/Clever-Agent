@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-22",
+  "event": "SCOPE_AMENDED",
+  "claim_id": "CLAIM-CP03-W02-FALLBACK-20260922",
+  "project_id": "CLEVER-JARVIS-001",
+  "checkpoint": "CP03",
+  "parent_wave": "CP03-W02",
+  "wave_id": "CP03-W02-FALLBACK-20260922",
+  "canonical_task": "W02-14",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "status": "ACTIVE",
+  "coordination": "PR #56 exposed two release-gate defects while validating the new supervised fallback boundary: stale event-SHA CAS after legal claim reconciliation and a workspace cargo-fmt miss. Expand scope only to persist this boundary sub-slice with exact RED/GREEN evidence, decision/risk entries and regenerated ContextPack. W02-14 remains IN_PROGRESS; AdapterSupervisor/sidecar F01/F02 is still NOT_RUN; W02-15+ remain BLOCKED; parity, denominator, provider egress and tool execution remain unchanged.",
+  "scope": [
+    ".github/workflows/cp03-w02-fallback-boundary.yml",
+    "scripts/cp03/finalize_w02_fallback_boundary.py"
+  ],
+  "red_run_id": 35707116490,
+  "red_job_id": 106678617610
+}

@@ -1,6 +1,7 @@
 use clever_kernel::inference_fallback::{
-    decide_fallback, AttemptReceipt, FailureContext, FailureStage, FallbackCandidate,
-    FallbackDecision, FallbackPolicy, FallbackStopReason, InferenceTargetClass,
+    decide_fallback, execute_streaming_fallbacks, AttemptReceipt, FailureContext, FailureStage,
+    FallbackCandidate, FallbackDecision, FallbackPolicy, FallbackStopReason, InferenceTargetClass,
+    StreamingAttemptFailure, StreamingAttemptSuccess, StreamingFallbackExecution,
 };
 
 fn local_policy() -> FallbackPolicy {
@@ -312,4 +313,183 @@ fn malformed_history_is_rejected_instead_of_retried() {
         &local_policy(),
     )
     .is_err());
+}
+
+#[test]
+fn supervised_boundary_retries_pre_token_failure_with_fresh_attempt_id() {
+    let history = vec![receipt(
+        "req-runtime:attempt:1",
+        "engine-a",
+        "model-a",
+        0,
+        120,
+        InferenceTargetClass::Local,
+    )];
+    let candidates = vec![candidate(
+        "engine-b",
+        "model-b",
+        InferenceTargetClass::Local,
+        80,
+    )];
+    let initial_failure = StreamingAttemptFailure {
+        error: "engine-a unavailable".to_owned(),
+        retryable: true,
+        emitted_chunks: 0,
+    };
+    let mut calls = Vec::new();
+
+    let execution = execute_streaming_fallbacks(
+        "req-runtime",
+        history,
+        initial_failure,
+        &candidates,
+        &local_policy(),
+        |attempt_id, target| {
+            calls.push((
+                attempt_id.to_owned(),
+                target.engine_id.clone(),
+                target.model_id.clone(),
+            ));
+            Ok(StreamingAttemptSuccess {
+                value: "fresh-output".to_owned(),
+                emitted_chunks: 1,
+            })
+        },
+    )
+    .expect("runtime fallback boundary must remain internally consistent");
+
+    assert_eq!(
+        calls,
+        vec![(
+            "req-runtime:attempt:2".to_owned(),
+            "engine-b".to_owned(),
+            "model-b".to_owned(),
+        )]
+    );
+    match execution {
+        StreamingFallbackExecution::Recovered {
+            value,
+            history,
+            cumulative_reserved_cost_microusd,
+        } => {
+            assert_eq!(value, "fresh-output");
+            assert_eq!(cumulative_reserved_cost_microusd, 200);
+            assert_eq!(history.len(), 2);
+            assert_eq!(history[1].attempt_id, "req-runtime:attempt:2");
+            assert_eq!(history[1].emitted_chunks, 1);
+        }
+        StreamingFallbackExecution::Stopped { .. } => panic!("retry should have recovered"),
+    }
+}
+
+#[test]
+fn supervised_boundary_never_invokes_fallback_after_partial_output() {
+    let history = vec![receipt(
+        "req-partial:attempt:1",
+        "engine-a",
+        "model-a",
+        2,
+        90,
+        InferenceTargetClass::Local,
+    )];
+    let candidates = vec![candidate(
+        "engine-b",
+        "model-b",
+        InferenceTargetClass::Local,
+        70,
+    )];
+    let initial_failure = StreamingAttemptFailure {
+        error: "engine-a failed after partial output".to_owned(),
+        retryable: true,
+        emitted_chunks: 2,
+    };
+
+    let execution = execute_streaming_fallbacks::<String, String, _>(
+        "req-partial",
+        history,
+        initial_failure,
+        &candidates,
+        &local_policy(),
+        |_, _| panic!("partial-output failure must never invoke another engine"),
+    )
+    .expect("partial-output stop must be a valid runtime decision");
+
+    assert_eq!(
+        execution,
+        StreamingFallbackExecution::Stopped {
+            last_error: "engine-a failed after partial output".to_owned(),
+            reason: FallbackStopReason::PartialOutput,
+            history: vec![receipt(
+                "req-partial:attempt:1",
+                "engine-a",
+                "model-a",
+                2,
+                90,
+                InferenceTargetClass::Local,
+            )],
+            cumulative_reserved_cost_microusd: 90,
+        }
+    );
+}
+
+#[test]
+fn supervised_boundary_stops_after_retry_emits_partial_without_third_attempt() {
+    let history = vec![receipt(
+        "req-second-partial:attempt:1",
+        "engine-a",
+        "model-a",
+        0,
+        40,
+        InferenceTargetClass::Local,
+    )];
+    let candidates = vec![
+        candidate("engine-b", "model-b", InferenceTargetClass::Local, 30),
+        candidate("engine-c", "model-c", InferenceTargetClass::Local, 20),
+    ];
+    let initial_failure = StreamingAttemptFailure {
+        error: "first failed before token".to_owned(),
+        retryable: true,
+        emitted_chunks: 0,
+    };
+    let mut calls = 0_u64;
+
+    let execution = execute_streaming_fallbacks::<String, String, _>(
+        "req-second-partial",
+        history,
+        initial_failure,
+        &candidates,
+        &local_policy(),
+        |attempt_id, target| {
+            calls += 1;
+            assert_eq!(calls, 1, "a third attempt would splice partial output");
+            assert_eq!(attempt_id, "req-second-partial:attempt:2");
+            assert_eq!(target.engine_id, "engine-b");
+            Err(StreamingAttemptFailure {
+                error: "second failed after one chunk".to_owned(),
+                retryable: true,
+                emitted_chunks: 1,
+            })
+        },
+    )
+    .expect("second-attempt partial failure must fail closed");
+
+    assert_eq!(calls, 1);
+    match execution {
+        StreamingFallbackExecution::Stopped {
+            last_error,
+            reason,
+            history,
+            cumulative_reserved_cost_microusd,
+        } => {
+            assert_eq!(last_error, "second failed after one chunk");
+            assert_eq!(reason, FallbackStopReason::PartialOutput);
+            assert_eq!(history.len(), 2);
+            assert_eq!(history[1].attempt_id, "req-second-partial:attempt:2");
+            assert_eq!(history[1].emitted_chunks, 1);
+            assert_eq!(cumulative_reserved_cost_microusd, 70);
+        }
+        StreamingFallbackExecution::Recovered { .. } => {
+            panic!("partial-output failure must not recover on a third engine")
+        }
+    }
 }
