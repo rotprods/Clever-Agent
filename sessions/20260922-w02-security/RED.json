@@ -1,0 +1,10 @@
+{
+  "classification": "SECURITY_REGRESSION_REPRODUCED",
+  "date": "2026-09-22",
+  "exit_code": 101,
+  "finding": "Standalone cancel accepted request/attempt identifiers without any caller principal/session authority context and reached canonical transport.",
+  "schema_version": 1,
+  "source_head": "d0eb4c83fee76c461fc35543958b5667c10702f6",
+  "task": "W02-15",
+  "test": "standalone_cancel_without_authority_context_must_fail_closed"
+}

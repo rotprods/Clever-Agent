@@ -21,8 +21,8 @@ use clever_contracts::{
     AdapterShutdown, CapabilityDescriptor, ContractVersion, InferenceCancel, InferenceChunk,
     InferenceError, InferenceFinishReason, InferenceRequest, InferenceTerminal,
     InferenceUsageMeasurement, LifecycleMode, NativeRegistryEntry, PlatformConstraint,
-    ProvenanceRef, RegistryPrimitive, RegistrySnapshot, RegistrySnapshotRequest, RuntimeHealth,
-    RuntimeHealthStatus, RuntimeOwner,
+    PrincipalRef, ProvenanceRef, RegistryPrimitive, RegistrySnapshot, RegistrySnapshotRequest,
+    RuntimeHealth, RuntimeHealthStatus, RuntimeOwner,
 };
 use prost::Message;
 
@@ -318,6 +318,14 @@ pub enum InferenceCancelOutcome {
     AlreadyTerminal,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+struct InferenceAuthority {
+    request_id: String,
+    attempt_id: String,
+    principal: PrincipalRef,
+    session_id: String,
+}
+
 struct InboundState {
     pending_bytes: AtomicUsize,
     frame_limit: AtomicUsize,
@@ -368,6 +376,7 @@ pub struct AdapterSupervisor {
     process_group_id: Option<u32>,
     cleanup: Option<AdapterCleanupCommand>,
     termination_complete: bool,
+    last_inference_authority: Option<InferenceAuthority>,
 }
 
 impl AdapterSupervisor {
@@ -539,6 +548,7 @@ impl AdapterSupervisor {
             process_group_id,
             cleanup,
             termination_complete: false,
+            last_inference_authority: None,
         };
         let hello_frame =
             supervisor.receive_frame(supervisor.policy.handshake_timeout, "handshake")?;
@@ -903,6 +913,10 @@ impl AdapterSupervisor {
             ));
         }
 
+        if let Err(error) = self.record_inference_authority(&request) {
+            return Err(Self::streaming_attempt_failure(error, false, 0));
+        }
+
         let frame = self.next_control_frame(
             adapter_frame::Body::InferenceRequest(request.clone()),
             self.policy.request_timeout,
@@ -1024,6 +1038,60 @@ impl AdapterSupervisor {
         Self::streaming_attempt_failure(error, false, emitted_chunks)
     }
 
+    fn record_inference_authority(
+        &mut self,
+        request: &InferenceRequest,
+    ) -> Result<(), AdapterSupervisorError> {
+        let principal = request.principal.clone().ok_or_else(|| {
+            AdapterSupervisorError::InvalidInferenceRequest(
+                "inference principal is required for cancellation authority".to_owned(),
+            )
+        })?;
+        if principal.user_id.trim().is_empty() || request.session_id.trim().is_empty() {
+            return Err(AdapterSupervisorError::InvalidInferenceRequest(
+                "inference user_id and session_id are required for cancellation authority"
+                    .to_owned(),
+            ));
+        }
+        self.last_inference_authority = Some(InferenceAuthority {
+            request_id: request.request_id.clone(),
+            attempt_id: request.attempt_id.clone(),
+            principal,
+            session_id: request.session_id.clone(),
+        });
+        Ok(())
+    }
+
+    fn validate_inference_cancel_authority(
+        &self,
+        target_request_id: &str,
+        target_attempt_id: &str,
+        caller_principal: &PrincipalRef,
+        caller_session_id: &str,
+    ) -> Result<(), AdapterSupervisorError> {
+        if caller_principal.user_id.trim().is_empty() || caller_session_id.trim().is_empty() {
+            return Err(AdapterSupervisorError::InvalidInferenceRequest(
+                "cancellation caller principal/session must be non-empty".to_owned(),
+            ));
+        }
+        let Some(authority) = self.last_inference_authority.as_ref() else {
+            return Err(AdapterSupervisorError::InvalidInferenceRequest(
+                "cancellation authority mismatch: no supervised inference ownership record"
+                    .to_owned(),
+            ));
+        };
+        if authority.request_id != target_request_id
+            || authority.attempt_id != target_attempt_id
+            || authority.principal != *caller_principal
+            || authority.session_id != caller_session_id
+        {
+            return Err(AdapterSupervisorError::InvalidInferenceRequest(
+                "cancellation authority mismatch for request/attempt/principal/session".to_owned(),
+            ));
+        }
+        Ok(())
+    }
+
     fn send_inference_cancel_frame(
         &mut self,
         target_request_id: &str,
@@ -1089,6 +1157,8 @@ impl AdapterSupervisor {
 
     pub fn cancel_inference(
         &mut self,
+        caller_principal: &PrincipalRef,
+        caller_session_id: &str,
         target_request_id: impl Into<String>,
         target_attempt_id: impl Into<String>,
         reason: impl Into<String>,
@@ -1102,6 +1172,12 @@ impl AdapterSupervisor {
         let request_id = target_request_id.into();
         let attempt_id = target_attempt_id.into();
         let reason = reason.into();
+        self.validate_inference_cancel_authority(
+            &request_id,
+            &attempt_id,
+            caller_principal,
+            caller_session_id,
+        )?;
         let cancel_frame_id =
             self.send_inference_cancel_frame(&request_id, &attempt_id, &reason)?;
         let response =
@@ -1192,6 +1268,8 @@ impl AdapterSupervisor {
                 "request is outside the bounded W02-12 cancellation lane".to_owned(),
             ));
         }
+
+        self.record_inference_authority(&request)?;
 
         let frame = self.next_control_frame(
             adapter_frame::Body::InferenceRequest(request.clone()),
