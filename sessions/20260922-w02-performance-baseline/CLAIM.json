@@ -5,7 +5,7 @@
   "claim_id": "CLAIM-CP03-W02-PERFORMANCE-20260922",
   "coordination": "W02-16 P01 only. Execute a fixed-budget same-host direct OpenJarvis vs canonical AdapterFrame sidecar streaming baseline against the exact pinned qwen3:0.6b/llamacpp lane. Budget, prompt, ordering and sample count are frozen before measurement. Preserve prior P02 evidence. No provider egress, tool execution, parity promotion, denominator mutation, fallback-model promotion, W02-17 implementation, or CP03 advancement is authorized. W02-17 may become READY only after P01 evidence passes and prior P02 remains valid.",
   "date": "2026-09-22",
-  "event": "PROPOSED",
+  "event": "CLAIM",
   "owner": "chatgpt-gpt-5.6-sol",
   "parent_wave": "CP03-W02",
   "project_id": "CLEVER-JARVIS-001",
@@ -31,6 +31,6 @@
     ".agentic/context/CURRENT_CONTEXT.json",
     ".agentic/context/CURRENT_CONTEXT.md"
   ],
-  "status": "PROPOSED",
+  "status": "ACTIVE",
   "wave_id": "CP03-W02-PERFORMANCE-BASELINE-20260922"
 }

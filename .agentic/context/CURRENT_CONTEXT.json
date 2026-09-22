@@ -26,7 +26,14 @@
     "DEC-W02-FALLBACK-ADAPTER-20260922",
     "DEC-W02-RECOVERY-RETEST-BUDGET-20260922"
   ],
-  "active_claims": [],
+  "active_claims": [
+    {
+      "claim_id": "CLAIM-CP03-W02-PERFORMANCE-20260922",
+      "owner": "chatgpt-gpt-5.6-sol",
+      "status": "ACTIVE",
+      "wave_id": "CP03-W02-PERFORMANCE-BASELINE-20260922"
+    }
+  ],
   "authority_read_order": [
     "GOAL.md",
     "SECURITY_MODEL.md",
