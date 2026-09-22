@@ -35,6 +35,11 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Install pinned Python contract runtime
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt
+
       - name: Exact-head, base and claim guard
         run: |
           set -euo pipefail
