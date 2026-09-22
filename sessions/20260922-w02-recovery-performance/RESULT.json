@@ -1,0 +1,14 @@
+{
+  "claim_id": "CLAIM-CP03-W02-RECOVERY-PERF-20260922",
+  "date": "2026-09-22",
+  "evidence_id": "EVID-W02-RECOVERY-RETEST-20260922",
+  "github_actions_run_id": 35756510838,
+  "next_subslice": "P01_SAME_HOST_PERFORMANCE_BASELINE",
+  "next_task": "W02-16",
+  "performance_baseline_same_host": "NOT_RUN",
+  "result": "ADVANCED_PARTIAL",
+  "task": "W02-16",
+  "task_status": "READY",
+  "validated_head": "1254e6f206596afcc6ce7c5f4323c5af31fb4ceb",
+  "w02_17_status": "BLOCKED"
+}

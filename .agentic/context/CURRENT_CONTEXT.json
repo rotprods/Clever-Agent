@@ -23,16 +23,10 @@
     "D-0021",
     "D-0022",
     "DEC-W02-CANCEL-AUTHORITY-20260922",
-    "DEC-W02-FALLBACK-ADAPTER-20260922"
+    "DEC-W02-FALLBACK-ADAPTER-20260922",
+    "DEC-W02-RECOVERY-RETEST-BUDGET-20260922"
   ],
-  "active_claims": [
-    {
-      "claim_id": "CLAIM-CP03-W02-RECOVERY-PERF-20260922",
-      "owner": "chatgpt-gpt-5.6-sol",
-      "status": "ACTIVE",
-      "wave_id": "CP03-W02-RETEST-RECOVERY-20260922"
-    }
-  ],
+  "active_claims": [],
   "authority_read_order": [
     "GOAL.md",
     "SECURITY_MODEL.md",
@@ -86,6 +80,7 @@
     "EVID-W02-MODEL-BRIDGE-20260921",
     "EVID-W02-MODEL-BRIDGE-RELEASE-20260921",
     "EVID-W02-REAL-MODEL-20260921",
+    "EVID-W02-RECOVERY-RETEST-20260922",
     "EVID-W02-SCOPE-LOCK-20260907",
     "EVID-W02-SECURITY-20260922",
     "EVID-W02-STREAMING-20260921",
@@ -236,6 +231,11 @@
     },
     {
       "risk_id": "RISK-W02-FALLBACK-REAL-MODEL-NOT-RUN-20260922",
+      "severity": "P2",
+      "status": "OPEN"
+    },
+    {
+      "risk_id": "RISK-W02-PERFORMANCE-BASELINE-PENDING-20260922",
       "severity": "P2",
       "status": "OPEN"
     }
