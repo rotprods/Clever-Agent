@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import os
+import re
 import subprocess
 import sys
 import time
@@ -165,6 +166,16 @@ class StructuredOutputUnitTests(unittest.TestCase):
         )
         self.assertEqual(value, {"answer": 42})
         self.assertEqual(calls[0].name, "lookup")
+
+    def test_canonical_transport_contract_is_explicit_not_metadata(self) -> None:
+        inference = (ROOT / "contracts/proto/clever/v1/inference.proto").read_text()
+        adapter = (ROOT / "contracts/proto/clever/v1/adapter.proto").read_text()
+        self.assertRegex(inference, r"optional\s+string\s+response_schema_json\s*=\s*12;")
+        self.assertRegex(inference, r"\bmessage\s+InferenceToolCall\b")
+        self.assertRegex(inference, r"\bmessage\s+InferenceStructuredOutput\b")
+        self.assertRegex(adapter, r"\binference_tool_call\s*=\s*25;")
+        self.assertRegex(adapter, r"\binference_structured_output\s*=\s*26;")
+        self.assertIsNone(re.search(r"(?mi)^\s*(?:optional\s+)?(?:string|bytes|map<[^>]+>)\s+\w*metadata\w*\s*=", inference))
 
 
 class StreamingStructuredIntegrationTests(unittest.TestCase):

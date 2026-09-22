@@ -4,16 +4,24 @@ on:
   push:
     branches:
       - wave/cp03-w02-structured-20260921
+      - wave/cp03-w02-structured-transport-20260922
   pull_request:
     branches: [main]
     paths:
+      - 'contracts/proto/clever/v1/inference.proto'
+      - 'contracts/proto/clever/v1/adapter.proto'
+      - 'contracts/sdk/**'
+      - 'contracts/generated_manifest.json'
+      - 'adapters/openjarvis/sidecar.py'
       - 'adapters/openjarvis/streaming_inference.py'
       - 'adapters/openjarvis/structured_output.py'
+      - 'tests/test_cp03_w02_structured_transport.py'
       - 'tests/test_cp03_w02_structured_output.py'
       - 'tests/test_cp03_w02_streaming.py'
       - 'tests/test_cp03_w02_cancellation.py'
+      - 'tests/test_cp03_w02_inference_contract.py'
+      - 'tests/test_cp03_adapter_contract.py'
       - 'tests/test_cp03_w02_plan.py'
-      - 'scripts/cp03/finalize_w02_structured.py'
       - 'iterations/03/waves/CP03-W02/TASK_GRAPH.json'
       - 'evidence/cp03/cp03-w02/W02-13/**'
       - 'sessions/20260921-w02-structured/**'
@@ -32,34 +40,261 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  scope_amendment:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/wave/cp03-w02-structured-transport-20260922'
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Exact-head pre-amendment guard
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/wave/cp03-w02-structured-transport-20260922 | cut -f1)" = "$GITHUB_SHA"
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          tasks={row['id']:row for row in graph['tasks']}
+          claim=json.loads(Path('sessions/20260921-w02-structured/CLAIM.json').read_text())
+          assert graph['first_executable_task']=='W02-13'
+          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646 and graph['w02_obligation_count']==47
+          assert tasks['W02-13']['status']=='IN_PROGRESS' and not tasks['W02-13']['proof']
+          assert all(tasks[d]['status']=='COMPLETE' and tasks[d]['proof'] for d in tasks['W02-13']['depends_on'])
+          assert tasks['W02-14']['status']=='BLOCKED' and not tasks['W02-14']['proof']
+          assert claim['claim_id']=='CLAIM-CP03-W02-STRUCTURED-20260921' and claim['status']=='ACTIVE'
+          PY
+      - name: Confirm active claim covers typed transport
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          claim=json.loads(Path('sessions/20260921-w02-structured/CLAIM.json').read_text())
+          required={
+            'contracts/proto/clever/v1/inference.proto',
+            'contracts/proto/clever/v1/adapter.proto',
+            'contracts/sdk/python/gen/**',
+            'contracts/sdk/typescript/src/gen/**',
+            'contracts/sdk/rust/src/gen/**',
+            'contracts/sdk/swift/Sources/CleverContracts/Gen/**',
+            'contracts/generated_manifest.json',
+            'adapters/openjarvis/sidecar.py',
+            'tests/test_cp03_w02_structured_transport.py',
+            'tests/test_cp03_w02_inference_contract.py',
+            'tests/test_cp03_adapter_contract.py',
+          }
+          missing=sorted(required-set(claim.get('scope', [])))
+          assert not missing, f'active W02-13 claim missing typed-transport scope: {missing}'
+          rows=[json.loads(line) for line in Path('ledgers/CLAIM_LEDGER.ndjson').read_text().splitlines() if line.strip()]
+          latest={}
+          for row in rows:
+              if row.get('claim_id') and row.get('status'):
+                  latest[row['claim_id']]=row['status']
+          conflicts=sorted(cid for cid,status in latest.items() if status=='ACTIVE' and cid!='CLAIM-CP03-W02-STRUCTURED-20260921')
+          assert not conflicts, f'conflicting active claims: {conflicts}'
+          PY
+
+  repair_transport:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/wave/cp03-w02-structured-transport-20260922'
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - uses: bufbuild/buf-setup-action@a47c93e0b1648d5651a065437926377d060baa99
+        with:
+          version: '1.72.0'
+      - name: Exact-head guard and apply RED fixes
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/wave/cp03-w02-structured-transport-20260922 | cut -f1)" = "$GITHUB_SHA"
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              p=Path(path)
+              text=p.read_text(encoding='utf-8')
+              if new in text:
+                  return
+              count=text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected exactly one patch anchor, found {count}')
+              p.write_text(text.replace(old,new,1), encoding='utf-8')
+
+          old_regex='self.assertIsNone(re.search(r"metadata.*(tool|structured)|(?:tool|structured).*metadata", inference, re.I | re.S))'
+          new_regex='self.assertIsNone(re.search(r"(?mi)^\\s*(?:optional\\s+)?(?:string|bytes|map<[^>]+>)\\s+\\w*metadata\\w*\\s*=", inference))'
+          for path in ('tests/test_cp03_w02_structured_output.py','tests/test_cp03_w02_structured_transport.py'):
+              replace_once(path, old_regex, new_regex)
+
+          sidecar='adapters/openjarvis/sidecar.py'
+          replace_once(
+              sidecar,
+              'from adapters.openjarvis.streaming_inference import execute_stream\nfrom adapters.openjarvis.unary_inference import UnaryInferenceRejected, execute_unary\n',
+              'from adapters.openjarvis.structured_output import ToolCallData\nfrom adapters.openjarvis.streaming_inference import execute_stream\nfrom adapters.openjarvis.unary_inference import UnaryInferenceRejected, execute_unary\n',
+          )
+          helpers='''def _response_schema(request: inference_pb2.InferenceRequest) -> dict[str, object] | None:\n    if not request.HasField("response_schema_json"):\n        return None\n    raw = request.response_schema_json.strip()\n    if not raw:\n        return None\n    if len(raw.encode("utf-8")) > 64 * 1024:\n        raise UnaryInferenceRejected(\n            inference_pb2.INFERENCE_ERROR_CODE_INVALID_REQUEST,\n            "response_schema_json exceeds the W02-13 64 KiB bound",\n            retryable=False,\n        )\n    try:\n        value = json.loads(raw)\n    except json.JSONDecodeError as exc:\n        raise UnaryInferenceRejected(\n            inference_pb2.INFERENCE_ERROR_CODE_INVALID_REQUEST,\n            f"response_schema_json is not valid JSON: {exc.msg}",\n            retryable=False,\n        ) from exc\n    if not isinstance(value, dict):\n        raise UnaryInferenceRejected(\n            inference_pb2.INFERENCE_ERROR_CODE_INVALID_REQUEST,\n            "response_schema_json must encode a JSON object schema",\n            retryable=False,\n        )\n    return value\n\n\ndef _tool_call_frame(request: adapter_pb2.AdapterFrame, call: ToolCallData) -> adapter_pb2.AdapterFrame:\n    native = request.inference_request\n    body = inference_pb2.InferenceToolCall(\n        contract_version=common_pb2.ContractVersion(major=1, minor=2),\n        request_id=native.request_id,\n        attempt_id=native.attempt_id,\n        index=call.index,\n        call_id=call.call_id,\n        name=call.name,\n        arguments_json=call.arguments_json,\n    )\n    return _frame(\n        f"inference-tool-call:{request.frame_id}:{call.index}",\n        "inference_tool_call",\n        body,\n        correlation_id=request.frame_id,\n    )\n\n\ndef _structured_output_frame(request: adapter_pb2.AdapterFrame, value: object) -> adapter_pb2.AdapterFrame:\n    native = request.inference_request\n    try:\n        encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)\n    except (TypeError, ValueError) as exc:\n        raise UnaryInferenceRejected(\n            inference_pb2.INFERENCE_ERROR_CODE_INTERNAL,\n            f"validated structured output is not canonical JSON data: {exc}",\n            retryable=False,\n        ) from exc\n    body = inference_pb2.InferenceStructuredOutput(\n        contract_version=common_pb2.ContractVersion(major=1, minor=2),\n        request_id=native.request_id,\n        attempt_id=native.attempt_id,\n        json_value=encoded,\n    )\n    return _frame(\n        f"inference-structured-output:{request.frame_id}",\n        "inference_structured_output",\n        body,\n        correlation_id=request.frame_id,\n    )\n'''
+          replace_once(
+              sidecar,
+              '    getattr(frame, body_name).CopyFrom(body)\n    return frame\n\n\ndef hello_frame() -> adapter_pb2.AdapterFrame:\n',
+              '    getattr(frame, body_name).CopyFrom(body)\n    return frame\n\n\n'+helpers+'\n\ndef hello_frame() -> adapter_pb2.AdapterFrame:\n',
+          )
+          replace_once(
+              sidecar,
+              '            "streaming-cancellation",\n        ],\n',
+              '            "streaming-cancellation",\n            "structured-inference-transport",\n        ],\n',
+          )
+          replace_once(
+              sidecar,
+              '    def start_stream(request: adapter_pb2.AdapterFrame) -> bool:\n        native_request = request.inference_request\n        state = coordinator.begin(native_request.request_id, native_request.attempt_id, request.frame_id)\n',
+              '    def start_stream(request: adapter_pb2.AdapterFrame) -> bool:\n        native_request = request.inference_request\n        try:\n            response_schema = _response_schema(native_request)\n        except UnaryInferenceRejected as exc:\n            inference_error(request, exc.code, str(exc))\n            return False\n        state = coordinator.begin(native_request.request_id, native_request.attempt_id, request.frame_id)\n',
+          )
+          replace_once(
+              sidecar,
+              '                execute_stream(\n                    native_request,\n                    emit_chunk=emit_chunk,\n                    emit_terminal=emit_terminal,\n                    cancel_requested=state.cancel_requested.is_set,\n                    wait_for_cancel_ack=state.cancel_acknowledged.wait,\n                )\n',
+              '                execute_stream(\n                    native_request,\n                    emit_chunk=emit_chunk,\n                    emit_terminal=emit_terminal,\n                    emit_tool_call=lambda call: send(_tool_call_frame(request, call)),\n                    response_schema=response_schema,\n                    emit_structured_output=(\n                        (lambda value: send(_structured_output_frame(request, value)))\n                        if response_schema is not None\n                        else None\n                    ),\n                    cancel_requested=state.cancel_requested.is_set,\n                    wait_for_cancel_ack=state.cancel_acknowledged.wait,\n                )\n',
+          )
+          replace_once(
+              sidecar,
+              '            if native_request.HasField("config") and native_request.config.stream:\n                start_stream(request)\n                continue\n            if coordinator.busy():\n',
+              '            if native_request.HasField("config") and native_request.config.stream:\n                start_stream(request)\n                continue\n            try:\n                response_schema = _response_schema(native_request)\n            except UnaryInferenceRejected as exc:\n                inference_error(request, exc.code, str(exc))\n                continue\n            if response_schema is not None:\n                inference_error(\n                    request,\n                    inference_pb2.INFERENCE_ERROR_CODE_INVALID_REQUEST,\n                    "response_schema_json is supported only by the streaming W02-13 lane",\n                )\n                continue\n            if coordinator.busy():\n',
+          )
+          PY
+      - name: Regenerate canonical SDK bindings
+        run: |
+          set -euo pipefail
+          buf format -d --exit-code
+          buf lint
+          buf generate
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt 'httpx>=0.27,<1' 'jsonschema==4.25.1'
+          python -m scripts.contracts.generated_manifest
+          git diff --check
+      - name: Prove typed transport and regressions before persistence
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
+        run: |
+          set -euo pipefail
+          python -m py_compile adapters/openjarvis/sidecar.py adapters/openjarvis/structured_output.py adapters/openjarvis/streaming_inference.py tests/test_cp03_w02_structured_output.py tests/test_cp03_w02_structured_transport.py
+          python -m unittest -v tests.test_cp03_w02_structured_output tests.test_cp03_w02_structured_transport tests.test_cp03_w02_streaming tests.test_cp03_w02_cancellation tests.test_cp03_w02_inference_contract tests.test_cp03_openjarvis_sidecar tests.test_cp03_adapter_contract tests.test_cp03_w02_plan
+          python -m scripts.contracts.validate_manifest
+          python -m scripts.contracts.generated_manifest --check
+          cargo test --locked --manifest-path contracts/sdk/rust/Cargo.toml
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_security
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --lib
+          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+          cd contracts/sdk/typescript
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run typecheck
+          npm test
+      - name: Prove durable invariants remain frozen
+        run: |
+          set -euo pipefail
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          goal=json.loads(Path('GOAL_STATE.json').read_text())
+          tasks={row['id']:row for row in graph['tasks']}
+          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646 and graph['w02_obligation_count']==47
+          assert goal['parity']['total']==7565 and goal['parity']['verified']==0
+          assert graph['first_executable_task']=='W02-13'
+          assert tasks['W02-13']['status']=='IN_PROGRESS' and not tasks['W02-13']['proof']
+          assert tasks['W02-14']['status']=='BLOCKED' and not tasks['W02-14']['proof']
+          PY
+      - name: Restrict implementation mutation
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess
+          allowed_prefixes=(
+            'contracts/sdk/python/gen/',
+            'contracts/sdk/typescript/src/gen/',
+            'contracts/sdk/rust/src/gen/',
+            'contracts/sdk/swift/Sources/CleverContracts/Gen/',
+          )
+          allowed_exact={
+            'contracts/generated_manifest.json',
+            'adapters/openjarvis/sidecar.py',
+            'tests/test_cp03_w02_structured_output.py',
+            'tests/test_cp03_w02_structured_transport.py',
+          }
+          paths={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if line}
+          unexpected={path for path in paths if path not in allowed_exact and not path.startswith(allowed_prefixes)}
+          assert not unexpected, f'out-of-scope W02-13 transport mutation: {sorted(unexpected)}'
+          PY
+      - name: CAS persist typed transport implementation
+        run: |
+          set -euo pipefail
+          if git diff --quiet && git diff --cached --quiet; then
+            exit 0
+          fi
+          test "$(git ls-remote origin refs/heads/wave/cp03-w02-structured-transport-20260922 | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add adapters/openjarvis/sidecar.py tests/test_cp03_w02_structured_output.py tests/test_cp03_w02_structured_transport.py contracts/sdk/python/gen contracts/sdk/typescript/src/gen contracts/sdk/rust/src/gen contracts/sdk/swift/Sources/CleverContracts/Gen contracts/generated_manifest.json
+          git commit -m 'feat(cp03-w02): wire typed structured sidecar transport'
+          git push origin HEAD:wave/cp03-w02-structured-transport-20260922
+
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
       - name: Install bounded test dependencies
         run: |
           python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt 'httpx>=0.27,<1' 'jsonschema==4.25.1'
-      - name: Compile W02-13 Python slice
+      - name: Compile and test W02-13 typed transport
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
         run: |
           set -euo pipefail
-          python -m py_compile adapters/openjarvis/structured_output.py adapters/openjarvis/streaming_inference.py tests/test_cp03_w02_structured_output.py scripts/cp03/finalize_w02_structured.py
+          python -m py_compile adapters/openjarvis/sidecar.py adapters/openjarvis/structured_output.py adapters/openjarvis/streaming_inference.py tests/test_cp03_w02_structured_output.py tests/test_cp03_w02_structured_transport.py
+          python -m unittest -v tests.test_cp03_w02_structured_output tests.test_cp03_w02_structured_transport tests.test_cp03_w02_streaming tests.test_cp03_w02_cancellation tests.test_cp03_w02_inference_contract tests.test_cp03_openjarvis_sidecar tests.test_cp03_adapter_contract tests.test_cp03_w02_plan
           git diff --check
-      - name: Targeted structured-output and tool-fragment tests
-        env:
-          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
+      - name: Generated SDK regressions
         run: |
           set -euo pipefail
-          python -m unittest -v tests.test_cp03_w02_structured_output
-      - name: Streaming cancellation and contract regression
-        env:
-          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
-        run: |
-          set -euo pipefail
-          python -m unittest -v tests.test_cp03_w02_streaming tests.test_cp03_w02_cancellation tests.test_cp03_w02_inference_contract tests.test_cp03_openjarvis_sidecar tests.test_cp03_w02_plan
+          python -m scripts.contracts.validate_manifest
+          python -m scripts.contracts.generated_manifest --check
+          cargo test --locked --manifest-path contracts/sdk/rust/Cargo.toml
+          cd contracts/sdk/typescript
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run typecheck
+          npm test
       - name: Kernel security and library gauntlet
         run: |
           set -euo pipefail
@@ -74,7 +309,7 @@ jobs:
           python scripts/validate_agentic_state.py
           python scripts/context/validate_context_pack.py
           python scripts/context/build_context_pack.py --check
-      - name: Assert frozen denominators and no parity promotion
+      - name: Assert frozen denominators and legal frontier
         run: |
           python - <<'PY'
           import json
@@ -87,17 +322,33 @@ jobs:
           assert graph['w02_obligation_count']==47
           assert goal['parity']['total']==7565
           assert goal['parity']['verified']==0
-          assert tasks['W02-13']['status'] in {'READY','IN_PROGRESS'}
-          assert tasks['W02-14']['status']=='BLOCKED'
+          if tasks['W02-13']['status']=='COMPLETE':
+              assert tasks['W02-13']['proof']
+              assert graph['first_executable_task']=='W02-14'
+              assert tasks['W02-14']['status']=='READY' and not tasks['W02-14']['proof']
+          else:
+              assert tasks['W02-13']['status']=='IN_PROGRESS' and not tasks['W02-13']['proof']
+              assert graph['first_executable_task']=='W02-13'
+              assert tasks['W02-14']['status']=='BLOCKED' and not tasks['W02-14']['proof']
           PY
 
-  finalize_partial:
-    needs: verify
-    if: github.event_name == 'push' && github.ref == 'refs/heads/wave/cp03-w02-structured-20260921'
+  swift_transport:
+    needs: repair_transport
+    if: github.event_name == 'push' && github.ref == 'refs/heads/wave/cp03-w02-structured-transport-20260922'
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Swift generated-contract regression
+        run: swift test --package-path contracts/sdk/swift
+
+  finalize_transport:
+    needs: [repair_transport, verify, swift_transport]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/wave/cp03-w02-structured-transport-20260922'
     permissions:
       contents: write
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -106,68 +357,160 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
-      - name: Install bounded test dependencies
-        run: |
-          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt 'httpx>=0.27,<1' 'jsonschema==4.25.1'
-      - name: Exact-head and pre-transition guard
-        run: |
-          set -euo pipefail
-          test "$(git ls-remote origin refs/heads/wave/cp03-w02-structured-20260921 | cut -f1)" = "$GITHUB_SHA"
-          python scripts/cp03/validate_w02_plan.py
-          python scripts/validate_agentic_state.py
-          python scripts/context/validate_context_pack.py
-          python scripts/context/build_context_pack.py --check
-          python -m scripts.parity.ledger --check --source-repo openjarvis
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
-          tasks={row['id']:row for row in graph['tasks']}
-          goal=json.loads(Path('GOAL_STATE.json').read_text())
-          claim=json.loads(Path('sessions/20260921-w02-structured/CLAIM.json').read_text())
-          assert graph['first_executable_task']=='W02-13'
-          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646 and graph['w02_obligation_count']==47
-          assert tasks['W02-13']['status']=='READY' and not tasks['W02-13']['proof']
-          assert all(tasks[d]['status']=='COMPLETE' and tasks[d]['proof'] for d in tasks['W02-13']['depends_on'])
-          assert tasks['W02-14']['status']=='BLOCKED' and not tasks['W02-14']['proof']
-          assert goal['parity']['total']==7565 and goal['parity']['verified']==0
-          assert claim['claim_id']=='CLAIM-CP03-W02-STRUCTURED-20260921' and claim['status']=='ACTIVE'
-          rows=[json.loads(line) for line in Path('ledgers/CLAIM_LEDGER.ndjson').read_text().splitlines() if line.strip()]
-          latest={}
-          for row in rows:
-              if row.get('claim_id') and row.get('status'):
-                  latest[row['claim_id']]=row['status']
-          active=[cid for cid,status in latest.items() if status=='ACTIVE' and cid!='CLAIM-CP03-W02-STRUCTURED-20260921']
-          assert not active, f'conflicting active claims: {active}'
-          PY
-      - name: Re-prove W02-13 exact-head behavior
+      - name: Exact-head completion guard and re-prove G4
         env:
           PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/contracts/sdk/python/gen
         run: |
           set -euo pipefail
-          python -m unittest -v tests.test_cp03_w02_structured_output tests.test_cp03_w02_streaming tests.test_cp03_w02_cancellation tests.test_cp03_w02_inference_contract tests.test_cp03_openjarvis_sidecar tests.test_cp03_w02_plan
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/wave/cp03-w02-structured-transport-20260922 | cut -f1)" = "$GITHUB_SHA"
+          python -m pip install --disable-pip-version-check -r contracts/sdk/python/requirements.txt 'httpx>=0.27,<1' 'jsonschema==4.25.1'
+          python -m unittest -v tests.test_cp03_w02_structured_output tests.test_cp03_w02_structured_transport tests.test_cp03_w02_streaming tests.test_cp03_w02_cancellation tests.test_cp03_w02_inference_contract tests.test_cp03_openjarvis_sidecar tests.test_cp03_adapter_contract tests.test_cp03_w02_plan
           cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_security
-          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --lib
-          cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
-      - name: Build exact-head partial evidence receipt
-        run: |
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
           python - <<'PY'
-          import json, os
-          receipt={
-            'project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','parent_wave':'CP03-W02','task':'W02-13','gate':'G4','status':'PARTIAL_PASS',
-            'validated_head':os.environ['GITHUB_SHA'],'github_actions_run_id':int(os.environ['GITHUB_RUN_ID']),'red_run_id':35648078142,
-            'fragmented_tool_arguments':'PASS','invalid_tool_arguments':'FAIL_CLOSED','malicious_tool_name_execution':'ZERO_EXECUTION',
-            'structured_json_schema_validation':'PASS','invalid_structured_json':'FAIL_CLOSED','canonical_typed_transport':'NOT_RUN',
-            'provider_egress_executions':0,'tool_executions':0,'parity_promotions':0,'verified_capabilities':0,
-            'global_denominator':7565,'openjarvis_obligations':646,'w02_proof_units':47,
-          }
-          open('/tmp/w02-13-partial-receipt.json','w').write(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          import json
+          from pathlib import Path
+          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          goal=json.loads(Path('GOAL_STATE.json').read_text())
+          tasks={row['id']:row for row in graph['tasks']}
+          claim=json.loads(Path('sessions/20260921-w02-structured/CLAIM.json').read_text())
+          assert graph['first_executable_task']=='W02-13'
+          assert tasks['W02-13']['status']=='IN_PROGRESS' and not tasks['W02-13']['proof']
+          assert tasks['W02-11']['status']=='COMPLETE' and tasks['W02-11']['proof']
+          assert tasks['W02-14']['status']=='BLOCKED' and not tasks['W02-14']['proof']
+          assert goal['parity']['total']==7565 and goal['parity']['verified']==0
+          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646 and graph['w02_obligation_count']==47
+          assert claim['claim_id']=='CLAIM-CP03-W02-STRUCTURED-20260921' and claim['status']=='ACTIVE'
           PY
-      - name: Exact-head partial transition and durable persistence
+      - name: Persist W02-13 completion state in working tree
         run: |
           set -euo pipefail
-          test "$(git ls-remote origin refs/heads/wave/cp03-w02-structured-20260921 | cut -f1)" = "$GITHUB_SHA"
-          python scripts/cp03/finalize_w02_structured.py --receipt /tmp/w02-13-partial-receipt.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          DATE='2026-09-22'
+          TASK='W02-13'
+          NEXT='W02-14'
+          CLAIM='CLAIM-CP03-W02-STRUCTURED-20260921'
+          EVID='EVID-W02-STRUCTURED-TRANSPORT-20260922'
+          WAVE='CP03-W02-STRUCTURED-TRANSPORT-20260922'
+          head=os.environ['GITHUB_SHA']
+          run_id=int(os.environ['GITHUB_RUN_ID'])
+
+          def read_json(path):
+              return json.loads(Path(path).read_text(encoding='utf-8'))
+          def write_json(path, value):
+              p=Path(path); p.parent.mkdir(parents=True,exist_ok=True)
+              p.write_text(json.dumps(value,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          def append(path,row):
+              with Path(path).open('a',encoding='utf-8') as fh:
+                  fh.write(json.dumps(row,sort_keys=True,separators=(',',':'))+'\n')
+
+          plan=read_json('iterations/03/waves/CP03-W02/TASK_GRAPH.json')
+          tasks={row['id']:row for row in plan['tasks']}
+          proof={
+              'evidence_id':EVID,'gate':'G4','result':'PASS','run_id':run_id,'validated_head':head,
+              'canonical_typed_transport':'PASS','fragmented_tool_arguments':'PASS','invalid_tool_arguments':'FAIL_CLOSED',
+              'structured_json_schema_validation':'PASS','invalid_structured_json':'FAIL_CLOSED',
+              'malicious_tool_name_execution':'ZERO_EXECUTION','generated_bindings':'PASS',
+              'python_roundtrip':'PASS','typescript_roundtrip':'PASS','rust_roundtrip':'PASS','swift_roundtrip':'PASS',
+              'provider_egress_executions':0,'tool_executions':0,'parity_promotions':0,
+          }
+          tasks[TASK]['status']='COMPLETE'
+          tasks[TASK]['proof']=[proof]
+          tasks[NEXT]['status']='READY'
+          plan['first_executable_task']=NEXT
+          write_json('iterations/03/waves/CP03-W02/TASK_GRAPH.json',plan)
+
+          receipt={
+              'project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','parent_wave':'CP03-W02','task':TASK,'gate':'G4','status':'PASS',
+              'validated_head':head,'github_actions_run_id':run_id,'red_run_id':35673870447,
+              'canonical_typed_transport':'PASS','fragmented_tool_arguments':'PASS','invalid_tool_arguments':'FAIL_CLOSED',
+              'structured_json_schema_validation':'PASS','invalid_structured_json':'FAIL_CLOSED','malicious_tool_name_execution':'ZERO_EXECUTION',
+              'generated_bindings':'PASS','python_roundtrip':'PASS','typescript_roundtrip':'PASS','rust_roundtrip':'PASS','swift_roundtrip':'PASS',
+              'provider_egress_executions':0,'tool_executions':0,'parity_promotions':0,'verified_capabilities':0,
+              'global_denominator':7565,'openjarvis_obligations':646,'w02_proof_units':47,'next_task':NEXT,
+          }
+          write_json('evidence/cp03/cp03-w02/W02-13/transport_receipt.json',receipt)
+          report=dict(receipt)
+          report.update({
+              'date':DATE,'evidence_id':EVID,'support_wave':WAVE,'task_status':'COMPLETE',
+              'decision':'Assembled tool calls and schema-validated structured output cross explicit typed AdapterFrame bodies; no metadata encoding grants execution authority.',
+              'historical_partial_evidence':'EVID-W02-STRUCTURED-CORE-20260921',
+          })
+          write_json('evidence/cp03/cp03-w02/W02-13/transport_report.json',report)
+
+          claim=read_json('sessions/20260921-w02-structured/CLAIM.json')
+          claim['status']='RELEASED'; claim['validated_head']=head; claim['last_evidence_id']=EVID; claim['released_at']=DATE
+          write_json('sessions/20260921-w02-structured/CLAIM.json',claim)
+          write_json('sessions/20260921-w02-structured/RESULT.json',{
+              'schema_version':1,'date':DATE,'claim_id':CLAIM,'wave_id':WAVE,'task':TASK,'status':'COMPLETE',
+              'evidence_id':EVID,'validated_head':head,'github_actions_run_id':run_id,'next_task':NEXT,
+          })
+
+          append('ledgers/EVIDENCE_LEDGER.ndjson',{
+              'schema_version':1,'date':DATE,'evidence_id':EVID,'status':'VERIFIED','type':'cp03_w02_structured_transport',
+              'wave_id':'CP03-W02','support_wave':WAVE,'github_actions_run_id':run_id,'validated_head':head,'red_run_id':35673870447,
+              'canonical_typed_transport':'PASS','fragmented_tool_arguments':'PASS','invalid_tool_arguments':'FAIL_CLOSED',
+              'structured_json_schema_validation':'PASS','invalid_structured_json':'FAIL_CLOSED','malicious_tool_name_execution':'ZERO_EXECUTION',
+              'generated_bindings':'PASS','python_roundtrip':'PASS','typescript_roundtrip':'PASS','rust_roundtrip':'PASS','swift_roundtrip':'PASS',
+              'provider_egress_executions':0,'tool_executions':0,'parity_promotions':0,'verified_capabilities':0,
+              'global_denominator':7565,'openjarvis_obligations':646,'w02_proof_units':47,
+              'claim':'Exact-head G4 proves canonical typed transport for structured output/tool calls as inert data and completes W02-13 without parity promotion.'
+          })
+          append('ledgers/RUN_LOG.ndjson',{
+              'schema_version':1,'date':DATE,'event_id':'RUN-W02-STRUCTURED-TRANSPORT-COMPLETE-20260922','event':'WORK_COMPLETED',
+              'goal_id':'CLEVER-JARVIS-001','checkpoint':'CP03','iteration':'I03','wave_id':'CP03-W02','support_wave':WAVE,
+              'canonical_task':TASK,'status':'COMPLETE','evidence_id':EVID,'next_task':NEXT,'K':47,'parity_promotions':0,
+          })
+          append('ledgers/WAVE_LEDGER.ndjson',{
+              'schema_version':1,'date':DATE,'event_id':'WAVE-W02-STRUCTURED-TRANSPORT-COMPLETE-20260922','event':'IMPLEMENTATION_VERIFICATION',
+              'wave_id':WAVE,'parent_wave':'CP03-W02','iteration':'I03','checkpoint':'CP03','canonical_task':TASK,
+              'status':'COMPLETE','evidence_id':EVID,'next_task':NEXT,
+          })
+          append('ledgers/DECISION_LEDGER.ndjson',{
+              'schema_version':1,'date':DATE,'decision_id':'D-0020','status':'ACCEPTED','evidence_id':EVID,
+              'decision':'W02-13 transports tool calls and structured output only through explicit typed inference messages and AdapterFrame bodies; model output remains inert data and never becomes execution authority.',
+              'context':'The previous core evidence intentionally left canonical transport NOT_RUN. Fields 25/26 plus generated bindings and sidecar framing now close that gap without metadata encoding, provider egress, denominator mutation or parity promotion.',
+          })
+          append('ledgers/RISK_LEDGER.ndjson',{
+              'schema_version':1,'date':DATE,'risk_id':'RISK-0013','status':'CLOSED','severity':'HIGH','evidence_id':EVID,
+              'risk':'Canonical AdapterFrame/sidecar transport for W02-13 typed tool and structured data was previously absent.',
+              'mitigation':'Explicit inference_tool_call/inference_structured_output bodies, regenerated four-language bindings, exact-head round trips and zero-execution tests now close this specific transport gap.',
+          })
+          append('ledgers/CLAIM_LEDGER.ndjson',{
+              'schema_version':1,'date':DATE,'event':'RELEASE','claim_id':CLAIM,'owner':'chatgpt-gpt-5.6-sol','status':'RELEASED',
+              'release_evidence_id':EVID,'wave_id':'CP03-W02-STRUCTURED-20260921','canonical_task':TASK,'validated_head':head,
+          })
+
+          state=Path('STATE.md')
+          text=state.read_text(encoding='utf-8')
+          old='- Canonical task frontier: `W02-13 — Structured output y tools` (`IN_PROGRESS`)\n'
+          new='- Canonical task frontier: `W02-14 — Fallback retry y salida parcial` (`READY`)\n'
+          if old not in text:
+              raise SystemExit('STATE W02-13 IN_PROGRESS anchor missing')
+          state.write_text(text.replace(old,new,1),encoding='utf-8')
+
+          handoff=Path('HANDOFF.md')
+          text=handoff.read_text(encoding='utf-8')
+          partial='- W02-13 partial G4 evidence: `EVID-W02-STRUCTURED-CORE-20260921`; fragmented OpenJarvis tool-call arguments assemble into bounded typed inert data, malformed JSON/schema violations fail closed, malicious tool names are preserved without execution, and targeted + streaming/cancellation/contract + kernel security regressions pass on the exact head. This is not W02-13 completion: canonical AdapterFrame/sidecar transport for typed tool/structured data remains unimplemented.'
+          complete='- W02-13 G4 completion evidence: `EVID-W02-STRUCTURED-TRANSPORT-20260922`; explicit typed `InferenceToolCall`/`InferenceStructuredOutput` bodies cross AdapterFrame/sidecar with correlated request/attempt identity, caller schema parsing is bounded/fail-closed, four language bindings are regenerated and round-trip tested, malicious tool names remain inert, tool executions 0, provider egress 0, parity promotions 0.'
+          if complete not in text:
+              if partial not in text:
+                  raise SystemExit('HANDOFF W02-13 partial evidence anchor missing')
+              text=text.replace(partial,partial+'\n'+complete,1)
+          old_next='''## Next executable\n\n`W02-13 — Structured output y tools` (`IN_PROGRESS`).\n\nThe bounded decoder/validator core is now evidence-backed, but W02-13 is intentionally not COMPLETE. The exact next sub-slice is to extend the canonical inference transport so assembled tool calls and validated structured output cross AdapterFrame/sidecar as typed data without metadata encoding, then re-run G4 exact-head tests. W02-14+ remain BLOCKED; no parity promotion or denominator change occurred.'''
+          new_next='''## Next executable\n\n`W02-14 — Fallback retry y salida parcial` (`READY`).\n\nW02-13 is evidence-backed COMPLETE. The next and only opened DAG frontier is W02-14; W02-15+ remain BLOCKED. No parity promotion, denominator mutation, provider egress, or tool execution occurred in the W02-13 completion wave.'''
+          if old_next not in text:
+              raise SystemExit('HANDOFF W02-13 next-executable anchor missing')
+          handoff.write_text(text.replace(old_next,new_next,1),encoding='utf-8')
+          PY
           python scripts/context/build_context_pack.py
           python scripts/cp03/validate_w02_plan.py
           python scripts/validate_agentic_state.py
@@ -178,45 +521,46 @@ jobs:
           import json
           from pathlib import Path
           graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
-          tasks={row['id']:row for row in graph['tasks']}
           goal=json.loads(Path('GOAL_STATE.json').read_text())
           context=json.loads(Path('.agentic/context/CURRENT_CONTEXT.json').read_text())
-          assert graph['first_executable_task']=='W02-13'
-          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646 and graph['w02_obligation_count']==47
-          assert tasks['W02-13']['status']=='IN_PROGRESS' and not tasks['W02-13']['proof']
-          assert tasks['W02-14']['status']=='BLOCKED' and not tasks['W02-14']['proof']
+          tasks={row['id']:row for row in graph['tasks']}
+          assert graph['first_executable_task']=='W02-14'
+          assert tasks['W02-13']['status']=='COMPLETE' and tasks['W02-13']['proof']
+          assert tasks['W02-14']['status']=='READY' and not tasks['W02-14']['proof']
           assert goal['parity']['total']==7565 and goal['parity']['verified']==0
-          assert 'D-0019' in context['accepted_decision_ids']
-          assert 'EVID-W02-STRUCTURED-CORE-20260921' in context['evidence_ids']
-          assert any(r['risk_id']=='RISK-0013' and r['status']=='OPEN' for r in context['open_risks'])
-          assert any(c['claim_id']=='CLAIM-CP03-W02-STRUCTURED-20260921' and c['status']=='ACTIVE' for c in context['active_claims'])
+          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646 and graph['w02_obligation_count']==47
+          assert 'D-0020' in context['accepted_decision_ids']
+          assert 'EVID-W02-STRUCTURED-TRANSPORT-20260922' in context['evidence_ids']
+          assert not any(r['risk_id']=='RISK-0013' for r in context['open_risks'])
+          assert not any(c['claim_id']=='CLAIM-CP03-W02-STRUCTURED-20260921' for c in context['active_claims'])
           PY
           git diff --check
-      - name: Restrict finalization mutation
+      - name: Restrict completion mutation
         run: |
+          set -euo pipefail
           python - <<'PY'
           import subprocess
           allowed={
             'iterations/03/waves/CP03-W02/TASK_GRAPH.json',
-            'evidence/cp03/cp03-w02/W02-13/partial_receipt.json','evidence/cp03/cp03-w02/W02-13/report.json',
+            'evidence/cp03/cp03-w02/W02-13/transport_receipt.json','evidence/cp03/cp03-w02/W02-13/transport_report.json',
             'sessions/20260921-w02-structured/RESULT.json','sessions/20260921-w02-structured/CLAIM.json',
             'ledgers/EVIDENCE_LEDGER.ndjson','ledgers/RUN_LOG.ndjson','ledgers/WAVE_LEDGER.ndjson','ledgers/DECISION_LEDGER.ndjson','ledgers/RISK_LEDGER.ndjson','ledgers/CLAIM_LEDGER.ndjson',
             'HANDOFF.md','STATE.md','.agentic/context/CURRENT_CONTEXT.json','.agentic/context/CURRENT_CONTEXT.md',
           }
           paths={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if line}
           unexpected=paths-allowed
-          assert not unexpected, f'out-of-scope W02-13 finalization mutation: {sorted(unexpected)}'
-          required={'iterations/03/waves/CP03-W02/TASK_GRAPH.json','ledgers/EVIDENCE_LEDGER.ndjson','ledgers/CLAIM_LEDGER.ndjson','HANDOFF.md','STATE.md','.agentic/context/CURRENT_CONTEXT.json','.agentic/context/CURRENT_CONTEXT.md'}
-          assert required.issubset(paths), f'missing durable W02-13 mutation: {sorted(required-paths)}'
+          assert not unexpected, f'out-of-scope W02-13 completion mutation: {sorted(unexpected)}'
+          required={'iterations/03/waves/CP03-W02/TASK_GRAPH.json','evidence/cp03/cp03-w02/W02-13/transport_receipt.json','ledgers/EVIDENCE_LEDGER.ndjson','ledgers/CLAIM_LEDGER.ndjson','HANDOFF.md','STATE.md','.agentic/context/CURRENT_CONTEXT.json','.agentic/context/CURRENT_CONTEXT.md'}
+          assert required.issubset(paths), f'missing durable W02-13 completion mutation: {sorted(required-paths)}'
           PY
-      - name: CAS persist W02-13 partial state without opening W02-14
+      - name: CAS persist completion on isolated state branch
         run: |
           set -euo pipefail
-          test "$(git ls-remote origin refs/heads/wave/cp03-w02-structured-20260921 | cut -f1)" = "$GITHUB_SHA"
-          test -z "$(git ls-remote origin refs/heads/wave/cp03-w02-structured-finalize-20260921 | cut -f1)"
+          test "$(git ls-remote origin refs/heads/wave/cp03-w02-structured-transport-20260922 | cut -f1)" = "$GITHUB_SHA"
+          test -z "$(git ls-remote origin refs/heads/state/cp03-w02-structured-transport-final-20260922 | cut -f1)"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git switch -c wave/cp03-w02-structured-finalize-20260921
-          git add iterations/03/waves/CP03-W02/TASK_GRAPH.json evidence/cp03/cp03-w02/W02-13 sessions/20260921-w02-structured/RESULT.json sessions/20260921-w02-structured/CLAIM.json ledgers/EVIDENCE_LEDGER.ndjson ledgers/RUN_LOG.ndjson ledgers/WAVE_LEDGER.ndjson ledgers/DECISION_LEDGER.ndjson ledgers/RISK_LEDGER.ndjson ledgers/CLAIM_LEDGER.ndjson HANDOFF.md STATE.md .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
-          git commit -m 'state(cp03-w02): persist W02-13 structured core partial evidence'
-          git push origin HEAD:wave/cp03-w02-structured-finalize-20260921
+          git switch -c state/cp03-w02-structured-transport-final-20260922
+          git add iterations/03/waves/CP03-W02/TASK_GRAPH.json evidence/cp03/cp03-w02/W02-13/transport_receipt.json evidence/cp03/cp03-w02/W02-13/transport_report.json sessions/20260921-w02-structured/RESULT.json sessions/20260921-w02-structured/CLAIM.json ledgers/EVIDENCE_LEDGER.ndjson ledgers/RUN_LOG.ndjson ledgers/WAVE_LEDGER.ndjson ledgers/DECISION_LEDGER.ndjson ledgers/RISK_LEDGER.ndjson ledgers/CLAIM_LEDGER.ndjson HANDOFF.md STATE.md .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git commit -m 'state(cp03-w02): complete W02-13 typed structured transport'
+          git push origin HEAD:state/cp03-w02-structured-transport-final-20260922

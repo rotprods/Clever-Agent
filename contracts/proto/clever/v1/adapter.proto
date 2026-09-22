@@ -109,5 +109,7 @@ message AdapterFrame {
     InferenceTerminal inference_terminal = 22;
     InferenceError inference_error = 23;
     InferenceCancel inference_cancel = 24;
+    InferenceToolCall inference_tool_call = 25;
+    InferenceStructuredOutput inference_structured_output = 26;
   }
 }

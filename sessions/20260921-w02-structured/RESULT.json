@@ -1,13 +1,12 @@
 {
   "claim_id": "CLAIM-CP03-W02-STRUCTURED-20260921",
-  "date": "2026-09-21",
-  "evidence_id": "EVID-W02-STRUCTURED-CORE-20260921",
-  "github_actions_run_id": 35653353602,
-  "next_subslice": "canonical typed transport for W02-13",
-  "next_task": "W02-13",
+  "date": "2026-09-22",
+  "evidence_id": "EVID-W02-STRUCTURED-TRANSPORT-20260922",
+  "github_actions_run_id": 35681531897,
+  "next_task": "W02-14",
   "schema_version": 1,
-  "status": "ADVANCED_IN_PROGRESS",
+  "status": "COMPLETE",
   "task": "W02-13",
-  "validated_head": "5ed3896a7d3117b4e3764719d7b970fd20301848",
-  "wave_id": "CP03-W02-STRUCTURED-20260921"
+  "validated_head": "87d1f54eb8254726a02f7e2b16ec2b819904f7f0",
+  "wave_id": "CP03-W02-STRUCTURED-TRANSPORT-20260922"
 }

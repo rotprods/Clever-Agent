@@ -36,6 +36,7 @@ fn request(user: &str, session_id: &str, max_output_tokens: u64) -> InferenceReq
         }),
         deadline_at: None,
         idempotency_key: "idem-1".to_owned(),
+        response_schema_json: None,
     }
 }
 

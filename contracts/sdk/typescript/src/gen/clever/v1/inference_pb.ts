@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file clever/v1/inference.proto.
  */
 export const file_clever_v1_inference: GenFile = /*@__PURE__*/
-  fileDesc("ChljbGV2ZXIvdjEvaW5mZXJlbmNlLnByb3RvEgljbGV2ZXIudjEiVwoOSW5mZXJlbmNlSW5wdXQSJgoEcm9sZRgBIAEoDjIYLmNsZXZlci52MS5JbmZlcmVuY2VSb2xlEg8KB2NvbnRlbnQYAiABKAkSDAoEbmFtZRgDIAEoCSKcAQoPSW5mZXJlbmNlQ29uZmlnEhkKEW1heF9vdXRwdXRfdG9rZW5zGAEgASgEEhgKC3RlbXBlcmF0dXJlGAIgASgCSACIAQESEgoFdG9wX3AYAyABKAJIAYgBARIWCg5zdG9wX3NlcXVlbmNlcxgEIAMoCRIOCgZzdHJlYW0YBSABKAhCDgoMX3RlbXBlcmF0dXJlQggKBl90b3BfcCLRAQoOSW5mZXJlbmNlVXNhZ2USOQoLbWVhc3VyZW1lbnQYASABKA4yJC5jbGV2ZXIudjEuSW5mZXJlbmNlVXNhZ2VNZWFzdXJlbWVudBIZCgxpbnB1dF90b2tlbnMYAiABKARIAIgBARIaCg1vdXRwdXRfdG9rZW5zGAMgASgESAGIAQESGQoMdG90YWxfdG9rZW5zGAQgASgESAKIAQFCDwoNX2lucHV0X3Rva2Vuc0IQCg5fb3V0cHV0X3Rva2Vuc0IPCg1fdG90YWxfdG9rZW5zIvYCChBJbmZlcmVuY2VSZXF1ZXN0EjQKEGNvbnRyYWN0X3ZlcnNpb24YASABKAsyGi5jbGV2ZXIudjEuQ29udHJhY3RWZXJzaW9uEhIKCnJlcXVlc3RfaWQYAiABKAkSEgoKYXR0ZW1wdF9pZBgDIAEoCRIqCglwcmluY2lwYWwYBCABKAsyFy5jbGV2ZXIudjEuUHJpbmNpcGFsUmVmEhIKCnNlc3Npb25faWQYBSABKAkSEQoJZW5naW5lX2lkGAYgASgJEhAKCG1vZGVsX2lkGAcgASgJEikKBmlucHV0cxgIIAMoCzIZLmNsZXZlci52MS5JbmZlcmVuY2VJbnB1dBIqCgZjb25maWcYCSABKAsyGi5jbGV2ZXIudjEuSW5mZXJlbmNlQ29uZmlnEi8KC2RlYWRsaW5lX2F0GAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIXCg9pZGVtcG90ZW5jeV9rZXkYCyABKAkilAEKDkluZmVyZW5jZUNodW5rEjQKEGNvbnRyYWN0X3ZlcnNpb24YASABKAsyGi5jbGV2ZXIudjEuQ29udHJhY3RWZXJzaW9uEhIKCnJlcXVlc3RfaWQYAiABKAkSEgoKYXR0ZW1wdF9pZBgDIAEoCRIQCghzZXF1ZW5jZRgEIAEoBBISCgp0ZXh0X2RlbHRhGAUgASgJIuwBChFJbmZlcmVuY2VUZXJtaW5hbBI0ChBjb250cmFjdF92ZXJzaW9uGAEgASgLMhouY2xldmVyLnYxLkNvbnRyYWN0VmVyc2lvbhISCgpyZXF1ZXN0X2lkGAIgASgJEhIKCmF0dGVtcHRfaWQYAyABKAkSFgoOZmluYWxfc2VxdWVuY2UYBCABKAQSNwoNZmluaXNoX3JlYXNvbhgFIAEoDjIgLmNsZXZlci52MS5JbmZlcmVuY2VGaW5pc2hSZWFzb24SKAoFdXNhZ2UYBiABKAsyGS5jbGV2ZXIudjEuSW5mZXJlbmNlVXNhZ2UivwEKDkluZmVyZW5jZUVycm9yEjQKEGNvbnRyYWN0X3ZlcnNpb24YASABKAsyGi5jbGV2ZXIudjEuQ29udHJhY3RWZXJzaW9uEhIKCnJlcXVlc3RfaWQYAiABKAkSEgoKYXR0ZW1wdF9pZBgDIAEoCRIrCgRjb2RlGAQgASgOMh0uY2xldmVyLnYxLkluZmVyZW5jZUVycm9yQ29kZRIPCgdtZXNzYWdlGAUgASgJEhEKCXJldHJ5YWJsZRgGIAEoCCKNAQoPSW5mZXJlbmNlQ2FuY2VsEjQKEGNvbnRyYWN0X3ZlcnNpb24YASABKAsyGi5jbGV2ZXIudjEuQ29udHJhY3RWZXJzaW9uEhkKEXRhcmdldF9yZXF1ZXN0X2lkGAIgASgJEhkKEXRhcmdldF9hdHRlbXB0X2lkGAMgASgJEg4KBnJlYXNvbhgEIAEoCSqaAQoNSW5mZXJlbmNlUm9sZRIeChpJTkZFUkVOQ0VfUk9MRV9VTlNQRUNJRklFRBAAEhkKFUlORkVSRU5DRV9ST0xFX1NZU1RFTRABEhcKE0lORkVSRU5DRV9ST0xFX1VTRVIQAhIcChhJTkZFUkVOQ0VfUk9MRV9BU1NJU1RBTlQQAxIXChNJTkZFUkVOQ0VfUk9MRV9UT09MEAQqowIKFUluZmVyZW5jZUZpbmlzaFJlYXNvbhInCiNJTkZFUkVOQ0VfRklOSVNIX1JFQVNPTl9VTlNQRUNJRklFRBAAEiAKHElORkVSRU5DRV9GSU5JU0hfUkVBU09OX1NUT1AQARIiCh5JTkZFUkVOQ0VfRklOSVNIX1JFQVNPTl9MRU5HVEgQAhIlCiFJTkZFUkVOQ0VfRklOSVNIX1JFQVNPTl9DQU5DRUxMRUQQAxIqCiZJTkZFUkVOQ0VfRklOSVNIX1JFQVNPTl9DT05URU5UX0ZJTFRFUhAEEiUKIUlORkVSRU5DRV9GSU5JU0hfUkVBU09OX1RPT0xfQ0FMTBAFEiEKHUlORkVSRU5DRV9GSU5JU0hfUkVBU09OX0VSUk9SEAYq+QIKEkluZmVyZW5jZUVycm9yQ29kZRIkCiBJTkZFUkVOQ0VfRVJST1JfQ09ERV9VTlNQRUNJRklFRBAAEigKJElORkVSRU5DRV9FUlJPUl9DT0RFX0lOVkFMSURfUkVRVUVTVBABEisKJ0lORkVSRU5DRV9FUlJPUl9DT0RFX0VOR0lORV9VTkFWQUlMQUJMRRACEioKJklORkVSRU5DRV9FUlJPUl9DT0RFX01PREVMX1VOQVZBSUxBQkxFEAMSKgomSU5GRVJFTkNFX0VSUk9SX0NPREVfREVBRExJTkVfRVhDRUVERUQQBBIoCiRJTkZFUkVOQ0VfRVJST1JfQ09ERV9CVURHRVRfRVhDRUVERUQQBRIiCh5JTkZFUkVOQ0VfRVJST1JfQ09ERV9DQU5DRUxMRUQQBhIdChlJTkZFUkVOQ0VfRVJST1JfQ09ERV9CVVNZEAcSIQodSU5GRVJFTkNFX0VSUk9SX0NPREVfSU5URVJOQUwQCCrDAQoZSW5mZXJlbmNlVXNhZ2VNZWFzdXJlbWVudBIrCidJTkZFUkVOQ0VfVVNBR0VfTUVBU1VSRU1FTlRfVU5TUEVDSUZJRUQQABInCiNJTkZFUkVOQ0VfVVNBR0VfTUVBU1VSRU1FTlRfVU5LTk9XThABEikKJUlORkVSRU5DRV9VU0FHRV9NRUFTVVJFTUVOVF9FU1RJTUFURUQQAhIlCiFJTkZFUkVOQ0VfVVNBR0VfTUVBU1VSRU1FTlRfRVhBQ1QQA2IGcHJvdG8z", [file_clever_v1_common, file_clever_v1_identity, file_google_protobuf_timestamp]);
+  fileDesc("ChljbGV2ZXIvdjEvaW5mZXJlbmNlLnByb3RvEgljbGV2ZXIudjEiVwoOSW5mZXJlbmNlSW5wdXQSJgoEcm9sZRgBIAEoDjIYLmNsZXZlci52MS5JbmZlcmVuY2VSb2xlEg8KB2NvbnRlbnQYAiABKAkSDAoEbmFtZRgDIAEoCSKcAQoPSW5mZXJlbmNlQ29uZmlnEhkKEW1heF9vdXRwdXRfdG9rZW5zGAEgASgEEhgKC3RlbXBlcmF0dXJlGAIgASgCSACIAQESEgoFdG9wX3AYAyABKAJIAYgBARIWCg5zdG9wX3NlcXVlbmNlcxgEIAMoCRIOCgZzdHJlYW0YBSABKAhCDgoMX3RlbXBlcmF0dXJlQggKBl90b3BfcCLRAQoOSW5mZXJlbmNlVXNhZ2USOQoLbWVhc3VyZW1lbnQYASABKA4yJC5jbGV2ZXIudjEuSW5mZXJlbmNlVXNhZ2VNZWFzdXJlbWVudBIZCgxpbnB1dF90b2tlbnMYAiABKARIAIgBARIaCg1vdXRwdXRfdG9rZW5zGAMgASgESAGIAQESGQoMdG90YWxfdG9rZW5zGAQgASgESAKIAQFCDwoNX2lucHV0X3Rva2Vuc0IQCg5fb3V0cHV0X3Rva2Vuc0IPCg1fdG90YWxfdG9rZW5zIrIDChBJbmZlcmVuY2VSZXF1ZXN0EjQKEGNvbnRyYWN0X3ZlcnNpb24YASABKAsyGi5jbGV2ZXIudjEuQ29udHJhY3RWZXJzaW9uEhIKCnJlcXVlc3RfaWQYAiABKAkSEgoKYXR0ZW1wdF9pZBgDIAEoCRIqCglwcmluY2lwYWwYBCABKAsyFy5jbGV2ZXIudjEuUHJpbmNpcGFsUmVmEhIKCnNlc3Npb25faWQYBSABKAkSEQoJZW5naW5lX2lkGAYgASgJEhAKCG1vZGVsX2lkGAcgASgJEikKBmlucHV0cxgIIAMoCzIZLmNsZXZlci52MS5JbmZlcmVuY2VJbnB1dBIqCgZjb25maWcYCSABKAsyGi5jbGV2ZXIudjEuSW5mZXJlbmNlQ29uZmlnEi8KC2RlYWRsaW5lX2F0GAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIXCg9pZGVtcG90ZW5jeV9rZXkYCyABKAkSIQoUcmVzcG9uc2Vfc2NoZW1hX2pzb24YDCABKAlIAIgBAUIXChVfcmVzcG9uc2Vfc2NoZW1hX2pzb24ilAEKDkluZmVyZW5jZUNodW5rEjQKEGNvbnRyYWN0X3ZlcnNpb24YASABKAsyGi5jbGV2ZXIudjEuQ29udHJhY3RWZXJzaW9uEhIKCnJlcXVlc3RfaWQYAiABKAkSEgoKYXR0ZW1wdF9pZBgDIAEoCRIQCghzZXF1ZW5jZRgEIAEoBBISCgp0ZXh0X2RlbHRhGAUgASgJIrcBChFJbmZlcmVuY2VUb29sQ2FsbBI0ChBjb250cmFjdF92ZXJzaW9uGAEgASgLMhouY2xldmVyLnYxLkNvbnRyYWN0VmVyc2lvbhISCgpyZXF1ZXN0X2lkGAIgASgJEhIKCmF0dGVtcHRfaWQYAyABKAkSDQoFaW5kZXgYBCABKA0SDwoHY2FsbF9pZBgFIAEoCRIMCgRuYW1lGAYgASgJEhYKDmFyZ3VtZW50c19qc29uGAcgASgJIo0BChlJbmZlcmVuY2VTdHJ1Y3R1cmVkT3V0cHV0EjQKEGNvbnRyYWN0X3ZlcnNpb24YASABKAsyGi5jbGV2ZXIudjEuQ29udHJhY3RWZXJzaW9uEhIKCnJlcXVlc3RfaWQYAiABKAkSEgoKYXR0ZW1wdF9pZBgDIAEoCRISCgpqc29uX3ZhbHVlGAQgASgJIuwBChFJbmZlcmVuY2VUZXJtaW5hbBI0ChBjb250cmFjdF92ZXJzaW9uGAEgASgLMhouY2xldmVyLnYxLkNvbnRyYWN0VmVyc2lvbhISCgpyZXF1ZXN0X2lkGAIgASgJEhIKCmF0dGVtcHRfaWQYAyABKAkSFgoOZmluYWxfc2VxdWVuY2UYBCABKAQSNwoNZmluaXNoX3JlYXNvbhgFIAEoDjIgLmNsZXZlci52MS5JbmZlcmVuY2VGaW5pc2hSZWFzb24SKAoFdXNhZ2UYBiABKAsyGS5jbGV2ZXIudjEuSW5mZXJlbmNlVXNhZ2UivwEKDkluZmVyZW5jZUVycm9yEjQKEGNvbnRyYWN0X3ZlcnNpb24YASABKAsyGi5jbGV2ZXIudjEuQ29udHJhY3RWZXJzaW9uEhIKCnJlcXVlc3RfaWQYAiABKAkSEgoKYXR0ZW1wdF9pZBgDIAEoCRIrCgRjb2RlGAQgASgOMh0uY2xldmVyLnYxLkluZmVyZW5jZUVycm9yQ29kZRIPCgdtZXNzYWdlGAUgASgJEhEKCXJldHJ5YWJsZRgGIAEoCCKNAQoPSW5mZXJlbmNlQ2FuY2VsEjQKEGNvbnRyYWN0X3ZlcnNpb24YASABKAsyGi5jbGV2ZXIudjEuQ29udHJhY3RWZXJzaW9uEhkKEXRhcmdldF9yZXF1ZXN0X2lkGAIgASgJEhkKEXRhcmdldF9hdHRlbXB0X2lkGAMgASgJEg4KBnJlYXNvbhgEIAEoCSqaAQoNSW5mZXJlbmNlUm9sZRIeChpJTkZFUkVOQ0VfUk9MRV9VTlNQRUNJRklFRBAAEhkKFUlORkVSRU5DRV9ST0xFX1NZU1RFTRABEhcKE0lORkVSRU5DRV9ST0xFX1VTRVIQAhIcChhJTkZFUkVOQ0VfUk9MRV9BU1NJU1RBTlQQAxIXChNJTkZFUkVOQ0VfUk9MRV9UT09MEAQqowIKFUluZmVyZW5jZUZpbmlzaFJlYXNvbhInCiNJTkZFUkVOQ0VfRklOSVNIX1JFQVNPTl9VTlNQRUNJRklFRBAAEiAKHElORkVSRU5DRV9GSU5JU0hfUkVBU09OX1NUT1AQARIiCh5JTkZFUkVOQ0VfRklOSVNIX1JFQVNPTl9MRU5HVEgQAhIlCiFJTkZFUkVOQ0VfRklOSVNIX1JFQVNPTl9DQU5DRUxMRUQQAxIqCiZJTkZFUkVOQ0VfRklOSVNIX1JFQVNPTl9DT05URU5UX0ZJTFRFUhAEEiUKIUlORkVSRU5DRV9GSU5JU0hfUkVBU09OX1RPT0xfQ0FMTBAFEiEKHUlORkVSRU5DRV9GSU5JU0hfUkVBU09OX0VSUk9SEAYq+QIKEkluZmVyZW5jZUVycm9yQ29kZRIkCiBJTkZFUkVOQ0VfRVJST1JfQ09ERV9VTlNQRUNJRklFRBAAEigKJElORkVSRU5DRV9FUlJPUl9DT0RFX0lOVkFMSURfUkVRVUVTVBABEisKJ0lORkVSRU5DRV9FUlJPUl9DT0RFX0VOR0lORV9VTkFWQUlMQUJMRRACEioKJklORkVSRU5DRV9FUlJPUl9DT0RFX01PREVMX1VOQVZBSUxBQkxFEAMSKgomSU5GRVJFTkNFX0VSUk9SX0NPREVfREVBRExJTkVfRVhDRUVERUQQBBIoCiRJTkZFUkVOQ0VfRVJST1JfQ09ERV9CVURHRVRfRVhDRUVERUQQBRIiCh5JTkZFUkVOQ0VfRVJST1JfQ09ERV9DQU5DRUxMRUQQBhIdChlJTkZFUkVOQ0VfRVJST1JfQ09ERV9CVVNZEAcSIQodSU5GRVJFTkNFX0VSUk9SX0NPREVfSU5URVJOQUwQCCrDAQoZSW5mZXJlbmNlVXNhZ2VNZWFzdXJlbWVudBIrCidJTkZFUkVOQ0VfVVNBR0VfTUVBU1VSRU1FTlRfVU5TUEVDSUZJRUQQABInCiNJTkZFUkVOQ0VfVVNBR0VfTUVBU1VSRU1FTlRfVU5LTk9XThABEikKJUlORkVSRU5DRV9VU0FHRV9NRUFTVVJFTUVOVF9FU1RJTUFURUQQAhIlCiFJTkZFUkVOQ0VfVVNBR0VfTUVBU1VSRU1FTlRfRVhBQ1QQA2IGcHJvdG8z", [file_clever_v1_common, file_clever_v1_identity, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message clever.v1.InferenceInput
@@ -172,6 +172,14 @@ export type InferenceRequest = Message<"clever.v1.InferenceRequest"> & {
    * @generated from field: string idempotency_key = 11;
    */
   idempotencyKey: string;
+
+  /**
+   * Caller-supplied JSON Schema. It is validation data only and carries no
+   * execution, policy, egress or capability authority.
+   *
+   * @generated from field: optional string response_schema_json = 12;
+   */
+  responseSchemaJson?: string | undefined;
 };
 
 /**
@@ -219,6 +227,91 @@ export const InferenceChunkSchema: GenMessage<InferenceChunk> = /*@__PURE__*/
   messageDesc(file_clever_v1_inference, 4);
 
 /**
+ * A fully assembled native model tool-call. This is inert cognition data: the
+ * contract deliberately contains no execution target, grant, capability token
+ * or transport metadata that can authorize a tool invocation.
+ *
+ * @generated from message clever.v1.InferenceToolCall
+ */
+export type InferenceToolCall = Message<"clever.v1.InferenceToolCall"> & {
+  /**
+   * @generated from field: clever.v1.ContractVersion contract_version = 1;
+   */
+  contractVersion?: ContractVersion | undefined;
+
+  /**
+   * @generated from field: string request_id = 2;
+   */
+  requestId: string;
+
+  /**
+   * @generated from field: string attempt_id = 3;
+   */
+  attemptId: string;
+
+  /**
+   * @generated from field: uint32 index = 4;
+   */
+  index: number;
+
+  /**
+   * @generated from field: string call_id = 5;
+   */
+  callId: string;
+
+  /**
+   * @generated from field: string name = 6;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string arguments_json = 7;
+   */
+  argumentsJson: string;
+};
+
+/**
+ * Describes the message clever.v1.InferenceToolCall.
+ * Use `create(InferenceToolCallSchema)` to create a new message.
+ */
+export const InferenceToolCallSchema: GenMessage<InferenceToolCall> = /*@__PURE__*/
+  messageDesc(file_clever_v1_inference, 5);
+
+/**
+ * A schema-validated structured value serialized as canonical JSON data.
+ *
+ * @generated from message clever.v1.InferenceStructuredOutput
+ */
+export type InferenceStructuredOutput = Message<"clever.v1.InferenceStructuredOutput"> & {
+  /**
+   * @generated from field: clever.v1.ContractVersion contract_version = 1;
+   */
+  contractVersion?: ContractVersion | undefined;
+
+  /**
+   * @generated from field: string request_id = 2;
+   */
+  requestId: string;
+
+  /**
+   * @generated from field: string attempt_id = 3;
+   */
+  attemptId: string;
+
+  /**
+   * @generated from field: string json_value = 4;
+   */
+  jsonValue: string;
+};
+
+/**
+ * Describes the message clever.v1.InferenceStructuredOutput.
+ * Use `create(InferenceStructuredOutputSchema)` to create a new message.
+ */
+export const InferenceStructuredOutputSchema: GenMessage<InferenceStructuredOutput> = /*@__PURE__*/
+  messageDesc(file_clever_v1_inference, 6);
+
+/**
  * @generated from message clever.v1.InferenceTerminal
  */
 export type InferenceTerminal = Message<"clever.v1.InferenceTerminal"> & {
@@ -258,7 +351,7 @@ export type InferenceTerminal = Message<"clever.v1.InferenceTerminal"> & {
  * Use `create(InferenceTerminalSchema)` to create a new message.
  */
 export const InferenceTerminalSchema: GenMessage<InferenceTerminal> = /*@__PURE__*/
-  messageDesc(file_clever_v1_inference, 5);
+  messageDesc(file_clever_v1_inference, 7);
 
 /**
  * @generated from message clever.v1.InferenceError
@@ -300,7 +393,7 @@ export type InferenceError = Message<"clever.v1.InferenceError"> & {
  * Use `create(InferenceErrorSchema)` to create a new message.
  */
 export const InferenceErrorSchema: GenMessage<InferenceError> = /*@__PURE__*/
-  messageDesc(file_clever_v1_inference, 6);
+  messageDesc(file_clever_v1_inference, 8);
 
 /**
  * @generated from message clever.v1.InferenceCancel
@@ -332,7 +425,7 @@ export type InferenceCancel = Message<"clever.v1.InferenceCancel"> & {
  * Use `create(InferenceCancelSchema)` to create a new message.
  */
 export const InferenceCancelSchema: GenMessage<InferenceCancel> = /*@__PURE__*/
-  messageDesc(file_clever_v1_inference, 7);
+  messageDesc(file_clever_v1_inference, 9);
 
 /**
  * Inference messages carry cognition data only. They cannot grant egress,
