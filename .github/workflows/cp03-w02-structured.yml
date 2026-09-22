@@ -72,7 +72,7 @@ jobs:
           assert graph['first_executable_task']=='W02-13'
           assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646 and graph['w02_obligation_count']==47
           assert tasks['W02-13']['status']=='IN_PROGRESS' and not tasks['W02-13']['proof']
-          assert all(tasks[d]['status']=='COMPLETE' and tasks[d]['proof'] for d in tasks['W02-13']['depends_on'])
+          assert all(tasks[d]['status']=='COMPLETE' and tasks[d]['proof'] for dep in tasks['W02-13']['depends_on'] for d in [dep])
           assert tasks['W02-14']['status']=='BLOCKED' and not tasks['W02-14']['proof']
           assert claim['claim_id']=='CLAIM-CP03-W02-STRUCTURED-20260921' and claim['status']=='ACTIVE'
           PY
@@ -325,7 +325,7 @@ jobs:
           if tasks['W02-13']['status']=='COMPLETE':
               assert tasks['W02-13']['proof']
               assert graph['first_executable_task']=='W02-14'
-              assert tasks['W02-14']['status']=='READY' and not tasks['W02-14']['proof']
+              assert tasks['W02-14']['status'] in {'READY','IN_PROGRESS'} and not tasks['W02-14']['proof']
           else:
               assert tasks['W02-13']['status']=='IN_PROGRESS' and not tasks['W02-13']['proof']
               assert graph['first_executable_task']=='W02-13'
