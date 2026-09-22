@@ -9,7 +9,9 @@
   "owner": "chatgpt-gpt-5.6-sol",
   "date": "2026-09-22",
   "base_head": "3b5f6a055283d8dbbb42b767f6ab7256cc777097",
-  "status": "ACTIVE",
+  "status": "RELEASED",
+  "release_evidence_id": "EVID-W02-STRUCTURED-RELEASE-REPAIR-20260922",
+  "release_validated_head": "a2fcc7a7359b243b6f2a20de19f571ebb45c50a4",
   "coordination": "W02-13 release convergence only. Repair the historical W02-07 egress PR gauntlet after PR #54 RED proved it executes the mandatory real-model W02-10 unary test without CLEVER_OPENJARVIS_SRC and still asserts the obsolete W02-07 frontier. No runtime inference implementation changes, no W02-14 fallback/retry implementation, no model/provider/tool execution, no parity promotion, no denominator mutation, and no W02 closure.",
   "scope": [
     ".github/workflows/cp03-w02-egress-budget.yml",
@@ -18,9 +20,20 @@
   ],
   "red_evidence": {
     "pull_request": 54,
-    "workflow_run_id": 35686687740,
-    "job_id": 106614914921,
+    "workflow_run_id": 35687118583,
+    "job_id": 106616215485,
     "failed_step": "Kernel regression (hermetic lane)",
-    "root_cause": "Historical hermetic regression invoked real_openjarvis_unary_inference_uses_pinned_llamacpp_lane without mandatory CLEVER_OPENJARVIS_SRC; its later frontier assertion also pins obsolete W02-07 READY state."
+    "root_cause": "Historical hermetic regression invoked real_openjarvis_unary_inference_uses_pinned_llamacpp_lane without mandatory CLEVER_OPENJARVIS_SRC; its later frontier assertion also pinned obsolete W02-07 READY state."
+  },
+  "green_evidence": {
+    "workflow_run_id": 35688501751,
+    "job_id": 106620320948,
+    "result": "PASS",
+    "kernel_regression": "PASS",
+    "planning_and_durable_state": "PASS",
+    "legal_frontier_guard": "PASS",
+    "parity_promotions": 0,
+    "global_denominator": 7565,
+    "openjarvis_obligations": 646
   }
 }
