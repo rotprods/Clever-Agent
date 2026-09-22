@@ -4,14 +4,23 @@ on:
   push:
     branches:
       - wave/cp03-w02-structured-20260921
+      - wave/cp03-w02-structured-transport-20260922
   pull_request:
     branches: [main]
     paths:
+      - 'contracts/proto/clever/v1/inference.proto'
+      - 'contracts/proto/clever/v1/adapter.proto'
+      - 'contracts/sdk/**'
+      - 'contracts/generated_manifest.json'
+      - 'adapters/openjarvis/sidecar.py'
       - 'adapters/openjarvis/streaming_inference.py'
       - 'adapters/openjarvis/structured_output.py'
+      - 'tests/test_cp03_w02_structured_transport.py'
       - 'tests/test_cp03_w02_structured_output.py'
       - 'tests/test_cp03_w02_streaming.py'
       - 'tests/test_cp03_w02_cancellation.py'
+      - 'tests/test_cp03_w02_inference_contract.py'
+      - 'tests/test_cp03_adapter_contract.py'
       - 'tests/test_cp03_w02_plan.py'
       - 'scripts/cp03/finalize_w02_structured.py'
       - 'iterations/03/waves/CP03-W02/TASK_GRAPH.json'
@@ -32,6 +41,124 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  scope_amendment:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/wave/cp03-w02-structured-transport-20260922'
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Exact-head pre-amendment guard
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/wave/cp03-w02-structured-transport-20260922 | cut -f1)" = "$GITHUB_SHA"
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          tasks={row['id']:row for row in graph['tasks']}
+          claim=json.loads(Path('sessions/20260921-w02-structured/CLAIM.json').read_text())
+          assert graph['first_executable_task']=='W02-13'
+          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646 and graph['w02_obligation_count']==47
+          assert tasks['W02-13']['status']=='IN_PROGRESS' and not tasks['W02-13']['proof']
+          assert all(tasks[d]['status']=='COMPLETE' and tasks[d]['proof'] for d in tasks['W02-13']['depends_on'])
+          assert tasks['W02-14']['status']=='BLOCKED' and not tasks['W02-14']['proof']
+          assert claim['claim_id']=='CLAIM-CP03-W02-STRUCTURED-20260921' and claim['status']=='ACTIVE'
+          PY
+      - name: Amend active claim before new canonical surfaces
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          claim_path=Path('sessions/20260921-w02-structured/CLAIM.json')
+          claim=json.loads(claim_path.read_text())
+          required=[
+            'contracts/proto/clever/v1/inference.proto',
+            'contracts/proto/clever/v1/adapter.proto',
+            'contracts/sdk/python/gen/**',
+            'contracts/sdk/typescript/src/gen/**',
+            'contracts/sdk/rust/src/gen/**',
+            'contracts/sdk/swift/Sources/CleverContracts/Gen/**',
+            'contracts/generated_manifest.json',
+            'adapters/openjarvis/sidecar.py',
+            'tests/test_cp03_w02_structured_transport.py',
+            'tests/test_cp03_w02_inference_contract.py',
+            'tests/test_cp03_adapter_contract.py',
+          ]
+          if all(path in claim.get('scope', []) for path in required):
+              raise SystemExit(0)
+          claim['scope']=list(dict.fromkeys([*claim.get('scope', []), *required]))
+          claim['coordination']=(
+            'W02-13 only. Existing structured decoder/validator claim expanded before mutation to the canonical typed '
+            'AdapterFrame/sidecar transport, generated SDK bindings and transport tests. Tool calls remain inert model data; '
+            'structured output must be schema-validated before transport. Zero shell/MCP/browser/tool execution, no W02-14 '
+            'fallback/retry implementation, no provider egress, no parity promotion, no denominator mutation, no W02 closure. '
+            'State transition remains exact-head evidence gated and may open only W02-14.'
+          )
+          claim['scope_amended_at']='2026-09-22'
+          claim['scope_amended_from_head']=os.environ['GITHUB_SHA']
+          claim_path.write_text(json.dumps(claim, indent=2, sort_keys=True)+'\n')
+
+          amendment={
+            'schema_version':1,'date':'2026-09-22','event':'SCOPE_AMENDED','project_id':'CLEVER-JARVIS-001',
+            'checkpoint':'CP03','parent_wave':'CP03-W02','canonical_task':'W02-13',
+            'claim_id':'CLAIM-CP03-W02-STRUCTURED-20260921','wave_id':'CP03-W02-STRUCTURED-20260921',
+            'owner':'chatgpt-gpt-5.6-sol','status':'ACTIVE','scope':required,
+            'coordination':'Typed AdapterFrame/sidecar transport + generated bindings only; no execution authority, fallback, provider egress, parity promotion, denominator mutation or W02 closure.',
+            'base_head':os.environ['GITHUB_SHA'],
+          }
+          with Path('ledgers/CLAIM_LEDGER.ndjson').open('a', encoding='utf-8') as fh:
+              fh.write(json.dumps(amendment, sort_keys=True, separators=(',',':'))+'\n')
+          started={
+            'schema_version':1,'date':'2026-09-22','event':'WORK_STARTED','event_id':'RUN-W02-STRUCTURED-TRANSPORT-START-20260922',
+            'goal_id':'CLEVER-JARVIS-001','checkpoint':'CP03','iteration':'I03','parent_wave':'CP03-W02','canonical_task':'W02-13',
+            'claim_id':'CLAIM-CP03-W02-STRUCTURED-20260921','branch':'wave/cp03-w02-structured-transport-20260922',
+            'head':os.environ['GITHUB_SHA'],'owner':'chatgpt-gpt-5.6-sol',
+            'objective':'Carry assembled tool calls and schema-validated structured output over explicit canonical AdapterFrame bodies as inert typed data.',
+          }
+          with Path('ledgers/RUN_LOG.ndjson').open('a', encoding='utf-8') as fh:
+              fh.write(json.dumps(started, sort_keys=True, separators=(',',':'))+'\n')
+          PY
+          python scripts/context/build_context_pack.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/validate_agentic_state.py
+          git diff --check
+      - name: CAS persist scope amendment
+        run: |
+          set -euo pipefail
+          if git diff --quiet && git diff --cached --quiet; then
+            exit 0
+          fi
+          test "$(git ls-remote origin refs/heads/wave/cp03-w02-structured-transport-20260922 | cut -f1)" = "$GITHUB_SHA"
+          python - <<'PY'
+          import subprocess
+          allowed={
+            'sessions/20260921-w02-structured/CLAIM.json','ledgers/CLAIM_LEDGER.ndjson','ledgers/RUN_LOG.ndjson',
+            '.agentic/context/CURRENT_CONTEXT.json','.agentic/context/CURRENT_CONTEXT.md',
+          }
+          paths={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if line}
+          assert paths <= allowed, f'out-of-scope scope-amendment mutation: {sorted(paths-allowed)}'
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sessions/20260921-w02-structured/CLAIM.json ledgers/CLAIM_LEDGER.ndjson ledgers/RUN_LOG.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git commit -m 'state(cp03-w02): amend W02-13 claim for typed transport'
+          git push origin HEAD:wave/cp03-w02-structured-transport-20260922
+
   verify:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
