@@ -29,6 +29,11 @@ use prost::Message;
 use crate::{
     capabilities::CapabilityRegistry,
     error::KernelError,
+    inference_fallback::{
+        execute_streaming_fallbacks, AttemptReceipt, FallbackCandidate, FallbackHistoryError,
+        FallbackPolicy, InferenceTargetClass, StreamingAttemptFailure, StreamingAttemptSuccess,
+        StreamingFallbackExecution,
+    },
     inference_security::{authorize_inference_egress, InferenceReservation, InferenceTarget},
     version::validate_contract_version,
 };
@@ -290,6 +295,12 @@ pub struct StreamingInferenceResult {
     pub chunks: Vec<InferenceChunk>,
     pub text: String,
     pub terminal: InferenceTerminal,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LocalStreamingFallbackCandidate {
+    pub model_id: String,
+    pub reserved_cost_microusd: u64,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -734,12 +745,110 @@ impl AdapterSupervisor {
         &mut self,
         request: InferenceRequest,
     ) -> Result<StreamingInferenceResult, AdapterSupervisorError> {
-        self.ensure_io_healthy()?;
+        match self.infer_stream_attempt(request, true) {
+            Ok(success) => Ok(success.value),
+            Err(failure) => {
+                let error = failure.error;
+                if matches!(error, AdapterSupervisorError::InferenceFailed { .. }) {
+                    self.fail_protocol(error)
+                } else {
+                    Err(error)
+                }
+            }
+        }
+    }
+
+    /// Execute one logical streaming request with a bounded local llama.cpp
+    /// fallback chain. The initial request stays on the pinned W02 model lane;
+    /// fallback candidates may select a different non-empty llama.cpp model,
+    /// but cannot change engine class, grant egress, or splice partial output.
+    ///
+    /// A retryable `InferenceError` is the only failure that may trigger a
+    /// second transport attempt. Protocol/I/O failures are fail-closed and any
+    /// emitted chunk permanently disables further attempts.
+    pub fn infer_stream_with_local_fallbacks(
+        &mut self,
+        request: InferenceRequest,
+        initial_reserved_cost_microusd: u64,
+        candidates: &[LocalStreamingFallbackCandidate],
+        policy: &FallbackPolicy,
+    ) -> Result<
+        StreamingFallbackExecution<StreamingInferenceResult, AdapterSupervisorError>,
+        FallbackHistoryError,
+    > {
+        let request_id = request.request_id.clone();
+        let base_request = request.clone();
+        match self.infer_stream_attempt(request.clone(), true) {
+            Ok(success) => Ok(StreamingFallbackExecution::Recovered {
+                value: success.value,
+                history: vec![AttemptReceipt {
+                    attempt_id: request.attempt_id,
+                    engine_id: request.engine_id,
+                    model_id: request.model_id,
+                    emitted_chunks: success.emitted_chunks,
+                    reserved_cost_microusd: initial_reserved_cost_microusd,
+                    target_class: InferenceTargetClass::Local,
+                }],
+                cumulative_reserved_cost_microusd: initial_reserved_cost_microusd,
+            }),
+            Err(initial_failure) => {
+                let history = vec![AttemptReceipt {
+                    attempt_id: request.attempt_id,
+                    engine_id: request.engine_id,
+                    model_id: request.model_id,
+                    emitted_chunks: initial_failure.emitted_chunks,
+                    reserved_cost_microusd: initial_reserved_cost_microusd,
+                    target_class: InferenceTargetClass::Local,
+                }];
+                let fallback_candidates = candidates
+                    .iter()
+                    .map(|candidate| FallbackCandidate {
+                        engine_id: W02_UNARY_ENGINE_ID.to_owned(),
+                        model_id: candidate.model_id.clone(),
+                        target_class: InferenceTargetClass::Local,
+                        reserved_cost_microusd: candidate.reserved_cost_microusd,
+                    })
+                    .collect::<Vec<_>>();
+
+                execute_streaming_fallbacks(
+                    &request_id,
+                    history,
+                    initial_failure,
+                    &fallback_candidates,
+                    policy,
+                    |attempt_id, candidate| {
+                        let mut retry_request = base_request.clone();
+                        retry_request.attempt_id = attempt_id.to_owned();
+                        retry_request.engine_id = candidate.engine_id.clone();
+                        retry_request.model_id = candidate.model_id.clone();
+                        self.infer_stream_attempt(retry_request, false)
+                    },
+                )
+            }
+        }
+    }
+
+    fn infer_stream_attempt(
+        &mut self,
+        request: InferenceRequest,
+        pinned_model_only: bool,
+    ) -> Result<
+        StreamingAttemptSuccess<StreamingInferenceResult>,
+        StreamingAttemptFailure<AdapterSupervisorError>,
+    > {
+        if let Err(error) = self.ensure_io_healthy() {
+            return Err(Self::streaming_attempt_failure(error, false, 0));
+        }
         if !self.negotiated_features.contains("streaming-inference") {
-            return self.fail_protocol(AdapterSupervisorError::InvalidInferenceRequest(
-                "peer did not negotiate streaming-inference".to_owned(),
+            return Err(Self::streaming_attempt_failure(
+                AdapterSupervisorError::InvalidInferenceRequest(
+                    "peer did not negotiate streaming-inference".to_owned(),
+                ),
+                false,
+                0,
             ));
         }
+
         let reservation = InferenceReservation {
             estimated_input_tokens: 0,
             estimated_cost_microusd: 0,
@@ -749,13 +858,31 @@ impl AdapterSupervisor {
             origin: "loopback".to_owned(),
             external: false,
         };
-        authorize_inference_egress(&request, &local_target, None, &reservation, 0)
-            .map_err(|error| AdapterSupervisorError::InvalidInferenceRequest(error.to_string()))?;
-        let config = request.config.as_ref().ok_or_else(|| {
-            AdapterSupervisorError::InvalidInferenceRequest("config is required".to_owned())
-        })?;
+        if let Err(error) =
+            authorize_inference_egress(&request, &local_target, None, &reservation, 0)
+        {
+            return Err(Self::streaming_attempt_failure(
+                AdapterSupervisorError::InvalidInferenceRequest(error.to_string()),
+                false,
+                0,
+            ));
+        }
+        let config = match request.config.as_ref() {
+            Some(config) => config,
+            None => {
+                return Err(Self::streaming_attempt_failure(
+                    AdapterSupervisorError::InvalidInferenceRequest(
+                        "config is required".to_owned(),
+                    ),
+                    false,
+                    0,
+                ))
+            }
+        };
+        let invalid_model = request.model_id.trim().is_empty()
+            || (pinned_model_only && request.model_id != W02_UNARY_MODEL_ID);
         if request.engine_id != W02_UNARY_ENGINE_ID
-            || request.model_id != W02_UNARY_MODEL_ID
+            || invalid_model
             || request.idempotency_key.trim().is_empty()
             || request.inputs.is_empty()
             || request.deadline_at.is_none()
@@ -767,8 +894,12 @@ impl AdapterSupervisor {
                 .iter()
                 .any(|input| input.role == 0 || input.content.trim().is_empty())
         {
-            return self.fail_protocol(AdapterSupervisorError::InvalidInferenceRequest(
-                "request is outside the bounded W02-11 streaming lane".to_owned(),
+            return Err(Self::streaming_attempt_failure(
+                AdapterSupervisorError::InvalidInferenceRequest(
+                    "request is outside the bounded local llama.cpp streaming lane".to_owned(),
+                ),
+                false,
+                0,
             ));
         }
 
@@ -778,50 +909,119 @@ impl AdapterSupervisor {
         );
         let frame_id = frame.frame_id.clone();
         if let Err(error) = self.write_frame(&frame) {
-            return self.fail_protocol(error);
+            return Err(self.streaming_protocol_failure(error, 0));
         }
 
         let mut chunks = Vec::new();
         let mut text = String::new();
         let mut expected_sequence = 1_u64;
         loop {
-            let response =
-                match self.receive_frame(self.policy.request_timeout, "streaming inference") {
-                    Ok(response) => response,
-                    Err(error) => return self.fail_protocol(error),
-                };
-            self.validate_inference_outer(&response, &frame_id)?;
+            let emitted_chunks = u64::try_from(chunks.len()).unwrap_or(u64::MAX);
+            let response = match self
+                .receive_frame(self.policy.request_timeout, "streaming inference")
+            {
+                Ok(response) => response,
+                Err(error) => return Err(self.streaming_protocol_failure(error, emitted_chunks)),
+            };
+            if let Err(error) = self.validate_inference_outer(&response, &frame_id) {
+                return Err(Self::streaming_attempt_failure(
+                    error,
+                    false,
+                    emitted_chunks,
+                ));
+            }
             match response.body {
                 Some(adapter_frame::Body::InferenceChunk(chunk)) => {
-                    self.validate_stream_chunk(&chunk, &request, expected_sequence)?;
+                    if let Err(error) =
+                        self.validate_stream_chunk(&chunk, &request, expected_sequence)
+                    {
+                        return Err(Self::streaming_attempt_failure(
+                            error,
+                            false,
+                            emitted_chunks,
+                        ));
+                    }
                     text.push_str(&chunk.text_delta);
                     chunks.push(chunk);
                     expected_sequence = expected_sequence.saturating_add(1);
                 }
                 Some(adapter_frame::Body::InferenceTerminal(terminal)) => {
                     if chunks.is_empty() {
-                        return self.fail_protocol(AdapterSupervisorError::InvalidRuntimeResponse(
+                        let error = AdapterSupervisorError::InvalidRuntimeResponse(
                             "stream terminal arrived before any content chunk".to_owned(),
-                        ));
+                        );
+                        return Err(self.streaming_protocol_failure(error, emitted_chunks));
                     }
                     let final_sequence = expected_sequence.saturating_sub(1);
-                    self.validate_stream_terminal(&terminal, &request, final_sequence)?;
-                    return Ok(StreamingInferenceResult {
-                        chunks,
-                        text,
-                        terminal,
+                    if let Err(error) =
+                        self.validate_stream_terminal(&terminal, &request, final_sequence)
+                    {
+                        return Err(Self::streaming_attempt_failure(
+                            error,
+                            false,
+                            emitted_chunks,
+                        ));
+                    }
+                    let emitted_chunks = u64::try_from(chunks.len()).unwrap_or(u64::MAX);
+                    return Ok(StreamingAttemptSuccess {
+                        value: StreamingInferenceResult {
+                            chunks,
+                            text,
+                            terminal,
+                        },
+                        emitted_chunks,
                     });
                 }
                 Some(adapter_frame::Body::InferenceError(error)) => {
-                    return self.inference_failure(error, &request)
+                    if error.request_id != request.request_id
+                        || error.attempt_id != request.attempt_id
+                    {
+                        let protocol_error = AdapterSupervisorError::InvalidRuntimeResponse(
+                            "inference error identity mismatch".to_owned(),
+                        );
+                        return Err(self.streaming_protocol_failure(protocol_error, emitted_chunks));
+                    }
+                    let retryable = error.retryable;
+                    return Err(Self::streaming_attempt_failure(
+                        AdapterSupervisorError::InferenceFailed {
+                            code: error.code,
+                            message: error.message,
+                            retryable,
+                        },
+                        retryable,
+                        emitted_chunks,
+                    ));
                 }
                 _ => {
-                    return self.fail_protocol(AdapterSupervisorError::UnexpectedFrame(
-                        "streaming inference",
-                    ))
+                    let error = AdapterSupervisorError::UnexpectedFrame("streaming inference");
+                    return Err(self.streaming_protocol_failure(error, emitted_chunks));
                 }
             }
         }
+    }
+
+    fn streaming_attempt_failure(
+        error: AdapterSupervisorError,
+        retryable: bool,
+        emitted_chunks: u64,
+    ) -> StreamingAttemptFailure<AdapterSupervisorError> {
+        StreamingAttemptFailure {
+            error,
+            retryable,
+            emitted_chunks,
+        }
+    }
+
+    fn streaming_protocol_failure(
+        &mut self,
+        error: AdapterSupervisorError,
+        emitted_chunks: u64,
+    ) -> StreamingAttemptFailure<AdapterSupervisorError> {
+        let error = match self.fail_protocol::<()>(error) {
+            Ok(()) => unreachable!("fail_protocol always returns Err"),
+            Err(error) => error,
+        };
+        Self::streaming_attempt_failure(error, false, emitted_chunks)
     }
 
     fn send_inference_cancel_frame(
