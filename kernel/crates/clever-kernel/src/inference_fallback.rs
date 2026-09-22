@@ -26,6 +26,20 @@ pub enum FailureStage {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct FailureContext {
+    pub stage: FailureStage,
+    pub retryable: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FallbackCandidate {
+    pub engine_id: String,
+    pub model_id: String,
+    pub target_class: InferenceTargetClass,
+    pub reserved_cost_microusd: u64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FallbackPolicy {
     /// Total number of attempts including the original attempt.
     pub max_attempts: usize,
@@ -145,27 +159,23 @@ fn validate_history(
 pub fn decide_fallback(
     request_id: &str,
     history: &[AttemptReceipt],
-    failure_stage: FailureStage,
-    retryable: bool,
-    candidate_engine_id: &str,
-    candidate_model_id: &str,
-    candidate_target_class: InferenceTargetClass,
-    candidate_reserved_cost_microusd: u64,
+    failure: FailureContext,
+    candidate: &FallbackCandidate,
     policy: &FallbackPolicy,
 ) -> Result<FallbackDecision, FallbackHistoryError> {
-    validate_history(request_id, history, failure_stage, policy)?;
-    if candidate_engine_id.trim().is_empty() || candidate_model_id.trim().is_empty() {
+    validate_history(request_id, history, failure.stage, policy)?;
+    if candidate.engine_id.trim().is_empty() || candidate.model_id.trim().is_empty() {
         return Err(FallbackHistoryError::EmptyAttemptIdentity);
     }
 
     let spent = cumulative_cost(history)?;
-    if matches!(failure_stage, FailureStage::AfterPartialOutput) {
+    if matches!(failure.stage, FailureStage::AfterPartialOutput) {
         return Ok(FallbackDecision::Stop {
             reason: FallbackStopReason::PartialOutput,
             cumulative_reserved_cost_microusd: spent,
         });
     }
-    if !retryable {
+    if !failure.retryable {
         return Ok(FallbackDecision::Stop {
             reason: FallbackStopReason::NonRetryable,
             cumulative_reserved_cost_microusd: spent,
@@ -177,16 +187,16 @@ pub fn decide_fallback(
             cumulative_reserved_cost_microusd: spent,
         });
     }
-    if candidate_target_class > policy.max_target_class {
+    if candidate.target_class > policy.max_target_class {
         return Ok(FallbackDecision::Stop {
             reason: FallbackStopReason::TargetClassNotAuthorized,
             cumulative_reserved_cost_microusd: spent,
         });
     }
     if history.iter().any(|receipt| {
-        receipt.engine_id == candidate_engine_id
-            && receipt.model_id == candidate_model_id
-            && receipt.target_class == candidate_target_class
+        receipt.engine_id == candidate.engine_id
+            && receipt.model_id == candidate.model_id
+            && receipt.target_class == candidate.target_class
     }) {
         return Ok(FallbackDecision::Stop {
             reason: FallbackStopReason::RepeatedTarget,
@@ -195,7 +205,7 @@ pub fn decide_fallback(
     }
 
     let with_candidate = spent
-        .checked_add(candidate_reserved_cost_microusd)
+        .checked_add(candidate.reserved_cost_microusd)
         .ok_or(FallbackHistoryError::CostOverflow)?;
     if with_candidate > policy.max_cumulative_reserved_cost_microusd {
         return Ok(FallbackDecision::Stop {
