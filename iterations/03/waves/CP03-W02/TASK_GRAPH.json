@@ -1,5 +1,5 @@
 {
-  "first_executable_task": "W02-13",
+  "first_executable_task": "W02-14",
   "global_denominator": 7565,
   "iteration": "I03",
   "milestones": {
@@ -533,10 +533,32 @@
       "id": "W02-13",
       "owner_role": "python_builder",
       "priority": "P1",
-      "proof": [],
+      "proof": [
+        {
+          "canonical_typed_transport": "PASS",
+          "evidence_id": "EVID-W02-STRUCTURED-TRANSPORT-20260922",
+          "fragmented_tool_arguments": "PASS",
+          "gate": "G4",
+          "generated_bindings": "PASS",
+          "invalid_structured_json": "FAIL_CLOSED",
+          "invalid_tool_arguments": "FAIL_CLOSED",
+          "malicious_tool_name_execution": "ZERO_EXECUTION",
+          "parity_promotions": 0,
+          "provider_egress_executions": 0,
+          "python_roundtrip": "PASS",
+          "result": "PASS",
+          "run_id": 35681531897,
+          "rust_roundtrip": "PASS",
+          "structured_json_schema_validation": "PASS",
+          "swift_roundtrip": "PASS",
+          "tool_executions": 0,
+          "typescript_roundtrip": "PASS",
+          "validated_head": "87d1f54eb8254726a02f7e2b16ec2b819904f7f0"
+        }
+      ],
       "reviewer_role": "protocol_engineer",
       "rollback": "Retirar decoder defectuoso sin inventar salida.",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "title": "Structured output y tool-call fragments"
     },
     {
@@ -560,7 +582,7 @@
       "proof": [],
       "reviewer_role": "reviewer_gauntlet",
       "rollback": "Desactivar fallback autom\u00e1tico conservando receipts.",
-      "status": "BLOCKED",
+      "status": "READY",
       "title": "Fallback retry y salida parcial"
     },
     {

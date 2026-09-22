@@ -5,10 +5,11 @@
   "claim_id": "CLAIM-CP03-W02-STRUCTURED-20260921",
   "coordination": "W02-13 only. Existing structured decoder/validator claim expanded before mutation to the canonical typed AdapterFrame/sidecar transport, generated SDK bindings, transport tests, and the two Rust test fixtures that must initialize the new additive optional request field after regeneration. Tool calls remain inert model data; structured output must be schema-validated before transport. Zero shell/MCP/browser/tool execution, no W02-14 fallback/retry implementation, no provider egress, no parity promotion, no denominator mutation, no W02 closure. State transition remains exact-head evidence gated and may open only W02-14.",
   "date": "2026-09-21",
-  "last_evidence_id": "EVID-W02-STRUCTURED-CORE-20260921",
+  "last_evidence_id": "EVID-W02-STRUCTURED-TRANSPORT-20260922",
   "owner": "chatgpt-gpt-5.6-sol",
   "parent_wave": "CP03-W02",
   "project_id": "CLEVER-JARVIS-001",
+  "released_at": "2026-09-22",
   "schema_version": 1,
   "scope": [
     "sessions/20260921-w02-structured/**",
@@ -48,7 +49,7 @@
   ],
   "scope_amended_at": "2026-09-22",
   "scope_amended_from_head": "d987dfb82c1097ad02b8781f42c345ad78075890",
-  "status": "ACTIVE",
-  "validated_head": "5ed3896a7d3117b4e3764719d7b970fd20301848",
+  "status": "RELEASED",
+  "validated_head": "87d1f54eb8254726a02f7e2b16ec2b819904f7f0",
   "wave_id": "CP03-W02-STRUCTURED-20260921"
 }
