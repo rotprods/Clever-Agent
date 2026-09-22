@@ -1,9 +1,9 @@
 {
-  "base_head": "b90c23f6c96f3a8d821921172bdba1f257a3fbf1",
+  "base_head": "2e2bcc4666b912e04aedb1948f389771972ad7fa",
   "canonical_task": "W02-14",
   "checkpoint": "CP03",
   "claim_id": "CLAIM-CP03-W02-FALLBACK-20260922",
-  "coordination": "W02-14 only. Implement and prove a bounded fallback/retry decision core: retry is allowed only before the first emitted token, every retry receives a fresh attempt_id, cumulative reserved cost is bounded, repeated engine/model targets cannot loop, and privacy/egress class may never be silently downgraded. Any failure after partial output must terminate as partial failure without stream splicing. No provider egress, model execution, tool execution, W02-15+ implementation, parity promotion, denominator mutation, or W02 closure.",
+  "coordination": "W02-14 only. Implement and prove bounded fallback/retry behavior while preserving the merged core as durable base: retry is allowed only before the first emitted token, every retry receives a fresh attempt_id, cumulative reserved cost is bounded, repeated engine/model targets cannot loop, and privacy/egress class may never be silently downgraded. Any failure after partial output must terminate as partial failure without stream splicing. No provider egress, model execution, tool execution, W02-15+ implementation, parity promotion, denominator mutation, or W02 closure.",
   "date": "2026-09-22",
   "last_evidence_id": "EVID-W02-FALLBACK-CORE-20260922",
   "owner": "chatgpt-gpt-5.6-sol",

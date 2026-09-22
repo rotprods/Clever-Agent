@@ -67,20 +67,26 @@ jobs:
           elif latest != 'ACTIVE':
               raise SystemExit(f'unexpected W02-14 claim state: {latest!r}')
 
-          amendment_path=Path('sessions/20260922-w02-fallback/CLAIM_AMENDMENT-001.json')
-          if amendment_path.exists():
-              amendment=json.loads(amendment_path.read_text())
-              if amendment.get('claim_id') != claim['claim_id'] or amendment.get('status') != 'ACTIVE' or amendment.get('event') != 'SCOPE_AMENDED':
-                  raise SystemExit('invalid W02-14 scope amendment')
-              already=any(
-                  row.get('claim_id')==claim['claim_id']
-                  and row.get('event')=='SCOPE_AMENDED'
-                  and row.get('red_run_id')==amendment.get('red_run_id')
-                  for row in rows
+          def amendment_key(row):
+              return (
+                  row.get('claim_id'),
+                  row.get('event'),
+                  row.get('red_run_id'),
+                  row.get('old_base_head'),
+                  row.get('new_base_head'),
+                  tuple(row.get('scope', [])),
               )
-              if not already:
+
+          for amendment_path in sorted(Path('sessions/20260922-w02-fallback').glob('CLAIM_AMENDMENT-*.json')):
+              amendment=json.loads(amendment_path.read_text())
+              if amendment.get('claim_id') != claim['claim_id'] or amendment.get('status') != 'ACTIVE':
+                  raise SystemExit(f'invalid W02-14 claim amendment: {amendment_path}')
+              if amendment.get('event') not in {'SCOPE_AMENDED','BASE_REANCHORED'}:
+                  raise SystemExit(f'unsupported W02-14 claim amendment event: {amendment.get("event")!r}')
+              if not any(amendment_key(row)==amendment_key(amendment) for row in rows):
                   with ledger.open('a',encoding='utf-8') as handle:
                       handle.write(json.dumps(amendment,sort_keys=True,separators=(',',':'))+'\n')
+                  rows.append(amendment)
           PY
           python scripts/context/build_context_pack.py
           python scripts/validate_agentic_state.py
