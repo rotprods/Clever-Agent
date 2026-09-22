@@ -103,6 +103,16 @@ jobs:
         id: patch
         run: |
           set -euo pipefail
+          if grep -q 'pub fn infer_stream_with_local_fallbacks' kernel/crates/clever-kernel/src/adapter.rs \
+             && grep -q 'fn fallback_transport_retries_only_pre_token_with_fresh_attempt_identity' kernel/crates/clever-kernel/tests/adapter_supervisor.rs \
+             && grep -q 'stream-fallback-pre-token' kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py; then
+            echo 'Verified adapter fallback markers already persisted; skip one-shot patch generator.'
+            cargo fmt --manifest-path kernel/Cargo.toml --all -- --check
+            python -m py_compile kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py
+            git diff --check
+            echo 'code_changed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           python scripts/cp03/w02_fallback_adapter_patch.py
           cargo fmt --manifest-path kernel/Cargo.toml --all
           python -m py_compile kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py
