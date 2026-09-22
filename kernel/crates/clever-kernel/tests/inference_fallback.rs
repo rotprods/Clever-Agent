@@ -1,6 +1,6 @@
 use clever_kernel::inference_fallback::{
-    decide_fallback, AttemptReceipt, FailureStage, FallbackDecision, FallbackPolicy,
-    FallbackStopReason, InferenceTargetClass,
+    decide_fallback, AttemptReceipt, FailureContext, FailureStage, FallbackCandidate,
+    FallbackDecision, FallbackPolicy, FallbackStopReason, InferenceTargetClass,
 };
 
 fn local_policy() -> FallbackPolicy {
@@ -29,6 +29,24 @@ fn receipt(
     }
 }
 
+fn failure(stage: FailureStage, retryable: bool) -> FailureContext {
+    FailureContext { stage, retryable }
+}
+
+fn candidate(
+    engine_id: &str,
+    model_id: &str,
+    target_class: InferenceTargetClass,
+    reserved_cost_microusd: u64,
+) -> FallbackCandidate {
+    FallbackCandidate {
+        engine_id: engine_id.to_owned(),
+        model_id: model_id.to_owned(),
+        target_class,
+        reserved_cost_microusd,
+    }
+}
+
 #[test]
 fn failure_before_first_token_retries_with_fresh_attempt_and_cumulative_budget() {
     let prior = vec![receipt(
@@ -39,16 +57,13 @@ fn failure_before_first_token_retries_with_fresh_attempt_and_cumulative_budget()
         120,
         InferenceTargetClass::Local,
     )];
+    let next = candidate("engine-b", "model-b", InferenceTargetClass::Local, 80);
 
     let decision = decide_fallback(
         "req-1",
         &prior,
-        FailureStage::BeforeFirstToken,
-        true,
-        "engine-b",
-        "model-b",
-        InferenceTargetClass::Local,
-        80,
+        failure(FailureStage::BeforeFirstToken, true),
+        &next,
         &local_policy(),
     )
     .expect("valid bounded fallback history");
@@ -72,16 +87,13 @@ fn failure_after_partial_output_never_retries_or_splices_streams() {
         90,
         InferenceTargetClass::Local,
     )];
+    let next = candidate("engine-b", "model-b", InferenceTargetClass::Local, 70);
 
     let decision = decide_fallback(
         "req-2",
         &prior,
-        FailureStage::AfterPartialOutput,
-        true,
-        "engine-b",
-        "model-b",
-        InferenceTargetClass::Local,
-        70,
+        failure(FailureStage::AfterPartialOutput, true),
+        &next,
         &local_policy(),
     )
     .expect("valid bounded fallback history");
@@ -105,16 +117,13 @@ fn retry_budget_is_cumulative_and_fails_closed_before_new_cost() {
         460,
         InferenceTargetClass::Local,
     )];
+    let next = candidate("engine-b", "model-b", InferenceTargetClass::Local, 80);
 
     let decision = decide_fallback(
         "req-3",
         &prior,
-        FailureStage::BeforeFirstToken,
-        true,
-        "engine-b",
-        "model-b",
-        InferenceTargetClass::Local,
-        80,
+        failure(FailureStage::BeforeFirstToken, true),
+        &next,
         &local_policy(),
     )
     .expect("valid bounded fallback history");
@@ -138,16 +147,18 @@ fn fallback_cannot_silently_downgrade_local_privacy_to_external() {
         20,
         InferenceTargetClass::Local,
     )];
-
-    let decision = decide_fallback(
-        "req-4",
-        &prior,
-        FailureStage::BeforeFirstToken,
-        true,
+    let next = candidate(
         "engine-cloud",
         "model-cloud",
         InferenceTargetClass::ExternalApproved,
         10,
+    );
+
+    let decision = decide_fallback(
+        "req-4",
+        &prior,
+        failure(FailureStage::BeforeFirstToken, true),
+        &next,
         &local_policy(),
     )
     .expect("valid bounded fallback history");
@@ -181,16 +192,13 @@ fn fallback_cannot_loop_back_to_an_already_attempted_engine_model() {
             InferenceTargetClass::Local,
         ),
     ];
+    let next = candidate("engine-a", "model-a", InferenceTargetClass::Local, 20);
 
     let decision = decide_fallback(
         "req-5",
         &prior,
-        FailureStage::BeforeFirstToken,
-        true,
-        "engine-a",
-        "model-a",
-        InferenceTargetClass::Local,
-        20,
+        failure(FailureStage::BeforeFirstToken, true),
+        &next,
         &local_policy(),
     )
     .expect("valid bounded fallback history");
@@ -214,15 +222,12 @@ fn non_retryable_failure_and_attempt_limit_both_stop() {
         10,
         InferenceTargetClass::Local,
     )];
+    let next = candidate("engine-b", "model-b", InferenceTargetClass::Local, 10);
     let non_retryable = decide_fallback(
         "req-6",
         &first,
-        FailureStage::BeforeFirstToken,
-        false,
-        "engine-b",
-        "model-b",
-        InferenceTargetClass::Local,
-        10,
+        failure(FailureStage::BeforeFirstToken, false),
+        &next,
         &local_policy(),
     )
     .expect("valid bounded fallback history");
@@ -260,15 +265,12 @@ fn non_retryable_failure_and_attempt_limit_both_stop() {
             InferenceTargetClass::Local,
         ),
     ];
+    let fourth = candidate("engine-d", "model-d", InferenceTargetClass::Local, 10);
     let at_limit = decide_fallback(
         "req-7",
         &exhausted,
-        FailureStage::BeforeFirstToken,
-        true,
-        "engine-d",
-        "model-d",
-        InferenceTargetClass::Local,
-        10,
+        failure(FailureStage::BeforeFirstToken, true),
+        &fourth,
         &local_policy(),
     )
     .expect("valid bounded fallback history");
@@ -301,15 +303,12 @@ fn malformed_history_is_rejected_instead_of_retried() {
             InferenceTargetClass::Local,
         ),
     ];
+    let next = candidate("engine-c", "model-c", InferenceTargetClass::Local, 10);
     assert!(decide_fallback(
         "req-8",
         &duplicate,
-        FailureStage::BeforeFirstToken,
-        true,
-        "engine-c",
-        "model-c",
-        InferenceTargetClass::Local,
-        10,
+        failure(FailureStage::BeforeFirstToken, true),
+        &next,
         &local_policy(),
     )
     .is_err());
