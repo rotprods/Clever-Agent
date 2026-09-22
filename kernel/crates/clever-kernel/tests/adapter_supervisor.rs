@@ -103,6 +103,7 @@ fn fake_stream_request() -> InferenceRequest {
             nanos: i32::try_from(deadline.subsec_nanos()).expect("deadline nanos fit i32"),
         }),
         idempotency_key: "w02-11-idempotency".to_owned(),
+        response_schema_json: None,
     }
 }
 
@@ -572,7 +573,7 @@ fn real_openjarvis_unary_inference_uses_pinned_llamacpp_lane() {
     command.env = BTreeMap::from([
         ("HOME".to_owned(), "/tmp".to_owned()),
         ("PYTHONPATH".to_owned(), pythonpath),
-        ("PYTHONHASHSEED".to_owned(), "0".to_owned()),
+        ("PYTHONHASHSEED=0".to_owned(), "0".to_owned()),
         ("CLEVER_W02_MODEL_PATH".to_owned(), model_path),
         ("LLAMACPP_HOST".to_owned(), llamacpp_host),
     ]);
@@ -629,6 +630,7 @@ fn real_openjarvis_unary_inference_uses_pinned_llamacpp_lane() {
             nanos: i32::try_from(deadline.subsec_nanos()).expect("deadline nanos fit i32"),
         }),
         idempotency_key: "w02-10-idempotency".to_owned(),
+        response_schema_json: None,
     };
     let result = supervisor
         .infer_unary(request)
