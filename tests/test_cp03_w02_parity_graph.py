@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SEED_CAPABILITY_ID = "cap_49014a3c03b104c8ec2f4ca1"
 OLLAMA_CAPABILITY_ID = "cap_a5ae164f941b35e6fafd357c"
 LITELLM_CAPABILITY_ID = "cap_149d7cf3bf745e7bea3fa1b0"
+CLOUD_CAPABILITY_ID = "cap_49e508ee1377a8861a33b2f0"
 OLLAMA_TEST_ID = (
     "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
     "test_ollama_registry_binding_is_capability_specific_and_evidence_backed"
@@ -18,6 +19,10 @@ OLLAMA_TEST_ID = (
 LITELLM_TEST_ID = (
     "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
     "test_litellm_registry_binding_is_capability_specific_and_evidence_backed"
+)
+CLOUD_TEST_ID = (
+    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
+    "test_cloud_registry_binding_is_capability_specific_and_evidence_backed"
 )
 
 
@@ -37,13 +42,13 @@ class W02ParityGraphTests(unittest.TestCase):
         self.assertEqual(summary["verified_capabilities"], 0)
         self.assertEqual(len(self.result["rows"]), 47)
 
-    def test_current_matrix_has_three_candidates_and_no_parity_promotion(self) -> None:
+    def test_current_matrix_has_four_candidates_and_no_parity_promotion(self) -> None:
         rows = self.result["rows"]
         self.assertTrue(all(row["canonical_parity_status"] == "UNVERIFIED" for row in rows))
         self.assertTrue(all(row["verified"] is False for row in rows))
         self.assertTrue(all(row["parity_promotion"] is False for row in rows))
-        self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 3)
-        self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 44)
+        self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 4)
+        self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 43)
         self.assertEqual(sum(row["ownership"] == "OWNED" for row in rows), 37)
         self.assertEqual(sum(row["ownership"] == "SHARED" for row in rows), 10)
         candidates = {
@@ -51,7 +56,10 @@ class W02ParityGraphTests(unittest.TestCase):
             for row in rows
             if row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE"
         }
-        self.assertEqual(set(candidates), {SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID, LITELLM_CAPABILITY_ID})
+        self.assertEqual(
+            set(candidates),
+            {SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID, LITELLM_CAPABILITY_ID, CLOUD_CAPABILITY_ID},
+        )
         seed = candidates[SEED_CAPABILITY_ID]
         self.assertEqual(seed["binding"]["evidence_id"], "EVID-W02-UNARY-INFERENCE-20260921")
         self.assertFalse(seed["binding"]["terminal"])
@@ -61,6 +69,9 @@ class W02ParityGraphTests(unittest.TestCase):
         litellm = candidates[LITELLM_CAPABILITY_ID]
         self.assertEqual(litellm["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")
         self.assertFalse(litellm["binding"]["terminal"])
+        cloud = candidates[CLOUD_CAPABILITY_ID]
+        self.assertEqual(cloud["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")
+        self.assertFalse(cloud["binding"]["terminal"])
 
     def test_ollama_registry_binding_is_capability_specific_and_evidence_backed(self) -> None:
         row = next(row for row in self.result["rows"] if row["capability_id"] == OLLAMA_CAPABILITY_ID)
@@ -143,6 +154,52 @@ class W02ParityGraphTests(unittest.TestCase):
                 {
                     "implementation": "openjarvis.engine.litellm.LiteLLMEngine",
                     "key": "litellm",
+                    "native_type": "ABCMeta",
+                    "state": "REGISTERED",
+                }
+            ],
+        )
+        self.assertEqual(catalog["model_executions"], 0)
+        self.assertEqual(catalog["provider_egress_executions"], 0)
+        self.assertEqual(catalog["parity_promotions"], 0)
+
+    def test_cloud_registry_binding_is_capability_specific_and_evidence_backed(self) -> None:
+        row = next(row for row in self.result["rows"] if row["capability_id"] == CLOUD_CAPABILITY_ID)
+        self.assertEqual(row["ownership"], "OWNED")
+        self.assertEqual(row["surface_kind"], "registry_registration")
+        self.assertEqual(row["source_path"], "src/openjarvis/engine/cloud.py")
+        self.assertEqual(row["source_line"], 323)
+        self.assertEqual(row["name"], "cloud")
+        self.assertEqual(row["canonical_parity_status"], "UNVERIFIED")
+        self.assertFalse(row["verified"])
+        self.assertFalse(row["parity_promotion"])
+        binding = row["binding"]
+        self.assertEqual(binding["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")
+        self.assertEqual(binding["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")
+        self.assertEqual(binding["test_id"], CLOUD_TEST_ID)
+        self.assertFalse(binding["terminal"])
+
+        evidence = graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")
+        receipt = evidence["EVID-W02-MODEL-BRIDGE-20260921"]
+        self.assertEqual(receipt["status"], "VERIFIED")
+        self.assertEqual(receipt["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")
+        self.assertEqual(receipt["native_engine_count"], 15)
+        self.assertEqual(receipt["native_import_failure_count"], 0)
+        self.assertEqual(receipt["native_model_count"], 69)
+        self.assertEqual(receipt["model_executions"], 0)
+        self.assertEqual(receipt["provider_egress_executions"], 0)
+        self.assertEqual(receipt["parity_promotions"], 0)
+
+        catalog = json.loads(
+            (ROOT / "evidence/cp03/cp03-w02/W02-08/native_catalog.json").read_text(encoding="utf-8")
+        )
+        matches = [engine for engine in catalog["engines"] if engine["key"] == "cloud"]
+        self.assertEqual(
+            matches,
+            [
+                {
+                    "implementation": "openjarvis.engine.cloud.CloudEngine",
+                    "key": "cloud",
                     "native_type": "ABCMeta",
                     "state": "REGISTERED",
                 }

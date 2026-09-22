@@ -10,7 +10,7 @@
 - Next executable wave: `CP03-W02 — Models engines and inference behavior`
 - Capability denominator: `7565`
 - Canonical task frontier: `W02-17 — Paridad y grafo W02` (`IN_PROGRESS`)
-- G6 explicit binding progress: `3/47` evidence-backed candidates; `44` UNBOUND; VERIFIED capabilities `0`; parity promotions `0`.
+- G6 explicit binding progress: `4/47` evidence-backed candidates; `43` UNBOUND; VERIFIED capabilities `0`; parity promotions `0`.
 
 ## Canonical frontier
 
