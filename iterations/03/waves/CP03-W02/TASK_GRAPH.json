@@ -1,5 +1,5 @@
 {
-  "first_executable_task": "W02-16",
+  "first_executable_task": "W02-17",
   "global_denominator": 7565,
   "iteration": "I03",
   "milestones": {
@@ -663,10 +663,23 @@
       "id": "W02-16",
       "owner_role": "test_engineer",
       "priority": "P1",
-      "proof": [],
+      "proof": [
+        {
+          "gate": "G5",
+          "p01_evidence_id": "EVID-W02-PERFORMANCE-BASELINE-20260922",
+          "p02_evidence_id": "EVID-W02-RECOVERY-RETEST-20260922",
+          "parity_promotions": 0,
+          "performance_threshold": "MEASUREMENT_ONLY_NO_POST_HOC_THRESHOLD",
+          "result": "PASS",
+          "run_id": 35769847083,
+          "same_host": true,
+          "samples_per_path": 3,
+          "validated_head": "701a86a1c044bb69693034f78e58e3124346437b"
+        }
+      ],
       "reviewer_role": "runtime_engineer",
       "rollback": "Conservar baseline y detener release ante regresi\u00f3n.",
-      "status": "READY",
+      "status": "COMPLETE",
       "title": "Retest recovery performance"
     },
     {
@@ -692,7 +705,7 @@
       "proof": [],
       "reviewer_role": "release_reconciler",
       "rollback": "Revertir solo proyecciones derivadas; preservar fuente.",
-      "status": "BLOCKED",
+      "status": "READY",
       "title": "Paridad y grafo W02"
     },
     {

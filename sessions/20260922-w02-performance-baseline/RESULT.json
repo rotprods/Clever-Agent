@@ -1,0 +1,16 @@
+{
+  "claim_id": "CLAIM-CP03-W02-PERFORMANCE-20260922",
+  "date": "2026-09-22",
+  "evidence_id": "EVID-W02-PERFORMANCE-BASELINE-20260922",
+  "github_actions_run_id": 35769847083,
+  "global_denominator": 7565,
+  "next_task": "W02-17",
+  "next_task_status": "READY",
+  "p01_same_host_performance": "PASS",
+  "p02_recovery_retest": "PASS",
+  "parity_promotions": 0,
+  "result": "ADVANCED",
+  "task": "W02-16",
+  "task_status": "COMPLETE",
+  "validated_head": "701a86a1c044bb69693034f78e58e3124346437b"
+}

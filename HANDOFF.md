@@ -15,9 +15,9 @@
 
 ## Next executable
 
-`W02-16 — Retest recovery performance` (`READY`).
+`W02-17 — Paridad y grafo W02` (`READY`).
 
-W02-16 P02 recovery/flakiness retest is evidence-backed PASS across all 20 fixed repetitions, with every cancel/flood/restart result retained and no favorable-rerun selection. P01 same-host performance remains `NOT_RUN`, so W02-16 stays the only READY DAG frontier and W02-17+ remain BLOCKED. No parity promotion, denominator mutation, provider egress, model execution, tool execution, or performance claim occurred in this partial W02-16 wave.
+W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS and P01 now has a fixed-budget same-host direct-vs-adapted baseline with latency, TTFT, memory and throughput recorded. W02-17 is the only newly opened READY DAG frontier. No parity promotion, denominator mutation, provider egress or tool execution occurred.
 
 ## W02-14 fallback — COMPLETE
 
@@ -46,3 +46,12 @@ W02-16 P02 recovery/flakiness retest is evidence-backed PASS across all 20 fixed
 - Provider egress 0; model executions 0; tool executions 0; parity promotions 0; denominator 7565; OpenJarvis obligations 646.
 - Claim `CLAIM-CP03-W02-RECOVERY-PERF-20260922` released at the end of this bounded sub-wave. `W02-16` remains `READY`; `W02-17` remains `BLOCKED`.
 - Exact next sub-slice: W02-16 P01 fixed-budget same-host performance baseline.
+
+## W02-16 recovery + performance — COMPLETE
+
+- P02 evidence: `EVID-W02-RECOVERY-RETEST-20260922` remains PASS (20/20 repetitions; all 80 invocation records retained).
+- P01 evidence: `EVID-W02-PERFORMANCE-BASELINE-20260922` on exact tested head `701a86a1c044bb69693034f78e58e3124346437b` / run `35769847083`. Fixed budget: 1 warmup + 3 measured samples per path, 32 max output tokens, temperature 0, fixed interleaved order.
+- Direct median: latency 132.490 ms; TTFT 47.578 ms; throughput 45.286 tok/s; client peak RSS 46068 KiB.
+- Adapted median: latency 424.320 ms; TTFT 340.192 ms; throughput 14.140 tok/s; client peak RSS 59148 KiB. Ratios adapted/direct: latency 3.2026, TTFT 7.1502, throughput 0.3122.
+- Measurement-only: no post-hoc threshold, no parity promotion, denominator 7565 unchanged, OpenJarvis obligations 646, provider egress 0, tool executions 0.
+- Claim `CLAIM-CP03-W02-PERFORMANCE-20260922` released. Exact next task: `W02-17 — Paridad y grafo W02`.
