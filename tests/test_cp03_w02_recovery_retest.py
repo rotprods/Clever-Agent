@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import copy
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
 import unittest
 
 from scripts.cp03.w02_recovery_retest import (
@@ -93,6 +97,22 @@ class RecoveryRetestContract(unittest.TestCase):
         report["global_denominator"] = 7564
         with self.assertRaisesRegex(ValueError, "drift"):
             validate_report(report)
+
+    def test_release_finalizer_is_importable_when_executed_by_path(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        finalizer = root / "scripts/cp03/finalize_w02_recovery_retest.py"
+        probe = (
+            "import runpy; "
+            f"runpy.run_path({str(finalizer)!r}, run_name='w02_16_finalizer_import_probe')"
+        )
+        completed = subprocess.run(
+            [sys.executable, "-c", probe],
+            cwd=tempfile.gettempdir(),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
 
 
 if __name__ == "__main__":
