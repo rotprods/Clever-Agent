@@ -35,6 +35,7 @@
 
 ## Active claims
 
+- `CLAIM-CP03-W02-FALLBACK-20260922` → `CP03-W02-FALLBACK-20260922` · `chatgpt-gpt-5.6-sol`
 
 ## Open / mitigating risks
 
