@@ -55,3 +55,8 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - Adapted median: latency 424.320 ms; TTFT 340.192 ms; throughput 14.140 tok/s; client peak RSS 59148 KiB. Ratios adapted/direct: latency 3.2026, TTFT 7.1502, throughput 0.3122.
 - Measurement-only: no post-hoc threshold, no parity promotion, denominator 7565 unchanged, OpenJarvis obligations 646, provider egress 0, tool executions 0.
 - Claim `CLAIM-CP03-W02-PERFORMANCE-20260922` released. Exact next task: `W02-17 — Paridad y grafo W02`.
+
+## W02-17 parity/graph — IN_PROGRESS
+
+- Claim `CLAIM-CP03-W02-PARITY-GRAPH-20260922` acquired from exact base `465fe294e28fd683c7683aaca1e0acfcb03052a9`.
+- Scope is G6 proof-plane compilation/validation only; parity promotions remain 0, denominator 7565 and OpenJarvis obligations 646 remain immutable. W02-18/W02-19 remain BLOCKED.
