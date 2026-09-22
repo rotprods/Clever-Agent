@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-22",
+  "event": "BASE_REANCHORED",
+  "claim_id": "CLAIM-CP03-W02-FALLBACK-20260922",
+  "project_id": "CLEVER-JARVIS-001",
+  "checkpoint": "CP03",
+  "parent_wave": "CP03-W02",
+  "wave_id": "CP03-W02-FALLBACK-20260922",
+  "canonical_task": "W02-14",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "status": "ACTIVE",
+  "old_base_head": "39e16b4b88aab6aff4a4b342547cc015f1e6fe7b",
+  "new_base_head": "d8799ab245e1fdd88b1fe40927a03ff49e939073",
+  "branch_parent_head": "d1167dfc9fd4294afa3fe208853b290fe6986cbf",
+  "coordination": "The active W02-14 branch is now a descendant of live main d8799ab245e1fdd88b1fe40927a03ff49e939073. Reanchor the still-active claim to that exact canonical main head before any adapter fallback mutation. This is ancestry/claim reconciliation only: no task/parity/denominator transition, provider/model/tool execution, W02-14 completion, or W02-15 opening is implied.",
+  "scope": []
+}
