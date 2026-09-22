@@ -18,3 +18,11 @@
 `W02-14 — Fallback retry y salida parcial` (`READY`).
 
 W02-13 is evidence-backed COMPLETE. The next and only opened DAG frontier is W02-14; W02-15+ remain BLOCKED. No parity promotion, denominator mutation, provider egress, or tool execution occurred in the W02-13 completion wave.
+
+## W02-14 fallback core — active
+
+- Active claim: `CLAIM-CP03-W02-FALLBACK-20260922` on `wave/cp03/w02-fallback-20260922`.
+- Evidence: `EVID-W02-FALLBACK-CORE-20260922` verifies the bounded Rust decision core only: fresh attempt IDs, cumulative reserved-cost ceiling, repeated-target loop rejection, explicit target-class authorization, non-retryable stop, and mandatory partial-output stop with no stream splicing.
+- Historical RED is preserved: run `35697471602` failed because the implementation did not exist; run `35697845508` then exposed `clippy::too_many_arguments`; typed failure/candidate inputs fixed the root cause before the green gauntlet.
+- W02-14 remains `IN_PROGRESS`. Runtime fallback orchestration through the supervised inference path is `NOT_RUN`; provider egress is 0; tool execution is 0; parity promotions are 0; denominator remains 7565; OpenJarvis obligations remain 646.
+- Exact next sub-slice: wire this policy core into the supervised streaming inference attempt boundary and prove F01/F02 end-to-end: retry only after retryable failure before first token, new attempt ID/cumulative budget receipt, and partial/failure terminal after any emitted chunk without concatenating output from another engine. W02-15+ remain blocked.

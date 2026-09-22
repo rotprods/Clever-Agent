@@ -1,0 +1,13 @@
+{
+  "claim_id": "CLAIM-CP03-W02-FALLBACK-20260922",
+  "date": "2026-09-22",
+  "evidence_id": "EVID-W02-FALLBACK-CORE-20260922",
+  "github_actions_run_id": 35699064265,
+  "next_subslice": "Integrate the policy at the supervised streaming attempt boundary and prove retry-before-first-token plus partial-output-no-splice end-to-end.",
+  "next_task": "W02-14",
+  "schema_version": 1,
+  "status": "ADVANCED_IN_PROGRESS",
+  "task": "W02-14",
+  "validated_head": "fdaa8cb706de70384b5f1823aea4672fa0021177",
+  "wave_id": "CP03-W02-FALLBACK-20260922"
+}

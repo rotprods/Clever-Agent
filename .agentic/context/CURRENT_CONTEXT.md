@@ -48,6 +48,7 @@
 - `RISK-0010` · `HIGH` · `MITIGATING` · detail in `ledgers/RISK_LEDGER.ndjson`
 - `RISK-0011` · `HIGH` · `MITIGATING` · detail in `ledgers/RISK_LEDGER.ndjson`
 - `RISK-0012` · `HIGH` · `OPEN` · detail in `ledgers/RISK_LEDGER.ndjson`
+- `RISK-0014` · `HIGH` · `OPEN` · detail in `ledgers/RISK_LEDGER.ndjson`
 
 ## Recovery order
 
