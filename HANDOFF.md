@@ -17,7 +17,7 @@
 
 `W02-16 — Retest recovery performance` (`READY`).
 
-W02-15 is evidence-backed COMPLETE. The next and only READY DAG frontier is W02-16; W02-17+ remain BLOCKED. No parity promotion, denominator mutation, provider egress, model execution, or tool execution occurred in the W02-15 security closure.
+W02-16 P02 recovery/flakiness retest is evidence-backed PASS across all 20 fixed repetitions, with every cancel/flood/restart result retained and no favorable-rerun selection. P01 same-host performance remains `NOT_RUN`, so W02-16 stays the only READY DAG frontier and W02-17+ remain BLOCKED. No parity promotion, denominator mutation, provider egress, model execution, tool execution, or performance claim occurred in this partial W02-16 wave.
 
 ## W02-14 fallback — COMPLETE
 
@@ -37,3 +37,12 @@ W02-15 is evidence-backed COMPLETE. The next and only READY DAG frontier is W02-
 - G5 regression remains green for injected/noncanonical egress origins, grant cross-principal/session isolation, secret canary redaction, privileged registry metadata filtering and bounded inbound flood behavior.
 - Provider egress 0; model executions 0; tool executions 0; parity promotions 0; denominator 7565; OpenJarvis obligations 646. W02-14 real fallback model execution remains `NOT_RUN` and is not promoted.
 - Claim `CLAIM-CP03-W02-SECURITY-20260922` is released. Exact next task: `W02-16 — Retest recovery performance` (G5), dependency W02-15 COMPLETE.
+
+## W02-16 recovery retest — PARTIAL
+
+- Evidence: `EVID-W02-RECOVERY-RETEST-20260922` on exact tested head `1254e6f206596afcc6ce7c5f4323c5af31fb4ceb` / run `35756510838`.
+- P02: 20/20 fixed repetitions executed; cancellation, frame-flood, byte-flood and crash/restart-budget probes all PASS; all 80 invocation records retained; failed invocations 0; no best-rerun selection.
+- P01 same-host direct-vs-adapted performance: `NOT_RUN`; latency/TTFT/memory/throughput are therefore not claimed.
+- Provider egress 0; model executions 0; tool executions 0; parity promotions 0; denominator 7565; OpenJarvis obligations 646.
+- Claim `CLAIM-CP03-W02-RECOVERY-PERF-20260922` released at the end of this bounded sub-wave. `W02-16` remains `READY`; `W02-17` remains `BLOCKED`.
+- Exact next sub-slice: W02-16 P01 fixed-budget same-host performance baseline.

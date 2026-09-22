@@ -1,0 +1,39 @@
+{
+  "base_head": "4b8923973a3d6bb2a74d8d846e00db79c8aabec3",
+  "canonical_task": "W02-16",
+  "checkpoint": "CP03",
+  "claim_id": "CLAIM-CP03-W02-RECOVERY-PERF-20260922",
+  "coordination": "W02-16 only. First close the P02 recovery/flakiness sub-slice with 20 fixed cancel/flood/restart repetitions and retain every result; do not cherry-pick reruns. The P01 same-host performance baseline remains NOT_RUN in this sub-slice and therefore W02-16 must remain READY and W02-17 BLOCKED. No provider/model/tool execution, parity promotion, denominator mutation, performance claim, W02 closure or CP03 advancement is authorized.",
+  "date": "2026-09-22",
+  "dependencies": [
+    "W02-15"
+  ],
+  "event": "CLAIM",
+  "last_evidence_id": "EVID-W02-RECOVERY-RETEST-20260922",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "parent_wave": "CP03-W02",
+  "project_id": "CLEVER-JARVIS-001",
+  "release_run_id": 35756510838,
+  "schema_version": 1,
+  "scope": [
+    ".github/workflows/cp03-w02-recovery-claim.yml",
+    ".github/workflows/cp03-w02-recovery-performance.yml",
+    "scripts/cp03/w02_recovery_retest.py",
+    "scripts/cp03/finalize_w02_recovery_retest.py",
+    "tests/test_cp03_w02_recovery_retest.py",
+    "sessions/20260922-w02-recovery-performance/**",
+    "evidence/cp03/cp03-w02/W02-16/**",
+    "HANDOFF.md",
+    "ledgers/CLAIM_LEDGER.ndjson",
+    "ledgers/EVIDENCE_LEDGER.ndjson",
+    "ledgers/RUN_LOG.ndjson",
+    "ledgers/WAVE_LEDGER.ndjson",
+    "ledgers/DECISION_LEDGER.ndjson",
+    "ledgers/RISK_LEDGER.ndjson",
+    ".agentic/context/CURRENT_CONTEXT.json",
+    ".agentic/context/CURRENT_CONTEXT.md"
+  ],
+  "status": "RELEASED",
+  "validated_head": "1254e6f206596afcc6ce7c5f4323c5af31fb4ceb",
+  "wave_id": "CP03-W02-RETEST-RECOVERY-20260922"
+}
