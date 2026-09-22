@@ -102,9 +102,9 @@ jobs:
               p=Path(rel)
               with p.open('a',encoding='utf-8') as f: f.write(json.dumps(row,ensure_ascii=False,sort_keys=True,separators=(',',':'))+'\n')
           handoff=Path('HANDOFF.md').read_text()
-          note='\n## W02-17 parity/graph — IN_PROGRESS\n\n- Claim `CLAIM-CP03-W02-PARITY-GRAPH-20260922` acquired from exact base `465fe294e28fd683c7683aaca1e0acfcb03052a9`.\n- Scope is G6 proof-plane compilation/validation only; parity promotions remain 0, denominator 7565 and OpenJarvis obligations 646 remain immutable. W02-18/W02-19 remain BLOCKED.\n'
+          note='## W02-17 parity/graph — IN_PROGRESS\n\n- Claim `CLAIM-CP03-W02-PARITY-GRAPH-20260922` acquired from exact base `465fe294e28fd683c7683aaca1e0acfcb03052a9`.\n- Scope is G6 proof-plane compilation/validation only; parity promotions remain 0, denominator 7565 and OpenJarvis obligations 646 remain immutable. W02-18/W02-19 remain BLOCKED.\n'
           assert 'CLAIM-CP03-W02-PARITY-GRAPH-20260922' not in handoff
-          Path('HANDOFF.md').write_text(handoff.rstrip()+note+'\n')
+          Path('HANDOFF.md').write_text(handoff.rstrip()+'\n\n'+note)
           PY
           python scripts/context/build_context_pack.py
           python scripts/validate_agentic_state.py
