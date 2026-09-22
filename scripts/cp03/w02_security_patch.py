@@ -267,7 +267,13 @@ def apply_fix() -> None:
     old_call = '''    let outcome = supervisor\n        .cancel_inference(request_id, attempt_id, "too late")\n        .expect("already-terminal cancellation response is a typed non-success outcome");\n'''
     new_call = '''    let outcome = supervisor\n        .cancel_inference(\n            &caller_principal,\n            &caller_session_id,\n            request_id,\n            attempt_id,\n            "too late",\n        )\n        .expect("already-terminal cancellation response is a typed non-success outcome");\n'''
     test = replace_once(test, old_call, new_call, "after-terminal authorized cancel")
-    test = replace_once(test, RED_BLOCK, GREEN_BLOCK, "RED to GREEN security test")
+    test = transform_region(
+        test,
+        "#[test]\nfn standalone_cancel_without_authority_context_must_fail_closed()",
+        "#[test]\nfn real_openjarvis_unary_inference_uses_pinned_llamacpp_lane()",
+        lambda _region: GREEN_BLOCK,
+        "rustfmt-stable RED to GREEN security test",
+    )
 
     ADAPTER.write_text(adapter, encoding="utf-8")
     TEST.write_text(test, encoding="utf-8")
