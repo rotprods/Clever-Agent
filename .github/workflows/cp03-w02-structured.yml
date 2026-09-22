@@ -324,8 +324,9 @@ jobs:
           assert goal['parity']['verified']==0
           if tasks['W02-13']['status']=='COMPLETE':
               assert tasks['W02-13']['proof']
-              assert graph['first_executable_task']=='W02-14'
-              assert tasks['W02-14']['status'] in {'READY','IN_PROGRESS'} and not tasks['W02-14']['proof']
+              assert tasks['W02-14']['status'] in {'READY','IN_PROGRESS','COMPLETE'}
+              if tasks['W02-14']['status']=='COMPLETE':
+                  assert tasks['W02-14']['proof']
           else:
               assert tasks['W02-13']['status']=='IN_PROGRESS' and not tasks['W02-13']['proof']
               assert graph['first_executable_task']=='W02-13'

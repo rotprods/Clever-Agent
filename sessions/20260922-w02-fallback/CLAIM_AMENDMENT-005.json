@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-22",
+  "event": "SCOPE_AMENDED",
+  "claim_id": "CLAIM-CP03-W02-FALLBACK-20260922",
+  "project_id": "CLEVER-JARVIS-001",
+  "checkpoint": "CP03",
+  "parent_wave": "CP03-W02",
+  "wave_id": "CP03-W02-FALLBACK-20260922",
+  "canonical_task": "W02-14",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "status": "ACTIVE",
+  "coordination": "Continue only the exact W02-14 F01/F02 runtime sub-slice after the merged generic fallback boundary: wire bounded pre-first-token retry/no-splice semantics into AdapterSupervisor using correlated fake-sidecar transport evidence. Do not execute providers, models or tools; do not promote parity, mutate denominators, close W02-14 without runtime proof, or open W02-15 before evidence-backed completion.",
+  "scope": [
+    ".github/workflows/cp03-w02-fallback-adapter.yml",
+    "scripts/cp03/w02_fallback_adapter_patch.py",
+    "scripts/cp03/finalize_w02_fallback_adapter.py",
+    "kernel/crates/clever-kernel/src/adapter.rs",
+    "kernel/crates/clever-kernel/tests/adapter_supervisor.rs",
+    "kernel/crates/clever-kernel/tests/fixtures/fake_adapter_sidecar.py"
+  ]
+}

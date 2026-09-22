@@ -1,5 +1,5 @@
 {
-  "first_executable_task": "W02-14",
+  "first_executable_task": "W02-15",
   "global_denominator": 7565,
   "iteration": "I03",
   "milestones": {
@@ -579,10 +579,26 @@
       "id": "W02-14",
       "owner_role": "runtime_engineer",
       "priority": "P1",
-      "proof": [],
+      "proof": [
+        {
+          "adapter_supervisor_f01_f02": "PASS",
+          "canonical_sidecar_transport": "PASS",
+          "evidence_id": "EVID-W02-FALLBACK-ADAPTER-20260922",
+          "failure_after_partial_output": "FAIL_CLOSED_NO_RETRY_NO_SPLICE",
+          "failure_before_first_token": "PASS_FRESH_ATTEMPT",
+          "gate": "G4",
+          "parity_promotions": 0,
+          "provider_egress_executions": 0,
+          "real_openjarvis_fallback_model_execution": "NOT_RUN",
+          "result": "PASS",
+          "run_id": 35724141588,
+          "tool_executions": 0,
+          "validated_head": "503d683df9107519956f976ad8db1fc9c09509b1"
+        }
+      ],
       "reviewer_role": "reviewer_gauntlet",
       "rollback": "Desactivar fallback autom\u00e1tico conservando receipts.",
-      "status": "IN_PROGRESS",
+      "status": "COMPLETE",
       "title": "Fallback retry y salida parcial"
     },
     {
@@ -608,7 +624,7 @@
       "proof": [],
       "reviewer_role": "reviewer_gauntlet",
       "rollback": "Denegar ruta afectada y conservar finding abierto.",
-      "status": "BLOCKED",
+      "status": "READY",
       "title": "Regresi\u00f3n de seguridad"
     },
     {

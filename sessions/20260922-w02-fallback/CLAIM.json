@@ -1,14 +1,15 @@
 {
-  "base_head": "39e16b4b88aab6aff4a4b342547cc015f1e6fe7b",
+  "base_head": "d8799ab245e1fdd88b1fe40927a03ff49e939073",
   "canonical_task": "W02-14",
   "checkpoint": "CP03",
   "claim_id": "CLAIM-CP03-W02-FALLBACK-20260922",
   "coordination": "W02-14 only. Implement and prove bounded fallback/retry behavior while preserving the merged core as durable base: retry is allowed only before the first emitted token, every retry receives a fresh attempt_id, cumulative reserved cost is bounded, repeated engine/model targets cannot loop, and privacy/egress class may never be silently downgraded. Any failure after partial output must terminate as partial failure without stream splicing. No provider egress, model execution, tool execution, W02-15+ implementation, parity promotion, denominator mutation, or W02 closure.",
   "date": "2026-09-22",
-  "last_evidence_id": "EVID-W02-FALLBACK-BOUNDARY-20260922",
+  "last_evidence_id": "EVID-W02-FALLBACK-ADAPTER-20260922",
   "owner": "chatgpt-gpt-5.6-sol",
   "parent_wave": "CP03-W02",
   "project_id": "CLEVER-JARVIS-001",
+  "release_run_id": 35724141588,
   "schema_version": 1,
   "scope": [
     "sessions/20260922-w02-fallback/**",
@@ -30,7 +31,7 @@
     ".agentic/context/CURRENT_CONTEXT.json",
     ".agentic/context/CURRENT_CONTEXT.md"
   ],
-  "status": "ACTIVE",
-  "validated_head": "232f2fc6918a63fe179676f8959273ba684ce547",
+  "status": "RELEASED",
+  "validated_head": "503d683df9107519956f976ad8db1fc9c09509b1",
   "wave_id": "CP03-W02-FALLBACK-20260922"
 }

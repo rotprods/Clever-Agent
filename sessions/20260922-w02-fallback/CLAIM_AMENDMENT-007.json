@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-22",
+  "event": "GATE_RED_PRESERVED",
+  "claim_id": "CLAIM-CP03-W02-FALLBACK-20260922",
+  "project_id": "CLEVER-JARVIS-001",
+  "checkpoint": "CP03",
+  "parent_wave": "CP03-W02",
+  "wave_id": "CP03-W02-FALLBACK-20260922",
+  "canonical_task": "W02-14",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "status": "ACTIVE",
+  "failed_run_id": 35718518997,
+  "failed_step": "Targeted fallback runtime tests",
+  "root_cause": "The generated Python protobuf bindings used by the fake AdapterFrame sidecar require protobuf==7.36.0, but the new workflow invoked the sidecar with the bare setup-python interpreter without installing contracts/sdk/python/requirements.txt. The fallback core tests passed 10/10; all three new transport tests failed before handshake with ModuleNotFoundError: No module named 'google'. This is a test-environment prerequisite defect, not evidence of runtime fallback correctness or failure.",
+  "repair": "Install the repository-pinned Python contract runtime requirements before any fake-sidecar adapter test, then rerun the same RED tests unchanged followed by regression and gauntlet. Do not mark W02-14 complete until that exact repaired path is green.",
+  "parity_promotions": 0,
+  "provider_egress_executions": 0,
+  "model_executions": 0,
+  "tool_executions": 0
+}

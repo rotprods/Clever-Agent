@@ -84,6 +84,23 @@ def stream_terminal(request, final_sequence: int) -> adapter_pb2.AdapterFrame:
     )
 
 
+def stream_error(request, *, retryable: bool, message: str) -> adapter_pb2.AdapterFrame:
+    body = inference_pb2.InferenceError(
+        contract_version=inference_version(),
+        request_id=request.request_id,
+        attempt_id=request.attempt_id,
+        code=13,
+        message=message,
+        retryable=retryable,
+    )
+    return frame(
+        "stream-error",
+        "inference_error",
+        body,
+        correlation_id="__REQUEST_FRAME__",
+    )
+
+
 def cancelled_terminal(request, final_sequence: int) -> adapter_pb2.AdapterFrame:
     body = inference_pb2.InferenceTerminal(
         contract_version=inference_version(),
@@ -230,6 +247,52 @@ def main() -> int:
     if mode == "no-read-after-hello":
         time.sleep(5)
         return 0
+
+    if mode.startswith("stream-fallback-"):
+        envelope = read_frame()
+        if envelope is None or envelope.WhichOneof("body") != "inference_request":
+            return 68
+        primary = envelope.inference_request
+        if mode == "stream-fallback-pre-token":
+            failure = stream_error(primary, retryable=True, message="primary unavailable")
+            failure.correlation_id = envelope.frame_id
+            write_frame(failure)
+            retry_envelope = read_frame()
+            if retry_envelope is None or retry_envelope.WhichOneof("body") != "inference_request":
+                return 69
+            retry = retry_envelope.inference_request
+            if retry.request_id != primary.request_id or retry.attempt_id == primary.attempt_id:
+                return 70
+            chunk = stream_chunk(retry, 1, "fallback")
+            terminal = stream_terminal(retry, 1)
+            chunk.correlation_id = retry_envelope.frame_id
+            terminal.correlation_id = retry_envelope.frame_id
+            write_coalesced(chunk, terminal)
+            return 0
+        if mode == "stream-fallback-partial":
+            chunk = stream_chunk(primary, 1, "partial")
+            failure = stream_error(primary, retryable=True, message="failed after partial")
+            chunk.correlation_id = envelope.frame_id
+            failure.correlation_id = envelope.frame_id
+            write_coalesced(chunk, failure)
+            time.sleep(0.2)
+            return 0
+        if mode == "stream-fallback-retry-partial":
+            first_failure = stream_error(primary, retryable=True, message="primary unavailable")
+            first_failure.correlation_id = envelope.frame_id
+            write_frame(first_failure)
+            retry_envelope = read_frame()
+            if retry_envelope is None or retry_envelope.WhichOneof("body") != "inference_request":
+                return 71
+            retry = retry_envelope.inference_request
+            chunk = stream_chunk(retry, 1, "partial-retry")
+            retry_failure = stream_error(retry, retryable=True, message="retry failed after partial")
+            chunk.correlation_id = retry_envelope.frame_id
+            retry_failure.correlation_id = retry_envelope.frame_id
+            write_coalesced(chunk, retry_failure)
+            time.sleep(0.2)
+            return 0
+        return 72
 
     if mode.startswith("stream-"):
         envelope = read_frame()

@@ -14,10 +14,14 @@ use clever_contracts::{
 use clever_kernel::{
     adapter::{
         bridge_registry_snapshot, AdapterCommand, AdapterIdentity, AdapterSupervisor,
-        AdapterSupervisorError, InferenceCancelOutcome, SupervisorPolicy,
+        AdapterSupervisorError, InferenceCancelOutcome, LocalStreamingFallbackCandidate,
+        SupervisorPolicy,
     },
     capabilities::CapabilityRegistry,
     error::KernelError,
+    inference_fallback::{
+        FallbackPolicy, FallbackStopReason, InferenceTargetClass, StreamingFallbackExecution,
+    },
 };
 
 fn repo_root() -> PathBuf {
@@ -65,6 +69,24 @@ fn fast_policy() -> SupervisorPolicy {
         request_timeout: Duration::from_millis(500),
         restart_backoff: Duration::from_millis(5),
         ..SupervisorPolicy::default()
+    }
+}
+
+fn local_fallback_policy() -> FallbackPolicy {
+    FallbackPolicy {
+        max_attempts: 3,
+        max_cumulative_reserved_cost_microusd: 100,
+        max_target_class: InferenceTargetClass::Local,
+    }
+}
+
+fn local_fallback_candidate(
+    model_id: &str,
+    reserved_cost_microusd: u64,
+) -> LocalStreamingFallbackCandidate {
+    LocalStreamingFallbackCandidate {
+        model_id: model_id.to_owned(),
+        reserved_cost_microusd,
     }
 }
 
@@ -476,6 +498,121 @@ fn stream_eof_before_terminal_fails_closed() {
         .expect_err("EOF before terminal must not produce success");
     assert_eq!(error, AdapterSupervisorError::ProcessExited);
     assert!(supervisor.is_poisoned());
+}
+
+#[test]
+fn fallback_transport_retries_only_pre_token_with_fresh_attempt_identity() {
+    let command = fake_command("stream-fallback-pre-token");
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
+        .expect("connect fallback fake sidecar");
+    let request = fake_stream_request();
+    let request_id = request.request_id.clone();
+    let original_attempt_id = request.attempt_id.clone();
+    let candidates = vec![local_fallback_candidate("qwen3:0.6b-fallback", 20)];
+
+    let execution = supervisor
+        .infer_stream_with_local_fallbacks(request, 10, &candidates, &local_fallback_policy())
+        .expect("fallback history must remain internally consistent");
+
+    match execution {
+        StreamingFallbackExecution::Recovered {
+            value,
+            history,
+            cumulative_reserved_cost_microusd,
+        } => {
+            assert_eq!(value.text, "fallback");
+            assert_eq!(value.chunks.len(), 1);
+            assert_eq!(history.len(), 2);
+            assert_eq!(history[0].attempt_id, original_attempt_id);
+            assert_eq!(history[0].emitted_chunks, 0);
+            assert_eq!(history[1].attempt_id, format!("{request_id}:attempt:2"));
+            assert_eq!(history[1].model_id, "qwen3:0.6b-fallback");
+            assert_eq!(history[1].emitted_chunks, 1);
+            assert_eq!(cumulative_reserved_cost_microusd, 30);
+        }
+        StreamingFallbackExecution::Stopped { .. } => panic!("pre-token retry should recover"),
+    }
+    assert!(!supervisor.is_poisoned());
+}
+
+#[test]
+fn fallback_transport_stops_after_primary_partial_output_without_splicing() {
+    let command = fake_command("stream-fallback-partial");
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
+        .expect("connect partial fallback fake sidecar");
+    let candidates = vec![local_fallback_candidate("qwen3:0.6b-fallback", 20)];
+
+    let execution = supervisor
+        .infer_stream_with_local_fallbacks(
+            fake_stream_request(),
+            10,
+            &candidates,
+            &local_fallback_policy(),
+        )
+        .expect("partial-output stop must remain internally consistent");
+
+    match execution {
+        StreamingFallbackExecution::Stopped {
+            last_error,
+            reason,
+            history,
+            cumulative_reserved_cost_microusd,
+        } => {
+            assert!(matches!(
+                last_error,
+                AdapterSupervisorError::InferenceFailed {
+                    retryable: true,
+                    ..
+                }
+            ));
+            assert_eq!(reason, FallbackStopReason::PartialOutput);
+            assert_eq!(history.len(), 1);
+            assert_eq!(history[0].emitted_chunks, 1);
+            assert_eq!(cumulative_reserved_cost_microusd, 10);
+        }
+        StreamingFallbackExecution::Recovered { .. } => panic!("partial stream must never recover"),
+    }
+    assert!(!supervisor.is_poisoned());
+}
+
+#[test]
+fn fallback_transport_never_starts_third_attempt_after_retry_partial_output() {
+    let command = fake_command("stream-fallback-retry-partial");
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
+        .expect("connect retry-partial fallback fake sidecar");
+    let candidates = vec![
+        local_fallback_candidate("qwen3:0.6b-fallback-a", 20),
+        local_fallback_candidate("qwen3:0.6b-fallback-b", 30),
+    ];
+
+    let execution = supervisor
+        .infer_stream_with_local_fallbacks(
+            fake_stream_request(),
+            10,
+            &candidates,
+            &local_fallback_policy(),
+        )
+        .expect("retry-partial stop must remain internally consistent");
+
+    match execution {
+        StreamingFallbackExecution::Stopped {
+            reason,
+            history,
+            cumulative_reserved_cost_microusd,
+            ..
+        } => {
+            assert_eq!(reason, FallbackStopReason::PartialOutput);
+            assert_eq!(history.len(), 2, "no third attempt may be invoked");
+            assert_eq!(history[0].emitted_chunks, 0);
+            assert_eq!(history[1].emitted_chunks, 1);
+            assert_eq!(history[1].model_id, "qwen3:0.6b-fallback-a");
+            assert_eq!(cumulative_reserved_cost_microusd, 30);
+        }
+        StreamingFallbackExecution::Recovered { .. } => {
+            panic!("partial retry output must never be spliced into a later attempt")
+        }
+    }
+    assert!(!supervisor.is_poisoned());
 }
 
 #[test]
