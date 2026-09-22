@@ -57,6 +57,7 @@ pub enum FallbackStopReason {
     BudgetExceeded,
     TargetClassNotAuthorized,
     RepeatedTarget,
+    NoCandidate,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -217,5 +218,163 @@ pub fn decide_fallback(
     Ok(FallbackDecision::Retry {
         next_attempt_id: format!("{request_id}:attempt:{}", history.len() + 1),
         cumulative_reserved_cost_microusd: with_candidate,
+    })
+}
+
+/// Failure emitted by the supervised streaming attempt boundary.
+///
+/// `emitted_chunks` is part of the proof surface: any value greater than zero
+/// permanently disables fallback for the request so outputs from distinct
+/// attempts can never be concatenated.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StreamingAttemptFailure<E> {
+    pub error: E,
+    pub retryable: bool,
+    pub emitted_chunks: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StreamingAttemptSuccess<T> {
+    pub value: T,
+    pub emitted_chunks: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum StreamingFallbackExecution<T, E> {
+    Recovered {
+        value: T,
+        history: Vec<AttemptReceipt>,
+        cumulative_reserved_cost_microusd: u64,
+    },
+    Stopped {
+        last_error: E,
+        reason: FallbackStopReason,
+        history: Vec<AttemptReceipt>,
+        cumulative_reserved_cost_microusd: u64,
+    },
+}
+
+fn stage_for_emitted_chunks(emitted_chunks: u64) -> FailureStage {
+    if emitted_chunks == 0 {
+        FailureStage::BeforeFirstToken
+    } else {
+        FailureStage::AfterPartialOutput
+    }
+}
+
+/// Execute the bounded retry state machine at a supervised streaming attempt
+/// boundary.
+///
+/// The caller owns actual transport/model execution through `run_attempt`; this
+/// function owns retry legality, fresh attempt IDs, cumulative reservations and
+/// the hard no-splice rule. A retry can recover only when every preceding
+/// failed attempt emitted zero chunks. If any attempt emitted output, the
+/// callback is never invoked again for that request.
+pub fn execute_streaming_fallbacks<T, E, F>(
+    request_id: &str,
+    mut history: Vec<AttemptReceipt>,
+    mut failure: StreamingAttemptFailure<E>,
+    candidates: &[FallbackCandidate],
+    policy: &FallbackPolicy,
+    mut run_attempt: F,
+) -> Result<StreamingFallbackExecution<T, E>, FallbackHistoryError>
+where
+    F: FnMut(
+        &str,
+        &FallbackCandidate,
+    ) -> Result<StreamingAttemptSuccess<T>, StreamingAttemptFailure<E>>,
+{
+    let latest_emitted_chunks = history
+        .last()
+        .ok_or(FallbackHistoryError::EmptyHistory)?
+        .emitted_chunks;
+    if latest_emitted_chunks != failure.emitted_chunks {
+        return Err(FallbackHistoryError::StageHistoryMismatch);
+    }
+
+    for candidate in candidates {
+        let stage = stage_for_emitted_chunks(failure.emitted_chunks);
+        let decision = decide_fallback(
+            request_id,
+            &history,
+            FailureContext {
+                stage,
+                retryable: failure.retryable,
+            },
+            candidate,
+            policy,
+        )?;
+
+        let (next_attempt_id, expected_cumulative) = match decision {
+            FallbackDecision::Retry {
+                next_attempt_id,
+                cumulative_reserved_cost_microusd,
+            } => (next_attempt_id, cumulative_reserved_cost_microusd),
+            FallbackDecision::Stop {
+                reason,
+                cumulative_reserved_cost_microusd,
+            } => {
+                return Ok(StreamingFallbackExecution::Stopped {
+                    last_error: failure.error,
+                    reason,
+                    history,
+                    cumulative_reserved_cost_microusd,
+                });
+            }
+        };
+
+        match run_attempt(&next_attempt_id, candidate) {
+            Ok(success) => {
+                history.push(AttemptReceipt {
+                    attempt_id: next_attempt_id,
+                    engine_id: candidate.engine_id.clone(),
+                    model_id: candidate.model_id.clone(),
+                    emitted_chunks: success.emitted_chunks,
+                    reserved_cost_microusd: candidate.reserved_cost_microusd,
+                    target_class: candidate.target_class,
+                });
+                let cumulative_reserved_cost_microusd = cumulative_cost(&history)?;
+                debug_assert_eq!(
+                    cumulative_reserved_cost_microusd,
+                    expected_cumulative,
+                    "fallback reservation accounting must match the decision receipt"
+                );
+                return Ok(StreamingFallbackExecution::Recovered {
+                    value: success.value,
+                    history,
+                    cumulative_reserved_cost_microusd,
+                });
+            }
+            Err(next_failure) => {
+                history.push(AttemptReceipt {
+                    attempt_id: next_attempt_id,
+                    engine_id: candidate.engine_id.clone(),
+                    model_id: candidate.model_id.clone(),
+                    emitted_chunks: next_failure.emitted_chunks,
+                    reserved_cost_microusd: candidate.reserved_cost_microusd,
+                    target_class: candidate.target_class,
+                });
+                failure = next_failure;
+            }
+        }
+    }
+
+    let stage = stage_for_emitted_chunks(failure.emitted_chunks);
+    validate_history(request_id, &history, stage, policy)?;
+    let cumulative_reserved_cost_microusd = cumulative_cost(&history)?;
+    let reason = if matches!(stage, FailureStage::AfterPartialOutput) {
+        FallbackStopReason::PartialOutput
+    } else if !failure.retryable {
+        FallbackStopReason::NonRetryable
+    } else if history.len() >= policy.max_attempts {
+        FallbackStopReason::AttemptsExhausted
+    } else {
+        FallbackStopReason::NoCandidate
+    };
+    Ok(StreamingFallbackExecution::Stopped {
+        last_error: failure.error,
+        reason,
+        history,
+        cumulative_reserved_cost_microusd,
     })
 }
