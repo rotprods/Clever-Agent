@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-22",
+  "event": "SCOPE_AMENDED",
+  "claim_id": "CLAIM-CP03-W02-FALLBACK-20260922",
+  "project_id": "CLEVER-JARVIS-001",
+  "checkpoint": "CP03",
+  "parent_wave": "CP03-W02",
+  "wave_id": "CP03-W02-FALLBACK-20260922",
+  "canonical_task": "W02-14",
+  "owner": "chatgpt-gpt-5.6-sol",
+  "status": "ACTIVE",
+  "coordination": "Release-gate repair only after PR #55 reproduced a stale W02-13 workflow assertion that required W02-14 READY even though the canonical validator legally permits the active frontier to be READY or IN_PROGRESS. Scope expands only to repair that assertion so W02-14 IN_PROGRESS is accepted without changing task proof, parity, denominators, provider/model/tool execution, or opening W02-15+.",
+  "scope": [
+    ".github/workflows/cp03-w02-structured.yml"
+  ],
+  "red_run_id": 35699738880,
+  "red_job_id": 106654650525
+}
