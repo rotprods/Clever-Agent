@@ -9,7 +9,7 @@
 - Active subcheckpoint: `I03.2`
 - Next executable wave: `CP03-W02 — Models engines and inference behavior`
 - Capability denominator: `7565`
-- Canonical task frontier: `W02-15 — Regresión de seguridad` (`READY`)
+- Canonical task frontier: `W02-16 — Retest recovery performance` (`READY`)
 
 ## Canonical frontier
 

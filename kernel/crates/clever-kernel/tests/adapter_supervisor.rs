@@ -676,6 +676,8 @@ fn cancellation_after_terminal_is_rejected_not_retroactive_success() {
     let request = fake_stream_request();
     let request_id = request.request_id.clone();
     let attempt_id = request.attempt_id.clone();
+    let caller_principal = request.principal.clone().expect("stream request principal");
+    let caller_session_id = request.session_id.clone();
     let result = supervisor
         .infer_stream(request)
         .expect("stream reaches terminal before cancellation");
@@ -684,8 +686,63 @@ fn cancellation_after_terminal_is_rejected_not_retroactive_success() {
         Ok(InferenceFinishReason::Stop)
     );
     let outcome = supervisor
-        .cancel_inference(request_id, attempt_id, "too late")
+        .cancel_inference(
+            &caller_principal,
+            &caller_session_id,
+            request_id,
+            attempt_id,
+            "too late",
+        )
         .expect("already-terminal cancellation response is a typed non-success outcome");
+    assert_eq!(outcome, InferenceCancelOutcome::AlreadyTerminal);
+    assert!(!supervisor.is_poisoned());
+}
+
+#[test]
+fn standalone_cancel_rejects_cross_principal_before_transport() {
+    let command = fake_command("stream-cancel-after-terminal");
+    let mut supervisor = AdapterSupervisor::start(command, fake_identity(), fast_policy())
+        .expect("connect after-terminal fake sidecar");
+    let request = fake_stream_request();
+    let request_id = request.request_id.clone();
+    let attempt_id = request.attempt_id.clone();
+    let owner = request.principal.clone().expect("stream request principal");
+    let session_id = request.session_id.clone();
+    supervisor
+        .infer_stream(request)
+        .expect("stream reaches terminal before standalone cancellation");
+
+    let mut attacker = owner.clone();
+    attacker.user_id = "cross-principal-attacker".to_owned();
+    attacker.tenant_id = "other-tenant".to_owned();
+    let error = supervisor
+        .cancel_inference(
+            &attacker,
+            &session_id,
+            request_id.clone(),
+            attempt_id.clone(),
+            "unauthorized cross-principal cancellation",
+        )
+        .expect_err("cross-principal cancellation must fail before transport");
+    assert!(matches!(
+        error,
+        AdapterSupervisorError::InvalidInferenceRequest(message)
+            if message.contains("cancellation authority mismatch")
+    ));
+    assert!(!supervisor.is_poisoned());
+
+    // The fake peer expects exactly one post-terminal cancel. If the rejected
+    // attacker request had crossed the kernel boundary, this owner request
+    // could not receive the expected typed ALREADY_TERMINAL response.
+    let outcome = supervisor
+        .cancel_inference(
+            &owner,
+            &session_id,
+            request_id,
+            attempt_id,
+            "authorized owner cancellation after terminal",
+        )
+        .expect("owner cancellation reaches canonical transport");
     assert_eq!(outcome, InferenceCancelOutcome::AlreadyTerminal);
     assert!(!supervisor.is_poisoned());
 }

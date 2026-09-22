@@ -15,9 +15,9 @@
 
 ## Next executable
 
-`W02-15 — Regresión de seguridad` (`READY`).
+`W02-16 — Retest recovery performance` (`READY`).
 
-W02-14 is evidence-backed COMPLETE. The next and only READY DAG frontier is W02-15; W02-16+ remain BLOCKED. No parity promotion, denominator mutation, provider egress, model execution, or tool execution occurred in the W02-14 adapter closure.
+W02-15 is evidence-backed COMPLETE. The next and only READY DAG frontier is W02-16; W02-17+ remain BLOCKED. No parity promotion, denominator mutation, provider egress, model execution, or tool execution occurred in the W02-15 security closure.
 
 ## W02-14 fallback — COMPLETE
 
@@ -28,3 +28,12 @@ W02-14 is evidence-backed COMPLETE. The next and only READY DAG frontier is W02-
 - Real OpenJarvis fallback model execution is still `NOT_RUN`; this wave does not turn that into PASS. Provider egress 0; model executions 0; tool executions 0; parity promotions 0; denominator 7565; OpenJarvis obligations 646.
 - Claim `CLAIM-CP03-W02-FALLBACK-20260922` is released after evidence-backed W02-14 completion. W02-15 is only opened as `READY`; it is not claimed or implemented here.
 - Exact next task: `W02-15 — Regresión de seguridad` (G5), dependencies W02-07/W02-12/W02-13/W02-14 all COMPLETE.
+
+## W02-15 security — COMPLETE
+
+- Evidence: `EVID-W02-SECURITY-20260922` on exact tested head `9415e72774768fa71fc6c8077ac8c9322b58c8fc` / run `35744047938`.
+- RED characterization reproduced the gap: the standalone cancellation API had no caller authority context and could reach transport using only request/attempt identifiers.
+- T0 `AdapterSupervisor` now records the supervised streaming ownership tuple and requires exact request, attempt, canonical principal and session match before writing a standalone cancel frame. Cross-principal/tenant mismatch fails locally and does not poison the healthy transport.
+- G5 regression remains green for injected/noncanonical egress origins, grant cross-principal/session isolation, secret canary redaction, privileged registry metadata filtering and bounded inbound flood behavior.
+- Provider egress 0; model executions 0; tool executions 0; parity promotions 0; denominator 7565; OpenJarvis obligations 646. W02-14 real fallback model execution remains `NOT_RUN` and is not promoted.
+- Claim `CLAIM-CP03-W02-SECURITY-20260922` is released. Exact next task: `W02-16 — Retest recovery performance` (G5), dependency W02-15 COMPLETE.

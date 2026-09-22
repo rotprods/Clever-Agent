@@ -1,5 +1,5 @@
 {
-  "first_executable_task": "W02-15",
+  "first_executable_task": "W02-16",
   "global_denominator": 7565,
   "iteration": "I03",
   "milestones": {
@@ -621,10 +621,29 @@
       "id": "W02-15",
       "owner_role": "security_reviewer",
       "priority": "P0",
-      "proof": [],
+      "proof": [
+        {
+          "cross_principal_cancel": "FAIL_CLOSED_PRE_TRANSPORT",
+          "egress_injection_ssrf": "PASS",
+          "evidence_id": "EVID-W02-SECURITY-20260922",
+          "gate": "G5",
+          "inbound_flood_bounds": "PASS",
+          "model_executions": 0,
+          "parity_promotions": 0,
+          "privileged_registry_metadata": "FILTERED",
+          "provider_egress_executions": 0,
+          "real_openjarvis_fallback_model_execution": "NOT_RUN",
+          "result": "PASS",
+          "run_id": 35744047938,
+          "secret_canary_redaction": "PASS",
+          "standalone_cancel_authority": "PASS",
+          "tool_executions": 0,
+          "validated_head": "9415e72774768fa71fc6c8077ac8c9322b58c8fc"
+        }
+      ],
       "reviewer_role": "reviewer_gauntlet",
       "rollback": "Denegar ruta afectada y conservar finding abierto.",
-      "status": "READY",
+      "status": "COMPLETE",
       "title": "Regresi\u00f3n de seguridad"
     },
     {
@@ -647,7 +666,7 @@
       "proof": [],
       "reviewer_role": "runtime_engineer",
       "rollback": "Conservar baseline y detener release ante regresi\u00f3n.",
-      "status": "BLOCKED",
+      "status": "READY",
       "title": "Retest recovery performance"
     },
     {
