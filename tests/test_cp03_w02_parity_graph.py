@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import unittest
 from pathlib import Path
 
 from scripts.cp03 import w02_parity_graph as graph
 
 ROOT = Path(__file__).resolve().parents[1]
+SEED_CAPABILITY_ID = "cap_49014a3c03b104c8ec2f4ca1"
+OLLAMA_CAPABILITY_ID = "cap_a5ae164f941b35e6fafd357c"
+OLLAMA_TEST_ID = (
+    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
+    "test_ollama_registry_binding_is_capability_specific_and_evidence_backed"
+)
 
 
 class W02ParityGraphTests(unittest.TestCase):
@@ -25,19 +32,72 @@ class W02ParityGraphTests(unittest.TestCase):
         self.assertEqual(summary["verified_capabilities"], 0)
         self.assertEqual(len(self.result["rows"]), 47)
 
-    def test_current_matrix_has_one_candidate_and_no_parity_promotion(self) -> None:
+    def test_current_matrix_has_two_candidates_and_no_parity_promotion(self) -> None:
         rows = self.result["rows"]
         self.assertTrue(all(row["canonical_parity_status"] == "UNVERIFIED" for row in rows))
         self.assertTrue(all(row["verified"] is False for row in rows))
         self.assertTrue(all(row["parity_promotion"] is False for row in rows))
-        self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 1)
-        self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 46)
+        self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 2)
+        self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 45)
         self.assertEqual(sum(row["ownership"] == "OWNED" for row in rows), 37)
         self.assertEqual(sum(row["ownership"] == "SHARED" for row in rows), 10)
-        candidate = next(row for row in rows if row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE")
-        self.assertEqual(candidate["capability_id"], "cap_49014a3c03b104c8ec2f4ca1")
-        self.assertEqual(candidate["binding"]["evidence_id"], "EVID-W02-UNARY-INFERENCE-20260921")
-        self.assertFalse(candidate["binding"]["terminal"])
+        candidates = {
+            row["capability_id"]: row
+            for row in rows
+            if row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE"
+        }
+        self.assertEqual(set(candidates), {SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID})
+        seed = candidates[SEED_CAPABILITY_ID]
+        self.assertEqual(seed["binding"]["evidence_id"], "EVID-W02-UNARY-INFERENCE-20260921")
+        self.assertFalse(seed["binding"]["terminal"])
+        ollama = candidates[OLLAMA_CAPABILITY_ID]
+        self.assertEqual(ollama["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")
+        self.assertFalse(ollama["binding"]["terminal"])
+
+    def test_ollama_registry_binding_is_capability_specific_and_evidence_backed(self) -> None:
+        row = next(row for row in self.result["rows"] if row["capability_id"] == OLLAMA_CAPABILITY_ID)
+        self.assertEqual(row["ownership"], "OWNED")
+        self.assertEqual(row["surface_kind"], "registry_registration")
+        self.assertEqual(row["source_path"], "src/openjarvis/engine/ollama.py")
+        self.assertEqual(row["source_line"], 106)
+        self.assertEqual(row["name"], "ollama")
+        self.assertEqual(row["canonical_parity_status"], "UNVERIFIED")
+        self.assertFalse(row["verified"])
+        self.assertFalse(row["parity_promotion"])
+        binding = row["binding"]
+        self.assertEqual(binding["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")
+        self.assertEqual(binding["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")
+        self.assertEqual(binding["test_id"], OLLAMA_TEST_ID)
+        self.assertFalse(binding["terminal"])
+
+        evidence = graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")
+        receipt = evidence["EVID-W02-MODEL-BRIDGE-20260921"]
+        self.assertEqual(receipt["status"], "VERIFIED")
+        self.assertEqual(receipt["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")
+        self.assertEqual(receipt["native_engine_count"], 15)
+        self.assertEqual(receipt["native_import_failure_count"], 0)
+        self.assertEqual(receipt["model_executions"], 0)
+        self.assertEqual(receipt["provider_egress_executions"], 0)
+        self.assertEqual(receipt["parity_promotions"], 0)
+
+        catalog = json.loads(
+            (ROOT / "evidence/cp03/cp03-w02/W02-08/native_catalog.json").read_text(encoding="utf-8")
+        )
+        matches = [engine for engine in catalog["engines"] if engine["key"] == "ollama"]
+        self.assertEqual(
+            matches,
+            [
+                {
+                    "implementation": "openjarvis.engine.ollama.OllamaEngine",
+                    "key": "ollama",
+                    "native_type": "ABCMeta",
+                    "state": "REGISTERED",
+                }
+            ],
+        )
+        self.assertEqual(catalog["model_executions"], 0)
+        self.assertEqual(catalog["provider_egress_executions"], 0)
+        self.assertEqual(catalog["parity_promotions"], 0)
 
     def test_graph_projects_all_four_planes_without_promotion(self) -> None:
         value = self.result["graph"]
@@ -59,7 +119,8 @@ class W02ParityGraphTests(unittest.TestCase):
         evidence = graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")
         fallback = evidence["EVID-W02-FALLBACK-ADAPTER-20260922"]
         self.assertEqual(fallback["real_openjarvis_fallback_model_execution"], "NOT_RUN")
-        candidate = next(row for row in self.result["rows"] if row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE")
+        candidate = next(row for row in self.result["rows"] if row["capability_id"] == SEED_CAPABILITY_ID)
+        self.assertEqual(candidate["w02_evidence_state"], "EVIDENCE_BACKED_CANDIDATE")
         self.assertNotEqual(candidate["binding"]["evidence_id"], "EVID-W02-FALLBACK-ADAPTER-20260922")
 
     def test_forged_evidence_id_is_rejected(self) -> None:
