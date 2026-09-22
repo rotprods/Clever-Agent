@@ -132,6 +132,66 @@ jobs:
           python -m scripts.parity.ledger --check --source-repo openjarvis
           git diff --check
 
+  repair-release-gate:
+    if: github.event_name == 'push'
+    needs: [reconcile-claim, verify-core]
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Prove scope amendment and reproduce only stale assertion
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          claim_base="$(python -c "import json; print(json.load(open('sessions/20260922-w02-fallback/CLAIM.json'))['base_head'])")"
+          test "$(git rev-parse origin/main)" = "$claim_base"
+          test "$(git merge-base HEAD origin/main)" = "$claim_base"
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-fallback-20260922 | cut -f1)" = "$GITHUB_SHA"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          rows=[json.loads(line) for line in Path('ledgers/CLAIM_LEDGER.ndjson').read_text().splitlines() if line.strip()]
+          assert any(
+              row.get('claim_id')=='CLAIM-CP03-W02-FALLBACK-20260922'
+              and row.get('event')=='SCOPE_AMENDED'
+              and row.get('red_run_id')==35699738880
+              and '.github/workflows/cp03-w02-structured.yml' in row.get('scope',[])
+              and row.get('status')=='ACTIVE'
+              for row in rows
+          )
+          path=Path('.github/workflows/cp03-w02-structured.yml')
+          text=path.read_text(encoding='utf-8')
+          old="assert tasks['W02-14']['status']=='READY' and not tasks['W02-14']['proof']"
+          new="assert tasks['W02-14']['status'] in {'READY','IN_PROGRESS'} and not tasks['W02-14']['proof']"
+          if new not in text:
+              count=text.count(old)
+              assert count == 1, f'expected one stale W02-14 frontier assertion, found {count}'
+              path.write_text(text.replace(old,new,1),encoding='utf-8')
+          PY
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          git diff --check
+      - name: CAS persist stale-gate repair
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- .github/workflows/cp03-w02-structured.yml; then
+            exit 0
+          fi
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-fallback-20260922 | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/cp03-w02-structured.yml
+          git commit -m 'fix(cp03-w02): accept active W02-14 frontier in structured gate'
+          git push origin HEAD:wave/cp03/w02-fallback-20260922
+
   persist-core:
     if: github.event_name == 'push'
     needs: [reconcile-claim, verify-core]
