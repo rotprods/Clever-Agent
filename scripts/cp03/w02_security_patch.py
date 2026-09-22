@@ -3,6 +3,9 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+# The first workflow phase persists the verified runtime patch with GITHUB_TOKEN.
+# GitHub intentionally does not recursively trigger workflows from that bot push,
+# so this no-semantic-change revision explicitly starts the exact-head finalize phase.
 ROOT = Path(__file__).resolve().parents[2]
 ADAPTER = ROOT / "kernel/crates/clever-kernel/src/adapter.rs"
 TEST = ROOT / "kernel/crates/clever-kernel/tests/adapter_supervisor.rs"
