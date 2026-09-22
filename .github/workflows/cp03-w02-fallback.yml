@@ -95,7 +95,10 @@ jobs:
       - name: Targeted W02-14 fallback tests
         run: cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_fallback
       - name: Touched kernel regression
-        run: cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --lib
+        run: |
+          set -euo pipefail
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --lib
+          cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_security
       - name: Clippy gauntlet
         run: cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -104,6 +107,7 @@ jobs:
       - name: Durable-state and parity regression
         run: |
           set -euo pipefail
+          python -m unittest -v tests.test_cp03_w02_plan
           python scripts/cp03/validate_w02_plan.py
           python scripts/validate_agentic_state.py
           python scripts/context/validate_context_pack.py
@@ -111,3 +115,85 @@ jobs:
           python scripts/context/validate_next_actions.py
           python -m scripts.parity.ledger --check --source-repo openjarvis
           git diff --check
+
+  persist-core:
+    if: github.event_name == 'push'
+    needs: [reconcile-claim, verify-core]
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - id: state
+        name: Resolve persistence state
+        shell: bash
+        run: |
+          if test -f evidence/cp03/cp03-w02/W02-14/core_policy_report.json; then
+            echo 'persisted=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'persisted=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Exact-head pre-persistence guard
+        if: steps.state.outputs.persisted == 'false'
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          claim_base="$(python -c "import json; print(json.load(open('sessions/20260922-w02-fallback/CLAIM.json'))['base_head'])")"
+          test "$(git rev-parse origin/main)" = "$claim_base"
+          test "$(git merge-base HEAD origin/main)" = "$claim_base"
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-fallback-20260922 | cut -f1)" = "$GITHUB_SHA"
+      - name: Persist evidence, state, handoff, decision and risk
+        if: steps.state.outputs.persisted == 'false'
+        run: |
+          set -euo pipefail
+          python scripts/cp03/finalize_w02_fallback_core.py
+          python scripts/context/build_context_pack.py
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/context/validate_next_actions.py
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          git diff --check
+      - name: Restrict persistence mutation
+        if: steps.state.outputs.persisted == 'false'
+        run: |
+          python - <<'PY'
+          import subprocess
+          allowed={
+            'sessions/20260922-w02-fallback/CLAIM.json',
+            'sessions/20260922-w02-fallback/RESULT.json',
+            'iterations/03/waves/CP03-W02/TASK_GRAPH.json',
+            'STATE.md',
+            'HANDOFF.md',
+            'evidence/cp03/cp03-w02/W02-14/core_policy_report.json',
+            'ledgers/EVIDENCE_LEDGER.ndjson',
+            'ledgers/RUN_LOG.ndjson',
+            'ledgers/WAVE_LEDGER.ndjson',
+            'ledgers/DECISION_LEDGER.ndjson',
+            'ledgers/RISK_LEDGER.ndjson',
+            '.agentic/context/CURRENT_CONTEXT.json',
+            '.agentic/context/CURRENT_CONTEXT.md',
+          }
+          paths={line[3:] for line in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if line}
+          unexpected=paths-allowed
+          assert not unexpected, f'out-of-scope W02-14 persistence mutation: {sorted(unexpected)}'
+          assert paths, 'W02-14 persistence produced no delta'
+          PY
+      - name: CAS persist partial W02-14 state
+        if: steps.state.outputs.persisted == 'false'
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-fallback-20260922 | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sessions/20260922-w02-fallback/CLAIM.json sessions/20260922-w02-fallback/RESULT.json iterations/03/waves/CP03-W02/TASK_GRAPH.json STATE.md HANDOFF.md evidence/cp03/cp03-w02/W02-14/core_policy_report.json ledgers/EVIDENCE_LEDGER.ndjson ledgers/RUN_LOG.ndjson ledgers/WAVE_LEDGER.ndjson ledgers/DECISION_LEDGER.ndjson ledgers/RISK_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git commit -m 'state(cp03-w02): persist verified W02-14 fallback core'
+          git push origin HEAD:wave/cp03/w02-fallback-20260922
