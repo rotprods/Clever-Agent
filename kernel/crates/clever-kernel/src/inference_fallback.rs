@@ -335,8 +335,7 @@ where
                 });
                 let cumulative_reserved_cost_microusd = cumulative_cost(&history)?;
                 debug_assert_eq!(
-                    cumulative_reserved_cost_microusd,
-                    expected_cumulative,
+                    cumulative_reserved_cost_microusd, expected_cumulative,
                     "fallback reservation accounting must match the decision receipt"
                 );
                 return Ok(StreamingFallbackExecution::Recovered {
