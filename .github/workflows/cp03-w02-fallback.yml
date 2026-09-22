@@ -178,7 +178,7 @@ jobs:
           new="assert tasks['W02-14']['status'] in {'READY','IN_PROGRESS'} and not tasks['W02-14']['proof']"
           old_count=text.count(old)
           new_count=text.count(new)
-          assert (old_count,new_count) in {(1,0),(0,1)}, f'unexpected structured frontier assertion counts: old={old_count} new={new_count}'
+          assert (old_count,new_count) in {(2,0),(0,2)}, f'unexpected structured frontier assertion counts: old={old_count} new={new_count}'
           if old_count:
               path.write_text(text.replace(old,new),encoding='utf-8')
           PY
