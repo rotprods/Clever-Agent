@@ -10,7 +10,9 @@ import subprocess
 import sys
 import threading
 import time
-from typing import Any
+from typing import Any, Callable
+
+import httpx
 
 ROOT = Path(__file__).resolve().parents[2]
 GENERATED = ROOT / "contracts" / "sdk" / "python" / "gen"
@@ -109,7 +111,56 @@ class _RssSampler:
             self.peak[name] = max(self.peak[name], _rss_kib(pid))
 
 
-def _sample_result(path: str, started_ns: int, first_ns: int | None, ended_ns: int, output_tokens: int, peak: dict[str, int]) -> dict[str, Any]:
+def _tokenize_output(host: str, text: str) -> int:
+    """Count generated text with the exact same-host llama.cpp tokenizer.
+
+    The pinned OpenJarvis ``stream_full`` endpoint does not request OpenAI
+    ``include_usage`` stream metadata, so a successful model stream may have no
+    completion-token count. P01 must not fabricate throughput from bytes,
+    characters or chunks. Tokenization happens after the timed interval against
+    the already-running loopback llama-server and therefore provides a common,
+    model-native denominator for direct and adapted paths without provider
+    egress or a second model execution.
+    """
+    if not text:
+        raise RuntimeError("cannot tokenize empty streamed output")
+    response = httpx.post(
+        f"{host.rstrip('/')}/tokenize",
+        json={"content": text, "add_special": False, "parse_special": False},
+        timeout=10.0,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    tokens = payload.get("tokens") if isinstance(payload, dict) else None
+    if not isinstance(tokens, list) or not tokens:
+        raise RuntimeError("llama-server /tokenize returned no output tokens")
+    return len(tokens)
+
+
+def _resolve_output_tokens(
+    reported_tokens: int | None,
+    text: str,
+    host: str,
+    *,
+    tokenizer: Callable[[str, str], int] = _tokenize_output,
+) -> tuple[int, str]:
+    if type(reported_tokens) is int and reported_tokens > 0:
+        return reported_tokens, "stream_usage"
+    count = tokenizer(host, text)
+    if type(count) is not int or count <= 0:
+        raise RuntimeError("same-host tokenizer produced no measurable output tokens")
+    return count, "llama_server_tokenize_output_text"
+
+
+def _sample_result(
+    path: str,
+    started_ns: int,
+    first_ns: int | None,
+    ended_ns: int,
+    output_tokens: int,
+    peak: dict[str, int],
+    token_count_source: str,
+) -> dict[str, Any]:
     if first_ns is None or output_tokens <= 0:
         raise RuntimeError(f"{path} produced no measurable streamed output")
     latency_ms = (ended_ns - started_ns) / 1_000_000
@@ -119,6 +170,7 @@ def _sample_result(path: str, started_ns: int, first_ns: int | None, ended_ns: i
         "latency_ms": latency_ms,
         "ttft_ms": ttft_ms,
         "output_tokens": output_tokens,
+        "token_count_source": token_count_source,
         "throughput_tokens_per_s": output_tokens / ((ended_ns - started_ns) / 1_000_000_000),
         "peak_rss_kib": peak,
     }
@@ -129,7 +181,8 @@ def run_direct(label: str, llama_pid: int) -> dict[str, Any]:
     host = os.environ["LLAMACPP_HOST"].rstrip("/")
     engine = None
     first_ns: int | None = None
-    output_tokens = 0
+    reported_output_tokens: int | None = None
+    text_parts: list[str] = []
     started_ns = time.monotonic_ns()
     try:
         engine, message_type, role_type = _native_engine_factory(host)
@@ -146,8 +199,10 @@ def run_direct(label: str, llama_pid: int) -> dict[str, Any]:
                 chat_template_kwargs={"enable_thinking": False},
             ):
                 content = getattr(native, "content", None)
-                if isinstance(content, str) and content and first_ns is None:
-                    first_ns = time.monotonic_ns()
+                if isinstance(content, str) and content:
+                    text_parts.append(content)
+                    if first_ns is None:
+                        first_ns = time.monotonic_ns()
                 native_usage = getattr(native, "usage", None)
                 if isinstance(native_usage, dict):
                     usage = native_usage
@@ -155,9 +210,22 @@ def run_direct(label: str, llama_pid: int) -> dict[str, Any]:
         with _RssSampler({"client": os.getpid(), "llama_server": llama_pid}) as sampler:
             asyncio.run(consume())
         ended_ns = time.monotonic_ns()
-        if usage and isinstance(usage.get("completion_tokens"), int):
-            output_tokens = int(usage["completion_tokens"])
-        return _sample_result("direct", started_ns, first_ns, ended_ns, output_tokens, sampler.peak)
+        if usage and type(usage.get("completion_tokens")) is int:
+            reported_output_tokens = int(usage["completion_tokens"])
+        output_tokens, token_count_source = _resolve_output_tokens(
+            reported_output_tokens,
+            "".join(text_parts),
+            host,
+        )
+        return _sample_result(
+            "direct",
+            started_ns,
+            first_ns,
+            ended_ns,
+            output_tokens,
+            sampler.peak,
+            token_count_source,
+        )
     finally:
         if engine is not None and callable(getattr(engine, "close", None)):
             engine.close()
@@ -203,7 +271,8 @@ class SidecarClient:
             inference_request=req,
         )
         first_ns: int | None = None
-        output_tokens = 0
+        reported_output_tokens: int | None = None
+        text_parts: list[str] = []
         started_ns = time.monotonic_ns()
         with _RssSampler({"client": self.proc.pid, "llama_server": llama_pid}) as sampler:
             write_frame(self.proc.stdin, frame)
@@ -215,8 +284,11 @@ class SidecarClient:
                     continue
                 body = response.WhichOneof("body")
                 if body == "inference_chunk":
-                    if response.inference_chunk.text_delta and first_ns is None:
-                        first_ns = time.monotonic_ns()
+                    content = response.inference_chunk.text_delta
+                    if content:
+                        text_parts.append(content)
+                        if first_ns is None:
+                            first_ns = time.monotonic_ns()
                 elif body == "inference_error":
                     raise RuntimeError(f"sidecar inference error: {response.inference_error.message}")
                 elif body == "error":
@@ -224,10 +296,24 @@ class SidecarClient:
                 elif body == "inference_terminal":
                     usage = response.inference_terminal.usage
                     if usage.HasField("output_tokens"):
-                        output_tokens = int(usage.output_tokens)
+                        reported_output_tokens = int(usage.output_tokens)
                     break
         ended_ns = time.monotonic_ns()
-        return _sample_result("adapted", started_ns, first_ns, ended_ns, output_tokens, sampler.peak)
+        host = os.environ["LLAMACPP_HOST"].rstrip("/")
+        output_tokens, token_count_source = _resolve_output_tokens(
+            reported_output_tokens,
+            "".join(text_parts),
+            host,
+        )
+        return _sample_result(
+            "adapted",
+            started_ns,
+            first_ns,
+            ended_ns,
+            output_tokens,
+            sampler.peak,
+            token_count_source,
+        )
 
     def close(self) -> None:
         if self.proc.poll() is None:
@@ -282,6 +368,7 @@ def validate(report: dict[str, Any]) -> None:
     for row in report["samples"]:
         assert row["latency_ms"] > 0 and 0 < row["ttft_ms"] <= row["latency_ms"]
         assert row["output_tokens"] > 0 and row["throughput_tokens_per_s"] > 0
+        assert row["token_count_source"] in {"stream_usage", "llama_server_tokenize_output_text"}
         assert row["peak_rss_kib"]["client"] > 0 and row["peak_rss_kib"]["llama_server"] > 0
     for path in ("direct", "adapted"):
         assert report["summary"][path]["sample_count"] == BUDGET["samples_per_path"]
