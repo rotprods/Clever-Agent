@@ -60,3 +60,9 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 
 - Claim `CLAIM-CP03-W02-PARITY-GRAPH-20260922` acquired from exact base `465fe294e28fd683c7683aaca1e0acfcb03052a9`.
 - Scope is G6 proof-plane compilation/validation only; parity promotions remain 0, denominator 7565 and OpenJarvis obligations 646 remain immutable. W02-18/W02-19 remain BLOCKED.
+
+## W02-17 G6 proof plane — partial verified
+
+- `EVID-W02-PARITY-GRAPH-CORE-20260922`: deterministic K=47 P0→P1→P2→P3 proof matrix/graph is implemented and fail-closed against forged/stale evidence, NOT_RUN/BLOCKED/PLATFORM_GATED/waivers and shared terminal attribution.
+- This is not parity: 47/47 proof units remain `UNBOUND`, verified capabilities remain 0 and parity promotions remain 0. `W02-17` stays `IN_PROGRESS`; `W02-18` and `W02-19` stay `BLOCKED`.
+- Exact next slice: author explicit capability→test→evidence bindings, validated against completed-task PASS proof + exact evidence SHA + field-level expectations; preserve the real OpenJarvis fallback model lane as `NOT_RUN`.

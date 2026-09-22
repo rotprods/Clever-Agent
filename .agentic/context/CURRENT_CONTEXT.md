@@ -50,6 +50,7 @@
 - `RISK-0012` · `HIGH` · `OPEN` · detail in `ledgers/RISK_LEDGER.ndjson`
 - `RISK-0014` · `HIGH` · `OPEN` · detail in `ledgers/RISK_LEDGER.ndjson`
 - `RISK-W02-FALLBACK-REAL-MODEL-NOT-RUN-20260922` · `P2` · `OPEN` · detail in `ledgers/RISK_LEDGER.ndjson`
+- `RISK-W02-G6-K47-BINDINGS-PENDING-20260922` · `P1` · `OPEN` · detail in `ledgers/RISK_LEDGER.ndjson`
 
 ## Recovery order
 
