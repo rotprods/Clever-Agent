@@ -86,3 +86,28 @@ jobs:
           git add ledgers/CLAIM_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
           git commit -m 'claim(cp03-w02): register active W02-14 claim'
           git push origin HEAD:wave/cp03/w02-fallback-20260922
+
+  verify-core:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Targeted W02-14 fallback tests
+        run: cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --test inference_fallback
+      - name: Touched kernel regression
+        run: cargo test --locked --manifest-path kernel/Cargo.toml -p clever-kernel --lib
+      - name: Clippy gauntlet
+        run: cargo clippy --locked --manifest-path kernel/Cargo.toml --workspace --all-targets --all-features -- -D warnings
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Durable-state and parity regression
+        run: |
+          set -euo pipefail
+          python scripts/cp03/validate_w02_plan.py
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/context/validate_next_actions.py
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          git diff --check
