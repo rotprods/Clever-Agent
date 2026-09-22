@@ -13,6 +13,7 @@
   "coordination": "W02-17 G6 only. Build the evidence/parity proof-plane compiler and adversarial evidence validator over the frozen K=47 scope. This slice may map and classify evidence but MUST NOT promote parity, mutate the 7565 denominator or 646 OpenJarvis obligations, convert BLOCKED/NOT_RUN/waiver into VERIFIED, open W02-18, execute provider/tool side effects, or rewrite lower-plane source truth.",
   "scope": [
     "sessions/20260922-w02-parity-graph/**",
+    ".github/workflows/cp03-w02-parity-graph-claim.yml",
     ".github/workflows/cp03-w02-parity-graph.yml",
     "scripts/cp03/w02_parity_graph.py",
     "tests/test_cp03_w02_parity_graph.py",
