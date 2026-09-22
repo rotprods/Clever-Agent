@@ -66,3 +66,11 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - `EVID-W02-PARITY-GRAPH-CORE-20260922`: deterministic K=47 P0→P1→P2→P3 proof matrix/graph is implemented and fail-closed against forged/stale evidence, NOT_RUN/BLOCKED/PLATFORM_GATED/waivers and shared terminal attribution.
 - This is not parity: 47/47 proof units remain `UNBOUND`, verified capabilities remain 0 and parity promotions remain 0. `W02-17` stays `IN_PROGRESS`; `W02-18` and `W02-19` stay `BLOCKED`.
 - Exact next slice: author explicit capability→test→evidence bindings, validated against completed-task PASS proof + exact evidence SHA + field-level expectations; preserve the real OpenJarvis fallback model lane as `NOT_RUN`.
+- Claim scope amended at exact continuation base `ab1f7665682cffe960906e8a6c1808f14acd9318` to include `inventory/cp03/w02_evidence_bindings.jsonl`; this authorizes explicit G6 bindings only and does not promote parity.
+
+## W02-17 explicit binding seed — partial verified
+
+- `EVID-W02-PARITY-BINDING-SEED-20260922`: `cap_49014a3c03b104c8ec2f4ca1` (`InferenceEngine`, OWNED) is explicitly bound to the real unary-inference test `adapter_supervisor::real_openjarvis_unary_inference_uses_pinned_llamacpp_lane`, completed-task evidence `EVID-W02-UNARY-INFERENCE-20260921`, exact evidence SHA `a29389d41642ca74ed9c09ccfb9ec9f1725b48d7`, and field-level runtime expectations.
+- Binding state only: 1 `EVIDENCE_BACKED_CANDIDATE`, 46 `UNBOUND`, VERIFIED capabilities 0, parity promotions 0. Denominator 7565 and OpenJarvis obligations 646 unchanged.
+- Real OpenJarvis fallback model execution remains `NOT_RUN`; W02-18/W02-19 remain `BLOCKED`; W02-17 remains `IN_PROGRESS`.
+- Exact next slice: bind the next W02 capability that has capability-specific executed test evidence; never infer a binding from task-level PASS alone.

@@ -30,6 +30,8 @@
     "ledgers/DECISION_LEDGER.ndjson",
     "ledgers/RISK_LEDGER.ndjson",
     ".agentic/context/CURRENT_CONTEXT.json",
-    ".agentic/context/CURRENT_CONTEXT.md"
-  ]
+    ".agentic/context/CURRENT_CONTEXT.md",
+    "inventory/cp03/w02_evidence_bindings.jsonl"
+  ],
+  "continuation_base_head": "ab1f7665682cffe960906e8a6c1808f14acd9318"
 }

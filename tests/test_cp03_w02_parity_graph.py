@@ -25,25 +25,42 @@ class W02ParityGraphTests(unittest.TestCase):
         self.assertEqual(summary["verified_capabilities"], 0)
         self.assertEqual(len(self.result["rows"]), 47)
 
-    def test_current_matrix_is_honestly_unbound_and_unverified(self) -> None:
+    def test_current_matrix_has_one_candidate_and_no_parity_promotion(self) -> None:
         rows = self.result["rows"]
         self.assertTrue(all(row["canonical_parity_status"] == "UNVERIFIED" for row in rows))
-        self.assertTrue(all(row["w02_evidence_state"] == "UNBOUND" for row in rows))
         self.assertTrue(all(row["verified"] is False for row in rows))
         self.assertTrue(all(row["parity_promotion"] is False for row in rows))
+        self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 1)
+        self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 46)
         self.assertEqual(sum(row["ownership"] == "OWNED" for row in rows), 37)
         self.assertEqual(sum(row["ownership"] == "SHARED" for row in rows), 10)
+        candidate = next(row for row in rows if row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE")
+        self.assertEqual(candidate["capability_id"], "cap_49014a3c03b104c8ec2f4ca1")
+        self.assertEqual(candidate["binding"]["evidence_id"], "EVID-W02-UNARY-INFERENCE-20260921")
+        self.assertFalse(candidate["binding"]["terminal"])
 
     def test_graph_projects_all_four_planes_without_promotion(self) -> None:
         value = self.result["graph"]
+        candidate_count = self.result["summary"]["binding_counts"]["EVIDENCE_BACKED_CANDIDATE"]
         self.assertEqual(
             value["authority_order"],
             ["P0_SOURCE_EVIDENCE", "P1_SEMANTIC_SURFACE", "P2_COS20D_DECISION", "P3_AGENT_CONTEXT"],
         )
         self.assertEqual(value["parity_promotions"], 0)
         self.assertEqual(value["verified_capabilities"], 0)
-        self.assertEqual(len(value["nodes"]), 47 * 4)
-        self.assertEqual(len(value["edges"]), 47 * 3)
+        self.assertEqual(len(value["nodes"]), 47 * 4 + candidate_count)
+        self.assertEqual(len(value["edges"]), 47 * 3 + candidate_count)
+        evidence_nodes = [node for node in value["nodes"] if node["id"].startswith("EVIDENCE:")]
+        support_edges = [edge for edge in value["edges"] if edge["type"] == "supports_candidate"]
+        self.assertEqual(len(evidence_nodes), candidate_count)
+        self.assertEqual(len(support_edges), candidate_count)
+
+    def test_seed_binding_preserves_real_fallback_not_run_lane(self) -> None:
+        evidence = graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")
+        fallback = evidence["EVID-W02-FALLBACK-ADAPTER-20260922"]
+        self.assertEqual(fallback["real_openjarvis_fallback_model_execution"], "NOT_RUN")
+        candidate = next(row for row in self.result["rows"] if row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE")
+        self.assertNotEqual(candidate["binding"]["evidence_id"], "EVID-W02-FALLBACK-ADAPTER-20260922")
 
     def test_forged_evidence_id_is_rejected(self) -> None:
         cid = self.result["rows"][0]["capability_id"]
