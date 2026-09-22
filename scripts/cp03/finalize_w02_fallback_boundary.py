@@ -13,6 +13,7 @@ DATE = "2026-09-22"
 STALE_CAS_RED_RUN = 35704980485
 CARDINALITY_RED_RUN = 35706711804
 FMT_RED_RUN = 35707116490
+MUTATION_GUARD_RED_RUN = 35708253012
 RELEASE_GATE_GREEN_RUN = 35706944406
 
 
@@ -80,8 +81,9 @@ def assert_scope_amendment_present() -> None:
 def update_handoff() -> None:
     path = ROOT / "HANDOFF.md"
     text = path.read_text(encoding="utf-8")
-    marker = "## W02-14 fallback core — active"
-    if marker not in text:
+    markers = ("## W02-14 fallback core — active", "## W02-14 fallback — active")
+    marker = next((candidate for candidate in markers if candidate in text), None)
+    if marker is None:
         raise RuntimeError("HANDOFF W02-14 marker missing")
     prefix = text.split(marker, 1)[0].rstrip()
     block = """## W02-14 fallback — active
@@ -89,7 +91,7 @@ def update_handoff() -> None:
 - Active claim: `CLAIM-CP03-W02-FALLBACK-20260922` on `wave/cp03/w02-fallback-20260922`; no overlapping active claim was accepted.
 - Preserved core evidence: `EVID-W02-FALLBACK-CORE-20260922` proves the authority-free fallback decision core: fresh attempt IDs, cumulative reservation ceiling, repeated-target rejection, explicit target-class authorization, non-retryable stop, and mandatory no-retry after partial output.
 - New partial evidence: `EVID-W02-FALLBACK-BOUNDARY-20260922` proves the generic supervised streaming attempt state machine around that core. A retryable pre-first-token failure may invoke exactly a fresh fallback attempt; an initial partial-output failure never invokes a fallback; and if a retry itself emits partial output before failing, no third attempt is invoked and streams are never spliced.
-- Release-gate RED evidence is retained rather than rewritten: run `35704980485` exposed self-induced stale event-SHA CAS after legal claim reconciliation; run `35706711804` exposed a wrong one-vs-two structured-frontier assertion cardinality assumption; PR run `35707116490` exposed missing workspace rustfmt conformance. Each root cause was corrected and retested.
+- RED evidence is retained rather than rewritten: run `35704980485` exposed self-induced stale event-SHA CAS after legal claim reconciliation; run `35706711804` exposed a wrong one-vs-two structured-frontier assertion cardinality assumption; PR run `35707116490` exposed missing workspace rustfmt conformance; run `35708253012` proved the persistence guard was over-specified by requiring `CURRENT_CONTEXT.md` to be dirty even when a deterministic rebuild legitimately left it byte-identical. Each root cause was diagnosed and corrected in the same W02-14 wave.
 - W02-14 remains `IN_PROGRESS` with no task proof. The generic boundary is verified, but actual `AdapterSupervisor`/OpenJarvis sidecar F01/F02 wiring is still `NOT_RUN`; provider egress is 0, model executions in this sub-slice are 0, tool executions are 0, parity promotions are 0, denominator remains 7565, and OpenJarvis obligations remain 646.
 - Exact next sub-slice: wire the proven state machine into the real `AdapterSupervisor` streaming transport boundary and prove, with correlated fake-sidecar/adversarial transport tests, retry only after a retryable failure before the first token plus a hard partial-output/no-splice terminal path. Do not open W02-15 until that evidence closes W02-14.
 """
@@ -128,6 +130,7 @@ def main() -> int:
         raise RuntimeError("STATE frontier drift")
 
     update_handoff()
+    red_runs = [STALE_CAS_RED_RUN, CARDINALITY_RED_RUN, FMT_RED_RUN, MUTATION_GUARD_RED_RUN]
 
     report = {
         "schema_version": 1,
@@ -142,7 +145,7 @@ def main() -> int:
         "status": "VERIFIED_SUBSLICE",
         "validated_head": head,
         "github_actions_run_id": run_id,
-        "historical_red_runs": [STALE_CAS_RED_RUN, CARDINALITY_RED_RUN, FMT_RED_RUN],
+        "historical_red_runs": red_runs,
         "release_gate_green_run_id": RELEASE_GATE_GREEN_RUN,
         "fallback_decision_core": "PASS",
         "supervised_boundary_state_machine": "PASS",
@@ -158,6 +161,7 @@ def main() -> int:
         "plan_validation": "PASS",
         "parity_ledger_validation": "PASS",
         "release_gate_repair": "PASS",
+        "persistence_mutation_guard": "PASS",
         "adapter_supervisor_f01_f02": "NOT_RUN",
         "openjarvis_sidecar_f01_f02": "NOT_RUN",
         "provider_egress_executions": 0,
@@ -209,7 +213,7 @@ def main() -> int:
             "support_wave": WAVE,
             "github_actions_run_id": run_id,
             "validated_head": head,
-            "historical_red_runs": [STALE_CAS_RED_RUN, CARDINALITY_RED_RUN, FMT_RED_RUN],
+            "historical_red_runs": red_runs,
             "fallback_decision_core": "PASS",
             "supervised_boundary_state_machine": "PASS",
             "boundary_specific_tests": 3,
