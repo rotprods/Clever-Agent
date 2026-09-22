@@ -78,6 +78,9 @@ message InferenceRequest {
   InferenceConfig config = 9;
   google.protobuf.Timestamp deadline_at = 10;
   string idempotency_key = 11;
+  // Caller-supplied JSON Schema. It is validation data only and carries no
+  // execution, policy, egress or capability authority.
+  optional string response_schema_json = 12;
 }
 
 message InferenceChunk {
@@ -86,6 +89,27 @@ message InferenceChunk {
   string attempt_id = 3;
   uint64 sequence = 4;
   string text_delta = 5;
+}
+
+// A fully assembled native model tool-call. This is inert cognition data: the
+// contract deliberately contains no execution target, grant, capability token
+// or transport metadata that can authorize a tool invocation.
+message InferenceToolCall {
+  ContractVersion contract_version = 1;
+  string request_id = 2;
+  string attempt_id = 3;
+  uint32 index = 4;
+  string call_id = 5;
+  string name = 6;
+  string arguments_json = 7;
+}
+
+// A schema-validated structured value serialized as canonical JSON data.
+message InferenceStructuredOutput {
+  ContractVersion contract_version = 1;
+  string request_id = 2;
+  string attempt_id = 3;
+  string json_value = 4;
 }
 
 message InferenceTerminal {
