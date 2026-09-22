@@ -20,6 +20,7 @@ if str(GENERATED) not in sys.path:
     sys.path.insert(0, str(GENERATED))
 
 from adapters.openjarvis import ADAPTER_ID, RUNTIME_ID, UPSTREAM_COMMIT, UPSTREAM_REPOSITORY
+from adapters.openjarvis.structured_output import ToolCallData
 from adapters.openjarvis.streaming_inference import execute_stream
 from adapters.openjarvis.unary_inference import UnaryInferenceRejected, execute_unary
 from clever.v1 import adapter_pb2, common_pb2, inference_pb2, runtime_pb2
@@ -332,6 +333,78 @@ def _frame(frame_id: str, body_name: str, body: object, *, correlation_id: str =
     return frame
 
 
+def _response_schema(request: inference_pb2.InferenceRequest) -> dict[str, object] | None:
+    if not request.HasField("response_schema_json"):
+        return None
+    raw = request.response_schema_json.strip()
+    if not raw:
+        return None
+    if len(raw.encode("utf-8")) > 64 * 1024:
+        raise UnaryInferenceRejected(
+            inference_pb2.INFERENCE_ERROR_CODE_INVALID_REQUEST,
+            "response_schema_json exceeds the W02-13 64 KiB bound",
+            retryable=False,
+        )
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise UnaryInferenceRejected(
+            inference_pb2.INFERENCE_ERROR_CODE_INVALID_REQUEST,
+            f"response_schema_json is not valid JSON: {exc.msg}",
+            retryable=False,
+        ) from exc
+    if not isinstance(value, dict):
+        raise UnaryInferenceRejected(
+            inference_pb2.INFERENCE_ERROR_CODE_INVALID_REQUEST,
+            "response_schema_json must encode a JSON object schema",
+            retryable=False,
+        )
+    return value
+
+
+def _tool_call_frame(request: adapter_pb2.AdapterFrame, call: ToolCallData) -> adapter_pb2.AdapterFrame:
+    native = request.inference_request
+    body = inference_pb2.InferenceToolCall(
+        contract_version=common_pb2.ContractVersion(major=1, minor=2),
+        request_id=native.request_id,
+        attempt_id=native.attempt_id,
+        index=call.index,
+        call_id=call.call_id,
+        name=call.name,
+        arguments_json=call.arguments_json,
+    )
+    return _frame(
+        f"inference-tool-call:{request.frame_id}:{call.index}",
+        "inference_tool_call",
+        body,
+        correlation_id=request.frame_id,
+    )
+
+
+def _structured_output_frame(request: adapter_pb2.AdapterFrame, value: object) -> adapter_pb2.AdapterFrame:
+    native = request.inference_request
+    try:
+        encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
+    except (TypeError, ValueError) as exc:
+        raise UnaryInferenceRejected(
+            inference_pb2.INFERENCE_ERROR_CODE_INTERNAL,
+            f"validated structured output is not canonical JSON data: {exc}",
+            retryable=False,
+        ) from exc
+    body = inference_pb2.InferenceStructuredOutput(
+        contract_version=common_pb2.ContractVersion(major=1, minor=2),
+        request_id=native.request_id,
+        attempt_id=native.attempt_id,
+        json_value=encoded,
+    )
+    return _frame(
+        f"inference-structured-output:{request.frame_id}",
+        "inference_structured_output",
+        body,
+        correlation_id=request.frame_id,
+    )
+
+
 def hello_frame() -> adapter_pb2.AdapterFrame:
     hello = adapter_pb2.AdapterHello(
         contract_version=contract_version(),
@@ -355,6 +428,7 @@ def hello_frame() -> adapter_pb2.AdapterFrame:
             "unary-inference",
             "streaming-inference",
             "streaming-cancellation",
+            "structured-inference-transport",
         ],
     )
     return _frame("openjarvis-hello", "hello", hello)
@@ -425,6 +499,11 @@ def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
 
     def start_stream(request: adapter_pb2.AdapterFrame) -> bool:
         native_request = request.inference_request
+        try:
+            response_schema = _response_schema(native_request)
+        except UnaryInferenceRejected as exc:
+            inference_error(request, exc.code, str(exc))
+            return False
         state = coordinator.begin(native_request.request_id, native_request.attempt_id, request.frame_id)
         if state is None:
             inference_error(
@@ -506,6 +585,13 @@ def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
                     native_request,
                     emit_chunk=emit_chunk,
                     emit_terminal=emit_terminal,
+                    emit_tool_call=lambda call: send(_tool_call_frame(request, call)),
+                    response_schema=response_schema,
+                    emit_structured_output=(
+                        (lambda value: send(_structured_output_frame(request, value)))
+                        if response_schema is not None
+                        else None
+                    ),
                     cancel_requested=state.cancel_requested.is_set,
                     wait_for_cancel_ack=state.cancel_acknowledged.wait,
                 )
@@ -588,6 +674,18 @@ def run_protocol(stdin: BinaryIO, stdout: BinaryIO) -> int:
             native_request = request.inference_request
             if native_request.HasField("config") and native_request.config.stream:
                 start_stream(request)
+                continue
+            try:
+                response_schema = _response_schema(native_request)
+            except UnaryInferenceRejected as exc:
+                inference_error(request, exc.code, str(exc))
+                continue
+            if response_schema is not None:
+                inference_error(
+                    request,
+                    inference_pb2.INFERENCE_ERROR_CODE_INVALID_REQUEST,
+                    "response_schema_json is supported only by the streaming W02-13 lane",
+                )
                 continue
             if coordinator.busy():
                 inference_error(

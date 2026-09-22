@@ -398,6 +398,17 @@ public nonisolated struct Clever_V1_InferenceRequest: @unchecked Sendable {
     set {_uniqueStorage()._idempotencyKey = newValue}
   }
 
+  /// Caller-supplied JSON Schema. It is validation data only and carries no
+  /// execution, policy, egress or capability authority.
+  public var responseSchemaJson: String {
+    get {_storage._responseSchemaJson ?? String()}
+    set {_uniqueStorage()._responseSchemaJson = newValue}
+  }
+  /// Returns true if `responseSchemaJson` has been explicitly set.
+  public var hasResponseSchemaJson: Bool {_storage._responseSchemaJson != nil}
+  /// Clears the value of `responseSchemaJson`. Subsequent reads from it will return its default value.
+  public mutating func clearResponseSchemaJson() {_uniqueStorage()._responseSchemaJson = nil}
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -426,6 +437,70 @@ public nonisolated struct Clever_V1_InferenceChunk: Sendable {
   public var sequence: UInt64 = 0
 
   public var textDelta: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _contractVersion: Clever_V1_ContractVersion? = nil
+}
+
+/// A fully assembled native model tool-call. This is inert cognition data: the
+/// contract deliberately contains no execution target, grant, capability token
+/// or transport metadata that can authorize a tool invocation.
+public nonisolated struct Clever_V1_InferenceToolCall: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var contractVersion: Clever_V1_ContractVersion {
+    get {_contractVersion ?? Clever_V1_ContractVersion()}
+    set {_contractVersion = newValue}
+  }
+  /// Returns true if `contractVersion` has been explicitly set.
+  public var hasContractVersion: Bool {self._contractVersion != nil}
+  /// Clears the value of `contractVersion`. Subsequent reads from it will return its default value.
+  public mutating func clearContractVersion() {self._contractVersion = nil}
+
+  public var requestID: String = String()
+
+  public var attemptID: String = String()
+
+  public var index: UInt32 = 0
+
+  public var callID: String = String()
+
+  public var name: String = String()
+
+  public var argumentsJson: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _contractVersion: Clever_V1_ContractVersion? = nil
+}
+
+/// A schema-validated structured value serialized as canonical JSON data.
+public nonisolated struct Clever_V1_InferenceStructuredOutput: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var contractVersion: Clever_V1_ContractVersion {
+    get {_contractVersion ?? Clever_V1_ContractVersion()}
+    set {_contractVersion = newValue}
+  }
+  /// Returns true if `contractVersion` has been explicitly set.
+  public var hasContractVersion: Bool {self._contractVersion != nil}
+  /// Clears the value of `contractVersion`. Subsequent reads from it will return its default value.
+  public mutating func clearContractVersion() {self._contractVersion = nil}
+
+  public var requestID: String = String()
+
+  public var attemptID: String = String()
+
+  public var jsonValue: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -696,7 +771,7 @@ nonisolated extension Clever_V1_InferenceUsage: SwiftProtobuf.Message, SwiftProt
 
 nonisolated extension Clever_V1_InferenceRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".InferenceRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}contract_version\0\u{3}request_id\0\u{3}attempt_id\0\u{1}principal\0\u{3}session_id\0\u{3}engine_id\0\u{3}model_id\0\u{1}inputs\0\u{1}config\0\u{3}deadline_at\0\u{3}idempotency_key\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}contract_version\0\u{3}request_id\0\u{3}attempt_id\0\u{1}principal\0\u{3}session_id\0\u{3}engine_id\0\u{3}model_id\0\u{1}inputs\0\u{1}config\0\u{3}deadline_at\0\u{3}idempotency_key\0\u{3}response_schema_json\0")
 
   fileprivate class _StorageClass {
     var _contractVersion: Clever_V1_ContractVersion? = nil
@@ -710,6 +785,7 @@ nonisolated extension Clever_V1_InferenceRequest: SwiftProtobuf.Message, SwiftPr
     var _config: Clever_V1_InferenceConfig? = nil
     var _deadlineAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
     var _idempotencyKey: String = String()
+    var _responseSchemaJson: String? = nil
 
       // This property is used as the initial default value for new instances of the type.
       // The type itself is protecting the reference to its storage via CoW semantics.
@@ -731,6 +807,7 @@ nonisolated extension Clever_V1_InferenceRequest: SwiftProtobuf.Message, SwiftPr
       _config = source._config
       _deadlineAt = source._deadlineAt
       _idempotencyKey = source._idempotencyKey
+      _responseSchemaJson = source._responseSchemaJson
     }
   }
 
@@ -760,6 +837,7 @@ nonisolated extension Clever_V1_InferenceRequest: SwiftProtobuf.Message, SwiftPr
         case 9: try { try decoder.decodeSingularMessageField(value: &_storage._config) }()
         case 10: try { try decoder.decodeSingularMessageField(value: &_storage._deadlineAt) }()
         case 11: try { try decoder.decodeSingularStringField(value: &_storage._idempotencyKey) }()
+        case 12: try { try decoder.decodeSingularStringField(value: &_storage._responseSchemaJson) }()
         default: break
         }
       }
@@ -805,6 +883,9 @@ nonisolated extension Clever_V1_InferenceRequest: SwiftProtobuf.Message, SwiftPr
       if !_storage._idempotencyKey.isEmpty {
         try visitor.visitSingularStringField(value: _storage._idempotencyKey, fieldNumber: 11)
       }
+      try { if let v = _storage._responseSchemaJson {
+        try visitor.visitSingularStringField(value: v, fieldNumber: 12)
+      } }()
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -825,6 +906,7 @@ nonisolated extension Clever_V1_InferenceRequest: SwiftProtobuf.Message, SwiftPr
         if _storage._config != rhs_storage._config {return false}
         if _storage._deadlineAt != rhs_storage._deadlineAt {return false}
         if _storage._idempotencyKey != rhs_storage._idempotencyKey {return false}
+        if _storage._responseSchemaJson != rhs_storage._responseSchemaJson {return false}
         return true
       }
       if !storagesAreEqual {return false}
@@ -883,6 +965,119 @@ nonisolated extension Clever_V1_InferenceChunk: SwiftProtobuf.Message, SwiftProt
     if lhs.attemptID != rhs.attemptID {return false}
     if lhs.sequence != rhs.sequence {return false}
     if lhs.textDelta != rhs.textDelta {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Clever_V1_InferenceToolCall: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".InferenceToolCall"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}contract_version\0\u{3}request_id\0\u{3}attempt_id\0\u{1}index\0\u{3}call_id\0\u{1}name\0\u{3}arguments_json\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._contractVersion) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.requestID) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.attemptID) }()
+      case 4: try { try decoder.decodeSingularUInt32Field(value: &self.index) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.callID) }()
+      case 6: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 7: try { try decoder.decodeSingularStringField(value: &self.argumentsJson) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._contractVersion {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    if !self.requestID.isEmpty {
+      try visitor.visitSingularStringField(value: self.requestID, fieldNumber: 2)
+    }
+    if !self.attemptID.isEmpty {
+      try visitor.visitSingularStringField(value: self.attemptID, fieldNumber: 3)
+    }
+    if self.index != 0 {
+      try visitor.visitSingularUInt32Field(value: self.index, fieldNumber: 4)
+    }
+    if !self.callID.isEmpty {
+      try visitor.visitSingularStringField(value: self.callID, fieldNumber: 5)
+    }
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 6)
+    }
+    if !self.argumentsJson.isEmpty {
+      try visitor.visitSingularStringField(value: self.argumentsJson, fieldNumber: 7)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Clever_V1_InferenceToolCall, rhs: Clever_V1_InferenceToolCall) -> Bool {
+    if lhs._contractVersion != rhs._contractVersion {return false}
+    if lhs.requestID != rhs.requestID {return false}
+    if lhs.attemptID != rhs.attemptID {return false}
+    if lhs.index != rhs.index {return false}
+    if lhs.callID != rhs.callID {return false}
+    if lhs.name != rhs.name {return false}
+    if lhs.argumentsJson != rhs.argumentsJson {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Clever_V1_InferenceStructuredOutput: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".InferenceStructuredOutput"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}contract_version\0\u{3}request_id\0\u{3}attempt_id\0\u{3}json_value\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._contractVersion) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.requestID) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.attemptID) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.jsonValue) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._contractVersion {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    if !self.requestID.isEmpty {
+      try visitor.visitSingularStringField(value: self.requestID, fieldNumber: 2)
+    }
+    if !self.attemptID.isEmpty {
+      try visitor.visitSingularStringField(value: self.attemptID, fieldNumber: 3)
+    }
+    if !self.jsonValue.isEmpty {
+      try visitor.visitSingularStringField(value: self.jsonValue, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Clever_V1_InferenceStructuredOutput, rhs: Clever_V1_InferenceStructuredOutput) -> Bool {
+    if lhs._contractVersion != rhs._contractVersion {return false}
+    if lhs.requestID != rhs.requestID {return false}
+    if lhs.attemptID != rhs.attemptID {return false}
+    if lhs.jsonValue != rhs.jsonValue {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

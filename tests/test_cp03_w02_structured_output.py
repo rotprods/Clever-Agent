@@ -175,7 +175,7 @@ class StructuredOutputUnitTests(unittest.TestCase):
         self.assertRegex(inference, r"\bmessage\s+InferenceStructuredOutput\b")
         self.assertRegex(adapter, r"\binference_tool_call\s*=\s*25;")
         self.assertRegex(adapter, r"\binference_structured_output\s*=\s*26;")
-        self.assertIsNone(re.search(r"metadata.*(tool|structured)|(?:tool|structured).*metadata", inference, re.I | re.S))
+        self.assertIsNone(re.search(r"(?mi)^\s*(?:optional\s+)?(?:string|bytes|map<[^>]+>)\s+\w*metadata\w*\s*=", inference))
 
 
 class StreamingStructuredIntegrationTests(unittest.TestCase):

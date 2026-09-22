@@ -7,9 +7,9 @@
       "sha256": "d124c04b835cea63e0ad309ee0aa14c42d5035dae751e787dcfd5ba03cce4820"
     },
     {
-      "bytes": 8352,
+      "bytes": 8600,
       "path": "contracts/sdk/python/gen/clever/v1/adapter_pb2.py",
-      "sha256": "087bfdca0eaf0a680ebf5038753a7ddc5f32a9b275febe5c91a2c7f49603e497"
+      "sha256": "eb8801e3527dedff14826e1003a39c3f397ffd9212694890e907ec1b4c2b6ee8"
     },
     {
       "bytes": 5080,
@@ -32,9 +32,9 @@
       "sha256": "e884ae0a2b4d63cdf88e67bc85b0b014dc98125d89092004ca0c871bbf656b53"
     },
     {
-      "bytes": 7529,
+      "bytes": 8638,
       "path": "contracts/sdk/python/gen/clever/v1/inference_pb2.py",
-      "sha256": "7a06bd6460d4d5cf7a22ea0393d8f495220df29b818bda1e90da987c53fd1be6"
+      "sha256": "de2d5966f3765b224bbbb4921435f2865a7403444af29496eb45a3cffbe77f91"
     },
     {
       "bytes": 3574,
@@ -67,9 +67,9 @@
       "sha256": "e644e39b807f09738b93c85bb0d82ebb3526883d496bdeb07968fa9a5b089cf3"
     },
     {
-      "bytes": 16863,
+      "bytes": 17463,
       "path": "contracts/sdk/typescript/src/gen/clever/v1/adapter_pb.ts",
-      "sha256": "98c9852e1bf3833ce86e30bfa42bd8cd1c679b087236bf897087faefafd4c897"
+      "sha256": "416080af30e0f215238a35aedd96595d5dd27ce155300e551a1221f5cee9ff5b"
     },
     {
       "bytes": 8600,
@@ -92,9 +92,9 @@
       "sha256": "7903b90d4b402f30427d31752db3628e4a31934e5221e213c5d66936a97716bf"
     },
     {
-      "bytes": 15777,
+      "bytes": 18737,
       "path": "contracts/sdk/typescript/src/gen/clever/v1/inference_pb.ts",
-      "sha256": "dcb7e3fbad1015a205133e1527844b181737934b291b056afa70d210b54eb465"
+      "sha256": "45444422b830ead6274a41c122e462a4a082afa5b4cebdf7b8a3db83412f4a97"
     },
     {
       "bytes": 5907,
@@ -127,9 +127,9 @@
       "sha256": "a5afbb95b45318c7711933f647e1f47ab024eedef291852d0f8237cec0fbd5ad"
     },
     {
-      "bytes": 52413,
+      "bytes": 54601,
       "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/adapter.pb.swift",
-      "sha256": "14f9e6b7c508159012f3935470fe96e4de3fa92d37885264d9602341c86f893a"
+      "sha256": "f0b4f808584798786d17367c89368a59fc74ae9d47b03f0c461e0293093ef344"
     },
     {
       "bytes": 24368,
@@ -152,9 +152,9 @@
       "sha256": "0f291c9d455368437b72d826a2ef9d5735d44a28ea14103348fea9604087b66f"
     },
     {
-      "bytes": 44447,
+      "bytes": 53842,
       "path": "contracts/sdk/swift/Sources/CleverContracts/Gen/clever/v1/inference.pb.swift",
-      "sha256": "bd3de6be36c28d39a2f35c70ab229b7dbaa599efc56ad0437be271e726c7f987"
+      "sha256": "204bde393c08ab7de91dc582879e836abc4f850ac5711bf2df36e7da928843e3"
     },
     {
       "bytes": 16784,
@@ -182,9 +182,9 @@
       "sha256": "fc04214f7d2610ad85048da8e9911b660b489c52a4461f9d5416c8ded84ac6b5"
     },
     {
-      "bytes": 58966,
+      "bytes": 60909,
       "path": "contracts/sdk/rust/src/gen/clever.v1.rs",
-      "sha256": "68f8d4d139dc2c7d90103f8d62ea7957a075f03b38fe8b4e64af98541305d7a6"
+      "sha256": "a791a6831f5268379c7da2febceea60b117ee8607cab8567d72c1da74e44c27a"
     },
     {
       "bytes": 268,
@@ -218,7 +218,7 @@
     }
   ],
   "generated_file_count": 43,
-  "proto_tree_sha256": "9de1010c1e35502fa4779bc5917f152ab639730f2e1cf48311c17f2c40327648",
+  "proto_tree_sha256": "dd4170e5222e2566f3efa32c57f030db0409315d7ee44508ce0983a0e2d2c60b",
   "schema_version": 1,
   "toolchain_lock_sha256": "ab3267b70749f36c0859d0fc61ef5b1e9fc3015eb0faeeb47308e141cc303052"
 }

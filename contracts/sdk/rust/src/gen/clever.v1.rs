@@ -343,6 +343,10 @@ pub struct InferenceRequest {
     pub deadline_at: ::core::option::Option<::prost_types::Timestamp>,
     #[prost(string, tag="11")]
     pub idempotency_key: ::prost::alloc::string::String,
+    /// Caller-supplied JSON Schema. It is validation data only and carries no
+    /// execution, policy, egress or capability authority.
+    #[prost(string, optional, tag="12")]
+    pub response_schema_json: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -357,6 +361,40 @@ pub struct InferenceChunk {
     pub sequence: u64,
     #[prost(string, tag="5")]
     pub text_delta: ::prost::alloc::string::String,
+}
+/// A fully assembled native model tool-call. This is inert cognition data: the
+/// contract deliberately contains no execution target, grant, capability token
+/// or transport metadata that can authorize a tool invocation.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct InferenceToolCall {
+    #[prost(message, optional, tag="1")]
+    pub contract_version: ::core::option::Option<ContractVersion>,
+    #[prost(string, tag="2")]
+    pub request_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub attempt_id: ::prost::alloc::string::String,
+    #[prost(uint32, tag="4")]
+    pub index: u32,
+    #[prost(string, tag="5")]
+    pub call_id: ::prost::alloc::string::String,
+    #[prost(string, tag="6")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag="7")]
+    pub arguments_json: ::prost::alloc::string::String,
+}
+/// A schema-validated structured value serialized as canonical JSON data.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct InferenceStructuredOutput {
+    #[prost(message, optional, tag="1")]
+    pub contract_version: ::core::option::Option<ContractVersion>,
+    #[prost(string, tag="2")]
+    pub request_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub attempt_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub json_value: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -750,7 +788,7 @@ pub struct AdapterFrame {
     pub sent_at: ::core::option::Option<::prost_types::Timestamp>,
     #[prost(message, optional, tag="5")]
     pub deadline_at: ::core::option::Option<::prost_types::Timestamp>,
-    #[prost(oneof="adapter_frame::Body", tags="10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24")]
+    #[prost(oneof="adapter_frame::Body", tags="10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26")]
     pub body: ::core::option::Option<adapter_frame::Body>,
 }
 /// Nested message and enum types in `AdapterFrame`.
@@ -788,6 +826,10 @@ pub mod adapter_frame {
         InferenceError(super::InferenceError),
         #[prost(message, tag="24")]
         InferenceCancel(super::InferenceCancel),
+        #[prost(message, tag="25")]
+        InferenceToolCall(super::InferenceToolCall),
+        #[prost(message, tag="26")]
+        InferenceStructuredOutput(super::InferenceStructuredOutput),
     }
 }
 /// Adapter transport is control-plane plumbing, not a source of authorization.
