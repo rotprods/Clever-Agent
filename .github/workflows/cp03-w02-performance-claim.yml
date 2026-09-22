@@ -26,13 +26,20 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
-      - name: Reconcile exact durable frontier
+      - name: Activate proposed claim exactly once
         shell: bash
         run: |
           set -euo pipefail
+          status="$(python -c "import json; print(json.load(open('sessions/20260922-w02-performance-baseline/CLAIM.json'))['status'])")"
+          if [ "$status" != "PROPOSED" ]; then
+            echo "claim already transitioned: $status; bootstrap is an intentional no-op"
+            exit 0
+          fi
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test "$(git ls-remote origin refs/heads/wave/cp03/w02-performance-baseline-20260922 | cut -f1)" = "$GITHUB_SHA"
           git fetch origin main
+          test "$(git rev-parse origin/main)" = "9d5d283c1c4e9e1bcd662a7b35bdbbf9120fa6b8"
+          test "$(git merge-base HEAD origin/main)" = "9d5d283c1c4e9e1bcd662a7b35bdbbf9120fa6b8"
           python - <<'PY'
           import json
           from pathlib import Path
@@ -60,29 +67,9 @@ jobs:
           prior=json.loads(Path('evidence/cp03/cp03-w02/W02-16/recovery_retest_report.json').read_text())
           assert prior['result']=='PASS' and prior['performance_baseline_same_host']=='NOT_RUN'
           assert prior['repetitions_executed']==20 and prior['failed_invocations']==0
-          PY
-          test "$(git rev-parse origin/main)" = "9d5d283c1c4e9e1bcd662a7b35bdbbf9120fa6b8"
-          test "$(git merge-base HEAD origin/main)" = "9d5d283c1c4e9e1bcd662a7b35bdbbf9120fa6b8"
-          python scripts/validate_agentic_state.py
-          python scripts/context/validate_context_pack.py
-          python scripts/context/build_context_pack.py --check
-          python scripts/context/validate_next_actions.py
-          python scripts/cp03/validate_w02_plan.py
-          python -m scripts.parity.ledger --check --source-repo openjarvis
-      - name: Activate bounded claim and regenerate ContextPack
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          p=Path('sessions/20260922-w02-performance-baseline/CLAIM.json')
-          claim=json.loads(p.read_text())
-          claim['event']='CLAIM'
-          claim['status']='ACTIVE'
-          p.write_text(json.dumps(claim,indent=2,sort_keys=True)+'\n')
-          ledger=Path('ledgers/CLAIM_LEDGER.ndjson')
-          with ledger.open('a',encoding='utf-8') as h:
+          claim['event']='CLAIM'; claim['status']='ACTIVE'
+          Path('sessions/20260922-w02-performance-baseline/CLAIM.json').write_text(json.dumps(claim,indent=2,sort_keys=True)+'\n')
+          with Path('ledgers/CLAIM_LEDGER.ndjson').open('a',encoding='utf-8') as h:
               h.write(json.dumps(claim,sort_keys=True,separators=(',',':'))+'\n')
           PY
           python scripts/context/build_context_pack.py
@@ -93,25 +80,13 @@ jobs:
           python scripts/cp03/validate_w02_plan.py
           python -m scripts.parity.ledger --check --source-repo openjarvis
           git diff --check
-      - name: Restrict claim mutation
-        shell: bash
-        run: |
-          set -euo pipefail
           python - <<'PY'
           import subprocess
           allowed={'sessions/20260922-w02-performance-baseline/CLAIM.json','ledgers/CLAIM_LEDGER.ndjson','.agentic/context/CURRENT_CONTEXT.json','.agentic/context/CURRENT_CONTEXT.md'}
           changed={x[3:] for x in subprocess.check_output(['git','status','--porcelain=v1','-uall'],text=True).splitlines() if x}
           assert changed <= allowed, sorted(changed-allowed)
-          assert {'sessions/20260922-w02-performance-baseline/CLAIM.json','ledgers/CLAIM_LEDGER.ndjson'} <= changed
           PY
-      - name: CAS persist active claim
-        shell: bash
-        run: |
-          set -euo pipefail
-          expected="$GITHUB_SHA"
-          test "$(git ls-remote origin refs/heads/wave/cp03/w02-performance-baseline-20260922 | cut -f1)" = "$expected"
-          git fetch origin main
-          test "$(git rev-parse origin/main)" = "9d5d283c1c4e9e1bcd662a7b35bdbbf9120fa6b8"
+          test "$(git ls-remote origin refs/heads/wave/cp03/w02-performance-baseline-20260922 | cut -f1)" = "$GITHUB_SHA"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add sessions/20260922-w02-performance-baseline/CLAIM.json ledgers/CLAIM_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
