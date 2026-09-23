@@ -1,8 +1,8 @@
-name: CP03 W02 G6 CLI model info register_builtin_models binding
+name: CP03 W02 G6 CLI chat register_builtin_models binding
 
 on:
   push:
-    branches: [wave/cp03/w02-parity-cli-model-info-register-builtins-20260923]
+    branches: [wave/cp03/w02-parity-cli-chat-register-builtins-20260923]
     paths:
       - '.github/workflows/cp03-w02-parity-graph.yml'
 
@@ -14,15 +14,15 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  EXPECTED_MAIN: 68993ba295d731d211c8e4d06c76d7258278a441
+  EXPECTED_MAIN: c371fb1dbadc4be34079fac55fadc3324ee5fafb
   CLAIM_ID: CLAIM-CP03-W02-PARITY-GRAPH-20260922
   BINDINGS_PATH: inventory/cp03/w02_evidence_bindings.jsonl
-  CAPABILITY_ID: cap_bdc045630a6fcf4735394782
+  CAPABILITY_ID: cap_63d29e906eae343ae8c88a05
   SOURCE_EVIDENCE: EVID-W02-MODEL-BRIDGE-20260921
   SOURCE_HEAD: a866c335a0f9cad75122c8eb7c5310d358f6aad4
   UPSTREAM_SHA: 72033b8ec288aa067ce4530ff9d96bf231e9c4e5
-  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_cli_model_info_register_builtin_binding_is_capability_specific_and_evidence_backed
-  PROBE_PATH: evidence/cp03/cp03-w02/W02-17/binding_cli_model_info_register_builtin_source_probe.json
+  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_cli_chat_register_builtin_binding_is_capability_specific_and_evidence_backed
+  PROBE_PATH: evidence/cp03/cp03-w02/W02-17/binding_cli_chat_register_builtin_source_probe.json
 
 jobs:
   verify-bind-persist:
@@ -37,7 +37,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Exact-head claim DAG and non-conflict guard
+      - name: Exact-head boot claim DAG and non-conflict guard
         shell: bash
         run: |
           set -euo pipefail
@@ -74,14 +74,14 @@ jobs:
           active=[r for r in latest.values() if r.get('status')=='ACTIVE']
           assert [r['claim_id'] for r in active]==['CLAIM-CP03-W02-PARITY-GRAPH-20260922'], active
           bindings=[json.loads(line) for line in Path('inventory/cp03/w02_evidence_bindings.jsonl').read_text().splitlines() if line.strip()]
-          assert len(bindings)==10, len(bindings)
-          assert not any(row.get('capability_id')=='cap_bdc045630a6fcf4735394782' for row in bindings)
+          assert len(bindings)==11, len(bindings)
+          assert not any(row.get('capability_id')=='cap_63d29e906eae343ae8c88a05' for row in bindings)
           proof=[json.loads(line) for line in Path('reports/cp03/w02_parity/PROOF_MATRIX.jsonl').read_text().splitlines() if line.strip()]
-          target=next(row for row in proof if row['capability_id']=='cap_bdc045630a6fcf4735394782')
+          target=next(row for row in proof if row['capability_id']=='cap_63d29e906eae343ae8c88a05')
           assert target['ownership']=='OWNED'
           assert target['surface_kind']=='registry_registration'
-          assert target['source_path']=='src/openjarvis/cli/model.py'
-          assert target['source_line']==90
+          assert target['source_path']=='src/openjarvis/cli/chat_cmd.py'
+          assert target['source_line']==130
           assert target['name']=='register_builtin_models'
           assert target['w02_evidence_state']=='UNBOUND'
           assert target['canonical_parity_status']=='UNVERIFIED'
@@ -94,7 +94,7 @@ jobs:
           python -m scripts.parity.ledger --check --source-repo openjarvis
           git diff --check
 
-      - name: Verify exact pinned upstream model info call-site
+      - name: Verify exact pinned upstream CLI chat registration call-site
         shell: bash
         run: |
           set -euo pipefail
@@ -107,10 +107,10 @@ jobs:
           python - <<'PY'
           import ast, hashlib, json, os
           from pathlib import Path
-          path=Path('/tmp/openjarvis/src/openjarvis/cli/model.py')
+          path=Path('/tmp/openjarvis/src/openjarvis/cli/chat_cmd.py')
           raw=path.read_bytes(); text=raw.decode('utf-8')
           tree=ast.parse(text)
-          fn=next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name=='info')
+          fn=next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name=='chat')
           calls=[]
           for node in ast.walk(fn):
               if not isinstance(node, ast.Call):
@@ -120,29 +120,30 @@ jobs:
               else: continue
               calls.append((node.lineno,name))
           reg=next(line for line,name in calls if name=='register_builtin_models')
-          discover=next(line for line,name in calls if name=='discover_engines')
-          assert reg==90, reg
-          assert reg < discover, (reg,discover)
+          resolve=next(line for line,name in calls if name=='get_engine')
+          assert reg==130, reg
+          assert reg < resolve, (reg,resolve)
           probe={
               'schema_version':1,
               'date':'2026-09-23',
               'upstream_repository':'https://github.com/open-jarvis/OpenJarvis.git',
               'upstream_commit':os.environ['UPSTREAM_SHA'],
-              'source_path':'src/openjarvis/cli/model.py',
+              'source_path':'src/openjarvis/cli/chat_cmd.py',
               'source_sha256':hashlib.sha256(raw).hexdigest(),
-              'function':'info',
+              'function':'chat',
               'registrar_call':'register_builtin_models',
               'registrar_call_line':reg,
-              'discover_engines_call_line':discover,
-              'registration_precedes_engine_discovery':True,
+              'get_engine_call_line':resolve,
+              'registration_precedes_get_engine':True,
               'source_execution':False,
+              'chat_command_execution':'NOT_RUN',
               'parity_promotion':False,
           }
           out=Path(os.environ['PROBE_PATH']); out.parent.mkdir(parents=True,exist_ok=True)
           out.write_text(json.dumps(probe,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           PY
 
-      - name: Add CLI model info registration binding and capability-specific test
+      - name: Add CLI chat registration binding and capability-specific test
         shell: bash
         run: |
           set -euo pipefail
@@ -152,7 +153,7 @@ jobs:
           bindings_path=Path(os.environ['BINDINGS_PATH'])
           capability_id=os.environ['CAPABILITY_ID']
           rows=[json.loads(line) for line in bindings_path.read_text(encoding='utf-8').splitlines() if line.strip()]
-          assert len(rows)==10, rows
+          assert len(rows)==11, rows
           assert not any(row.get('capability_id')==capability_id for row in rows)
           rows.append({
               'capability_id': capability_id,
@@ -174,24 +175,24 @@ jobs:
 
           test_path=Path('tests/test_cp03_w02_parity_graph.py')
           text=test_path.read_text(encoding='utf-8')
-          needle='CLI_MODEL_LIST_REGISTER_BUILTIN_CAPABILITY_ID = "cap_a1156e1a8626c074910758f9"\n'
+          needle='CLI_MODEL_INFO_REGISTER_BUILTIN_CAPABILITY_ID = "cap_bdc045630a6fcf4735394782"\n'
           assert needle in text
-          text=text.replace(needle,needle+'CLI_MODEL_INFO_REGISTER_BUILTIN_CAPABILITY_ID = "cap_bdc045630a6fcf4735394782"\n',1)
-          prior_test='''CLI_MODEL_LIST_REGISTER_BUILTIN_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_cli_model_list_register_builtin_binding_is_capability_specific_and_evidence_backed"\n)\n'''
+          text=text.replace(needle,needle+'CLI_CHAT_REGISTER_BUILTIN_CAPABILITY_ID = "cap_63d29e906eae343ae8c88a05"\n',1)
+          prior_test='''CLI_MODEL_INFO_REGISTER_BUILTIN_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_cli_model_info_register_builtin_binding_is_capability_specific_and_evidence_backed"\n)\n'''
           assert prior_test in text
-          text=text.replace(prior_test,prior_test+'''CLI_MODEL_INFO_REGISTER_BUILTIN_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_cli_model_info_register_builtin_binding_is_capability_specific_and_evidence_backed"\n)\n''',1)
-          text=text.replace('def test_current_matrix_has_ten_candidates_and_no_parity_promotion', 'def test_current_matrix_has_eleven_candidates_and_no_parity_promotion', 1)
-          text=text.replace('self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 10)', 'self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 11)', 1)
-          text=text.replace('self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 37)', 'self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 36)', 1)
-          old_set='{SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID, LITELLM_CAPABILITY_ID, CLOUD_CAPABILITY_ID, NIM_CAPABILITY_ID, GEMMA_CPP_CAPABILITY_ID, OPENAI_COMPAT_REGISTER_CAPABILITY_ID, MODEL_REGISTER_VALUE_CAPABILITY_ID, MODEL_REGISTER_VALUE_1088_CAPABILITY_ID, CLI_MODEL_LIST_REGISTER_BUILTIN_CAPABILITY_ID}'
+          text=text.replace(prior_test,prior_test+'''CLI_CHAT_REGISTER_BUILTIN_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_cli_chat_register_builtin_binding_is_capability_specific_and_evidence_backed"\n)\n''',1)
+          text=text.replace('def test_current_matrix_has_eleven_candidates_and_no_parity_promotion', 'def test_current_matrix_has_twelve_candidates_and_no_parity_promotion', 1)
+          text=text.replace('self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 11)', 'self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 12)', 1)
+          text=text.replace('self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 36)', 'self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 35)', 1)
+          old_set='{SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID, LITELLM_CAPABILITY_ID, CLOUD_CAPABILITY_ID, NIM_CAPABILITY_ID, GEMMA_CPP_CAPABILITY_ID, OPENAI_COMPAT_REGISTER_CAPABILITY_ID, MODEL_REGISTER_VALUE_CAPABILITY_ID, MODEL_REGISTER_VALUE_1088_CAPABILITY_ID, CLI_MODEL_LIST_REGISTER_BUILTIN_CAPABILITY_ID, CLI_MODEL_INFO_REGISTER_BUILTIN_CAPABILITY_ID}'
           assert old_set in text
-          text=text.replace(old_set,old_set[:-1]+', CLI_MODEL_INFO_REGISTER_BUILTIN_CAPABILITY_ID}',1)
-          prior_candidate='''        cli_model_list_register_builtin = candidates[CLI_MODEL_LIST_REGISTER_BUILTIN_CAPABILITY_ID]\n        self.assertEqual(cli_model_list_register_builtin["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(cli_model_list_register_builtin["binding"]["terminal"])\n'''
+          text=text.replace(old_set,old_set[:-1]+', CLI_CHAT_REGISTER_BUILTIN_CAPABILITY_ID}',1)
+          prior_candidate='''        cli_model_info_register_builtin = candidates[CLI_MODEL_INFO_REGISTER_BUILTIN_CAPABILITY_ID]\n        self.assertEqual(cli_model_info_register_builtin["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(cli_model_info_register_builtin["binding"]["terminal"])\n'''
           assert prior_candidate in text
-          text=text.replace(prior_candidate,prior_candidate+'''        cli_model_info_register_builtin = candidates[CLI_MODEL_INFO_REGISTER_BUILTIN_CAPABILITY_ID]\n        self.assertEqual(cli_model_info_register_builtin["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(cli_model_info_register_builtin["binding"]["terminal"])\n''',1)
+          text=text.replace(prior_candidate,prior_candidate+'''        cli_chat_register_builtin = candidates[CLI_CHAT_REGISTER_BUILTIN_CAPABILITY_ID]\n        self.assertEqual(cli_chat_register_builtin["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(cli_chat_register_builtin["binding"]["terminal"])\n''',1)
           marker='    def test_graph_projects_all_four_planes_without_promotion(self) -> None:\n'
           assert marker in text
-          method='''    def test_cli_model_info_register_builtin_binding_is_capability_specific_and_evidence_backed(self) -> None:\n        row = next(row for row in self.result["rows"] if row["capability_id"] == CLI_MODEL_INFO_REGISTER_BUILTIN_CAPABILITY_ID)\n        self.assertEqual(row["ownership"], "OWNED")\n        self.assertEqual(row["surface_kind"], "registry_registration")\n        self.assertEqual(row["source_path"], "src/openjarvis/cli/model.py")\n        self.assertEqual(row["source_line"], 90)\n        self.assertEqual(row["name"], "register_builtin_models")\n        self.assertEqual(row["source_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")\n        self.assertEqual(row["canonical_parity_status"], "UNVERIFIED")\n        self.assertFalse(row["verified"])\n        self.assertFalse(row["parity_promotion"])\n        binding = row["binding"]\n        self.assertEqual(binding["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertEqual(binding["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")\n        self.assertEqual(binding["test_id"], CLI_MODEL_INFO_REGISTER_BUILTIN_TEST_ID)\n        self.assertFalse(binding["terminal"])\n\n        obligation = next(\n            item for item in graph.read_jsonl(ROOT / graph.OBLIGATIONS_PATH)\n            if item["capability_id"] == CLI_MODEL_INFO_REGISTER_BUILTIN_CAPABILITY_ID\n        )\n        self.assertEqual(obligation["source_path"], "src/openjarvis/cli/model.py")\n        self.assertEqual(obligation["source_line"], 90)\n        self.assertEqual(obligation["name"], "register_builtin_models")\n        self.assertEqual(obligation["source_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")\n\n        probe=json.loads((ROOT / "evidence/cp03/cp03-w02/W02-17/binding_cli_model_info_register_builtin_source_probe.json").read_text(encoding="utf-8"))\n        self.assertEqual(probe["upstream_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")\n        self.assertEqual(probe["source_path"], "src/openjarvis/cli/model.py")\n        self.assertEqual(probe["function"], "info")\n        self.assertEqual(probe["registrar_call"], "register_builtin_models")\n        self.assertEqual(probe["registrar_call_line"], 90)\n        self.assertTrue(probe["registration_precedes_engine_discovery"])\n        self.assertFalse(probe["source_execution"])\n        self.assertFalse(probe["parity_promotion"])\n\n        evidence = graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")\n        receipt = evidence["EVID-W02-MODEL-BRIDGE-20260921"]\n        self.assertEqual(receipt["status"], "VERIFIED")\n        self.assertEqual(receipt["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")\n        self.assertEqual(receipt["native_engine_count"], 15)\n        self.assertEqual(receipt["native_import_failure_count"], 0)\n        self.assertEqual(receipt["native_model_count"], 69)\n        self.assertEqual(receipt["model_executions"], 0)\n        self.assertEqual(receipt["provider_egress_executions"], 0)\n        self.assertEqual(receipt["parity_promotions"], 0)\n\n        catalog=json.loads((ROOT / "evidence/cp03/cp03-w02/W02-08/native_catalog.json").read_text(encoding="utf-8"))\n        self.assertEqual(catalog["model_count"],69)\n        self.assertEqual(len(catalog["models"]),69)\n        self.assertEqual(catalog["import_failures"],[])\n        self.assertTrue(all(model["state"] == "REGISTERED" for model in catalog["models"]))\n        self.assertEqual(catalog["model_executions"],0)\n        self.assertEqual(catalog["provider_egress_executions"],0)\n        self.assertEqual(catalog["parity_promotions"],0)\n\n'''
+          method='''    def test_cli_chat_register_builtin_binding_is_capability_specific_and_evidence_backed(self) -> None:\n        row = next(row for row in self.result["rows"] if row["capability_id"] == CLI_CHAT_REGISTER_BUILTIN_CAPABILITY_ID)\n        self.assertEqual(row["ownership"], "OWNED")\n        self.assertEqual(row["surface_kind"], "registry_registration")\n        self.assertEqual(row["source_path"], "src/openjarvis/cli/chat_cmd.py")\n        self.assertEqual(row["source_line"], 130)\n        self.assertEqual(row["name"], "register_builtin_models")\n        self.assertEqual(row["source_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")\n        self.assertEqual(row["canonical_parity_status"], "UNVERIFIED")\n        self.assertFalse(row["verified"])\n        self.assertFalse(row["parity_promotion"])\n        binding = row["binding"]\n        self.assertEqual(binding["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertEqual(binding["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")\n        self.assertEqual(binding["test_id"], CLI_CHAT_REGISTER_BUILTIN_TEST_ID)\n        self.assertFalse(binding["terminal"])\n\n        obligation = next(\n            item for item in graph.read_jsonl(ROOT / graph.OBLIGATIONS_PATH)\n            if item["capability_id"] == CLI_CHAT_REGISTER_BUILTIN_CAPABILITY_ID\n        )\n        self.assertEqual(obligation["source_path"], "src/openjarvis/cli/chat_cmd.py")\n        self.assertEqual(obligation["source_line"], 130)\n        self.assertEqual(obligation["name"], "register_builtin_models")\n        self.assertEqual(obligation["source_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")\n\n        probe=json.loads((ROOT / "evidence/cp03/cp03-w02/W02-17/binding_cli_chat_register_builtin_source_probe.json").read_text(encoding="utf-8"))\n        self.assertEqual(probe["upstream_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")\n        self.assertEqual(probe["source_path"], "src/openjarvis/cli/chat_cmd.py")\n        self.assertEqual(probe["function"], "chat")\n        self.assertEqual(probe["registrar_call"], "register_builtin_models")\n        self.assertEqual(probe["registrar_call_line"], 130)\n        self.assertTrue(probe["registration_precedes_get_engine"])\n        self.assertFalse(probe["source_execution"])\n        self.assertEqual(probe["chat_command_execution"], "NOT_RUN")\n        self.assertFalse(probe["parity_promotion"])\n\n        evidence = graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")\n        receipt = evidence["EVID-W02-MODEL-BRIDGE-20260921"]\n        self.assertEqual(receipt["status"], "VERIFIED")\n        self.assertEqual(receipt["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")\n        self.assertEqual(receipt["native_engine_count"], 15)\n        self.assertEqual(receipt["native_import_failure_count"], 0)\n        self.assertEqual(receipt["native_model_count"], 69)\n        self.assertEqual(receipt["model_executions"], 0)\n        self.assertEqual(receipt["provider_egress_executions"], 0)\n        self.assertEqual(receipt["parity_promotions"], 0)\n\n        catalog=json.loads((ROOT / "evidence/cp03/cp03-w02/W02-08/native_catalog.json").read_text(encoding="utf-8"))\n        self.assertEqual(catalog["model_count"],69)\n        self.assertEqual(len(catalog["models"]),69)\n        self.assertEqual(catalog["import_failures"],[])\n        self.assertTrue(all(model["state"] == "REGISTERED" for model in catalog["models"]))\n        self.assertEqual(catalog["model_executions"],0)\n        self.assertEqual(catalog["provider_egress_executions"],0)\n        self.assertEqual(catalog["parity_promotions"],0)\n\n'''
           text=text.replace(marker,method+marker,1)
           test_path.write_text(text,encoding='utf-8')
           PY
@@ -204,13 +205,13 @@ jobs:
           import json
           from pathlib import Path
           summary=json.loads(Path('reports/cp03/w02_parity/SUMMARY.json').read_text())
-          assert summary['binding_counts']=={'UNBOUND':36,'EVIDENCE_BACKED_CANDIDATE':11}, summary
+          assert summary['binding_counts']=={'UNBOUND':35,'EVIDENCE_BACKED_CANDIDATE':12}, summary
           assert summary['verified_capabilities']==0
           assert summary['parity_promotions']==0
           assert summary['global_denominator']==7565
           assert summary['openjarvis_obligations']==646
           rows=[json.loads(x) for x in Path('reports/cp03/w02_parity/PROOF_MATRIX.jsonl').read_text().splitlines() if x.strip()]
-          row=next(x for x in rows if x['capability_id']=='cap_bdc045630a6fcf4735394782')
+          row=next(x for x in rows if x['capability_id']=='cap_63d29e906eae343ae8c88a05')
           assert row['w02_evidence_state']=='EVIDENCE_BACKED_CANDIDATE'
           assert row['canonical_parity_status']=='UNVERIFIED'
           assert row['verified'] is False and row['parity_promotion'] is False
@@ -246,7 +247,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$BINDINGS_PATH" "$PROBE_PATH" tests/test_cp03_w02_parity_graph.py reports/cp03/w02_parity graphs/cp03/w02_parity
-          git commit -m 'CP03 W02-17: add CLI model info registration G6 binding'
+          git commit -m 'CP03 W02-17: add CLI chat registration G6 binding'
           binding_head="$(git rev-parse HEAD)"
           git push origin HEAD:"${GITHUB_REF_NAME}"
           test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$binding_head"
@@ -261,8 +262,8 @@ jobs:
           python - <<'PY'
           import json, os
           from pathlib import Path
-          evidence_id='EVID-W02-PARITY-BINDING-CLI-MODEL-INFO-REGISTER-BUILTIN-20260923'
-          decision_id='DEC-W02-G6-CLI-MODEL-INFO-REGISTER-BUILTIN-BINDING-20260923'
+          evidence_id='EVID-W02-PARITY-BINDING-CLI-CHAT-REGISTER-BUILTIN-20260923'
+          decision_id='DEC-W02-G6-CLI-CHAT-REGISTER-BUILTIN-BINDING-20260923'
           risk_id='RISK-W02-G6-K47-BINDINGS-PENDING-20260922'
           head=os.environ['BINDING_HEAD']; main=os.environ['EXPECTED_MAIN']; run_id=int(os.environ['GITHUB_RUN_ID'])
           test_id=os.environ['TEST_ID']; source_evidence=os.environ['SOURCE_EVIDENCE']; source_head=os.environ['SOURCE_HEAD']; capability_id=os.environ['CAPABILITY_ID']
@@ -278,28 +279,28 @@ jobs:
           assert claim['claim_id']==os.environ['CLAIM_ID'] and claim['status']=='ACTIVE'
           claim['continuation_base_head']=main
           claim_path.write_text(json.dumps(claim,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-          claim_event={'schema_version':1,'date':'2026-09-23','event':'CONTINUATION','event_id':'CLAIM-CONT-W02-G6-CLI-MODEL-INFO-REGISTER-BUILTIN-20260923','project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','parent_wave':'CP03-W02','canonical_task':'W02-17','wave_id':'CP03-W02-PARITY-GRAPH-20260922','claim_id':os.environ['CLAIM_ID'],'owner':'chatgpt-gpt-5.6-sol','status':'ACTIVE','base_head':main,'scope':claim['scope'],'coordination':'Continue the sole W02-17 G6 claim from exact main. Add exactly one capability-specific binding for the frozen CLI model.info register_builtin_models call site at src/openjarvis/cli/model.py:90, backed by exact pinned-source call-order evidence plus completed W02-08 registration evidence. No parity promotion, denominator mutation, W02-18 opening, provider egress or tool execution.'}
+          claim_event={'schema_version':1,'date':'2026-09-23','event':'CONTINUATION','event_id':'CLAIM-CONT-W02-G6-CLI-CHAT-REGISTER-BUILTIN-20260923','project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','parent_wave':'CP03-W02','canonical_task':'W02-17','wave_id':'CP03-W02-PARITY-GRAPH-20260922','claim_id':os.environ['CLAIM_ID'],'owner':'chatgpt-gpt-5.6-sol','status':'ACTIVE','base_head':main,'scope':claim['scope'],'coordination':'Continue the sole W02-17 G6 claim from exact main. Add exactly one capability-specific binding for the frozen CLI chat register_builtin_models call site at src/openjarvis/cli/chat_cmd.py:130, backed by exact pinned-source call-order evidence plus completed W02-08 registration evidence. Do not treat the chat command itself as executed and do not promote parity.'}
           append_once('ledgers/CLAIM_LEDGER.ndjson','event_id',claim_event['event_id'],claim_event)
           probe=json.loads(Path(os.environ['PROBE_PATH']).read_text(encoding='utf-8'))
-          result={'schema_version':1,'date':'2026-09-23','project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','parent_wave':'CP03-W02','task':'W02-17','gate':'G6','status':'PASS','evidence_id':evidence_id,'claim_id':os.environ['CLAIM_ID'],'validated_head':head,'github_actions_run_id':run_id,'bindings_validated_total':11,'bindings_added_this_slice':1,'binding_capability_id':capability_id,'binding_capability_name':'register_builtin_models','binding_source_evidence_id':source_evidence,'binding_source_validated_head':source_head,'binding_source_run_id':35552788123,'executed_test_id':test_id,'source_probe_path':os.environ['PROBE_PATH'],'source_probe_sha256':probe['source_sha256'],'source_artifact_path':'evidence/cp03/cp03-w02/W02-08/native_catalog.json','source_artifact_match':{'source_path':'src/openjarvis/cli/model.py','source_line':90,'function':'info','registrar_call':'register_builtin_models','registration_precedes_engine_discovery':True,'native_model_count':69},'unbound_remaining':36,'verified_capabilities':0,'parity_promotions':0,'global_denominator':7565,'openjarvis_obligations':646,'model_executions':0,'provider_egress_executions':0,'tool_executions':0,'source_execution':False,'real_openjarvis_fallback_model_execution':'NOT_RUN','next_slice':'Bind the next W02 capability only when a capability-specific executed test and exact completed-task evidence receipt can be named.'}
+          result={'schema_version':1,'date':'2026-09-23','project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','parent_wave':'CP03-W02','task':'W02-17','gate':'G6','status':'PASS','evidence_id':evidence_id,'claim_id':os.environ['CLAIM_ID'],'validated_head':head,'github_actions_run_id':run_id,'bindings_validated_total':12,'bindings_added_this_slice':1,'binding_capability_id':capability_id,'binding_capability_name':'register_builtin_models','binding_source_evidence_id':source_evidence,'binding_source_validated_head':source_head,'binding_source_run_id':35552788123,'executed_test_id':test_id,'source_probe_path':os.environ['PROBE_PATH'],'source_probe_sha256':probe['source_sha256'],'source_artifact_path':'evidence/cp03/cp03-w02/W02-08/native_catalog.json','source_artifact_match':{'source_path':'src/openjarvis/cli/chat_cmd.py','source_line':130,'function':'chat','registrar_call':'register_builtin_models','registration_precedes_get_engine':True,'native_model_count':69},'unbound_remaining':35,'verified_capabilities':0,'parity_promotions':0,'global_denominator':7565,'openjarvis_obligations':646,'model_executions':0,'provider_egress_executions':0,'tool_executions':0,'source_execution':False,'chat_command_execution':'NOT_RUN','real_openjarvis_fallback_model_execution':'NOT_RUN','next_slice':'Bind the next W02 capability only when a capability-specific executed test and exact completed-task evidence receipt can be named.'}
           Path('sessions/20260922-w02-parity-graph/RESULT.json').write_text(json.dumps(result,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
-          report_path=Path('evidence/cp03/cp03-w02/W02-17/binding_cli_model_info_register_builtin_report.json')
+          report_path=Path('evidence/cp03/cp03-w02/W02-17/binding_cli_chat_register_builtin_report.json')
           report_path.write_text(json.dumps(result,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
-          evidence={'schema_version':1,'date':'2026-09-23','evidence_id':evidence_id,'status':'VERIFIED','type':'cp03_w02_g6_capability_specific_cli_model_info_register_builtin_binding','wave_id':'CP03-W02','support_wave':'CP03-W02-PARITY-GRAPH-20260922','validated_head':head,'github_actions_run_id':run_id,'claim':'The owned OpenJarvis CLI model.info register_builtin_models proof unit at src/openjarvis/cli/model.py:90 is bound to the completed exact-head W02-08 model registration receipt plus an exact pinned-source call-order probe and a capability-specific G6 test. This establishes only an EVIDENCE_BACKED_CANDIDATE; the CLI source itself was not executed and canonical parity remains UNVERIFIED.','binding_capability_id':capability_id,'binding_source_evidence_id':source_evidence,'binding_source_validated_head':source_head,'executed_test_id':test_id,'source_probe_sha256':probe['source_sha256'],'source_execution':False,'bindings_validated_total':11,'unbound_remaining':36,'verified_capabilities':0,'parity_promotions':0,'global_denominator':7565,'openjarvis_obligations':646,'model_executions':0,'provider_egress_executions':0,'tool_executions':0,'real_openjarvis_fallback_model_execution':'NOT_RUN'}
+          evidence={'schema_version':1,'date':'2026-09-23','evidence_id':evidence_id,'status':'VERIFIED','type':'cp03_w02_g6_capability_specific_cli_chat_register_builtin_binding','wave_id':'CP03-W02','support_wave':'CP03-W02-PARITY-GRAPH-20260922','validated_head':head,'github_actions_run_id':run_id,'claim':'The owned OpenJarvis CLI chat register_builtin_models proof unit at src/openjarvis/cli/chat_cmd.py:130 is bound to the completed exact-head W02-08 model registration receipt plus an exact pinned-source call-order probe and a capability-specific G6 test. This establishes only an EVIDENCE_BACKED_CANDIDATE; the chat command itself was NOT_RUN and canonical parity remains UNVERIFIED.','binding_capability_id':capability_id,'binding_source_evidence_id':source_evidence,'binding_source_validated_head':source_head,'executed_test_id':test_id,'source_probe_sha256':probe['source_sha256'],'source_execution':False,'chat_command_execution':'NOT_RUN','bindings_validated_total':12,'unbound_remaining':35,'verified_capabilities':0,'parity_promotions':0,'global_denominator':7565,'openjarvis_obligations':646,'model_executions':0,'provider_egress_executions':0,'tool_executions':0,'real_openjarvis_fallback_model_execution':'NOT_RUN'}
           append_once('ledgers/EVIDENCE_LEDGER.ndjson','evidence_id',evidence_id,evidence)
-          append_once('ledgers/RUN_LOG.ndjson','event_id','RUN-W02-PARITY-BINDING-CLI-MODEL-INFO-REGISTER-BUILTIN-20260923',{'schema_version':1,'date':'2026-09-23','event':'CP03_W02_G6_CLI_MODEL_INFO_REGISTER_BUILTIN_BINDING_ADVANCED','event_id':'RUN-W02-PARITY-BINDING-CLI-MODEL-INFO-REGISTER-BUILTIN-20260923','goal_id':'CLEVER-JARVIS-001','checkpoint':'CP03','iteration':'I03','wave_id':'CP03-W02','canonical_task':'W02-17','claim_id':os.environ['CLAIM_ID'],'evidence_id':evidence_id,'status':'ADVANCED','bindings_validated_total':11,'unbound_remaining':36,'verified_capabilities':0,'parity_promotions':0})
-          append_once('ledgers/WAVE_LEDGER.ndjson','event_id','WAVE-W02-PARITY-BINDING-CLI-MODEL-INFO-REGISTER-BUILTIN-20260923',{'schema_version':1,'date':'2026-09-23','event':'IMPLEMENTATION_VERIFICATION','event_id':'WAVE-W02-PARITY-BINDING-CLI-MODEL-INFO-REGISTER-BUILTIN-20260923','checkpoint':'CP03','iteration':'I03','parent_wave':'CP03-W02','wave_id':'CP03-W02-PARITY-GRAPH-20260922','canonical_task':'W02-17','claim_id':os.environ['CLAIM_ID'],'gate':'G6','evidence_id':evidence_id,'status':'IN_PROGRESS','bindings_validated_total':11,'unbound_remaining':36,'parity_promotions':0})
-          append_once('ledgers/DECISION_LEDGER.ndjson','decision_id',decision_id,{'schema_version':1,'date':'2026-09-23','decision_id':decision_id,'status':'ACCEPTED','task':'W02-17','evidence_id':evidence_id,'decision':'Bind the frozen CLI model.info register_builtin_models call-site at src/openjarvis/cli/model.py:90 only as a non-terminal EVIDENCE_BACKED_CANDIDATE, using an exact pinned-source AST call-order probe plus the completed W02-08 registration receipt. Do not infer CLI behavioral parity or promote VERIFIED.','context':'The exact pinned upstream source shows info calls register_builtin_models before engine discovery. W02-08 separately executed the underlying builtin registration path and persisted 69 ModelSpec registrations, but the CLI command itself was not executed in this slice.'})
-          risk={'schema_version':1,'date':'2026-09-23','risk_id':risk_id,'severity':'P1','status':'OPEN','evidence_id':evidence_id,'risk':'W02-17 still has 36/47 proof units without explicit capability-to-test-to-evidence bindings; source-level call-site evidence is not CLI execution and must not be widened into VERIFIED parity.','mitigation':'Continue one capability-specific evidence-backed binding at a time. Require exact source pin, executed G6 test, completed-task receipt and explicit non-proof treatment for NOT_RUN/BLOCKED/PLATFORM_GATED/waivers; keep denominator 7565, OpenJarvis obligations 646 and W02-18 BLOCKED.'}
+          append_once('ledgers/RUN_LOG.ndjson','event_id','RUN-W02-PARITY-BINDING-CLI-CHAT-REGISTER-BUILTIN-20260923',{'schema_version':1,'date':'2026-09-23','event':'CP03_W02_G6_CLI_CHAT_REGISTER_BUILTIN_BINDING_ADVANCED','event_id':'RUN-W02-PARITY-BINDING-CLI-CHAT-REGISTER-BUILTIN-20260923','goal_id':'CLEVER-JARVIS-001','checkpoint':'CP03','iteration':'I03','wave_id':'CP03-W02','canonical_task':'W02-17','claim_id':os.environ['CLAIM_ID'],'evidence_id':evidence_id,'status':'ADVANCED','bindings_validated_total':12,'unbound_remaining':35,'verified_capabilities':0,'parity_promotions':0})
+          append_once('ledgers/WAVE_LEDGER.ndjson','event_id','WAVE-W02-PARITY-BINDING-CLI-CHAT-REGISTER-BUILTIN-20260923',{'schema_version':1,'date':'2026-09-23','event':'IMPLEMENTATION_VERIFICATION','event_id':'WAVE-W02-PARITY-BINDING-CLI-CHAT-REGISTER-BUILTIN-20260923','checkpoint':'CP03','iteration':'I03','parent_wave':'CP03-W02','wave_id':'CP03-W02-PARITY-GRAPH-20260922','canonical_task':'W02-17','claim_id':os.environ['CLAIM_ID'],'gate':'G6','evidence_id':evidence_id,'status':'IN_PROGRESS','bindings_validated_total':12,'unbound_remaining':35,'parity_promotions':0})
+          append_once('ledgers/DECISION_LEDGER.ndjson','decision_id',decision_id,{'schema_version':1,'date':'2026-09-23','decision_id':decision_id,'status':'ACCEPTED','task':'W02-17','evidence_id':evidence_id,'decision':'Bind the frozen CLI chat register_builtin_models call-site at src/openjarvis/cli/chat_cmd.py:130 only as a non-terminal EVIDENCE_BACKED_CANDIDATE, using an exact pinned-source AST call-order probe plus the completed W02-08 registration receipt. Do not infer chat behavioral parity or promote VERIFIED.','context':'The exact pinned upstream source shows chat calls register_builtin_models before get_engine. W02-08 separately executed the underlying builtin registration path and persisted 69 ModelSpec registrations, but the chat command itself was NOT_RUN in this slice.'})
+          risk={'schema_version':1,'date':'2026-09-23','risk_id':risk_id,'severity':'P1','status':'OPEN','evidence_id':evidence_id,'risk':'W02-17 still has 35/47 proof units without explicit capability-to-test-to-evidence bindings; source-level call-site evidence is not CLI execution and must not be widened into VERIFIED parity.','mitigation':'Continue one capability-specific evidence-backed binding at a time. Require exact source pin, executed G6 test, completed-task receipt and explicit non-proof treatment for NOT_RUN/BLOCKED/PLATFORM_GATED/waivers; keep denominator 7565, OpenJarvis obligations 646 and W02-18 BLOCKED.'}
           if not any(r.get('risk_id')==risk_id and r.get('evidence_id')==evidence_id for r in read_rows('ledgers/RISK_LEDGER.ndjson')):
               with Path('ledgers/RISK_LEDGER.ndjson').open('a',encoding='utf-8') as handle: handle.write(json.dumps(risk,ensure_ascii=False,sort_keys=True,separators=(',',':'))+'\n')
           state_path=Path('STATE.md')
           lines=[line for line in state_path.read_text(encoding='utf-8').splitlines() if not line.startswith('- G6 explicit binding progress:')]
           insert_at=next(i for i,line in enumerate(lines) if line.startswith('- Canonical task frontier:'))+1
-          lines.insert(insert_at,'- G6 explicit binding progress: `11/47` evidence-backed candidates; `36` UNBOUND; VERIFIED capabilities `0`; parity promotions `0`.')
+          lines.insert(insert_at,'- G6 explicit binding progress: `12/47` evidence-backed candidates; `35` UNBOUND; VERIFIED capabilities `0`; parity promotions `0`.')
           state_path.write_text('\n'.join(lines).rstrip()+'\n',encoding='utf-8')
-          handoff_path=Path('HANDOFF.md'); handoff=handoff_path.read_text(encoding='utf-8').rstrip(); marker='## W02-17 CLI model info register_builtin_models binding — partial verified'
-          note=f'''\n\n{marker}\n\n- `{evidence_id}`: `{capability_id}` (`register_builtin_models`, OWNED registry registration) is bound to completed W02-08 evidence `{source_evidence}` at exact SHA `{source_head}` plus an exact pinned-source probe for `src/openjarvis/cli/model.py:90`.\n- Capability-specific executed test: `{test_id}`. The source probe proves `info` calls `register_builtin_models` before engine discovery at upstream `{os.environ['UPSTREAM_SHA']}`; W02-08 separately persists 69 registered `ModelSpec` entries. The CLI source itself remains `NOT_EXECUTED` in this slice.\n- G6 is now 11 `EVIDENCE_BACKED_CANDIDATE` / 36 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged.\n- `NOT_RUN`, `BLOCKED`, `PLATFORM_GATED`, source-only proof and waivers remain non-proof for VERIFIED parity. Real OpenJarvis fallback model execution remains `NOT_RUN`. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.\n- Exact next slice: bind the next W02 capability only when its own executed test can be named and traced to exact completed-task evidence; do not infer behavioral parity from source presence alone.\n'''
+          handoff_path=Path('HANDOFF.md'); handoff=handoff_path.read_text(encoding='utf-8').rstrip(); marker='## W02-17 CLI chat register_builtin_models binding — partial verified'
+          note=f'''\n\n{marker}\n\n- `{evidence_id}`: `{capability_id}` (`register_builtin_models`, OWNED registry registration) is bound to completed W02-08 evidence `{source_evidence}` at exact SHA `{source_head}` plus an exact pinned-source probe for `src/openjarvis/cli/chat_cmd.py:130`.\n- Capability-specific executed G6 test: `{test_id}`. The source probe proves `chat` calls `register_builtin_models` before `get_engine` at upstream `{os.environ['UPSTREAM_SHA']}`; W02-08 separately persists 69 registered `ModelSpec` entries. The CLI `chat` command itself remains `NOT_RUN` in this slice.\n- G6 is now 12 `EVIDENCE_BACKED_CANDIDATE` / 35 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged.\n- `NOT_RUN`, `BLOCKED`, `PLATFORM_GATED`, source-only proof and waivers remain non-proof for VERIFIED parity. Real OpenJarvis fallback model execution remains `NOT_RUN`. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.\n- Exact next slice: bind the next W02 capability only when its own executed test can be named and traced to exact completed-task evidence; do not infer behavioral parity from source presence alone.\n'''
           if marker not in handoff: handoff_path.write_text(handoff+note,encoding='utf-8')
           PY
 
@@ -329,14 +330,14 @@ jobs:
           git add \
             sessions/20260922-w02-parity-graph/CLAIM.json \
             sessions/20260922-w02-parity-graph/RESULT.json \
-            evidence/cp03/cp03-w02/W02-17/binding_cli_model_info_register_builtin_report.json \
+            evidence/cp03/cp03-w02/W02-17/binding_cli_chat_register_builtin_report.json \
             "$PROBE_PATH" \
             reports/cp03/w02_parity graphs/cp03/w02_parity \
             STATE.md HANDOFF.md \
             ledgers/CLAIM_LEDGER.ndjson ledgers/EVIDENCE_LEDGER.ndjson ledgers/RUN_LOG.ndjson \
             ledgers/WAVE_LEDGER.ndjson ledgers/DECISION_LEDGER.ndjson ledgers/RISK_LEDGER.ndjson \
             .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
-          git commit -m 'CP03 W02-17: persist CLI model info registration binding evidence'
+          git commit -m 'CP03 W02-17: persist CLI chat registration binding evidence'
           final_head="$(git rev-parse HEAD)"
           git push origin HEAD:"${GITHUB_REF_NAME}"
           test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$final_head"
