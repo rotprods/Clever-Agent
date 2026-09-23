@@ -219,3 +219,11 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - Formal G6 binding remains anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4` plus the capability-specific regression `test_cli_model_list_command_binding_is_capability_specific_and_source_backed`. This is candidate evidence only, not VERIFIED parity.
 - G6 is now 17 `EVIDENCE_BACKED_CANDIDATE` / 30 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged. AFM remains `UNBOUND`; AFM and real fallback executions remain `NOT_RUN`; W02-18/W02-19 remain `BLOCKED`.
 - Exact next slice: another W02-17 proof unit with capability-specific executed or exact pinned-source evidence plus completed-task receipt; do not infer runtime behavior from this source-backed command binding.
+
+## W02-17 InferenceStartEvent protocol binding — source-backed partial verified
+
+- `EVID-W02-PARITY-BINDING-INFERENCE-START-EVENT-20260923`: `cap_a97068215f50aeff0353f6e9` (`InferenceStartEvent`, OWNED protocol contract at `frontend/src/types/index.ts:13`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.
+- Exact pinned source `72033b8ec288aa067ce4530ff9d96bf231e9c4e5` was fetched and hashed (`45e499e92306e7387ab99b2ee52f89fe18a63dd3f8bc8d33b7325582bf24e242`); the contract fields are exactly `model:string`, `engine:string`, `turn:number`. Source execution is not claimed and runtime `InferenceStartEvent` emission remains `NOT_RUN`.
+- Formal G6 binding is anchored to completed W02-10 `EVID-W02-UNARY-INFERENCE-20260921` at exact validated head `a29389d41642ca74ed9c09ccfb9ec9f1725b48d7`, which proves one correlated real local inference but does not prove frontend event emission. This is candidate evidence only, not VERIFIED parity.
+- G6 is now 18 `EVIDENCE_BACKED_CANDIDATE` / 29 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged. AFM remains `UNBOUND`; AFM, runtime event emission and real fallback execution remain `NOT_RUN`; W02-18/W02-19 remain `BLOCKED`.
+- Exact next slice: another W02-17 proof unit with capability-specific executed or exact pinned-source evidence plus completed-task receipt; never infer event behavior or promote parity from this source-backed protocol binding.
