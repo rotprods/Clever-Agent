@@ -1,8 +1,8 @@
-name: CP03 W02 G6 CLI model pull binding
+name: CP03 W02 G6 CLI model convert binding
 
 on:
   push:
-    branches: [wave/cp03/w02-parity-cli-model-pull-20260923]
+    branches: [wave/cp03/w02-parity-cli-model-convert-20260923]
     paths:
       - '.github/workflows/cp03-w02-parity-graph.yml'
 
@@ -14,19 +14,19 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  EXPECTED_MAIN: 786d933e602dcd142b6ece3a84a82d0d74312a86
+  EXPECTED_MAIN: bb33f28625bb20ca791f9decab03cf44e148179c
   UPSTREAM_COMMIT: 72033b8ec288aa067ce4530ff9d96bf231e9c4e5
   CLAIM_ID: CLAIM-CP03-W02-PARITY-GRAPH-20260922
   WAVE_ID: CP03-W02-PARITY-GRAPH-20260922
-  CAPABILITY_ID: cap_69723ff5986f70a048ed98fe
-  EVIDENCE_ID: EVID-W02-PARITY-BINDING-CLI-MODEL-PULL-COMMAND-20260923
-  DECISION_ID: DEC-W02-G6-CLI-MODEL-PULL-COMMAND-BINDING-20260923
+  CAPABILITY_ID: cap_3b8fd0841f8367091ad6b585
+  EVIDENCE_ID: EVID-W02-PARITY-BINDING-CLI-MODEL-CONVERT-COMMAND-20260923
+  DECISION_ID: DEC-W02-G6-CLI-MODEL-CONVERT-COMMAND-BINDING-20260923
   SOURCE_EVIDENCE_ID: EVID-W02-MODEL-BRIDGE-20260921
   SOURCE_EVIDENCE_HEAD: a866c335a0f9cad75122c8eb7c5310d358f6aad4
-  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_cli_model_pull_command_binding_is_capability_specific_and_source_backed
+  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_cli_model_convert_command_binding_is_capability_specific_and_source_backed
 
 jobs:
-  bind-cli-model-pull:
+  bind-cli-model-convert:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -38,7 +38,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Exact-head, claim, DAG and durable-state preflight
+      - name: Exact-head claim DAG and durable-state preflight
         shell: bash
         run: |
           set -euo pipefail
@@ -65,8 +65,7 @@ jobs:
           claim=json.loads(Path('sessions/20260922-w02-parity-graph/CLAIM.json').read_text())
           assert claim['claim_id']==os.environ['CLAIM_ID']
           assert claim['wave_id']==os.environ['WAVE_ID']
-          assert claim['canonical_task']=='W02-17'
-          assert claim['status']=='ACTIVE'
+          assert claim['canonical_task']=='W02-17' and claim['status']=='ACTIVE'
           for required in ('tests/test_cp03_w02_parity_graph.py','inventory/cp03/w02_evidence_bindings.jsonl','evidence/cp03/cp03-w02/W02-17/**','STATE.md','HANDOFF.md'):
               assert required in claim['scope']
 
@@ -76,23 +75,25 @@ jobs:
                   row=json.loads(line)
                   if row.get('claim_id'): latest[row['claim_id']]=row
           active=latest[os.environ['CLAIM_ID']]
-          assert active['status']=='ACTIVE'
-          assert active['wave_id']==os.environ['WAVE_ID']
+          assert active['status']=='ACTIVE' and active['wave_id']==os.environ['WAVE_ID']
+          assert active['owner']=='chatgpt-gpt-5.6-sol'
 
           summary=json.loads(Path('reports/cp03/w02_parity/SUMMARY.json').read_text())
-          assert summary['binding_counts']=={'EVIDENCE_BACKED_CANDIDATE':18,'UNBOUND':29}
+          assert summary['binding_counts']=={'EVIDENCE_BACKED_CANDIDATE':19,'UNBOUND':28}
           assert summary['verified_capabilities']==0 and summary['parity_promotions']==0
           assert summary['global_denominator']==7565 and summary['openjarvis_obligations']==646
 
           matrix=[json.loads(x) for x in Path('reports/cp03/w02_parity/PROOF_MATRIX.jsonl').read_text().splitlines() if x.strip()]
           target=next(x for x in matrix if x['capability_id']==os.environ['CAPABILITY_ID'])
-          assert target['name']=='pull' and target['surface_kind']=='cli_command'
-          assert target['source_path']=='src/openjarvis/cli/model.py' and target['source_line']==226
+          assert target['name']=='convert' and target['surface_kind']=='cli_command'
+          assert target['source_path']=='src/openjarvis/cli/model.py' and target['source_line']==584
           assert target['ownership']=='OWNED'
           assert target['w02_evidence_state']=='UNBOUND' and target['binding'] is None
           assert target['canonical_parity_status']=='UNVERIFIED' and target['verified'] is False
           afm=next(x for x in matrix if x['capability_id']=='cap_ac38bf813e130d14927723d8')
           assert afm['w02_evidence_state']=='UNBOUND' and afm['canonical_parity_status']=='UNVERIFIED'
+          start=next(x for x in matrix if x['capability_id']=='cap_a97068215f50aeff0353f6e9')
+          assert start['w02_evidence_state']=='UNBOUND' and start['binding'] is None
           PY
           python scripts/validate_agentic_state.py
           python scripts/context/validate_context_pack.py
@@ -103,7 +104,7 @@ jobs:
           python scripts/cp03/w02_parity_graph.py --check
           git diff --check
 
-      - name: Probe exact pinned source and add capability-specific RED test
+      - name: Probe pinned convert source and add capability-specific RED test
         shell: bash
         run: |
           set -euo pipefail
@@ -123,48 +124,55 @@ jobs:
           sha=hashlib.sha256(raw).hexdigest()
           assert sha=='4b8efbf289b2aad39d0996df3ecc5182d613ea51b72ad52e47b722323dfa73af', sha
           tree=ast.parse(raw.decode('utf-8'))
-          fn=next(node for node in tree.body if isinstance(node,(ast.FunctionDef,ast.AsyncFunctionDef)) and node.name=='pull')
-          assert fn.lineno==226
-          assert len(fn.decorator_list)==3
-          command,arg,option=fn.decorator_list
-          assert isinstance(command,ast.Call) and isinstance(command.func,ast.Attribute)
-          assert isinstance(command.func.value,ast.Name) and command.func.value.id=='model' and command.func.attr=='command'
-          assert command.lineno==223 and not command.args and not command.keywords
-          assert isinstance(arg,ast.Call) and isinstance(arg.func,ast.Attribute)
-          assert isinstance(arg.func.value,ast.Name) and arg.func.value.id=='click' and arg.func.attr=='argument'
-          assert arg.lineno==224 and len(arg.args)==1 and isinstance(arg.args[0],ast.Constant) and arg.args[0].value=='model_name'
-          assert isinstance(option,ast.Call) and isinstance(option.func,ast.Attribute)
-          assert isinstance(option.func.value,ast.Name) and option.func.value.id=='click' and option.func.attr=='option'
-          assert option.lineno==225 and isinstance(option.args[0],ast.Constant) and option.args[0].value=='--engine'
+          fn=next(node for node in tree.body if isinstance(node,(ast.FunctionDef,ast.AsyncFunctionDef)) and node.name=='convert')
+          assert fn.lineno==584
+          assert [a.arg for a in fn.args.args]==['hf_repo','engine','quantize','mlx_4bit','output','force']
+          calls=[]
+          for dec in fn.decorator_list:
+              assert isinstance(dec,ast.Call)
+              if isinstance(dec.func,ast.Attribute) and isinstance(dec.func.value,ast.Name):
+                  calls.append(f'{dec.func.value.id}.{dec.func.attr}')
+              else:
+                  raise AssertionError(ast.dump(dec.func))
+          assert calls[0]=='model.command'
+          assert calls[1]=='click.argument'
+          assert calls.count('click.option')==5
+          arg=fn.decorator_list[1]
+          assert isinstance(arg.args[0],ast.Constant) and arg.args[0].value=='hf_repo'
+          option_literals=[]
+          for dec in fn.decorator_list[2:]:
+              option_literals.extend(a.value for a in dec.args if isinstance(a,ast.Constant) and isinstance(a.value,str))
+          for required in ('--engine','--quantize','--mlx-4bit','--output','--force'):
+              assert required in option_literals
           probe={
               'schema_version':1,'date':'2026-09-23','project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','task':'W02-17','gate':'G6',
-              'capability_id':os.environ['CAPABILITY_ID'],'capability_name':'pull','surface_kind':'cli_command',
-              'upstream_commit':os.environ['UPSTREAM_COMMIT'],'source_path':'src/openjarvis/cli/model.py','source_line':226,
-              'source_sha256':sha,'source_probe':'PASS','source_execution':False,'function':'pull',
-              'model_command_decorator_line':223,'model_name_argument_line':224,'engine_option_line':225,
-              'pull_command_execution':'NOT_RUN','network_acquisition_execution':'NOT_RUN','canonical_parity_status':'UNVERIFIED',
-              'model_executions':0,'provider_egress_executions':0,'tool_executions':0,'parity_promotions':0,
+              'capability_id':os.environ['CAPABILITY_ID'],'capability_name':'convert','surface_kind':'cli_command',
+              'upstream_commit':os.environ['UPSTREAM_COMMIT'],'source_path':'src/openjarvis/cli/model.py','source_line':584,
+              'source_sha256':sha,'source_probe':'PASS','source_execution':False,'function':'convert',
+              'decorator_calls':calls,'argument_names':[a.arg for a in fn.args.args],
+              'convert_command_execution':'NOT_RUN','artifact_conversion_execution':'NOT_RUN','network_acquisition_execution':'NOT_RUN','filesystem_mutation_execution':'NOT_RUN',
+              'canonical_parity_status':'UNVERIFIED','model_executions':0,'provider_egress_executions':0,'tool_executions':0,'parity_promotions':0,
           }
-          out=Path('evidence/cp03/cp03-w02/W02-17/binding_cli_model_pull_command_source_probe.json')
+          out=Path('evidence/cp03/cp03-w02/W02-17/binding_cli_model_convert_command_source_probe.json')
           out.write_text(json.dumps(probe,indent=2,sort_keys=True)+'\n',encoding='utf-8')
 
           p=Path('tests/test_cp03_w02_parity_graph.py')
           text=p.read_text(encoding='utf-8')
-          assert 'CLI_MODEL_PULL_COMMAND_CAPABILITY_ID' not in text
-          text=text.replace(
-              'CLI_MODEL_GROUP_COMMAND_CAPABILITY_ID = "cap_263641071dc7bb5251e3339b"\n',
-              'CLI_MODEL_GROUP_COMMAND_CAPABILITY_ID = "cap_263641071dc7bb5251e3339b"\nCLI_MODEL_PULL_COMMAND_CAPABILITY_ID = "cap_69723ff5986f70a048ed98fe"\n',1)
-          marker='CLI_MODEL_GROUP_COMMAND_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_cli_model_group_command_binding_is_capability_specific_and_source_backed"\n)\n'
+          assert 'CLI_MODEL_CONVERT_COMMAND_CAPABILITY_ID' not in text
+          old='CLI_MODEL_PULL_COMMAND_CAPABILITY_ID = "cap_69723ff5986f70a048ed98fe"\n'
+          assert old in text
+          text=text.replace(old,old+'CLI_MODEL_CONVERT_COMMAND_CAPABILITY_ID = "cap_3b8fd0841f8367091ad6b585"\n',1)
+          marker='CLI_MODEL_PULL_COMMAND_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_cli_model_pull_command_binding_is_capability_specific_and_source_backed"\n)\n'
           assert marker in text
-          text=text.replace(marker, marker+'CLI_MODEL_PULL_COMMAND_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_cli_model_pull_command_binding_is_capability_specific_and_source_backed"\n)\n',1)
-          text=text.replace('def test_current_matrix_has_eighteen_candidates_and_no_parity_promotion', 'def test_current_matrix_has_nineteen_candidates_and_no_parity_promotion',1)
-          text=text.replace('== "EVIDENCE_BACKED_CANDIDATE" for row in rows), 18)', '== "EVIDENCE_BACKED_CANDIDATE" for row in rows), 19)',1)
-          text=text.replace('== "UNBOUND" for row in rows), 29)', '== "UNBOUND" for row in rows), 28)',1)
-          text=text.replace('CLI_MODEL_GROUP_COMMAND_CAPABILITY_ID},', 'CLI_MODEL_GROUP_COMMAND_CAPABILITY_ID, CLI_MODEL_PULL_COMMAND_CAPABILITY_ID},',1)
-          block='''        cli_model_group_command = candidates[CLI_MODEL_GROUP_COMMAND_CAPABILITY_ID]\n        self.assertEqual(cli_model_group_command["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(cli_model_group_command["binding"]["terminal"])\n'''
+          text=text.replace(marker,marker+'CLI_MODEL_CONVERT_COMMAND_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_cli_model_convert_command_binding_is_capability_specific_and_source_backed"\n)\n',1)
+          text=text.replace('def test_current_matrix_has_nineteen_candidates_and_no_parity_promotion', 'def test_current_matrix_has_twenty_candidates_and_no_parity_promotion',1)
+          text=text.replace('== "EVIDENCE_BACKED_CANDIDATE" for row in rows), 19)', '== "EVIDENCE_BACKED_CANDIDATE" for row in rows), 20)',1)
+          text=text.replace('== "UNBOUND" for row in rows), 28)', '== "UNBOUND" for row in rows), 27)',1)
+          text=text.replace('CLI_MODEL_PULL_COMMAND_CAPABILITY_ID},', 'CLI_MODEL_PULL_COMMAND_CAPABILITY_ID, CLI_MODEL_CONVERT_COMMAND_CAPABILITY_ID},',1)
+          block='''        cli_model_pull_command = candidates[CLI_MODEL_PULL_COMMAND_CAPABILITY_ID]\n        self.assertEqual(cli_model_pull_command["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(cli_model_pull_command["binding"]["terminal"])\n'''
           assert block in text
-          text=text.replace(block,block+'''        cli_model_pull_command = candidates[CLI_MODEL_PULL_COMMAND_CAPABILITY_ID]\n        self.assertEqual(cli_model_pull_command["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(cli_model_pull_command["binding"]["terminal"])\n''',1)
-          method='''    def test_cli_model_pull_command_binding_is_capability_specific_and_source_backed(self) -> None:\n        row = next(row for row in self.result["rows"] if row["capability_id"] == CLI_MODEL_PULL_COMMAND_CAPABILITY_ID)\n        self.assertEqual(row["ownership"], "OWNED")\n        self.assertEqual(row["surface_kind"], "cli_command")\n        self.assertEqual(row["source_path"], "src/openjarvis/cli/model.py")\n        self.assertEqual(row["source_line"], 226)\n        self.assertEqual(row["name"], "pull")\n        self.assertEqual(row["source_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")\n        self.assertEqual(row["w02_evidence_state"], "EVIDENCE_BACKED_CANDIDATE")\n        self.assertEqual(row["canonical_parity_status"], "UNVERIFIED")\n        self.assertFalse(row["verified"])\n        self.assertFalse(row["parity_promotion"])\n        binding=row["binding"]\n        self.assertEqual(binding["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertEqual(binding["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")\n        self.assertEqual(binding["test_id"], CLI_MODEL_PULL_COMMAND_TEST_ID)\n        self.assertFalse(binding["terminal"])\n        receipt=graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")["EVID-W02-MODEL-BRIDGE-20260921"]\n        self.assertEqual(receipt["status"], "VERIFIED")\n        self.assertEqual(receipt["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")\n        self.assertEqual(receipt["native_engine_count"],15)\n        self.assertEqual(receipt["native_import_failure_count"],0)\n        self.assertEqual(receipt["native_model_count"],69)\n        self.assertEqual(receipt["model_executions"],0)\n        self.assertEqual(receipt["provider_egress_executions"],0)\n        self.assertEqual(receipt["parity_promotions"],0)\n        probe=json.loads((ROOT / "evidence/cp03/cp03-w02/W02-17/binding_cli_model_pull_command_source_probe.json").read_text(encoding="utf-8"))\n        self.assertEqual(probe["capability_id"], CLI_MODEL_PULL_COMMAND_CAPABILITY_ID)\n        self.assertEqual(probe["upstream_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")\n        self.assertEqual(probe["source_path"], "src/openjarvis/cli/model.py")\n        self.assertEqual(probe["source_line"],226)\n        self.assertEqual(probe["source_probe"],"PASS")\n        self.assertFalse(probe["source_execution"])\n        self.assertEqual(probe["function"],"pull")\n        self.assertEqual(probe["model_command_decorator_line"],223)\n        self.assertEqual(probe["model_name_argument_line"],224)\n        self.assertEqual(probe["engine_option_line"],225)\n        self.assertEqual(probe["pull_command_execution"],"NOT_RUN")\n        self.assertEqual(probe["network_acquisition_execution"],"NOT_RUN")\n        self.assertEqual(probe["model_executions"],0)\n        self.assertEqual(probe["provider_egress_executions"],0)\n        self.assertEqual(probe["tool_executions"],0)\n        self.assertEqual(probe["parity_promotions"],0)\n\n'''
+          text=text.replace(block,block+'''        cli_model_convert_command = candidates[CLI_MODEL_CONVERT_COMMAND_CAPABILITY_ID]\n        self.assertEqual(cli_model_convert_command["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(cli_model_convert_command["binding"]["terminal"])\n''',1)
+          method='''    def test_cli_model_convert_command_binding_is_capability_specific_and_source_backed(self) -> None:\n        row = next(row for row in self.result["rows"] if row["capability_id"] == CLI_MODEL_CONVERT_COMMAND_CAPABILITY_ID)\n        self.assertEqual(row["ownership"], "OWNED")\n        self.assertEqual(row["surface_kind"], "cli_command")\n        self.assertEqual(row["source_path"], "src/openjarvis/cli/model.py")\n        self.assertEqual(row["source_line"], 584)\n        self.assertEqual(row["name"], "convert")\n        self.assertEqual(row["source_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")\n        self.assertEqual(row["w02_evidence_state"], "EVIDENCE_BACKED_CANDIDATE")\n        self.assertEqual(row["canonical_parity_status"], "UNVERIFIED")\n        self.assertFalse(row["verified"])\n        self.assertFalse(row["parity_promotion"])\n        binding=row["binding"]\n        self.assertEqual(binding["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertEqual(binding["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")\n        self.assertEqual(binding["test_id"], CLI_MODEL_CONVERT_COMMAND_TEST_ID)\n        self.assertFalse(binding["terminal"])\n        receipt=graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")["EVID-W02-MODEL-BRIDGE-20260921"]\n        self.assertEqual(receipt["status"], "VERIFIED")\n        self.assertEqual(receipt["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")\n        self.assertEqual(receipt["native_engine_count"],15)\n        self.assertEqual(receipt["native_import_failure_count"],0)\n        self.assertEqual(receipt["native_model_count"],69)\n        self.assertEqual(receipt["model_executions"],0)\n        self.assertEqual(receipt["provider_egress_executions"],0)\n        self.assertEqual(receipt["parity_promotions"],0)\n        probe=json.loads((ROOT / "evidence/cp03/cp03-w02/W02-17/binding_cli_model_convert_command_source_probe.json").read_text(encoding="utf-8"))\n        self.assertEqual(probe["capability_id"], CLI_MODEL_CONVERT_COMMAND_CAPABILITY_ID)\n        self.assertEqual(probe["upstream_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")\n        self.assertEqual(probe["source_path"], "src/openjarvis/cli/model.py")\n        self.assertEqual(probe["source_line"],584)\n        self.assertEqual(probe["source_probe"],"PASS")\n        self.assertFalse(probe["source_execution"])\n        self.assertEqual(probe["function"],"convert")\n        self.assertEqual(probe["argument_names"],["hf_repo","engine","quantize","mlx_4bit","output","force"])\n        self.assertEqual(probe["convert_command_execution"],"NOT_RUN")\n        self.assertEqual(probe["artifact_conversion_execution"],"NOT_RUN")\n        self.assertEqual(probe["network_acquisition_execution"],"NOT_RUN")\n        self.assertEqual(probe["filesystem_mutation_execution"],"NOT_RUN")\n        self.assertEqual(probe["model_executions"],0)\n        self.assertEqual(probe["provider_egress_executions"],0)\n        self.assertEqual(probe["tool_executions"],0)\n        self.assertEqual(probe["parity_promotions"],0)\n\n'''
           insert='    def test_cli_model_group_command_binding_is_capability_specific_and_source_backed(self) -> None:\n'
           assert insert in text
           text=text.replace(insert,method+insert,1)
@@ -191,9 +199,9 @@ jobs:
           from pathlib import Path
           path=Path('inventory/cp03/w02_evidence_bindings.jsonl')
           rows=[json.loads(x) for x in path.read_text(encoding='utf-8').splitlines() if x.strip()]
-          assert len(rows)==18
+          assert len(rows)==19
           assert all(row['capability_id'] != os.environ['CAPABILITY_ID'] for row in rows)
-          binding={
+          rows.append({
               'capability_id':os.environ['CAPABILITY_ID'],
               'evidence_id':os.environ['SOURCE_EVIDENCE_ID'],
               'test_id':os.environ['TEST_ID'],
@@ -203,8 +211,7 @@ jobs:
                   'model_executions':0,'provider_egress_executions':0,'parity_promotions':0,
               },
               'terminal':False,
-          }
-          rows.append(binding)
+          })
           path.write_text(''.join(json.dumps(row,separators=(',',':'))+'\n' for row in rows),encoding='utf-8')
           PY
           python -m unittest -v "$TEST_ID"
@@ -213,12 +220,12 @@ jobs:
           import json
           from pathlib import Path
           summary=json.loads(Path('reports/cp03/w02_parity/SUMMARY.json').read_text())
-          assert summary['binding_counts']=={'EVIDENCE_BACKED_CANDIDATE':19,'UNBOUND':28}
+          assert summary['binding_counts']=={'EVIDENCE_BACKED_CANDIDATE':20,'UNBOUND':27}
           assert summary['verified_capabilities']==0 and summary['parity_promotions']==0
           assert summary['global_denominator']==7565 and summary['openjarvis_obligations']==646
           PY
 
-      - name: Persist evidence, decisions, risks, state, handoff and ContextPack
+      - name: Persist evidence decisions risks state handoff and ContextPack
         shell: bash
         run: |
           set -euo pipefail
@@ -233,71 +240,70 @@ jobs:
               with p.open('a',encoding='utf-8') as f:
                   f.write(json.dumps(row,sort_keys=True,separators=(',',':'))+'\n')
 
-          probe_path=Path('evidence/cp03/cp03-w02/W02-17/binding_cli_model_pull_command_source_probe.json')
+          probe_path=Path('evidence/cp03/cp03-w02/W02-17/binding_cli_model_convert_command_source_probe.json')
           probe_sha=hashlib.sha256(probe_path.read_bytes()).hexdigest()
           report={
               'schema_version':1,'date':'2026-09-23','project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','task':'W02-17','gate':'G6',
               'claim_id':os.environ['CLAIM_ID'],'evidence_id':os.environ['EVIDENCE_ID'],'status':'PASS',
               'validated_base_head':os.environ['EXPECTED_MAIN'],'github_actions_run_id':int(os.environ['GITHUB_RUN_ID']),
-              'binding_capability_id':os.environ['CAPABILITY_ID'],'binding_capability_name':'pull','binding_surface_kind':'cli_command',
+              'binding_capability_id':os.environ['CAPABILITY_ID'],'binding_capability_name':'convert','binding_surface_kind':'cli_command',
               'binding_source_evidence_id':os.environ['SOURCE_EVIDENCE_ID'],'binding_source_validated_head':os.environ['SOURCE_EVIDENCE_HEAD'],
               'binding_source_run_id':35552788123,'executed_test_id':os.environ['TEST_ID'],'source_probe_path':str(probe_path),
-              'source_probe_sha256':probe_sha,'source_execution':False,'pull_command_execution':'NOT_RUN','network_acquisition_execution':'NOT_RUN',
-              'bindings_added_this_slice':1,'bindings_validated_total':19,'unbound_remaining':28,
+              'source_probe_sha256':probe_sha,'source_execution':False,'convert_command_execution':'NOT_RUN','artifact_conversion_execution':'NOT_RUN',
+              'network_acquisition_execution':'NOT_RUN','filesystem_mutation_execution':'NOT_RUN',
+              'bindings_added_this_slice':1,'bindings_validated_total':20,'unbound_remaining':27,
               'global_denominator':7565,'openjarvis_obligations':646,'verified_capabilities':0,'parity_promotions':0,
               'model_executions':0,'provider_egress_executions':0,'tool_executions':0,
               'afm_inprocess_execution':'NOT_RUN','real_openjarvis_fallback_model_execution':'NOT_RUN',
-              'next_slice':'Continue W02-17 with another proof unit only when capability-specific executed or exact pinned-source evidence can be paired with an existing completed-task PASS receipt. AFM remains blocked pending compatible-host proof.',
+              'next_slice':'Continue W02-17 with another non-conflicting proof unit only when capability-specific executed or exact pinned-source evidence can be paired with an existing completed-task PASS receipt. AFM remains blocked pending compatible-host proof; the existing InferenceStartEvent branch remains untouched.',
           }
-          report_path=Path('evidence/cp03/cp03-w02/W02-17/binding_cli_model_pull_command_report.json')
+          report_path=Path('evidence/cp03/cp03-w02/W02-17/binding_cli_model_convert_command_report.json')
           report_path.write_text(json.dumps(report,indent=2,sort_keys=True)+'\n',encoding='utf-8')
 
-          append_once('ledgers/EVIDENCE_LEDGER.ndjson','evidence_id',os.environ['EVIDENCE_ID'],{
-              **report,'type':'CP03_W02_G6_CAPABILITY_BINDING','path':str(report_path),
-          })
+          append_once('ledgers/EVIDENCE_LEDGER.ndjson','evidence_id',os.environ['EVIDENCE_ID'],{**report,'type':'CP03_W02_G6_CAPABILITY_BINDING','path':str(report_path)})
           append_once('ledgers/DECISION_LEDGER.ndjson','decision_id',os.environ['DECISION_ID'],{
               'schema_version':1,'date':'2026-09-23','decision_id':os.environ['DECISION_ID'],'status':'ACCEPTED','checkpoint':'CP03','task':'W02-17',
-              'decision':'Bind the frozen OpenJarvis CLI model pull command as a non-terminal EVIDENCE_BACKED_CANDIDATE only.',
-              'context':'Exact pinned source proves the pull command declaration and arguments at model.py:223-226. W02-08 supplies an exact completed-task PASS receipt for the model registry bridge. Direct pull/network acquisition execution remains NOT_RUN and no runtime parity is inferred.',
+              'decision':'Bind the frozen OpenJarvis CLI model convert command as a non-terminal EVIDENCE_BACKED_CANDIDATE only.',
+              'context':'Exact pinned source proves the convert command declaration, arguments and option surface at model.py:584. W02-08 supplies an exact completed-task PASS receipt for the model registry bridge. Convert execution, artifact conversion, network acquisition and filesystem mutation remain NOT_RUN; no behavioral parity is inferred.',
               'evidence_id':os.environ['EVIDENCE_ID'],'parity_promotions':0,
           })
-          append_once('ledgers/RUN_LOG.ndjson','event_id','RUN-W02-G6-CLI-MODEL-PULL-20260923',{
-              'schema_version':1,'date':'2026-09-23','event':'CP03_W02_G6_CAPABILITY_BINDING','event_id':'RUN-W02-G6-CLI-MODEL-PULL-20260923',
+          append_once('ledgers/RUN_LOG.ndjson','event_id','RUN-W02-G6-CLI-MODEL-CONVERT-20260923',{
+              'schema_version':1,'date':'2026-09-23','event':'CP03_W02_G6_CAPABILITY_BINDING','event_id':'RUN-W02-G6-CLI-MODEL-CONVERT-20260923',
               'goal_id':'CLEVER-JARVIS-001','checkpoint':'CP03','iteration':'I03','wave_id':'CP03-W02','canonical_task':'W02-17',
               'claim_id':os.environ['CLAIM_ID'],'evidence_id':os.environ['EVIDENCE_ID'],'status':'ADVANCED',
-              'bindings_validated_total':19,'unbound_remaining':28,'verified_capabilities':0,'parity_promotions':0,
+              'bindings_validated_total':20,'unbound_remaining':27,'verified_capabilities':0,'parity_promotions':0,
           })
-          append_once('ledgers/WAVE_LEDGER.ndjson','event_id','WAVE-W02-G6-CLI-MODEL-PULL-20260923',{
-              'schema_version':1,'date':'2026-09-23','event':'WAVE_PROGRESS','event_id':'WAVE-W02-G6-CLI-MODEL-PULL-20260923',
+          append_once('ledgers/WAVE_LEDGER.ndjson','event_id','WAVE-W02-G6-CLI-MODEL-CONVERT-20260923',{
+              'schema_version':1,'date':'2026-09-23','event':'WAVE_PROGRESS','event_id':'WAVE-W02-G6-CLI-MODEL-CONVERT-20260923',
               'checkpoint':'CP03','iteration':'I03','parent_wave':'CP03-W02','wave_id':os.environ['WAVE_ID'],'canonical_task':'W02-17',
               'claim_id':os.environ['CLAIM_ID'],'gate':'G6','evidence_id':os.environ['EVIDENCE_ID'],'status':'IN_PROGRESS',
-              'bindings_validated_total':19,'unbound_remaining':28,'parity_promotions':0,
+              'bindings_validated_total':20,'unbound_remaining':27,'parity_promotions':0,
           })
-          append_once('ledgers/RISK_LEDGER.ndjson','event_id','RISK-UPDATE-W02-G6-K47-BINDINGS-CLI-MODEL-PULL-20260923',{
-              'schema_version':1,'date':'2026-09-23','event_id':'RISK-UPDATE-W02-G6-K47-BINDINGS-CLI-MODEL-PULL-20260923',
+          append_once('ledgers/RISK_LEDGER.ndjson','event_id','RISK-UPDATE-W02-G6-K47-BINDINGS-CLI-MODEL-CONVERT-20260923',{
+              'schema_version':1,'date':'2026-09-23','event_id':'RISK-UPDATE-W02-G6-K47-BINDINGS-CLI-MODEL-CONVERT-20260923',
               'risk_id':'RISK-W02-G6-K47-BINDINGS-PENDING-20260922','severity':'P1','status':'OPEN','task':'W02-17','evidence_id':os.environ['EVIDENCE_ID'],
-              'risk':'G6 remains incomplete: 28/47 frozen W02 proof units are still UNBOUND; source-backed CLI pull evidence does not prove download/network behavior or runtime behavioral parity.',
-              'mitigation':'Keep W02-17 IN_PROGRESS, verified parity at 0 and W02-18 BLOCKED. Bind proof units only with capability-specific executed or exact-source evidence plus exact completed-task PASS receipts; preserve pull acquisition, AFM and other NOT_RUN/platform-gated states.',
+              'risk':'G6 remains incomplete: 27/47 frozen W02 proof units are still UNBOUND; source-backed CLI convert evidence does not prove conversion execution, artifact semantics, network behavior or runtime behavioral parity.',
+              'mitigation':'Keep W02-17 IN_PROGRESS, verified parity at 0 and W02-18 BLOCKED. Bind proof units only with capability-specific executed or exact-source evidence plus exact completed-task PASS receipts; preserve convert execution, AFM, fallback and other NOT_RUN/platform-gated states.',
           })
-          append_once('ledgers/CLAIM_LEDGER.ndjson','event_id','CLAIM-CONTINUE-W02-G6-CLI-MODEL-PULL-20260923',{
-              'schema_version':1,'date':'2026-09-23','event':'CONTINUE','event_id':'CLAIM-CONTINUE-W02-G6-CLI-MODEL-PULL-20260923',
+          append_once('ledgers/CLAIM_LEDGER.ndjson','event_id','CLAIM-CONTINUE-W02-G6-CLI-MODEL-CONVERT-20260923',{
+              'schema_version':1,'date':'2026-09-23','event':'CONTINUE','event_id':'CLAIM-CONTINUE-W02-G6-CLI-MODEL-CONVERT-20260923',
               'claim_id':os.environ['CLAIM_ID'],'checkpoint':'CP03','canonical_task':'W02-17','wave_id':os.environ['WAVE_ID'],
               'owner':'chatgpt-gpt-5.6-sol','status':'ACTIVE','base_head':os.environ['EXPECTED_MAIN'],
-              'coordination':'Continue the existing non-conflicting W02-17 G6 claim for one CLI model-pull source proof unit only; no command/network execution, parity promotion or denominator mutation.',
+              'coordination':'Continue the existing non-conflicting W02-17 G6 claim for one CLI model-convert source proof unit only; do not touch the separate InferenceStartEvent branch, execute conversion/network/filesystem effects, promote parity or mutate denominators.',
           })
 
           state=Path('STATE.md')
           s=state.read_text(encoding='utf-8')
-          old='- G6 explicit binding progress: `18/47` evidence-backed candidates; `29` UNBOUND; VERIFIED capabilities `0`; parity promotions `0`.'
-          new='- G6 explicit binding progress: `19/47` evidence-backed candidates; `28` UNBOUND; VERIFIED capabilities `0`; parity promotions `0`.'
+          old='- G6 explicit binding progress: `19/47` evidence-backed candidates; `28` UNBOUND; VERIFIED capabilities `0`; parity promotions `0`.'
+          new='- G6 explicit binding progress: `20/47` evidence-backed candidates; `27` UNBOUND; VERIFIED capabilities `0`; parity promotions `0`.'
           assert old in s
           state.write_text(s.replace(old,new,1),encoding='utf-8')
 
           hand=Path('HANDOFF.md')
           h=hand.read_text(encoding='utf-8').rstrip()
-          marker='## W02-17 CLI model pull command binding — source-backed partial verified'
+          marker='## W02-17 CLI model convert command binding — source-backed partial verified'
           assert marker not in h
-          note=f'''\n\n{marker}\n\n- `{os.environ['EVIDENCE_ID']}`: `cap_69723ff5986f70a048ed98fe` (`pull`, OWNED CLI command at `src/openjarvis/cli/model.py:226`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.\n- Exact pinned source `{os.environ['UPSTREAM_COMMIT']}` was fetched and AST-probed: `@model.command()` line 223, `model_name` argument line 224, `--engine` option line 225 and `pull()` line 226; source SHA-256 is `4b8efbf289b2aad39d0996df3ecc5182d613ea51b72ad52e47b722323dfa73af`. Direct pull and network acquisition remain `NOT_RUN`.\n- Formal G6 binding is anchored to completed W02-08 `{os.environ['SOURCE_EVIDENCE_ID']}` at exact SHA `{os.environ['SOURCE_EVIDENCE_HEAD']}` plus `{os.environ['TEST_ID']}`. Candidate evidence only: VERIFIED parity remains 0.\n- G6 is now 19 `EVIDENCE_BACKED_CANDIDATE` / 28 `UNBOUND`; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. AFM and real fallback executions remain `NOT_RUN`; W02-18/W02-19 remain `BLOCKED`.\n- Exact next slice: another W02-17 proof unit with capability-specific executed or exact pinned-source evidence plus completed-task receipt; do not infer download/network behavior from this source-backed pull binding.\n'''
+          note=f'''\n\n{marker}\n\n- `{os.environ['EVIDENCE_ID']}`: `cap_3b8fd0841f8367091ad6b585` (`convert`, OWNED CLI command at `src/openjarvis/cli/model.py:584`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.\n- Exact pinned source `{os.environ['UPSTREAM_COMMIT']}` was fetched and AST-probed: the `convert` declaration, `hf_repo` argument and five conversion options are present at the frozen pin; source SHA-256 is `4b8efbf289b2aad39d0996df3ecc5182d613ea51b72ad52e47b722323dfa73af`. Direct convert execution, artifact conversion, network acquisition and filesystem mutation remain `NOT_RUN`.\n- Formal G6 binding is anchored to completed W02-08 `{os.environ['SOURCE_EVIDENCE_ID']}` at exact SHA `{os.environ['SOURCE_EVIDENCE_HEAD']}` plus `{os.environ['TEST_ID']}`. Candidate evidence only: VERIFIED parity remains 0.\n- G6 is now 20 `EVIDENCE_BACKED_CANDIDATE` / 27 `UNBOUND`; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. AFM and real fallback executions remain `NOT_RUN`; W02-18/W02-19 remain `BLOCKED`. The pre-existing InferenceStartEvent branch was deliberately left untouched to avoid scope collision.\n- Exact next slice: another W02-17 proof unit with capability-specific executed or exact pinned-source evidence plus completed-task receipt; do not infer conversion behavior from this source-backed command binding.\n'''
           hand.write_text(h+note,encoding='utf-8')
 
           claim_path=Path('sessions/20260922-w02-parity-graph/CLAIM.json')
@@ -311,7 +317,7 @@ jobs:
           python scripts/cp03/w02_parity_graph.py --write
           python scripts/context/build_context_pack.py
 
-      - name: Full touched-family regression, adversarial gauntlet and exact-head CAS commit
+      - name: Full touched-family regression adversarial gauntlet and exact-head CAS commit
         shell: bash
         run: |
           set -euo pipefail
@@ -327,15 +333,17 @@ jobs:
           import json
           from pathlib import Path
           summary=json.loads(Path('reports/cp03/w02_parity/SUMMARY.json').read_text())
-          assert summary['binding_counts']=={'EVIDENCE_BACKED_CANDIDATE':19,'UNBOUND':28}
+          assert summary['binding_counts']=={'EVIDENCE_BACKED_CANDIDATE':20,'UNBOUND':27}
           assert summary['global_denominator']==7565 and summary['openjarvis_obligations']==646
           assert summary['verified_capabilities']==0 and summary['parity_promotions']==0
           matrix=[json.loads(x) for x in Path('reports/cp03/w02_parity/PROOF_MATRIX.jsonl').read_text().splitlines() if x.strip()]
-          target=next(x for x in matrix if x['capability_id']=='cap_69723ff5986f70a048ed98fe')
+          target=next(x for x in matrix if x['capability_id']=='cap_3b8fd0841f8367091ad6b585')
           assert target['w02_evidence_state']=='EVIDENCE_BACKED_CANDIDATE'
           assert target['canonical_parity_status']=='UNVERIFIED' and target['verified'] is False and target['parity_promotion'] is False
           afm=next(x for x in matrix if x['capability_id']=='cap_ac38bf813e130d14927723d8')
           assert afm['w02_evidence_state']=='UNBOUND' and afm['canonical_parity_status']=='UNVERIFIED'
+          inference_start=next(x for x in matrix if x['capability_id']=='cap_a97068215f50aeff0353f6e9')
+          assert inference_start['w02_evidence_state']=='UNBOUND' and inference_start['binding'] is None
           graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
           tasks={x['id']:x for x in graph['tasks']}
           assert graph['first_executable_task']=='W02-17'
@@ -344,12 +352,16 @@ jobs:
           ctx=json.loads(Path('.agentic/context/CURRENT_CONTEXT.json').read_text())
           claim=next(x for x in ctx['active_claims'] if x['claim_id']=='CLAIM-CP03-W02-PARITY-GRAPH-20260922')
           assert claim['wave_id']=='CP03-W02-PARITY-GRAPH-20260922' and claim['status']=='ACTIVE'
-          evidence=set(ctx['evidence_ids'])
-          decisions=set(ctx['accepted_decision_ids'])
-          assert 'EVID-W02-PARITY-BINDING-CLI-MODEL-PULL-COMMAND-20260923' in evidence
-          assert 'DEC-W02-G6-CLI-MODEL-PULL-COMMAND-BINDING-20260923' in decisions
-          probe=json.loads(Path('evidence/cp03/cp03-w02/W02-17/binding_cli_model_pull_command_source_probe.json').read_text())
-          assert probe['pull_command_execution']=='NOT_RUN' and probe['network_acquisition_execution']=='NOT_RUN'
+          assert 'EVID-W02-PARITY-BINDING-CLI-MODEL-CONVERT-COMMAND-20260923' in set(ctx['evidence_ids'])
+          assert 'DEC-W02-G6-CLI-MODEL-CONVERT-COMMAND-BINDING-20260923' in set(ctx['accepted_decision_ids'])
+          probe=json.loads(Path('evidence/cp03/cp03-w02/W02-17/binding_cli_model_convert_command_source_probe.json').read_text())
+          assert probe['convert_command_execution']=='NOT_RUN'
+          assert probe['artifact_conversion_execution']=='NOT_RUN'
+          assert probe['network_acquisition_execution']=='NOT_RUN'
+          assert probe['filesystem_mutation_execution']=='NOT_RUN'
+          assert probe['canonical_parity_status']=='UNVERIFIED'
+          fallback=next(json.loads(x) for x in Path('ledgers/EVIDENCE_LEDGER.ndjson').read_text().splitlines() if x.strip() and json.loads(x).get('evidence_id')=='EVID-W02-FALLBACK-ADAPTER-20260922')
+          assert fallback['real_openjarvis_fallback_model_execution']=='NOT_RUN'
           PY
           git diff --check
           test -n "$(git status --porcelain)"
@@ -360,5 +372,5 @@ jobs:
           git config user.name 'clever-agent-wave'
           git config user.email 'actions@users.noreply.github.com'
           git add tests/test_cp03_w02_parity_graph.py inventory/cp03/w02_evidence_bindings.jsonl reports/cp03/w02_parity graphs/cp03/w02_parity evidence/cp03/cp03-w02/W02-17 STATE.md HANDOFF.md sessions/20260922-w02-parity-graph/CLAIM.json sessions/20260922-w02-parity-graph/RESULT.json ledgers/CLAIM_LEDGER.ndjson ledgers/EVIDENCE_LEDGER.ndjson ledgers/DECISION_LEDGER.ndjson ledgers/RISK_LEDGER.ndjson ledgers/RUN_LOG.ndjson ledgers/WAVE_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
-          git commit -m 'CP03 W02-17: bind CLI model pull source proof'
+          git commit -m 'CP03 W02-17: bind CLI model convert source proof'
           git push origin "HEAD:${GITHUB_REF_NAME}"
