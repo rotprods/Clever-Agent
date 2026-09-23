@@ -227,3 +227,11 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - Formal G6 binding is anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4` plus `tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_cli_model_group_command_binding_is_capability_specific_and_source_backed`. Candidate evidence only: VERIFIED parity remains 0.
 - G6 is now 18 `EVIDENCE_BACKED_CANDIDATE` / 29 `UNBOUND`; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. AFM and real fallback executions remain `NOT_RUN`; W02-18/W02-19 remain `BLOCKED`.
 - Exact next slice: another W02-17 proof unit with capability-specific executed or exact pinned-source evidence plus completed-task receipt; do not infer runtime behavior from this source-backed group binding.
+
+## W02-17 CLI model pull command binding — source-backed partial verified
+
+- `EVID-W02-PARITY-BINDING-CLI-MODEL-PULL-COMMAND-20260923`: `cap_69723ff5986f70a048ed98fe` (`pull`, OWNED CLI command at `src/openjarvis/cli/model.py:226`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.
+- Exact pinned source `72033b8ec288aa067ce4530ff9d96bf231e9c4e5` was fetched and AST-probed: `@model.command()` line 223, `model_name` argument line 224, `--engine` option line 225 and `pull()` line 226; source SHA-256 is `4b8efbf289b2aad39d0996df3ecc5182d613ea51b72ad52e47b722323dfa73af`. Direct pull and network acquisition remain `NOT_RUN`.
+- Formal G6 binding is anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4` plus `tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_cli_model_pull_command_binding_is_capability_specific_and_source_backed`. Candidate evidence only: VERIFIED parity remains 0.
+- G6 is now 19 `EVIDENCE_BACKED_CANDIDATE` / 28 `UNBOUND`; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. AFM and real fallback executions remain `NOT_RUN`; W02-18/W02-19 remain `BLOCKED`.
+- Exact next slice: another W02-17 proof unit with capability-specific executed or exact pinned-source evidence plus completed-task receipt; do not infer download/network behavior from this source-backed pull binding.
