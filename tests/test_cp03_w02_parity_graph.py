@@ -13,6 +13,7 @@ OLLAMA_CAPABILITY_ID = "cap_a5ae164f941b35e6fafd357c"
 LITELLM_CAPABILITY_ID = "cap_149d7cf3bf745e7bea3fa1b0"
 CLOUD_CAPABILITY_ID = "cap_49e508ee1377a8861a33b2f0"
 NIM_CAPABILITY_ID = "cap_fa50b5646f0cfab91c7efec5"
+GEMMA_CPP_CAPABILITY_ID = "cap_5cf599d5c98778fc324cbd0c"
 OLLAMA_TEST_ID = (
     "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
     "test_ollama_registry_binding_is_capability_specific_and_evidence_backed"
@@ -28,6 +29,10 @@ CLOUD_TEST_ID = (
 NIM_TEST_ID = (
     "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
     "test_nim_registry_binding_is_capability_specific_and_evidence_backed"
+)
+GEMMA_CPP_TEST_ID = (
+    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
+    "test_gemma_cpp_registry_binding_is_capability_specific_and_evidence_backed"
 )
 
 
@@ -47,13 +52,13 @@ class W02ParityGraphTests(unittest.TestCase):
         self.assertEqual(summary["verified_capabilities"], 0)
         self.assertEqual(len(self.result["rows"]), 47)
 
-    def test_current_matrix_has_five_candidates_and_no_parity_promotion(self) -> None:
+    def test_current_matrix_has_six_candidates_and_no_parity_promotion(self) -> None:
         rows = self.result["rows"]
         self.assertTrue(all(row["canonical_parity_status"] == "UNVERIFIED" for row in rows))
         self.assertTrue(all(row["verified"] is False for row in rows))
         self.assertTrue(all(row["parity_promotion"] is False for row in rows))
-        self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 5)
-        self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 42)
+        self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 6)
+        self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 41)
         self.assertEqual(sum(row["ownership"] == "OWNED" for row in rows), 37)
         self.assertEqual(sum(row["ownership"] == "SHARED" for row in rows), 10)
         candidates = {
@@ -63,7 +68,7 @@ class W02ParityGraphTests(unittest.TestCase):
         }
         self.assertEqual(
             set(candidates),
-            {SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID, LITELLM_CAPABILITY_ID, CLOUD_CAPABILITY_ID, NIM_CAPABILITY_ID},
+            {SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID, LITELLM_CAPABILITY_ID, CLOUD_CAPABILITY_ID, NIM_CAPABILITY_ID, GEMMA_CPP_CAPABILITY_ID},
         )
         seed = candidates[SEED_CAPABILITY_ID]
         self.assertEqual(seed["binding"]["evidence_id"], "EVID-W02-UNARY-INFERENCE-20260921")
@@ -80,6 +85,9 @@ class W02ParityGraphTests(unittest.TestCase):
         nim = candidates[NIM_CAPABILITY_ID]
         self.assertEqual(nim["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")
         self.assertFalse(nim["binding"]["terminal"])
+        gemma_cpp = candidates[GEMMA_CPP_CAPABILITY_ID]
+        self.assertEqual(gemma_cpp["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")
+        self.assertFalse(gemma_cpp["binding"]["terminal"])
 
     def test_ollama_registry_binding_is_capability_specific_and_evidence_backed(self) -> None:
         row = next(row for row in self.result["rows"] if row["capability_id"] == OLLAMA_CAPABILITY_ID)
@@ -271,6 +279,52 @@ class W02ParityGraphTests(unittest.TestCase):
                 {
                     "implementation": "openjarvis.engine.nim.NIMEngine",
                     "key": "nim",
+                    "native_type": "ABCMeta",
+                    "state": "REGISTERED",
+                }
+            ],
+        )
+        self.assertEqual(catalog["model_executions"], 0)
+        self.assertEqual(catalog["provider_egress_executions"], 0)
+        self.assertEqual(catalog["parity_promotions"], 0)
+
+    def test_gemma_cpp_registry_binding_is_capability_specific_and_evidence_backed(self) -> None:
+        row = next(row for row in self.result["rows"] if row["capability_id"] == GEMMA_CPP_CAPABILITY_ID)
+        self.assertEqual(row["ownership"], "OWNED")
+        self.assertEqual(row["surface_kind"], "registry_registration")
+        self.assertEqual(row["source_path"], "src/openjarvis/engine/gemma_cpp.py")
+        self.assertEqual(row["source_line"], 24)
+        self.assertEqual(row["name"], "gemma_cpp")
+        self.assertEqual(row["canonical_parity_status"], "UNVERIFIED")
+        self.assertFalse(row["verified"])
+        self.assertFalse(row["parity_promotion"])
+        binding = row["binding"]
+        self.assertEqual(binding["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")
+        self.assertEqual(binding["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")
+        self.assertEqual(binding["test_id"], GEMMA_CPP_TEST_ID)
+        self.assertFalse(binding["terminal"])
+
+        evidence = graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")
+        receipt = evidence["EVID-W02-MODEL-BRIDGE-20260921"]
+        self.assertEqual(receipt["status"], "VERIFIED")
+        self.assertEqual(receipt["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")
+        self.assertEqual(receipt["native_engine_count"], 15)
+        self.assertEqual(receipt["native_import_failure_count"], 0)
+        self.assertEqual(receipt["native_model_count"], 69)
+        self.assertEqual(receipt["model_executions"], 0)
+        self.assertEqual(receipt["provider_egress_executions"], 0)
+        self.assertEqual(receipt["parity_promotions"], 0)
+
+        catalog = json.loads(
+            (ROOT / "evidence/cp03/cp03-w02/W02-08/native_catalog.json").read_text(encoding="utf-8")
+        )
+        matches = [engine for engine in catalog["engines"] if engine["key"] == "gemma_cpp"]
+        self.assertEqual(
+            matches,
+            [
+                {
+                    "implementation": "openjarvis.engine.gemma_cpp.GemmaCppEngine",
+                    "key": "gemma_cpp",
                     "native_type": "ABCMeta",
                     "state": "REGISTERED",
                 }
