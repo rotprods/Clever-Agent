@@ -232,8 +232,13 @@ class W02ParityGraphTests(unittest.TestCase):
         self.assertEqual(binding["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")
         self.assertEqual(binding["test_id"], NIM_TEST_ID)
         self.assertFalse(binding["terminal"])
+        raw_binding = next(
+            item
+            for item in graph.read_jsonl(ROOT / graph.BINDINGS_PATH)
+            if item["capability_id"] == NIM_CAPABILITY_ID
+        )
         self.assertEqual(
-            binding["expected_fields"],
+            raw_binding["expected_fields"],
             {
                 "status": "VERIFIED",
                 "native_engine_count": 15,
