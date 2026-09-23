@@ -211,3 +211,11 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - A retained regression was RED before repair and GREEN after an append-only `CLAIM_CONTEXT_REPAIRED` event restored `CP03-W02-PARITY-GRAPH-20260922`.
 - The first repair run then failed its own full gauntlet because `EVIDENCE_LEDGER.ndjson` is hashed into `reports/cp03/w02_parity/SUMMARY.json` and the derived proof plane had not been regenerated. The corrected gate now proves that stale state RED, runs `w02_parity_graph.py --write`, then requires `--check` GREEN before CAS commit.
 - No claim scope, DAG status, denominator, obligations or parity state changed. W02-17 remains `IN_PROGRESS` at 16/47 evidence-backed candidates / 31 UNBOUND; VERIFIED 0; parity promotions 0. AFM and real fallback execution remain `NOT_RUN`; W02-18/W02-19 remain `BLOCKED`.
+
+## W02-17 CLI model list command binding — source-backed partial verified
+
+- `EVID-W02-PARITY-BINDING-CLI-MODEL-LIST-COMMAND-20260923`: `cap_0ca72684c7cad5e160373532` (`list`, OWNED CLI command at `src/openjarvis/cli/model.py:34`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.
+- Exact pinned source `72033b8ec288aa067ce4530ff9d96bf231e9c4e5` was fetched and AST-probed: `@model.command("list")` is at line 33; `register_builtin_models()` is line 38 and precedes `discover_engines`/`discover_models`. The complete source SHA-256 is `4b8efbf289b2aad39d0996df3ecc5182d613ea51b72ad52e47b722323dfa73af`. Source execution is not claimed and direct `model list` execution remains `NOT_RUN`.
+- Formal G6 binding remains anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4` plus the capability-specific regression `test_cli_model_list_command_binding_is_capability_specific_and_source_backed`. This is candidate evidence only, not VERIFIED parity.
+- G6 is now 17 `EVIDENCE_BACKED_CANDIDATE` / 30 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged. AFM remains `UNBOUND`; AFM and real fallback executions remain `NOT_RUN`; W02-18/W02-19 remain `BLOCKED`.
+- Exact next slice: another W02-17 proof unit with capability-specific executed or exact pinned-source evidence plus completed-task receipt; do not infer runtime behavior from this source-backed command binding.
