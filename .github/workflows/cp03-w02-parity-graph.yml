@@ -1,4 +1,4 @@
-name: CP03 W02 G6 AFM optional-engine negative binding guard
+name: CP03 W02 G6 AFM blocker recovery
 
 on:
   push:
@@ -22,7 +22,7 @@ env:
   TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_afm_inprocess_registry_remains_unbound_when_only_shim_catalog_is_observed
 
 jobs:
-  verify-guard-persist:
+  recover-persist:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -34,7 +34,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Exact-head boot claim DAG and non-conflict guard
+      - name: Exact-head recovery guard
         shell: bash
         run: |
           set -euo pipefail
@@ -50,8 +50,7 @@ jobs:
           assert claim['claim_id']=='CLAIM-CP03-W02-PARITY-GRAPH-20260922'
           assert claim['status']=='ACTIVE'
           required=['tests/test_cp03_w02_parity_graph.py','.github/workflows/cp03-w02-parity-graph.yml','evidence/cp03/cp03-w02/W02-17/**','ledgers/RISK_LEDGER.ndjson']
-          for path in required:
-              assert path in claim['scope'], path
+          assert all(path in claim['scope'] for path in required)
           graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
           tasks={t['id']:t for t in graph['tasks']}
           assert graph['first_executable_task']=='W02-17'
@@ -60,9 +59,7 @@ jobs:
           assert all(tasks[x]['status']=='COMPLETE' for x in tasks['W02-17']['depends_on'])
           assert tasks['W02-18']['status']=='BLOCKED' and not tasks['W02-18']['proof']
           assert tasks['W02-19']['status']=='BLOCKED' and not tasks['W02-19']['proof']
-          assert graph['global_denominator']==7565
-          assert graph['openjarvis_obligations']==646
-          assert graph['w02_obligation_count']==47
+          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646 and graph['w02_obligation_count']==47
           latest={}
           for line in Path('ledgers/CLAIM_LEDGER.ndjson').read_text().splitlines():
               if line.strip():
@@ -72,21 +69,13 @@ jobs:
           active=[r for r in latest.values() if r.get('status')=='ACTIVE']
           assert [r['claim_id'] for r in active]==['CLAIM-CP03-W02-PARITY-GRAPH-20260922'], active
           bindings=[json.loads(line) for line in Path('inventory/cp03/w02_evidence_bindings.jsonl').read_text().splitlines() if line.strip()]
-          assert len(bindings)==14, len(bindings)
+          assert len(bindings)==14
           assert not any(row.get('capability_id')=='cap_ac38bf813e130d14927723d8' for row in bindings)
-          proof=[json.loads(line) for line in Path('reports/cp03/w02_parity/PROOF_MATRIX.jsonl').read_text().splitlines() if line.strip()]
-          target=next(row for row in proof if row['capability_id']=='cap_ac38bf813e130d14927723d8')
-          assert target['ownership']=='OWNED'
-          assert target['surface_kind']=='registry_registration'
-          assert target['source_path']=='src/openjarvis/engine/apple_fm.py'
-          assert target['source_line']==171
-          assert target['name']=='afm'
-          assert target['w02_evidence_state']=='UNBOUND'
-          assert target['canonical_parity_status']=='UNVERIFIED'
-          assert target['verified'] is False and target['parity_promotion'] is False
-          summary=json.loads(Path('reports/cp03/w02_parity/SUMMARY.json').read_text())
-          assert summary['binding_counts']=={'UNBOUND':33,'EVIDENCE_BACKED_CANDIDATE':14}
-          assert summary['verified_capabilities']==0 and summary['parity_promotions']==0
+          probe=json.loads(Path('evidence/cp03/cp03-w02/W02-17/afm_optional_engine_source_probe.json').read_text())
+          assert probe['capability_status']=='BLOCKED_UNOBSERVABLE_OPTIONAL_IMPORT'
+          assert probe['decorator_registry_key']=='afm'
+          assert probe['w02_catalog_has_afm'] is False and probe['w02_catalog_has_apple_fm'] is True
+          assert probe['afm_engine_execution']=='NOT_RUN' and probe['parity_promotions']==0 and probe['binding_created'] is False
           PY
           python scripts/validate_agentic_state.py
           python scripts/context/validate_context_pack.py
@@ -96,109 +85,13 @@ jobs:
           python -m scripts.parity.ledger --check --source-repo openjarvis
           git diff --check
 
-      - name: Prove AFM optional-engine evidence gap against exact pinned upstream
+      - name: Reuse RED guard and rerun targeted plus regression gauntlet
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf /tmp/openjarvis
-          git init -q /tmp/openjarvis
-          git -C /tmp/openjarvis remote add origin https://github.com/open-jarvis/OpenJarvis.git
-          git -C /tmp/openjarvis fetch -q --depth=1 origin "$UPSTREAM_SHA"
-          git -C /tmp/openjarvis checkout -q --detach FETCH_HEAD
-          test "$(git -C /tmp/openjarvis rev-parse HEAD)" = "$UPSTREAM_SHA"
-          python - <<'PY'
-          import ast, hashlib, json, os
-          from pathlib import Path
-
-          source=Path('/tmp/openjarvis/src/openjarvis/engine/apple_fm.py')
-          init=Path('/tmp/openjarvis/src/openjarvis/engine/__init__.py')
-          source_raw=source.read_bytes()
-          init_raw=init.read_bytes()
-          tree=ast.parse(source_raw.decode('utf-8'))
-          target=next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name=='AppleFMEngine')
-          registrations=[]
-          for dec in target.decorator_list:
-              if not isinstance(dec,ast.Call) or not dec.args or not isinstance(dec.args[0],ast.Constant):
-                  continue
-              func=dec.func
-              if isinstance(func,ast.Attribute) and func.attr=='register':
-                  registrations.append((dec.lineno,dec.args[0].value))
-          assert registrations==[(171,'afm')], registrations
-
-          init_text=init_raw.decode('utf-8')
-          assert 'for optional in ("cloud", "litellm", "gemma_cpp", "apple_fm"):' in init_text
-          assert 'except (ImportError, OSError) as exc:' in init_text
-
-          catalog=json.loads(Path('evidence/cp03/cp03-w02/W02-08/native_catalog.json').read_text())
-          keys={row['key'] for row in catalog['engines']}
-          assert catalog['engine_count']==15
-          assert 'apple_fm' in keys
-          assert 'afm' not in keys
-          assert catalog['import_failures']==[]
-          assert catalog['model_executions']==0
-          assert catalog['provider_egress_executions']==0
-          assert catalog['parity_promotions']==0
-
-          probe={
-              'schema_version':1,
-              'date':'2026-09-23',
-              'task':'W02-17',
-              'gate':'G6',
-              'capability_id':os.environ['CAPABILITY_ID'],
-              'upstream_repository':'https://github.com/open-jarvis/OpenJarvis.git',
-              'upstream_commit':os.environ['UPSTREAM_SHA'],
-              'source_path':'src/openjarvis/engine/apple_fm.py',
-              'source_sha256':hashlib.sha256(source_raw).hexdigest(),
-              'optional_loader_path':'src/openjarvis/engine/__init__.py',
-              'optional_loader_sha256':hashlib.sha256(init_raw).hexdigest(),
-              'decorator_line':171,
-              'decorator_registry_key':'afm',
-              'optional_import_module':'apple_fm',
-              'optional_import_exceptions_swallowed':['ImportError','OSError'],
-              'w02_catalog_path':'evidence/cp03/cp03-w02/W02-08/native_catalog.json',
-              'w02_catalog_engine_count':15,
-              'w02_catalog_has_afm':False,
-              'w02_catalog_has_apple_fm':True,
-              'w02_catalog_import_failures':[],
-              'capability_status':'BLOCKED_UNOBSERVABLE_OPTIONAL_IMPORT',
-              'source_execution':False,
-              'afm_engine_execution':'NOT_RUN',
-              'model_executions':0,
-              'provider_egress_executions':0,
-              'tool_executions':0,
-              'parity_promotions':0,
-              'binding_created':False,
-              'canonical_parity_status':'UNVERIFIED',
-              'reason':'Pinned source registers in-process AFM under key afm, while W02-08 observed only the distinct apple_fm shim and the upstream optional loader swallows ImportError/OSError. Existing catalog evidence therefore cannot prove cap_ac38 and must not be rebound.'
-          }
-          out=Path(os.environ['PROBE_PATH'])
-          out.parent.mkdir(parents=True,exist_ok=True)
-          out.write_text(json.dumps(probe,indent=2,sort_keys=True)+'\n',encoding='utf-8')
-          PY
-
-      - name: Install negative proof guard and run specific test
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('tests/test_cp03_w02_parity_graph.py')
-          text=p.read_text(encoding='utf-8')
-          const='AFM_INPROCESS_CAPABILITY_ID = "cap_ac38bf813e130d14927723d8"\n'
-          if const not in text:
-              needle='CLI_SERVE_REGISTER_BUILTIN_CAPABILITY_ID = "cap_e924254fa9cf1fde7a4f78b8"\n'
-              assert needle in text
-              text=text.replace(needle,needle+const,1)
-          marker='    def test_graph_projects_all_four_planes_without_promotion(self) -> None:\n'
-          method='''    def test_afm_inprocess_registry_remains_unbound_when_only_shim_catalog_is_observed(self) -> None:\n        row = next(row for row in self.result["rows"] if row["capability_id"] == AFM_INPROCESS_CAPABILITY_ID)\n        self.assertEqual(row["ownership"], "OWNED")\n        self.assertEqual(row["surface_kind"], "registry_registration")\n        self.assertEqual(row["source_path"], "src/openjarvis/engine/apple_fm.py")\n        self.assertEqual(row["source_line"], 171)\n        self.assertEqual(row["name"], "afm")\n        self.assertEqual(row["source_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")\n        self.assertEqual(row["w02_evidence_state"], "UNBOUND")\n        self.assertIsNone(row["binding"])\n        self.assertEqual(row["canonical_parity_status"], "UNVERIFIED")\n        self.assertFalse(row["verified"])\n        self.assertFalse(row["parity_promotion"])\n\n        probe=json.loads((ROOT / "evidence/cp03/cp03-w02/W02-17/afm_optional_engine_source_probe.json").read_text(encoding="utf-8"))\n        self.assertEqual(probe["capability_id"], AFM_INPROCESS_CAPABILITY_ID)\n        self.assertEqual(probe["upstream_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")\n        self.assertEqual(probe["decorator_registry_key"], "afm")\n        self.assertEqual(probe["decorator_line"], 171)\n        self.assertEqual(probe["optional_import_module"], "apple_fm")\n        self.assertEqual(probe["optional_import_exceptions_swallowed"], ["ImportError", "OSError"])\n        self.assertFalse(probe["w02_catalog_has_afm"])\n        self.assertTrue(probe["w02_catalog_has_apple_fm"])\n        self.assertEqual(probe["capability_status"], "BLOCKED_UNOBSERVABLE_OPTIONAL_IMPORT")\n        self.assertFalse(probe["binding_created"])\n        self.assertEqual(probe["canonical_parity_status"], "UNVERIFIED")\n        self.assertEqual(probe["afm_engine_execution"], "NOT_RUN")\n        self.assertFalse(probe["source_execution"])\n        self.assertEqual(probe["parity_promotions"], 0)\n\n        catalog=json.loads((ROOT / "evidence/cp03/cp03-w02/W02-08/native_catalog.json").read_text(encoding="utf-8"))\n        keys={engine["key"] for engine in catalog["engines"]}\n        self.assertIn("apple_fm", keys)\n        self.assertNotIn("afm", keys)\n        self.assertEqual(catalog["import_failures"], [])\n        self.assertEqual(catalog["model_executions"], 0)\n        self.assertEqual(catalog["provider_egress_executions"], 0)\n        self.assertEqual(catalog["parity_promotions"], 0)\n\n'''
-          if 'def test_afm_inprocess_registry_remains_unbound_when_only_shim_catalog_is_observed' not in text:
-              assert marker in text
-              text=text.replace(marker,method+marker,1)
-          p.write_text(text,encoding='utf-8')
-          PY
           python -m unittest -v "$TEST_ID"
           python scripts/cp03/w02_parity_graph.py --check
-          python -m unittest -v tests.test_cp03_w02_parity_graph
+          python -m unittest -v tests.test_cp03_w02_model_bridge tests.test_cp03_w02_parity_graph tests.test_cp03_w02_plan tests.test_cp03_w02_unary_release_regressions
           python - <<'PY'
           import json
           from pathlib import Path
@@ -211,40 +104,8 @@ jobs:
           PY
           git diff --check
 
-      - name: Regression and G6 adversarial gauntlet
+      - name: Persist blocker evidence decision risk state handoff and ContextPack
         shell: bash
-        run: |
-          set -euo pipefail
-          python -m unittest -v tests.test_cp03_w02_model_bridge tests.test_cp03_w02_parity_graph tests.test_cp03_w02_plan tests.test_cp03_w02_unary_release_regressions
-          python scripts/validate_agentic_state.py
-          python scripts/context/validate_context_pack.py
-          python scripts/context/build_context_pack.py --check
-          python scripts/context/validate_next_actions.py
-          python scripts/cp03/validate_w02_plan.py
-          python -m scripts.parity.ledger --check --source-repo openjarvis
-          git diff --check
-
-      - name: Commit negative guard under exact-head CAS
-        id: guard
-        shell: bash
-        run: |
-          set -euo pipefail
-          git fetch origin main
-          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
-          test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$GITHUB_SHA"
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add "$PROBE_PATH" tests/test_cp03_w02_parity_graph.py
-          git commit -m 'CP03 W02-17: guard AFM optional-engine false binding'
-          guard_head="$(git rev-parse HEAD)"
-          git push origin HEAD:"${GITHUB_REF_NAME}"
-          test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$guard_head"
-          echo "head=$guard_head" >> "$GITHUB_OUTPUT"
-
-      - name: Persist negative evidence decision risk state handoff and ContextPack
-        shell: bash
-        env:
-          GUARD_HEAD: ${{ steps.guard.outputs.head }}
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -254,120 +115,114 @@ jobs:
           evidence_id='EVID-W02-PARITY-BLOCKER-AFM-OPTIONAL-20260923'
           decision_id='DEC-W02-G6-AFM-OPTIONAL-UNBOUND-20260923'
           risk_id='RISK-W02-G6-AFM-OPTIONAL-ENGINE-UNPROVEN-20260923'
-          event_id='CLAIM-CONT-W02-G6-AFM-OPTIONAL-20260923'
-          head=os.environ['GUARD_HEAD']
-          main=os.environ['EXPECTED_MAIN']
+          continuation_id='CLAIM-CONT-W02-G6-AFM-OPTIONAL-20260923'
+          base=os.environ['EXPECTED_MAIN']
+          validated_head=os.environ['GITHUB_SHA']
           run_id=int(os.environ['GITHUB_RUN_ID'])
 
-          def read_rows(path):
+          def rows(path):
               p=Path(path)
               return [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()] if p.exists() else []
 
           def append_once(path,key,value,row):
-              if any(existing.get(key)==value for existing in read_rows(path)):
+              if any(existing.get(key)==value for existing in rows(path)):
                   return
-              with Path(path).open('a',encoding='utf-8') as h:
-                  h.write(json.dumps(row,ensure_ascii=False,sort_keys=True,separators=(',',':'))+'\n')
+              with Path(path).open('a',encoding='utf-8') as handle:
+                  handle.write(json.dumps(row,ensure_ascii=False,sort_keys=True,separators=(',',':'))+'\n')
 
           claim_path=Path('sessions/20260922-w02-parity-graph/CLAIM.json')
           claim=json.loads(claim_path.read_text())
           assert claim['claim_id']==os.environ['CLAIM_ID'] and claim['status']=='ACTIVE'
-          claim['continuation_base_head']=main
+          claim['continuation_base_head']=base
           claim_path.write_text(json.dumps(claim,ensure_ascii=False,indent=2)+'\n')
 
-          append_once('ledgers/CLAIM_LEDGER.ndjson','event_id',event_id,{
-              'schema_version':1,'date':'2026-09-23','event':'CONTINUATION','event_id':event_id,
-              'project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','parent_wave':'CP03-W02',
-              'canonical_task':'W02-17','wave_id':'CP03-W02-PARITY-GRAPH-20260922',
-              'claim_id':os.environ['CLAIM_ID'],'owner':'chatgpt-gpt-5.6-sol','status':'ACTIVE',
-              'base_head':main,'scope':claim['scope'],
-              'coordination':'Continue sole W02-17 G6 claim from exact main to prove a negative AFM binding guard. No binding is created: pinned source registers afm, while W02-08 observed only apple_fm and the optional loader swallows ImportError/OSError. Denominators and parity remain unchanged.'
+          append_once('ledgers/CLAIM_LEDGER.ndjson','event_id',continuation_id,{
+              'schema_version':1,'date':'2026-09-23','event':'CONTINUATION','event_id':continuation_id,
+              'project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','parent_wave':'CP03-W02','canonical_task':'W02-17',
+              'wave_id':'CP03-W02-PARITY-GRAPH-20260922','claim_id':os.environ['CLAIM_ID'],
+              'owner':'chatgpt-gpt-5.6-sol','status':'ACTIVE','base_head':base,'scope':claim['scope'],
+              'coordination':'Continue sole W02-17 G6 claim from exact main. Prove and preserve a negative AFM binding guard; no new binding, parity promotion, denominator mutation, W02-18 opening, or reinterpretation of blocked/NOT_RUN evidence.'
           })
 
           probe=json.loads(Path(os.environ['PROBE_PATH']).read_text())
           report={
-              'schema_version':1,'date':'2026-09-23','project_id':'CLEVER-JARVIS-001',
-              'checkpoint':'CP03','parent_wave':'CP03-W02','task':'W02-17','gate':'G6',
-              'status':'BLOCKED_SUBSLICE','evidence_id':evidence_id,'claim_id':os.environ['CLAIM_ID'],
-              'validated_head':head,'github_actions_run_id':run_id,
-              'capability_id':os.environ['CAPABILITY_ID'],'capability_name':'afm',
-              'capability_status':'BLOCKED_UNOBSERVABLE_OPTIONAL_IMPORT',
-              'source_probe_path':os.environ['PROBE_PATH'],'source_sha256':probe['source_sha256'],
-              'optional_loader_sha256':probe['optional_loader_sha256'],
-              'binding_created':False,'bindings_validated_total':14,'unbound_remaining':33,
-              'verified_capabilities':0,'parity_promotions':0,'global_denominator':7565,
-              'openjarvis_obligations':646,'source_execution':False,'afm_engine_execution':'NOT_RUN',
-              'model_executions':0,'provider_egress_executions':0,'tool_executions':0,
+              'schema_version':1,'date':'2026-09-23','project_id':'CLEVER-JARVIS-001','checkpoint':'CP03',
+              'parent_wave':'CP03-W02','task':'W02-17','gate':'G6','status':'BLOCKED_SUBSLICE',
+              'evidence_id':evidence_id,'claim_id':os.environ['CLAIM_ID'],'validated_head':validated_head,
+              'github_actions_run_id':run_id,'capability_id':os.environ['CAPABILITY_ID'],'capability_name':'afm',
+              'capability_status':'BLOCKED_UNOBSERVABLE_OPTIONAL_IMPORT','source_probe_path':os.environ['PROBE_PATH'],
+              'source_sha256':probe['source_sha256'],'optional_loader_sha256':probe['optional_loader_sha256'],
+              'binding_created':False,'bindings_validated_total':14,'unbound_remaining':33,'verified_capabilities':0,
+              'parity_promotions':0,'global_denominator':7565,'openjarvis_obligations':646,'source_execution':False,
+              'afm_engine_execution':'NOT_RUN','model_executions':0,'provider_egress_executions':0,'tool_executions':0,
               'real_openjarvis_fallback_model_execution':'NOT_RUN',
-              'next_slice':'Do not bind cap_ac38 from W02-08. Obtain direct in-process afm execution/import evidence on a compatible Apple Foundation Models host, or continue with another proof unit that has its own executed test and exact completed-task evidence.'
+              'next_slice':'Do not bind cap_ac38 from W02-08. Require direct in-process afm registration/execution evidence on a compatible Apple Foundation Models host, or continue W02-17 with another proof unit only when its own executed test and exact completed-task evidence exist.'
           }
-          Path('evidence/cp03/cp03-w02/W02-17/afm_optional_engine_blocker_report.json').write_text(
-              json.dumps(report,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8'
-          )
+          Path('evidence/cp03/cp03-w02/W02-17/afm_optional_engine_blocker_report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2,sort_keys=True)+'\n')
 
           append_once('ledgers/EVIDENCE_LEDGER.ndjson','evidence_id',evidence_id,{
-              'schema_version':1,'date':'2026-09-23','evidence_id':evidence_id,'status':'VERIFIED',
-              'type':'cp03_w02_g6_negative_binding_guard','wave_id':'CP03-W02',
-              'support_wave':'CP03-W02-PARITY-GRAPH-20260922','validated_head':head,
-              'github_actions_run_id':run_id,
-              'claim':'Exact pinned source proves cap_ac38 registers the in-process engine as afm. Existing W02-08 catalog contains only distinct apple_fm shim and its import_failures array cannot observe apple_fm optional-loader ImportError/OSError because upstream swallows them. Therefore cap_ac38 remains UNBOUND and UNVERIFIED; this evidence verifies the blocker only, not capability parity.',
-              'capability_id':os.environ['CAPABILITY_ID'],
-              'capability_status':'BLOCKED_UNOBSERVABLE_OPTIONAL_IMPORT',
-              'source_probe_path':os.environ['PROBE_PATH'],'binding_created':False,
-              'afm_engine_execution':'NOT_RUN','source_execution':False,
-              'bindings_validated_total':14,'unbound_remaining':33,'verified_capabilities':0,
-              'parity_promotions':0,'global_denominator':7565,'openjarvis_obligations':646
+              'schema_version':1,'date':'2026-09-23','evidence_id':evidence_id,'status':'RECORDED',
+              'type':'cp03_w02_g6_negative_binding_guard','wave_id':'CP03-W02','support_wave':'CP03-W02-PARITY-GRAPH-20260922',
+              'validated_head':validated_head,'github_actions_run_id':run_id,'capability_id':os.environ['CAPABILITY_ID'],
+              'capability_status':'BLOCKED_UNOBSERVABLE_OPTIONAL_IMPORT','source_probe_path':os.environ['PROBE_PATH'],
+              'binding_created':False,'source_execution':False,'afm_engine_execution':'NOT_RUN','bindings_validated_total':14,
+              'unbound_remaining':33,'verified_capabilities':0,'parity_promotions':0,'global_denominator':7565,
+              'openjarvis_obligations':646,
+              'claim':'Exact pinned source registers the in-process engine as afm. Existing W02-08 catalog contains only the distinct apple_fm shim, while upstream optional loading swallows ImportError/OSError. This receipt records the blocker only; it is not capability verification and cannot satisfy a parity binding.'
           })
           append_once('ledgers/RUN_LOG.ndjson','event_id','RUN-W02-PARITY-BLOCKER-AFM-OPTIONAL-20260923',{
               'schema_version':1,'date':'2026-09-23','event':'CP03_W02_G6_AFM_NEGATIVE_BINDING_GUARD',
-              'event_id':'RUN-W02-PARITY-BLOCKER-AFM-OPTIONAL-20260923','goal_id':'CLEVER-JARVIS-001',
-              'checkpoint':'CP03','iteration':'I03','wave_id':'CP03-W02','canonical_task':'W02-17',
-              'claim_id':os.environ['CLAIM_ID'],'evidence_id':evidence_id,'status':'ADVANCED_WITH_BLOCKER',
-              'bindings_validated_total':14,'unbound_remaining':33,'verified_capabilities':0,'parity_promotions':0
+              'event_id':'RUN-W02-PARITY-BLOCKER-AFM-OPTIONAL-20260923','goal_id':'CLEVER-JARVIS-001','checkpoint':'CP03',
+              'iteration':'I03','wave_id':'CP03-W02','canonical_task':'W02-17','claim_id':os.environ['CLAIM_ID'],
+              'evidence_id':evidence_id,'status':'ADVANCED_WITH_BLOCKER','bindings_validated_total':14,
+              'unbound_remaining':33,'verified_capabilities':0,'parity_promotions':0
           })
           append_once('ledgers/WAVE_LEDGER.ndjson','event_id','WAVE-W02-PARITY-BLOCKER-AFM-OPTIONAL-20260923',{
               'schema_version':1,'date':'2026-09-23','event':'BLOCKER_CLASSIFICATION',
-              'event_id':'WAVE-W02-PARITY-BLOCKER-AFM-OPTIONAL-20260923','checkpoint':'CP03',
-              'iteration':'I03','parent_wave':'CP03-W02','wave_id':'CP03-W02-PARITY-GRAPH-20260922',
-              'canonical_task':'W02-17','claim_id':os.environ['CLAIM_ID'],'gate':'G6',
-              'evidence_id':evidence_id,'status':'IN_PROGRESS','capability_id':os.environ['CAPABILITY_ID'],
-              'capability_status':'BLOCKED_UNOBSERVABLE_OPTIONAL_IMPORT','bindings_validated_total':14,
-              'unbound_remaining':33,'parity_promotions':0
+              'event_id':'WAVE-W02-PARITY-BLOCKER-AFM-OPTIONAL-20260923','checkpoint':'CP03','iteration':'I03',
+              'parent_wave':'CP03-W02','wave_id':'CP03-W02-PARITY-GRAPH-20260922','canonical_task':'W02-17',
+              'claim_id':os.environ['CLAIM_ID'],'gate':'G6','evidence_id':evidence_id,'status':'IN_PROGRESS',
+              'capability_id':os.environ['CAPABILITY_ID'],'capability_status':'BLOCKED_UNOBSERVABLE_OPTIONAL_IMPORT',
+              'bindings_validated_total':14,'unbound_remaining':33,'parity_promotions':0
           })
           append_once('ledgers/DECISION_LEDGER.ndjson','decision_id',decision_id,{
-              'schema_version':1,'date':'2026-09-23','decision_id':decision_id,'status':'ACCEPTED',
-              'task':'W02-17','evidence_id':evidence_id,
-              'decision':'Keep cap_ac38 (in-process AFM) UNBOUND. Do not reinterpret the observed apple_fm shim catalog entry as proof of the distinct afm registry capability.',
-              'context':'Pinned OpenJarvis source decorates AppleFMEngine with EngineRegistry.register("afm"). W02-08 observed apple_fm but no afm; upstream optional loading swallows ImportError/OSError, so the existing empty import_failures list is not evidence that afm loaded.'
+              'schema_version':1,'date':'2026-09-23','decision_id':decision_id,'status':'ACCEPTED','task':'W02-17',
+              'evidence_id':evidence_id,
+              'decision':'Keep cap_ac38 (in-process AFM) UNBOUND. Never reinterpret the observed apple_fm shim catalog entry as proof of the distinct afm registry capability.',
+              'context':'Pinned OpenJarvis source decorates AppleFMEngine with EngineRegistry.register("afm"). W02-08 observed apple_fm but no afm; upstream optional loading swallows ImportError/OSError, so import_failures=[] is not evidence that afm loaded.'
           })
           append_once('ledgers/RISK_LEDGER.ndjson','risk_id',risk_id,{
-              'schema_version':1,'date':'2026-09-23','risk_id':risk_id,'severity':'P1','status':'OPEN',
-              'evidence_id':evidence_id,
-              'risk':'The in-process Apple Foundation Models capability cap_ac38 cannot be proven from current Linux-side W02-08 catalog evidence; optional import failures are swallowed upstream and the catalog contains only the distinct apple_fm shim.',
-              'mitigation':'Require direct afm registration/execution evidence on a compatible Apple Foundation Models host before creating a binding or parity promotion. The negative guard prevents aliasing apple_fm to afm.'
+              'schema_version':1,'date':'2026-09-23','risk_id':risk_id,'severity':'P1','status':'OPEN','evidence_id':evidence_id,
+              'risk':'The in-process Apple Foundation Models capability cap_ac38 cannot be proven from current W02-08 catalog evidence; optional import failures are swallowed upstream and the catalog contains only the distinct apple_fm shim.',
+              'mitigation':'Require direct afm registration/execution evidence on a compatible Apple Foundation Models host before creating a binding or parity promotion. The negative regression guard prevents aliasing apple_fm to afm.'
           })
 
-          state_path=Path('STATE.md')
-          lines=[line for line in state_path.read_text().splitlines() if not line.startswith('- G6 explicit blocker:')]
-          insert_at=next(i for i,line in enumerate(lines) if line.startswith('- G6 explicit binding progress:'))+1
-          lines.insert(insert_at,'- G6 explicit blocker: `cap_ac38bf813e130d14927723d8` (`afm`) remains `UNBOUND`; W02-08 observed only distinct `apple_fm`, while optional `apple_fm` import failures are swallowed upstream. Direct compatible-host AFM proof is still required.')
-          state_path.write_text('\n'.join(lines).rstrip()+'\n')
+          state=Path('STATE.md')
+          state_lines=[line for line in state.read_text().splitlines() if not line.startswith('- G6 explicit blocker:')]
+          message='- G6 explicit blocker: `cap_ac38bf813e130d14927723d8` (`afm`) remains `UNBOUND`; W02-08 observed only distinct `apple_fm`, while optional `apple_fm` import failures are swallowed upstream. Direct compatible-host AFM proof is still required.'
+          positions=[i for i,line in enumerate(state_lines) if line.startswith('- G6 explicit binding progress:')]
+          if positions:
+              state_lines.insert(positions[0]+1,message)
+          else:
+              state_lines.append(message)
+          state.write_text('\n'.join(state_lines).rstrip()+'\n')
 
-          handoff_path=Path('HANDOFF.md')
-          handoff=handoff_path.read_text().rstrip()
-          marker='## W02-17 AFM optional-engine negative guard — blocker verified'
-          note = (
-              "\n\n" + marker + "\n\n"
-              + f"- `{evidence_id}` proves a false-binding hazard for `{os.environ['CAPABILITY_ID']}` (`afm`, OWNED registry registration at pinned `src/openjarvis/engine/apple_fm.py:171`): exact source registers key `afm`, but W02-08 observed only the distinct `apple_fm` shim.\n"
-              + "- Exact pinned `openjarvis.engine.__init__` treats `apple_fm` as optional and swallows `ImportError`/`OSError`; therefore W02-08 `import_failures=[]` cannot prove the in-process `afm` engine loaded.\n"
-              + "- A regression guard now requires this proof unit to remain `UNBOUND`, with no binding and canonical parity `UNVERIFIED`. `afm` execution remains `NOT_RUN`; this sub-slice is blocker evidence, not a capability PASS.\n"
-              + "- G6 remains 14 `EVIDENCE_BACKED_CANDIDATE` / 33 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.\n"
-              + "- Exact next safe action: obtain direct `afm` registration/execution proof on a compatible Apple Foundation Models host, or bind another W02 proof unit only when its own executed test and exact completed-task receipt exist. Never alias `apple_fm` shim evidence to `afm`.\n"
-          )
-          if marker not in handoff:
-              handoff_path.write_text(handoff+note,encoding='utf-8')
+          handoff=Path('HANDOFF.md')
+          current=handoff.read_text().rstrip()
+          marker='## W02-17 AFM optional-engine negative guard — blocker recorded'
+          if marker not in current:
+              current += '\n\n'+marker+'\n\n'
+              current += f'- `{evidence_id}` records a false-binding hazard for `{os.environ["CAPABILITY_ID"]}` (`afm`): pinned source registers key `afm`, but W02-08 observed only distinct `apple_fm`.\n'
+              current += '- Pinned `openjarvis.engine.__init__` treats `apple_fm` as optional and swallows `ImportError`/`OSError`; therefore W02-08 `import_failures=[]` cannot prove the in-process `afm` engine loaded.\n'
+              current += '- The regression guard requires this proof unit to remain `UNBOUND`, binding absent and canonical parity `UNVERIFIED`. `afm` execution remains `NOT_RUN`; this is blocker evidence, never a capability PASS.\n'
+              current += '- G6 remains 14 `EVIDENCE_BACKED_CANDIDATE` / 33 `UNBOUND`; VERIFIED remains 0, parity promotions 0, denominator 7565 and OpenJarvis obligations 646 unchanged. W02-17 remains `IN_PROGRESS`; W02-18/W02-19 remain `BLOCKED`.\n'
+              current += '- Exact next safe action: obtain direct `afm` registration/execution evidence on a compatible Apple Foundation Models host, or continue W02-17 with another proof unit backed by its own executed test and exact completed-task receipt. Never alias `apple_fm` evidence to `afm`.\n'
+              handoff.write_text(current+'\n')
           PY
 
+          # Root-cause fix for failed run 35871570099: EVIDENCE_LEDGER is a compiler input,
+          # so regenerate derived products before checking them.
+          python scripts/cp03/w02_parity_graph.py --write
           python scripts/cp03/w02_parity_graph.py --check
           python scripts/context/build_context_pack.py
           python scripts/validate_agentic_state.py
@@ -377,22 +232,47 @@ jobs:
           python scripts/cp03/validate_w02_plan.py
           python -m scripts.parity.ledger --check --source-repo openjarvis
           python -m unittest -v "$TEST_ID" tests.test_cp03_w02_parity_graph tests.test_cp03_w02_plan
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          summary=json.loads(Path('reports/cp03/w02_parity/SUMMARY.json').read_text())
+          assert summary['binding_counts']=={'UNBOUND':33,'EVIDENCE_BACKED_CANDIDATE':14}
+          assert summary['verified_capabilities']==0 and summary['parity_promotions']==0
+          assert summary['global_denominator']==7565 and summary['openjarvis_obligations']==646
+          proof=[json.loads(line) for line in Path('reports/cp03/w02_parity/PROOF_MATRIX.jsonl').read_text().splitlines() if line.strip()]
+          target=next(row for row in proof if row['capability_id']=='cap_ac38bf813e130d14927723d8')
+          assert target['w02_evidence_state']=='UNBOUND' and target['binding'] is None
+          assert target['canonical_parity_status']=='UNVERIFIED' and target['verified'] is False and target['parity_promotion'] is False
+          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          tasks={t['id']:t for t in graph['tasks']}
+          assert tasks['W02-17']['status']=='IN_PROGRESS' and not tasks['W02-17']['proof']
+          assert tasks['W02-18']['status']=='BLOCKED' and tasks['W02-19']['status']=='BLOCKED'
+          PY
           git diff --check
 
-      - name: Commit persisted state under exact-head CAS
+      - name: Final exact-head CAS commit and restore workflow
         shell: bash
-        env:
-          GUARD_HEAD: ${{ steps.guard.outputs.head }}
         run: |
           set -euo pipefail
           git fetch origin main
           test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
-          test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$GUARD_HEAD"
+          test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$GITHUB_SHA"
+          git checkout origin/main -- .github/workflows/cp03-w02-parity-graph.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add sessions/20260922-w02-parity-graph/CLAIM.json evidence/cp03/cp03-w02/W02-17/afm_optional_engine_blocker_report.json "$PROBE_PATH" STATE.md HANDOFF.md ledgers/CLAIM_LEDGER.ndjson ledgers/EVIDENCE_LEDGER.ndjson ledgers/RUN_LOG.ndjson ledgers/WAVE_LEDGER.ndjson ledgers/DECISION_LEDGER.ndjson ledgers/RISK_LEDGER.ndjson .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
-          git commit -m 'CP03 W02-17: persist AFM optional-engine blocker evidence'
+          git add .github/workflows/cp03-w02-parity-graph.yml \
+            sessions/20260922-w02-parity-graph/CLAIM.json \
+            evidence/cp03/cp03-w02/W02-17/afm_optional_engine_source_probe.json \
+            evidence/cp03/cp03-w02/W02-17/afm_optional_engine_blocker_report.json \
+            STATE.md HANDOFF.md \
+            ledgers/CLAIM_LEDGER.ndjson ledgers/EVIDENCE_LEDGER.ndjson ledgers/RUN_LOG.ndjson \
+            ledgers/WAVE_LEDGER.ndjson ledgers/DECISION_LEDGER.ndjson ledgers/RISK_LEDGER.ndjson \
+            reports/cp03/w02_parity graphs/cp03/w02_parity \
+            .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
+          git diff --cached --check
+          git commit -m 'CP03 W02-17: persist AFM optional-engine blocker'
           final_head="$(git rev-parse HEAD)"
           git push origin HEAD:"${GITHUB_REF_NAME}"
           test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$final_head"
-          echo "final_head=$final_head"
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          echo "FINAL_HEAD=$final_head"
