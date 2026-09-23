@@ -195,3 +195,12 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - G6 is now 15 `EVIDENCE_BACKED_CANDIDATE` / 32 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged.
 - AFM `cap_ac38bf813e130d14927723d8` remains `UNBOUND`; direct AFM execution is still `NOT_RUN`. Real OpenJarvis fallback model execution also remains `NOT_RUN`. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.
 - Exact next slice: another W02-17 proof unit with its own executed test/exact evidence; never generalize this CLI proof to adjacent commands or promote parity without terminal evidence.
+
+## W02-17 ModelInfo protocol binding — source-backed partial verified
+
+- `EVID-W02-PARITY-BINDING-MODELINFO-PROTOCOL-20260923`: `cap_048295582ec38991a9519378` (`ModelInfo`, OWNED protocol contract at `frontend/src/types/index.ts:160`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.
+- Exact pinned source `72033b8ec288aa067ce4530ff9d96bf231e9c4e5` was probed: fields are exactly `id:string`, `object:string`, `created:number`, `owned_by:string`; source execution is not claimed.
+- Formal G6 binding is anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4` plus `tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_model_info_protocol_binding_is_capability_specific_and_source_backed` and `evidence/cp03/cp03-w02/W02-17/binding_model_info_protocol_source_probe.json`. This is candidate evidence only, not VERIFIED parity.
+- G6 is now 16 `EVIDENCE_BACKED_CANDIDATE` / 31 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged.
+- AFM `cap_ac38bf813e130d14927723d8` remains `UNBOUND`; AFM execution and real OpenJarvis fallback model execution remain `NOT_RUN`. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.
+- Exact next slice: another W02-17 proof unit with capability-specific executed or exact source evidence plus completed-task receipt; do not generalize this protocol proof to behavioral parity.

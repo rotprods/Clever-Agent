@@ -35,7 +35,7 @@
 
 ## Active claims
 
-- `CLAIM-CP03-W02-PARITY-GRAPH-20260922` → `CP03-W02-PARITY-GRAPH-20260922` · `chatgpt-gpt-5.6-sol`
+- `CLAIM-CP03-W02-PARITY-GRAPH-20260922` → `None` · `chatgpt-gpt-5.6-sol`
 
 ## Open / mitigating risks
 
