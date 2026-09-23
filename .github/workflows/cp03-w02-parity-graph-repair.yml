@@ -1,0 +1,51 @@
+name: CP03 W02 parity graph persistence-order repair
+
+on:
+  push:
+    branches: [wave/cp03/w02-parity-cloud-reload-20260924]
+    paths:
+      - '.github/workflows/cp03-w02-parity-graph-repair.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair-workflow-order:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Patch generated-product regeneration after ledger persistence
+        shell: bash
+        env:
+          EXPECTED_MAIN: 8b2873e16c99a6969a810344a026a75012462d39
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$GITHUB_SHA"
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git merge-base origin/main HEAD)" = "$EXPECTED_MAIN"
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/cp03-w02-parity-graph.yml')
+          t=p.read_text(encoding='utf-8')
+          old="""          python scripts/context/build_context_pack.py\n\n      - name: Full regression gauntlet and exact-head CAS commit\n"""
+          new="""          # EVIDENCE_LEDGER is a proof-plane input. Regenerate derived parity products after append-only ledger persistence so --check sees the final input hashes.\n          python scripts/cp03/w02_parity_graph.py --write\n          python scripts/context/build_context_pack.py\n\n      - name: Full regression gauntlet and exact-head CAS commit\n"""
+          assert t.count(old)==1, t.count(old)
+          t=t.replace(old,new,1)
+          p.write_text(t,encoding='utf-8')
+          PY
+          git diff --check
+          git diff --exit-code -- .github/workflows/cp03-w02-parity-graph.yml && exit 1 || true
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'clever-agent-wave'
+          git config user.email 'actions@users.noreply.github.com'
+          git add .github/workflows/cp03-w02-parity-graph.yml
+          git commit -m 'CP03 W02-17: regenerate proof plane after ledger persistence'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
