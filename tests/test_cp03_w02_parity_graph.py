@@ -16,6 +16,7 @@ NIM_CAPABILITY_ID = "cap_fa50b5646f0cfab91c7efec5"
 GEMMA_CPP_CAPABILITY_ID = "cap_5cf599d5c98778fc324cbd0c"
 OPENAI_COMPAT_REGISTER_CAPABILITY_ID = "cap_5411f850a1935d329d2c53a0"
 MODEL_REGISTER_VALUE_CAPABILITY_ID = "cap_1d68bea6da6cb4c552cee405"
+MODEL_REGISTER_VALUE_1088_CAPABILITY_ID = "cap_d0bb7e74057a2b59835f2143"
 OLLAMA_TEST_ID = (
     "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
     "test_ollama_registry_binding_is_capability_specific_and_evidence_backed"
@@ -44,6 +45,10 @@ MODEL_REGISTER_VALUE_TEST_ID = (
     "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
     "test_model_register_value_binding_is_capability_specific_and_evidence_backed"
 )
+MODEL_REGISTER_VALUE_1088_TEST_ID = (
+    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
+    "test_model_register_value_1088_binding_is_capability_specific_and_evidence_backed"
+)
 
 
 class W02ParityGraphTests(unittest.TestCase):
@@ -62,13 +67,13 @@ class W02ParityGraphTests(unittest.TestCase):
         self.assertEqual(summary["verified_capabilities"], 0)
         self.assertEqual(len(self.result["rows"]), 47)
 
-    def test_current_matrix_has_eight_candidates_and_no_parity_promotion(self) -> None:
+    def test_current_matrix_has_nine_candidates_and_no_parity_promotion(self) -> None:
         rows = self.result["rows"]
         self.assertTrue(all(row["canonical_parity_status"] == "UNVERIFIED" for row in rows))
         self.assertTrue(all(row["verified"] is False for row in rows))
         self.assertTrue(all(row["parity_promotion"] is False for row in rows))
-        self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 8)
-        self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 39)
+        self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 9)
+        self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 38)
         self.assertEqual(sum(row["ownership"] == "OWNED" for row in rows), 37)
         self.assertEqual(sum(row["ownership"] == "SHARED" for row in rows), 10)
         candidates = {
@@ -78,7 +83,7 @@ class W02ParityGraphTests(unittest.TestCase):
         }
         self.assertEqual(
             set(candidates),
-            {SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID, LITELLM_CAPABILITY_ID, CLOUD_CAPABILITY_ID, NIM_CAPABILITY_ID, GEMMA_CPP_CAPABILITY_ID, OPENAI_COMPAT_REGISTER_CAPABILITY_ID, MODEL_REGISTER_VALUE_CAPABILITY_ID},
+            {SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID, LITELLM_CAPABILITY_ID, CLOUD_CAPABILITY_ID, NIM_CAPABILITY_ID, GEMMA_CPP_CAPABILITY_ID, OPENAI_COMPAT_REGISTER_CAPABILITY_ID, MODEL_REGISTER_VALUE_CAPABILITY_ID, MODEL_REGISTER_VALUE_1088_CAPABILITY_ID},
         )
         seed = candidates[SEED_CAPABILITY_ID]
         self.assertEqual(seed["binding"]["evidence_id"], "EVID-W02-UNARY-INFERENCE-20260921")
@@ -104,6 +109,9 @@ class W02ParityGraphTests(unittest.TestCase):
         model_register_value = candidates[MODEL_REGISTER_VALUE_CAPABILITY_ID]
         self.assertEqual(model_register_value["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")
         self.assertFalse(model_register_value["binding"]["terminal"])
+        model_register_value_1088 = candidates[MODEL_REGISTER_VALUE_1088_CAPABILITY_ID]
+        self.assertEqual(model_register_value_1088["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")
+        self.assertFalse(model_register_value_1088["binding"]["terminal"])
 
     def test_ollama_registry_binding_is_capability_specific_and_evidence_backed(self) -> None:
         row = next(row for row in self.result["rows"] if row["capability_id"] == OLLAMA_CAPABILITY_ID)
@@ -450,6 +458,56 @@ class W02ParityGraphTests(unittest.TestCase):
         keys={model["key"] for model in catalog["models"]}
         for expected in ("qwen3:0.6b", "gpt-4o", "afm-3", "afm-3-core", "afm-3-core-advanced"):
             self.assertIn(expected, keys)
+        self.assertEqual(catalog["model_executions"], 0)
+        self.assertEqual(catalog["provider_egress_executions"], 0)
+        self.assertEqual(catalog["parity_promotions"], 0)
+
+    def test_model_register_value_1088_binding_is_capability_specific_and_evidence_backed(self) -> None:
+        row = next(row for row in self.result["rows"] if row["capability_id"] == MODEL_REGISTER_VALUE_1088_CAPABILITY_ID)
+        self.assertEqual(row["ownership"], "OWNED")
+        self.assertEqual(row["surface_kind"], "registry_registration")
+        self.assertEqual(row["source_path"], "src/openjarvis/intelligence/model_catalog.py")
+        self.assertEqual(row["source_line"], 1088)
+        self.assertEqual(row["name"], "register_value")
+        self.assertEqual(row["canonical_parity_status"], "UNVERIFIED")
+        self.assertFalse(row["verified"])
+        self.assertFalse(row["parity_promotion"])
+        binding = row["binding"]
+        self.assertEqual(binding["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")
+        self.assertEqual(binding["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")
+        self.assertEqual(binding["test_id"], MODEL_REGISTER_VALUE_1088_TEST_ID)
+        self.assertFalse(binding["terminal"])
+
+        obligation = next(
+            item for item in graph.read_jsonl(ROOT / graph.OBLIGATIONS_PATH)
+            if item["capability_id"] == MODEL_REGISTER_VALUE_1088_CAPABILITY_ID
+        )
+        self.assertEqual(obligation["interface"]["registrar"], "ModelRegistry.register_value")
+        self.assertEqual(obligation["runtime_owner"], "openjarvis:intelligence")
+        self.assertEqual(obligation["source_path"], "src/openjarvis/intelligence/model_catalog.py")
+        self.assertEqual(obligation["source_line"], 1088)
+
+        evidence = graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")
+        receipt = evidence["EVID-W02-MODEL-BRIDGE-20260921"]
+        self.assertEqual(receipt["status"], "VERIFIED")
+        self.assertEqual(receipt["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")
+        self.assertEqual(receipt["native_engine_count"], 15)
+        self.assertEqual(receipt["native_import_failure_count"], 0)
+        self.assertEqual(receipt["native_model_count"], 69)
+        self.assertEqual(receipt["model_executions"], 0)
+        self.assertEqual(receipt["provider_egress_executions"], 0)
+        self.assertEqual(receipt["parity_promotions"], 0)
+
+        bridge_source = (ROOT / "adapters/openjarvis/model_bridge.py").read_text(encoding="utf-8")
+        self.assertIn('register_builtin = getattr(module, "register_builtin_models", None)', bridge_source)
+        self.assertIn("register_builtin()", bridge_source)
+        catalog = json.loads((ROOT / "evidence/cp03/cp03-w02/W02-08/native_catalog.json").read_text(encoding="utf-8"))
+        self.assertEqual(catalog["model_count"], 69)
+        self.assertEqual(len(catalog["models"]), 69)
+        self.assertEqual(catalog["import_failures"], [])
+        self.assertTrue(all(model["state"] == "REGISTERED" for model in catalog["models"]))
+        self.assertTrue(all(model["native_type"] == "ModelSpec" for model in catalog["models"]))
+        self.assertTrue(all(model["implementation"] == "openjarvis.core.types.ModelSpec" for model in catalog["models"]))
         self.assertEqual(catalog["model_executions"], 0)
         self.assertEqual(catalog["provider_egress_executions"], 0)
         self.assertEqual(catalog["parity_promotions"], 0)
