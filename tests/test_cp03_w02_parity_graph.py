@@ -20,6 +20,7 @@ MODEL_REGISTER_VALUE_1088_CAPABILITY_ID = "cap_d0bb7e74057a2b59835f2143"
 CLI_MODEL_LIST_REGISTER_BUILTIN_CAPABILITY_ID = "cap_a1156e1a8626c074910758f9"
 CLI_MODEL_INFO_REGISTER_BUILTIN_CAPABILITY_ID = "cap_bdc045630a6fcf4735394782"
 CLI_CHAT_REGISTER_BUILTIN_CAPABILITY_ID = "cap_63d29e906eae343ae8c88a05"
+CLI_ASK_REGISTER_BUILTIN_CAPABILITY_ID = "cap_e0f19ffe0e3814a158b2f56d"
 OLLAMA_TEST_ID = (
     "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
     "test_ollama_registry_binding_is_capability_specific_and_evidence_backed"
@@ -64,6 +65,10 @@ CLI_CHAT_REGISTER_BUILTIN_TEST_ID = (
     "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
     "test_cli_chat_register_builtin_binding_is_capability_specific_and_evidence_backed"
 )
+CLI_ASK_REGISTER_BUILTIN_TEST_ID = (
+    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
+    "test_cli_ask_register_builtin_binding_is_capability_specific_and_evidence_backed"
+)
 
 
 class W02ParityGraphTests(unittest.TestCase):
@@ -82,13 +87,13 @@ class W02ParityGraphTests(unittest.TestCase):
         self.assertEqual(summary["verified_capabilities"], 0)
         self.assertEqual(len(self.result["rows"]), 47)
 
-    def test_current_matrix_has_twelve_candidates_and_no_parity_promotion(self) -> None:
+    def test_current_matrix_has_thirteen_candidates_and_no_parity_promotion(self) -> None:
         rows = self.result["rows"]
         self.assertTrue(all(row["canonical_parity_status"] == "UNVERIFIED" for row in rows))
         self.assertTrue(all(row["verified"] is False for row in rows))
         self.assertTrue(all(row["parity_promotion"] is False for row in rows))
-        self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 12)
-        self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 35)
+        self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 13)
+        self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 34)
         self.assertEqual(sum(row["ownership"] == "OWNED" for row in rows), 37)
         self.assertEqual(sum(row["ownership"] == "SHARED" for row in rows), 10)
         candidates = {
@@ -98,7 +103,7 @@ class W02ParityGraphTests(unittest.TestCase):
         }
         self.assertEqual(
             set(candidates),
-            {SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID, LITELLM_CAPABILITY_ID, CLOUD_CAPABILITY_ID, NIM_CAPABILITY_ID, GEMMA_CPP_CAPABILITY_ID, OPENAI_COMPAT_REGISTER_CAPABILITY_ID, MODEL_REGISTER_VALUE_CAPABILITY_ID, MODEL_REGISTER_VALUE_1088_CAPABILITY_ID, CLI_MODEL_LIST_REGISTER_BUILTIN_CAPABILITY_ID, CLI_MODEL_INFO_REGISTER_BUILTIN_CAPABILITY_ID, CLI_CHAT_REGISTER_BUILTIN_CAPABILITY_ID},
+            {SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID, LITELLM_CAPABILITY_ID, CLOUD_CAPABILITY_ID, NIM_CAPABILITY_ID, GEMMA_CPP_CAPABILITY_ID, OPENAI_COMPAT_REGISTER_CAPABILITY_ID, MODEL_REGISTER_VALUE_CAPABILITY_ID, MODEL_REGISTER_VALUE_1088_CAPABILITY_ID, CLI_MODEL_LIST_REGISTER_BUILTIN_CAPABILITY_ID, CLI_MODEL_INFO_REGISTER_BUILTIN_CAPABILITY_ID, CLI_CHAT_REGISTER_BUILTIN_CAPABILITY_ID, CLI_ASK_REGISTER_BUILTIN_CAPABILITY_ID},
         )
         seed = candidates[SEED_CAPABILITY_ID]
         self.assertEqual(seed["binding"]["evidence_id"], "EVID-W02-UNARY-INFERENCE-20260921")
@@ -136,6 +141,9 @@ class W02ParityGraphTests(unittest.TestCase):
         cli_chat_register_builtin = candidates[CLI_CHAT_REGISTER_BUILTIN_CAPABILITY_ID]
         self.assertEqual(cli_chat_register_builtin["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")
         self.assertFalse(cli_chat_register_builtin["binding"]["terminal"])
+        cli_ask_register_builtin = candidates[CLI_ASK_REGISTER_BUILTIN_CAPABILITY_ID]
+        self.assertEqual(cli_ask_register_builtin["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")
+        self.assertFalse(cli_ask_register_builtin["binding"]["terminal"])
 
     def test_ollama_registry_binding_is_capability_specific_and_evidence_backed(self) -> None:
         row = next(row for row in self.result["rows"] if row["capability_id"] == OLLAMA_CAPABILITY_ID)
@@ -696,6 +704,54 @@ class W02ParityGraphTests(unittest.TestCase):
         self.assertEqual(receipt["provider_egress_executions"], 0)
         self.assertEqual(receipt["parity_promotions"], 0)
 
+        catalog=json.loads((ROOT / "evidence/cp03/cp03-w02/W02-08/native_catalog.json").read_text(encoding="utf-8"))
+        self.assertEqual(catalog["model_count"],69)
+        self.assertEqual(len(catalog["models"]),69)
+        self.assertEqual(catalog["import_failures"],[])
+        self.assertTrue(all(model["state"] == "REGISTERED" for model in catalog["models"]))
+        self.assertEqual(catalog["model_executions"],0)
+        self.assertEqual(catalog["provider_egress_executions"],0)
+        self.assertEqual(catalog["parity_promotions"],0)
+
+    def test_cli_ask_register_builtin_binding_is_capability_specific_and_evidence_backed(self) -> None:
+        row = next(row for row in self.result["rows"] if row["capability_id"] == CLI_ASK_REGISTER_BUILTIN_CAPABILITY_ID)
+        self.assertEqual(row["ownership"], "OWNED")
+        self.assertEqual(row["surface_kind"], "registry_registration")
+        self.assertEqual(row["source_path"], "src/openjarvis/cli/ask.py")
+        self.assertEqual(row["source_line"], 869)
+        self.assertEqual(row["name"], "register_builtin_models")
+        self.assertEqual(row["source_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")
+        self.assertEqual(row["canonical_parity_status"], "UNVERIFIED")
+        self.assertFalse(row["verified"])
+        self.assertFalse(row["parity_promotion"])
+        binding=row["binding"]
+        self.assertEqual(binding["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")
+        self.assertEqual(binding["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")
+        self.assertEqual(binding["test_id"], CLI_ASK_REGISTER_BUILTIN_TEST_ID)
+        self.assertFalse(binding["terminal"])
+        obligation=next(item for item in graph.read_jsonl(ROOT / graph.OBLIGATIONS_PATH) if item["capability_id"] == CLI_ASK_REGISTER_BUILTIN_CAPABILITY_ID)
+        self.assertEqual(obligation["source_path"], "src/openjarvis/cli/ask.py")
+        self.assertEqual(obligation["source_line"], 869)
+        self.assertEqual(obligation["name"], "register_builtin_models")
+        probe=json.loads((ROOT / "evidence/cp03/cp03-w02/W02-17/binding_cli_ask_register_builtin_source_probe.json").read_text(encoding="utf-8"))
+        self.assertEqual(probe["upstream_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")
+        self.assertEqual(probe["source_path"], "src/openjarvis/cli/ask.py")
+        self.assertEqual(probe["registrar_call"], "register_builtin_models")
+        self.assertEqual(probe["registrar_call_line"], 869)
+        self.assertTrue(probe["registration_precedes_engine_resolution"])
+        self.assertFalse(probe["source_execution"])
+        self.assertEqual(probe["ask_command_execution"], "NOT_RUN")
+        self.assertFalse(probe["parity_promotion"])
+        evidence=graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")
+        receipt=evidence["EVID-W02-MODEL-BRIDGE-20260921"]
+        self.assertEqual(receipt["status"], "VERIFIED")
+        self.assertEqual(receipt["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")
+        self.assertEqual(receipt["native_engine_count"],15)
+        self.assertEqual(receipt["native_import_failure_count"],0)
+        self.assertEqual(receipt["native_model_count"],69)
+        self.assertEqual(receipt["model_executions"],0)
+        self.assertEqual(receipt["provider_egress_executions"],0)
+        self.assertEqual(receipt["parity_promotions"],0)
         catalog=json.loads((ROOT / "evidence/cp03/cp03-w02/W02-08/native_catalog.json").read_text(encoding="utf-8"))
         self.assertEqual(catalog["model_count"],69)
         self.assertEqual(len(catalog["models"]),69)
