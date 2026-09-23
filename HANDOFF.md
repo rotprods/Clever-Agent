@@ -138,3 +138,11 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - G6 is now 9 `EVIDENCE_BACKED_CANDIDATE` / 38 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged.
 - `NOT_RUN`, `BLOCKED`, `PLATFORM_GATED` and waivers remain non-proof. Real OpenJarvis fallback model execution remains `NOT_RUN`. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.
 - Exact next slice: bind the next W02 capability only when its own executed test can be named and traced to an exact completed-task receipt.
+
+## W02-17 CLI model list register_builtin_models binding — partial verified
+
+- `EVID-W02-PARITY-BINDING-CLI-MODEL-LIST-REGISTER-BUILTIN-20260923`: `cap_a1156e1a8626c074910758f9` (`register_builtin_models`, OWNED registry registration) is bound to completed W02-08 evidence `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4` plus an exact pinned-source probe for `src/openjarvis/cli/model.py:38`.
+- Capability-specific executed test: `tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_cli_model_list_register_builtin_binding_is_capability_specific_and_evidence_backed`. The source probe proves `list_models` calls `register_builtin_models` before engine discovery at upstream `72033b8ec288aa067ce4530ff9d96bf231e9c4e5`; W02-08 separately persists 69 registered `ModelSpec` entries. The CLI source itself remains `NOT_EXECUTED` in this slice.
+- G6 is now 10 `EVIDENCE_BACKED_CANDIDATE` / 37 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged.
+- `NOT_RUN`, `BLOCKED`, `PLATFORM_GATED`, source-only proof and waivers remain non-proof for VERIFIED parity. Real OpenJarvis fallback model execution remains `NOT_RUN`. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.
+- Exact next slice: bind the next W02 capability only when its own executed test can be named and traced to exact completed-task evidence; do not infer behavioral parity from source presence alone.
