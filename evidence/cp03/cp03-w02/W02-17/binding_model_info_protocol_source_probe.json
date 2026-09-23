@@ -1,0 +1,40 @@
+{
+  "canonical_parity_status": "UNVERIFIED",
+  "capability_id": "cap_048295582ec38991a9519378",
+  "capability_name": "ModelInfo",
+  "checkpoint": "CP03",
+  "date": "2026-09-23",
+  "gate": "G6",
+  "interface_fields": [
+    {
+      "name": "id",
+      "type": "string"
+    },
+    {
+      "name": "object",
+      "type": "string"
+    },
+    {
+      "name": "created",
+      "type": "number"
+    },
+    {
+      "name": "owned_by",
+      "type": "string"
+    }
+  ],
+  "model_executions": 0,
+  "parity_promotions": 0,
+  "project_id": "CLEVER-JARVIS-001",
+  "provider_egress_executions": 0,
+  "schema_version": 1,
+  "source_execution": false,
+  "source_line": 160,
+  "source_path": "frontend/src/types/index.ts",
+  "source_probe": "PASS",
+  "source_sha256": "45e499e92306e7387ab99b2ee52f89fe18a63dd3f8bc8d33b7325582bf24e242",
+  "surface_kind": "protocol_contract",
+  "task": "W02-17",
+  "tool_executions": 0,
+  "upstream_commit": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5"
+}
