@@ -92,6 +92,13 @@ class W02ParityGraphTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.result = graph.compile_root(ROOT)
 
+    def test_context_pack_preserves_active_claim_wave_id(self) -> None:
+        context = json.loads((ROOT / ".agentic/context/CURRENT_CONTEXT.json").read_text(encoding="utf-8"))
+        claims = [row for row in context["active_claims"] if row["claim_id"] == "CLAIM-CP03-W02-PARITY-GRAPH-20260922"]
+        self.assertEqual(len(claims), 1)
+        self.assertEqual(claims[0]["status"], "ACTIVE")
+        self.assertEqual(claims[0]["wave_id"], "CP03-W02-PARITY-GRAPH-20260922")
+
     def test_frozen_scope_and_denominators_are_preserved(self) -> None:
         summary = self.result["summary"]
         self.assertEqual(summary["global_denominator"], 7565)
