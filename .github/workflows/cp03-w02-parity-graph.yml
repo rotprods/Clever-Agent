@@ -1,8 +1,8 @@
-name: CP03 W02 G6 CLI model info command binding
+name: CP03 W02 G6 ModelInfo protocol binding
 
 on:
   push:
-    branches: [wave/cp03/w02-parity-cli-model-info-command-20260923]
+    branches: [wave/cp03/w02-parity-modelinfo-protocol-20260923]
     paths:
       - '.github/workflows/cp03-w02-parity-graph.yml'
 
@@ -14,20 +14,20 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  EXPECTED_MAIN: 12c6bca7b44ecbe4164da84d76046240a6037389
+  EXPECTED_MAIN: 972ccd482edf63bc5300f90bc751d3c24a4ae583
   CLAIM_ID: CLAIM-CP03-W02-PARITY-GRAPH-20260922
-  CAPABILITY_ID: cap_075a2380f9db372754f08116
+  CAPABILITY_ID: cap_048295582ec38991a9519378
   SOURCE_EVIDENCE: EVID-W02-MODEL-BRIDGE-20260921
   SOURCE_HEAD: a866c335a0f9cad75122c8eb7c5310d358f6aad4
   UPSTREAM_SHA: 72033b8ec288aa067ce4530ff9d96bf231e9c4e5
-  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_cli_model_info_command_binding_is_capability_specific_and_runtime_backed
-  PROBE_PATH: evidence/cp03/cp03-w02/W02-17/binding_cli_model_info_command_runtime_probe.json
+  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_model_info_protocol_binding_is_capability_specific_and_source_backed
+  PROBE_PATH: evidence/cp03/cp03-w02/W02-17/binding_model_info_protocol_source_probe.json
   BINDINGS_PATH: inventory/cp03/w02_evidence_bindings.jsonl
 
 jobs:
   verify-bind-persist:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -49,21 +49,15 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-
           claim=json.loads(Path('sessions/20260922-w02-parity-graph/CLAIM.json').read_text())
           assert claim['claim_id']=='CLAIM-CP03-W02-PARITY-GRAPH-20260922'
           assert claim['status']=='ACTIVE'
           required=[
-              'inventory/cp03/w02_evidence_bindings.jsonl',
-              'tests/test_cp03_w02_parity_graph.py',
-              '.github/workflows/cp03-w02-parity-graph.yml',
-              'evidence/cp03/cp03-w02/W02-17/**',
-              'STATE.md','HANDOFF.md','ledgers/EVIDENCE_LEDGER.ndjson',
-              '.agentic/context/CURRENT_CONTEXT.json',
+              'inventory/cp03/w02_evidence_bindings.jsonl','tests/test_cp03_w02_parity_graph.py',
+              '.github/workflows/cp03-w02-parity-graph.yml','evidence/cp03/cp03-w02/W02-17/**',
+              'STATE.md','HANDOFF.md','ledgers/EVIDENCE_LEDGER.ndjson','.agentic/context/CURRENT_CONTEXT.json',
           ]
-          for path in required:
-              assert path in claim['scope'], path
-
+          for path in required: assert path in claim['scope'], path
           graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
           tasks={t['id']:t for t in graph['tasks']}
           assert graph['first_executable_task']=='W02-17'
@@ -72,31 +66,25 @@ jobs:
           assert all(tasks[d]['status']=='COMPLETE' and tasks[d]['proof'] for d in tasks['W02-17']['depends_on'])
           assert tasks['W02-18']['status']=='BLOCKED' and not tasks['W02-18']['proof']
           assert tasks['W02-19']['status']=='BLOCKED' and not tasks['W02-19']['proof']
-          assert graph['global_denominator']==7565
-          assert graph['openjarvis_obligations']==646
-          assert graph['w02_obligation_count']==47
-
+          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646 and graph['w02_obligation_count']==47
           latest={}
           for line in Path('ledgers/CLAIM_LEDGER.ndjson').read_text().splitlines():
               if line.strip():
                   row=json.loads(line)
-                  if row.get('claim_id'):
-                      latest[row['claim_id']]=row
+                  if row.get('claim_id'): latest[row['claim_id']]=row
           active=[r for r in latest.values() if r.get('status')=='ACTIVE']
           assert [r['claim_id'] for r in active]==['CLAIM-CP03-W02-PARITY-GRAPH-20260922'], active
-
-          bindings=[json.loads(line) for line in Path('inventory/cp03/w02_evidence_bindings.jsonl').read_text().splitlines() if line.strip()]
-          assert len(bindings)==14, len(bindings)
-          assert not any(row.get('capability_id')=='cap_075a2380f9db372754f08116' for row in bindings)
-          matrix=[json.loads(line) for line in Path('reports/cp03/w02_parity/PROOF_MATRIX.jsonl').read_text().splitlines() if line.strip()]
-          target=next(r for r in matrix if r['capability_id']=='cap_075a2380f9db372754f08116')
+          bindings=[json.loads(x) for x in Path('inventory/cp03/w02_evidence_bindings.jsonl').read_text().splitlines() if x.strip()]
+          assert len(bindings)==15
+          assert not any(r['capability_id']=='cap_048295582ec38991a9519378' for r in bindings)
+          matrix=[json.loads(x) for x in Path('reports/cp03/w02_parity/PROOF_MATRIX.jsonl').read_text().splitlines() if x.strip()]
+          target=next(r for r in matrix if r['capability_id']=='cap_048295582ec38991a9519378')
           assert target['ownership']=='OWNED'
-          assert target['surface_kind']=='cli_command'
-          assert target['source_path']=='src/openjarvis/cli/model.py'
-          assert target['source_line']==87
-          assert target['name']=='info'
-          assert target['w02_evidence_state']=='UNBOUND'
-          assert target['canonical_parity_status']=='UNVERIFIED'
+          assert target['surface_kind']=='protocol_contract'
+          assert target['source_path']=='frontend/src/types/index.ts'
+          assert target['source_line']==160
+          assert target['name']=='ModelInfo'
+          assert target['w02_evidence_state']=='UNBOUND' and target['canonical_parity_status']=='UNVERIFIED'
           afm=next(r for r in matrix if r['capability_id']=='cap_ac38bf813e130d14927723d8')
           assert afm['w02_evidence_state']=='UNBOUND' and afm['canonical_parity_status']=='UNVERIFIED'
           PY
@@ -108,222 +96,116 @@ jobs:
           python -m scripts.parity.ledger --check --source-repo openjarvis
           git diff --check
 
-      - name: Execute pinned upstream CLI model info under network-none
+      - name: Probe exact pinned ModelInfo source contract
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf /tmp/openjarvis /tmp/w02-cli-info-probe.py /tmp/w02-cli-info-runtime.json
+          rm -rf /tmp/openjarvis
           git init -q /tmp/openjarvis
           git -C /tmp/openjarvis remote add origin https://github.com/open-jarvis/OpenJarvis.git
           git -C /tmp/openjarvis fetch -q --depth=1 origin "$UPSTREAM_SHA"
           git -C /tmp/openjarvis checkout -q --detach FETCH_HEAD
           test "$(git -C /tmp/openjarvis rev-parse HEAD)" = "$UPSTREAM_SHA"
-
-          docker build \
-            -f "$GITHUB_WORKSPACE/scripts/cp03/Dockerfile.baseline" \
-            -t "clever-openjarvis-w02-g6-cli-info:$GITHUB_SHA" \
-            /tmp/openjarvis
-
-          cat >/tmp/w02-cli-info-probe.py <<'PY'
-          import hashlib
-          import json
-          import os
-          from click.testing import CliRunner
-          from openjarvis.cli.model import model
-
-          target='qwen3:0.6b'
-          result=CliRunner().invoke(model,['info',target],catch_exceptions=True)
-          payload={
-              'schema_version':1,
-              'command':['model','info',target],
-              'command_execution':'PASS' if result.exit_code==0 else 'FAIL',
-              'exit_code':result.exit_code,
-              'output_contains_model_id':target in result.output,
-              'output_sha256':hashlib.sha256(result.output.encode('utf-8')).hexdigest(),
-              'output_length':len(result.output),
-              'exception_type':type(result.exception).__name__ if result.exception else None,
-              'network_mode':'none',
-              'model_executions':0,
-              'provider_egress_executions':0,
-              'tool_executions':0,
-              'parity_promotions':0,
-          }
-          print(json.dumps(payload,sort_keys=True))
-          if result.exit_code != 0:
-              raise SystemExit(f'CLI info failed: {result.exception!r}\n{result.output}')
-          if target not in result.output:
-              raise SystemExit('CLI info output omitted target model id')
-          PY
-
-          timeout 120s docker run --rm \
-            --network none \
-            --read-only \
-            --cap-drop ALL \
-            --security-opt no-new-privileges \
-            --pids-limit 256 \
-            --memory 2g \
-            --cpus 2 \
-            --tmpfs /tmp:rw,noexec,nosuid,size=256m \
-            -e HOME=/tmp/home \
-            -e XDG_CONFIG_HOME=/tmp/config \
-            -e XDG_DATA_HOME=/tmp/data \
-            -e PYTHONHASHSEED=0 \
-            -e PYTHONPATH=/src/src \
-            -v /tmp/w02-cli-info-probe.py:/probe.py:ro \
-            "clever-openjarvis-w02-g6-cli-info:$GITHUB_SHA" \
-            'exec /src/.venv/bin/python /probe.py' \
-            > /tmp/w02-cli-info-runtime.json
-
           python - <<'PY'
-          import ast, hashlib, json, os
+          import hashlib,json,os,re
           from pathlib import Path
-
-          runtime=json.loads(Path('/tmp/w02-cli-info-runtime.json').read_text())
-          assert runtime['command_execution']=='PASS'
-          assert runtime['exit_code']==0
-          assert runtime['output_contains_model_id'] is True
-          assert runtime['network_mode']=='none'
-          assert runtime['model_executions']==0
-          assert runtime['provider_egress_executions']==0
-          assert runtime['tool_executions']==0
-          assert runtime['parity_promotions']==0
-
-          source=Path('/tmp/openjarvis/src/openjarvis/cli/model.py')
-          raw=source.read_bytes(); tree=ast.parse(raw.decode('utf-8'))
-          info=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='info')
-          calls=[]
-          for node in ast.walk(info):
-              if isinstance(node,ast.Call):
-                  if isinstance(node.func,ast.Name): name=node.func.id
-                  elif isinstance(node.func,ast.Attribute): name=node.func.attr
-                  else: continue
-                  calls.append((node.lineno,name))
-          assert any(name=='register_builtin_models' for _,name in calls)
-          assert any(name=='discover_engines' for _,name in calls)
-          assert any(name=='contains' for _,name in calls)
-          assert any(name=='get' for _,name in calls)
+          source=Path('/tmp/openjarvis/frontend/src/types/index.ts')
+          raw=source.read_bytes(); text=raw.decode('utf-8')
+          match=re.search(r'export interface ModelInfo\s*\{(?P<body>.*?)\n\}',text,re.S)
+          assert match, 'ModelInfo interface missing'
+          line=text[:match.start()].count('\n')+1
+          assert line==160, line
+          fields=[]
+          for entry in match.group('body').splitlines():
+              entry=entry.strip()
+              if not entry: continue
+              m=re.fullmatch(r'([A-Za-z_][A-Za-z0-9_]*):\s*([^;]+);',entry)
+              assert m, entry
+              fields.append({'name':m.group(1),'type':m.group(2).strip()})
+          assert fields==[
+              {'name':'id','type':'string'}, {'name':'object','type':'string'},
+              {'name':'created','type':'number'}, {'name':'owned_by','type':'string'},
+          ], fields
           probe={
-              'schema_version':1,
-              'date':'2026-09-23',
-              'project_id':'CLEVER-JARVIS-001',
-              'checkpoint':'CP03',
-              'task':'W02-17',
-              'gate':'G6',
-              'capability_id':os.environ['CAPABILITY_ID'],
-              'capability_name':'info',
-              'surface_kind':'cli_command',
-              'source_path':'src/openjarvis/cli/model.py',
-              'source_line':87,
-              'upstream_commit':os.environ['UPSTREAM_SHA'],
-              'source_sha256':hashlib.sha256(raw).hexdigest(),
-              'runtime':runtime,
-              'runtime_isolation':{
-                  'network':'none','read_only':True,'cap_drop':'ALL',
-                  'no_new_privileges':True,'pids_limit':256,'memory':'2g','cpus':2,
-              },
-              'model_executions':0,
-              'provider_egress_executions':0,
-              'tool_executions':0,
-              'parity_promotions':0,
-              'canonical_parity_status':'UNVERIFIED',
+              'schema_version':1,'date':'2026-09-23','project_id':'CLEVER-JARVIS-001','checkpoint':'CP03',
+              'task':'W02-17','gate':'G6','capability_id':os.environ['CAPABILITY_ID'],
+              'capability_name':'ModelInfo','surface_kind':'protocol_contract','source_path':'frontend/src/types/index.ts',
+              'source_line':160,'upstream_commit':os.environ['UPSTREAM_SHA'],'source_sha256':hashlib.sha256(raw).hexdigest(),
+              'interface_fields':fields,'source_probe':'PASS','source_execution':False,
+              'model_executions':0,'provider_egress_executions':0,'tool_executions':0,'parity_promotions':0,
+              'canonical_parity_status':'UNVERIFIED'
           }
           out=Path(os.environ['PROBE_PATH']); out.parent.mkdir(parents=True,exist_ok=True)
           out.write_text(json.dumps(probe,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           PY
 
-      - name: Add one capability-specific non-terminal G6 binding
+      - name: Add one non-terminal capability-specific binding and RED-to-GREEN regression
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json, os
+          import json,os
           from pathlib import Path
-
-          bindings_path=Path(os.environ['BINDINGS_PATH'])
-          rows=[json.loads(line) for line in bindings_path.read_text(encoding='utf-8').splitlines() if line.strip()]
-          assert len(rows)==14
-          cid=os.environ['CAPABILITY_ID']
-          assert not any(r.get('capability_id')==cid for r in rows)
+          b=Path(os.environ['BINDINGS_PATH'])
+          rows=[json.loads(x) for x in b.read_text().splitlines() if x.strip()]
+          assert len(rows)==15
+          cid=os.environ['CAPABILITY_ID']; assert not any(r['capability_id']==cid for r in rows)
           rows.append({
-              'capability_id':cid,
-              'evidence_id':os.environ['SOURCE_EVIDENCE'],
-              'test_id':os.environ['TEST_ID'],
+              'capability_id':cid,'evidence_id':os.environ['SOURCE_EVIDENCE'],'test_id':os.environ['TEST_ID'],
               'validated_head':os.environ['SOURCE_HEAD'],
-              'expected_fields':{
-                  'status':'VERIFIED',
-                  'native_engine_count':15,
-                  'native_import_failure_count':0,
-                  'native_model_count':69,
-                  'model_executions':0,
-                  'provider_egress_executions':0,
-                  'parity_promotions':0,
-              },
+              'expected_fields':{'status':'VERIFIED','native_engine_count':15,'native_import_failure_count':0,
+                  'native_model_count':69,'model_executions':0,'provider_egress_executions':0,'parity_promotions':0},
               'terminal':False,
           })
-          bindings_path.write_text(''.join(json.dumps(r,separators=(',',':'))+'\n' for r in rows),encoding='utf-8')
-
-          p=Path('tests/test_cp03_w02_parity_graph.py')
-          text=p.read_text(encoding='utf-8')
-          needle='AFM_INPROCESS_CAPABILITY_ID = "cap_ac38bf813e130d14927723d8"\n'
+          b.write_text(''.join(json.dumps(r,separators=(',',':'))+'\n' for r in rows))
+          p=Path('tests/test_cp03_w02_parity_graph.py'); text=p.read_text()
+          needle='CLI_MODEL_INFO_COMMAND_CAPABILITY_ID = "cap_075a2380f9db372754f08116"\n'
           assert needle in text
-          text=text.replace(needle,needle+'CLI_MODEL_INFO_COMMAND_CAPABILITY_ID = "cap_075a2380f9db372754f08116"\n',1)
-
-          serve_test='''CLI_SERVE_REGISTER_BUILTIN_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_cli_serve_register_builtin_binding_is_capability_specific_and_evidence_backed"\n)\n'''
-          assert serve_test in text
-          text=text.replace(serve_test,serve_test+'''CLI_MODEL_INFO_COMMAND_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_cli_model_info_command_binding_is_capability_specific_and_runtime_backed"\n)\n''',1)
-
-          assert 'def test_current_matrix_has_fourteen_candidates_and_no_parity_promotion' in text
-          text=text.replace('def test_current_matrix_has_fourteen_candidates_and_no_parity_promotion','def test_current_matrix_has_fifteen_candidates_and_no_parity_promotion',1)
-          text=text.replace('self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 14)','self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 15)',1)
-          text=text.replace('self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 33)','self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 32)',1)
-          set_tail='CLI_SERVE_REGISTER_BUILTIN_CAPABILITY_ID},'
-          assert set_tail in text
-          text=text.replace(set_tail,'CLI_SERVE_REGISTER_BUILTIN_CAPABILITY_ID, CLI_MODEL_INFO_COMMAND_CAPABILITY_ID},',1)
-
-          prior='''        cli_serve_register_builtin = candidates[CLI_SERVE_REGISTER_BUILTIN_CAPABILITY_ID]\n        self.assertEqual(cli_serve_register_builtin["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(cli_serve_register_builtin["binding"]["terminal"])\n'''
+          text=text.replace(needle,needle+'MODEL_INFO_PROTOCOL_CAPABILITY_ID = "cap_048295582ec38991a9519378"\n',1)
+          testneedle='''CLI_MODEL_INFO_COMMAND_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_cli_model_info_command_binding_is_capability_specific_and_runtime_backed"\n)\n'''
+          assert testneedle in text
+          text=text.replace(testneedle,testneedle+'''MODEL_INFO_PROTOCOL_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_model_info_protocol_binding_is_capability_specific_and_source_backed"\n)\n''',1)
+          assert 'def test_current_matrix_has_fifteen_candidates_and_no_parity_promotion' in text
+          text=text.replace('def test_current_matrix_has_fifteen_candidates_and_no_parity_promotion','def test_current_matrix_has_sixteen_candidates_and_no_parity_promotion',1)
+          text=text.replace('self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 15)','self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 16)',1)
+          text=text.replace('self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 32)','self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 31)',1)
+          settail='CLI_MODEL_INFO_COMMAND_CAPABILITY_ID},'
+          assert settail in text
+          text=text.replace(settail,'CLI_MODEL_INFO_COMMAND_CAPABILITY_ID, MODEL_INFO_PROTOCOL_CAPABILITY_ID},',1)
+          prior='''        cli_model_info_command = candidates[CLI_MODEL_INFO_COMMAND_CAPABILITY_ID]\n        self.assertEqual(cli_model_info_command["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(cli_model_info_command["binding"]["terminal"])\n'''
           assert prior in text
-          text=text.replace(prior,prior+'''        cli_model_info_command = candidates[CLI_MODEL_INFO_COMMAND_CAPABILITY_ID]\n        self.assertEqual(cli_model_info_command["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(cli_model_info_command["binding"]["terminal"])\n''',1)
-
+          text=text.replace(prior,prior+'''        model_info_protocol = candidates[MODEL_INFO_PROTOCOL_CAPABILITY_ID]\n        self.assertEqual(model_info_protocol["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(model_info_protocol["binding"]["terminal"])\n''',1)
           marker='    def test_afm_inprocess_registry_remains_unbound_when_only_shim_catalog_is_observed(self) -> None:\n'
           assert marker in text
-          method='''    def test_cli_model_info_command_binding_is_capability_specific_and_runtime_backed(self) -> None:\n        row = next(row for row in self.result["rows"] if row["capability_id"] == CLI_MODEL_INFO_COMMAND_CAPABILITY_ID)\n        self.assertEqual(row["ownership"], "OWNED")\n        self.assertEqual(row["surface_kind"], "cli_command")\n        self.assertEqual(row["source_path"], "src/openjarvis/cli/model.py")\n        self.assertEqual(row["source_line"], 87)\n        self.assertEqual(row["name"], "info")\n        self.assertEqual(row["source_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")\n        self.assertEqual(row["canonical_parity_status"], "UNVERIFIED")\n        self.assertFalse(row["verified"])\n        self.assertFalse(row["parity_promotion"])\n        binding = row["binding"]\n        self.assertEqual(binding["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertEqual(binding["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")\n        self.assertEqual(binding["test_id"], CLI_MODEL_INFO_COMMAND_TEST_ID)\n        self.assertFalse(binding["terminal"])\n\n        receipt = graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")["EVID-W02-MODEL-BRIDGE-20260921"]\n        self.assertEqual(receipt["status"], "VERIFIED")\n        self.assertEqual(receipt["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")\n        self.assertEqual(receipt["native_engine_count"], 15)\n        self.assertEqual(receipt["native_import_failure_count"], 0)\n        self.assertEqual(receipt["native_model_count"], 69)\n        self.assertEqual(receipt["model_executions"], 0)\n        self.assertEqual(receipt["provider_egress_executions"], 0)\n        self.assertEqual(receipt["parity_promotions"], 0)\n\n        probe = json.loads((ROOT / "evidence/cp03/cp03-w02/W02-17/binding_cli_model_info_command_runtime_probe.json").read_text(encoding="utf-8"))\n        self.assertEqual(probe["capability_id"], CLI_MODEL_INFO_COMMAND_CAPABILITY_ID)\n        self.assertEqual(probe["upstream_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")\n        self.assertEqual(probe["source_path"], "src/openjarvis/cli/model.py")\n        self.assertEqual(probe["source_line"], 87)\n        self.assertEqual(probe["runtime"]["command"], ["model", "info", "qwen3:0.6b"])\n        self.assertEqual(probe["runtime"]["command_execution"], "PASS")\n        self.assertEqual(probe["runtime"]["exit_code"], 0)\n        self.assertTrue(probe["runtime"]["output_contains_model_id"])\n        self.assertEqual(probe["runtime"]["network_mode"], "none")\n        self.assertEqual(probe["model_executions"], 0)\n        self.assertEqual(probe["provider_egress_executions"], 0)\n        self.assertEqual(probe["tool_executions"], 0)\n        self.assertEqual(probe["parity_promotions"], 0)\n        self.assertEqual(probe["canonical_parity_status"], "UNVERIFIED")\n\n'''
+          method='''    def test_model_info_protocol_binding_is_capability_specific_and_source_backed(self) -> None:\n        row = next(row for row in self.result["rows"] if row["capability_id"] == MODEL_INFO_PROTOCOL_CAPABILITY_ID)\n        self.assertEqual(row["ownership"], "OWNED")\n        self.assertEqual(row["surface_kind"], "protocol_contract")\n        self.assertEqual(row["source_path"], "frontend/src/types/index.ts")\n        self.assertEqual(row["source_line"], 160)\n        self.assertEqual(row["name"], "ModelInfo")\n        self.assertEqual(row["source_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")\n        self.assertEqual(row["canonical_parity_status"], "UNVERIFIED")\n        self.assertFalse(row["verified"])\n        self.assertFalse(row["parity_promotion"])\n        binding=row["binding"]\n        self.assertEqual(binding["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertEqual(binding["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")\n        self.assertEqual(binding["test_id"], MODEL_INFO_PROTOCOL_TEST_ID)\n        self.assertFalse(binding["terminal"])\n        receipt=graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")["EVID-W02-MODEL-BRIDGE-20260921"]\n        self.assertEqual(receipt["status"], "VERIFIED")\n        self.assertEqual(receipt["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")\n        self.assertEqual(receipt["native_model_count"],69)\n        self.assertEqual(receipt["model_executions"],0)\n        self.assertEqual(receipt["provider_egress_executions"],0)\n        self.assertEqual(receipt["parity_promotions"],0)\n        probe=json.loads((ROOT / "evidence/cp03/cp03-w02/W02-17/binding_model_info_protocol_source_probe.json").read_text())\n        self.assertEqual(probe["capability_id"], MODEL_INFO_PROTOCOL_CAPABILITY_ID)\n        self.assertEqual(probe["upstream_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")\n        self.assertEqual(probe["source_path"], "frontend/src/types/index.ts")\n        self.assertEqual(probe["source_line"],160)\n        self.assertEqual(probe["source_probe"],"PASS")\n        self.assertFalse(probe["source_execution"])\n        self.assertEqual(probe["interface_fields"],[{"name":"id","type":"string"},{"name":"object","type":"string"},{"name":"created","type":"number"},{"name":"owned_by","type":"string"}])\n        self.assertEqual(probe["model_executions"],0)\n        self.assertEqual(probe["provider_egress_executions"],0)\n        self.assertEqual(probe["tool_executions"],0)\n        self.assertEqual(probe["parity_promotions"],0)\n\n'''
           text=text.replace(marker,method+marker,1)
-          p.write_text(text,encoding='utf-8')
+          p.write_text(text)
           PY
-
           python scripts/cp03/w02_parity_graph.py --write
           python scripts/cp03/w02_parity_graph.py --check
           python -m unittest -v "$TEST_ID" tests.test_cp03_w02_parity_graph
           python - <<'PY'
           import json
           from pathlib import Path
-          summary=json.loads(Path('reports/cp03/w02_parity/SUMMARY.json').read_text())
-          assert summary['global_denominator']==7565
-          assert summary['openjarvis_obligations']==646
-          assert summary['w02_proof_units']==47
-          assert summary['verified_capabilities']==0
-          assert summary['parity_promotions']==0
-          matrix=[json.loads(x) for x in Path('reports/cp03/w02_parity/PROOF_MATRIX.jsonl').read_text().splitlines() if x.strip()]
-          assert sum(r['w02_evidence_state']=='EVIDENCE_BACKED_CANDIDATE' for r in matrix)==15
-          assert sum(r['w02_evidence_state']=='UNBOUND' for r in matrix)==32
-          target=next(r for r in matrix if r['capability_id']=='cap_075a2380f9db372754f08116')
-          assert target['w02_evidence_state']=='EVIDENCE_BACKED_CANDIDATE'
-          assert target['canonical_parity_status']=='UNVERIFIED'
-          assert target['verified'] is False and target['parity_promotion'] is False
-          afm=next(r for r in matrix if r['capability_id']=='cap_ac38bf813e130d14927723d8')
+          s=json.loads(Path('reports/cp03/w02_parity/SUMMARY.json').read_text())
+          assert s['global_denominator']==7565 and s['openjarvis_obligations']==646 and s['w02_proof_units']==47
+          assert s['verified_capabilities']==0 and s['parity_promotions']==0
+          m=[json.loads(x) for x in Path('reports/cp03/w02_parity/PROOF_MATRIX.jsonl').read_text().splitlines() if x.strip()]
+          assert sum(r['w02_evidence_state']=='EVIDENCE_BACKED_CANDIDATE' for r in m)==16
+          assert sum(r['w02_evidence_state']=='UNBOUND' for r in m)==31
+          t=next(r for r in m if r['capability_id']=='cap_048295582ec38991a9519378')
+          assert t['w02_evidence_state']=='EVIDENCE_BACKED_CANDIDATE' and t['canonical_parity_status']=='UNVERIFIED'
+          assert t['verified'] is False and t['parity_promotion'] is False
+          afm=next(r for r in m if r['capability_id']=='cap_ac38bf813e130d14927723d8')
           assert afm['w02_evidence_state']=='UNBOUND' and afm['binding'] is None
           PY
           git diff --check
 
-      - name: Regression and G6 adversarial gauntlet before commit
+      - name: Targeted regression and G6 gauntlet
         shell: bash
         run: |
           set -euo pipefail
-          python -m unittest -v \
-            tests.test_cp03_w02_model_bridge \
-            tests.test_cp03_w02_parity_graph \
-            tests.test_cp03_w02_plan \
-            tests.test_cp03_w02_unary_release_regressions
+          python -m unittest -v tests.test_cp03_w02_model_bridge tests.test_cp03_w02_parity_graph tests.test_cp03_w02_plan tests.test_cp03_w02_unary_release_regressions
           python scripts/validate_agentic_state.py
           python scripts/context/validate_context_pack.py
           python scripts/context/build_context_pack.py --check
@@ -332,8 +214,8 @@ jobs:
           python -m scripts.parity.ledger --check --source-repo openjarvis
           git diff --check
 
-      - name: Commit capability proof and binding under exact-head CAS
-        id: binding
+      - name: Commit proof unit under exact-head CAS
+        id: proof
         shell: bash
         run: |
           set -euo pipefail
@@ -343,148 +225,79 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$BINDINGS_PATH" "$PROBE_PATH" tests/test_cp03_w02_parity_graph.py reports/cp03/w02_parity graphs/cp03/w02_parity
-          git commit -m 'CP03 W02-17: add runtime-backed CLI model info G6 binding'
-          head="$(git rev-parse HEAD)"
-          git push origin HEAD:"${GITHUB_REF_NAME}"
+          git commit -m 'CP03 W02-17: add source-backed ModelInfo protocol G6 binding'
+          head="$(git rev-parse HEAD)"; git push origin HEAD:"${GITHUB_REF_NAME}"
           test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$head"
           echo "head=$head" >> "$GITHUB_OUTPUT"
-
-      - name: Exact-head retest of binding commit
-        shell: bash
-        env:
-          BINDING_HEAD: ${{ steps.binding.outputs.head }}
-        run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD)" = "$BINDING_HEAD"
-          git fetch origin main
-          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
-          python scripts/cp03/w02_parity_graph.py --check
-          python -m unittest -v "$TEST_ID" tests.test_cp03_w02_parity_graph tests.test_cp03_w02_plan
-          python scripts/validate_agentic_state.py
-          python scripts/context/validate_context_pack.py
-          python scripts/context/build_context_pack.py --check
-          python scripts/context/validate_next_actions.py
-          python scripts/cp03/validate_w02_plan.py
-          python -m scripts.parity.ledger --check --source-repo openjarvis
-          git diff --check
 
       - name: Persist evidence decisions risks state handoff and ContextPack
         shell: bash
         env:
-          BINDING_HEAD: ${{ steps.binding.outputs.head }}
+          PROOF_HEAD: ${{ steps.proof.outputs.head }}
         run: |
           set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$PROOF_HEAD"
           python - <<'PY'
-          import hashlib, json, os
+          import hashlib,json,os
           from pathlib import Path
-
-          evidence_id='EVID-W02-PARITY-BINDING-CLI-MODEL-INFO-COMMAND-20260923'
-          decision_id='DEC-W02-G6-CLI-MODEL-INFO-COMMAND-BINDING-20260923'
-          risk_id='RISK-W02-G6-K47-BINDINGS-PENDING-20260922'
-          head=os.environ['BINDING_HEAD']; main=os.environ['EXPECTED_MAIN']; run_id=int(os.environ['GITHUB_RUN_ID'])
-          cid=os.environ['CAPABILITY_ID']; test_id=os.environ['TEST_ID']
-
+          evid='EVID-W02-PARITY-BINDING-MODELINFO-PROTOCOL-20260923'; dec='DEC-W02-G6-MODELINFO-PROTOCOL-BINDING-20260923'
+          risk_id='RISK-W02-G6-K47-BINDINGS-PENDING-20260922'; head=os.environ['PROOF_HEAD']; run_id=int(os.environ['GITHUB_RUN_ID'])
           def rows(path):
-              p=Path(path)
-              return [json.loads(x) for x in p.read_text(encoding='utf-8').splitlines() if x.strip()] if p.exists() else []
+              p=Path(path); return [json.loads(x) for x in p.read_text().splitlines() if x.strip()] if p.exists() else []
           def append_once(path,key,value,row):
-              if any(x.get(key)==value for x in rows(path)):
-                  return
-              with Path(path).open('a',encoding='utf-8') as h:
-                  h.write(json.dumps(row,ensure_ascii=False,sort_keys=True,separators=(',',':'))+'\n')
-
-          claim_path=Path('sessions/20260922-w02-parity-graph/CLAIM.json')
-          claim=json.loads(claim_path.read_text())
+              if any(x.get(key)==value for x in rows(path)): return
+              with Path(path).open('a') as h: h.write(json.dumps(row,sort_keys=True,separators=(',',':'))+'\n')
+          claimp=Path('sessions/20260922-w02-parity-graph/CLAIM.json'); claim=json.loads(claimp.read_text())
           assert claim['claim_id']==os.environ['CLAIM_ID'] and claim['status']=='ACTIVE'
-          claim['continuation_base_head']=main
-          claim_path.write_text(json.dumps(claim,ensure_ascii=False,indent=2)+'\n')
-          claim_event={
-              'schema_version':1,'date':'2026-09-23','event':'CONTINUATION',
-              'event_id':'CLAIM-CONT-W02-G6-CLI-MODEL-INFO-COMMAND-20260923',
-              'project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','parent_wave':'CP03-W02',
-              'canonical_task':'W02-17','wave_id':'CP03-W02-PARITY-GRAPH-20260922',
-              'claim_id':os.environ['CLAIM_ID'],'owner':'chatgpt-gpt-5.6-sol','status':'ACTIVE',
-              'base_head':main,'scope':claim['scope'],
-              'coordination':'Continue the sole W02-17 G6 claim from exact main. Execute and bind only the owned CLI model info proof unit using a network-none pinned OpenJarvis runtime probe plus completed W02-08 registration evidence. No model/provider/tool execution, parity promotion, denominator mutation, AFM promotion, or W02-18 opening.'
-          }
-          append_once('ledgers/CLAIM_LEDGER.ndjson','event_id',claim_event['event_id'],claim_event)
-
-          probe_path=Path(os.environ['PROBE_PATH']); probe=json.loads(probe_path.read_text())
-          probe_sha=hashlib.sha256(probe_path.read_bytes()).hexdigest()
-          result={
-              'schema_version':1,'date':'2026-09-23','project_id':'CLEVER-JARVIS-001',
-              'checkpoint':'CP03','parent_wave':'CP03-W02','task':'W02-17','gate':'G6','status':'PASS',
-              'evidence_id':evidence_id,'claim_id':os.environ['CLAIM_ID'],'validated_head':head,
-              'github_actions_run_id':run_id,'bindings_validated_total':15,'bindings_added_this_slice':1,
-              'binding_capability_id':cid,'binding_capability_name':'info','binding_surface_kind':'cli_command',
-              'binding_source_evidence_id':os.environ['SOURCE_EVIDENCE'],
-              'binding_source_validated_head':os.environ['SOURCE_HEAD'],
-              'binding_source_run_id':35552788123,'executed_test_id':test_id,
-              'runtime_probe_path':os.environ['PROBE_PATH'],'runtime_probe_sha256':probe_sha,
-              'direct_command_execution':'PASS','runtime_network':'none','runtime_target_model':'qwen3:0.6b',
-              'unbound_remaining':32,'verified_capabilities':0,'parity_promotions':0,
-              'global_denominator':7565,'openjarvis_obligations':646,'model_executions':0,
-              'provider_egress_executions':0,'tool_executions':0,
-              'real_openjarvis_fallback_model_execution':'NOT_RUN',
-              'afm_inprocess_execution':'NOT_RUN',
-              'next_slice':'Continue W02-17 with another proof unit only when capability-specific executed or exact source evidence can be paired with an existing completed-task PASS receipt. AFM remains blocked pending compatible-host proof.'
-          }
-          Path('sessions/20260922-w02-parity-graph/RESULT.json').write_text(json.dumps(result,ensure_ascii=False,indent=2,sort_keys=True)+'\n')
-          Path('evidence/cp03/cp03-w02/W02-17/binding_cli_model_info_command_report.json').write_text(json.dumps(result,ensure_ascii=False,indent=2,sort_keys=True)+'\n')
-
-          evidence={
-              'schema_version':1,'date':'2026-09-23','evidence_id':evidence_id,'status':'VERIFIED',
-              'type':'cp03_w02_g6_runtime_backed_cli_model_info_binding','wave_id':'CP03-W02',
-              'support_wave':'CP03-W02-PARITY-GRAPH-20260922','validated_head':head,
-              'github_actions_run_id':run_id,
-              'claim':'The owned OpenJarvis CLI model info proof unit was executed on the exact pinned upstream under Docker network=none and bound only as a non-terminal EVIDENCE_BACKED_CANDIDATE to completed W02-08 registration evidence. Runtime exit was 0 and the target model id was rendered. Canonical parity remains UNVERIFIED.',
-              'binding_capability_id':cid,'binding_source_evidence_id':os.environ['SOURCE_EVIDENCE'],
-              'binding_source_validated_head':os.environ['SOURCE_HEAD'],'executed_test_id':test_id,
-              'runtime_probe_sha256':probe_sha,'direct_command_execution':'PASS','runtime_network':'none',
-              'model_executions':0,'provider_egress_executions':0,'tool_executions':0,
-              'bindings_validated_total':15,'unbound_remaining':32,'verified_capabilities':0,
-              'parity_promotions':0,'global_denominator':7565,'openjarvis_obligations':646,
-              'real_openjarvis_fallback_model_execution':'NOT_RUN','afm_inprocess_execution':'NOT_RUN'
-          }
-          append_once('ledgers/EVIDENCE_LEDGER.ndjson','evidence_id',evidence_id,evidence)
-          append_once('ledgers/RUN_LOG.ndjson','event_id','RUN-W02-PARITY-BINDING-CLI-MODEL-INFO-COMMAND-20260923',{
-              'schema_version':1,'date':'2026-09-23','event':'CP03_W02_G6_CLI_MODEL_INFO_COMMAND_BINDING_ADVANCED',
-              'event_id':'RUN-W02-PARITY-BINDING-CLI-MODEL-INFO-COMMAND-20260923','goal_id':'CLEVER-JARVIS-001',
-              'checkpoint':'CP03','iteration':'I03','wave_id':'CP03-W02','canonical_task':'W02-17',
-              'claim_id':os.environ['CLAIM_ID'],'evidence_id':evidence_id,'status':'ADVANCED',
-              'bindings_validated_total':15,'unbound_remaining':32,'verified_capabilities':0,'parity_promotions':0})
-          append_once('ledgers/WAVE_LEDGER.ndjson','event_id','WAVE-W02-PARITY-BINDING-CLI-MODEL-INFO-COMMAND-20260923',{
-              'schema_version':1,'date':'2026-09-23','event':'IMPLEMENTATION_VERIFICATION',
-              'event_id':'WAVE-W02-PARITY-BINDING-CLI-MODEL-INFO-COMMAND-20260923','checkpoint':'CP03','iteration':'I03',
-              'parent_wave':'CP03-W02','wave_id':'CP03-W02-PARITY-GRAPH-20260922','canonical_task':'W02-17',
-              'claim_id':os.environ['CLAIM_ID'],'gate':'G6','evidence_id':evidence_id,'status':'IN_PROGRESS',
-              'bindings_validated_total':15,'unbound_remaining':32,'parity_promotions':0})
-          append_once('ledgers/DECISION_LEDGER.ndjson','decision_id',decision_id,{
-              'schema_version':1,'date':'2026-09-23','decision_id':decision_id,'status':'ACCEPTED','task':'W02-17',
-              'evidence_id':evidence_id,
-              'decision':'Bind cap_075a2380f9db372754f08116 (CLI model info) only as a non-terminal EVIDENCE_BACKED_CANDIDATE after an exact pinned upstream network-none command execution and capability-specific regression. Do not promote VERIFIED parity.',
-              'context':'The command executed successfully and rendered qwen3:0.6b without model/provider/tool execution. Formal binding authority remains the completed W02-08 PASS receipt; the new direct runtime probe strengthens capability specificity but does not mutate canonical parity.'})
-          risk={
-              'schema_version':1,'date':'2026-09-23','risk_id':risk_id,'severity':'P1','status':'OPEN','evidence_id':evidence_id,
-              'risk':'W02-17 still has 32/47 proof units without explicit capability-to-test-to-evidence bindings; direct CLI execution of one command does not imply adjacent command or runtime parity.',
-              'mitigation':'Continue one capability-specific proof unit at a time; preserve NOT_RUN/BLOCKED/PLATFORM_GATED as non-proof. Keep AFM UNBOUND until compatible-host proof and keep denominator 7565, obligations 646, VERIFIED 0 and W02-18 BLOCKED.'}
-          if not any(r.get('risk_id')==risk_id and r.get('evidence_id')==evidence_id for r in rows('ledgers/RISK_LEDGER.ndjson')):
-              with Path('ledgers/RISK_LEDGER.ndjson').open('a',encoding='utf-8') as h:
-                  h.write(json.dumps(risk,ensure_ascii=False,sort_keys=True,separators=(',',':'))+'\n')
-
-          state=Path('STATE.md'); lines=state.read_text().splitlines()
-          lines=[line for line in lines if not line.startswith('- G6 explicit binding progress:')]
-          pos=next(i for i,line in enumerate(lines) if line.startswith('- Canonical task frontier:'))+1
-          lines.insert(pos,'- G6 explicit binding progress: `15/47` evidence-backed candidates; `32` UNBOUND; VERIFIED capabilities `0`; parity promotions `0`.')
+          claim['continuation_base_head']=os.environ['EXPECTED_MAIN']; claimp.write_text(json.dumps(claim,indent=2)+'\n')
+          append_once('ledgers/CLAIM_LEDGER.ndjson','event_id','CLAIM-AMEND-W02-G6-MODELINFO-20260923',{
+              'schema_version':1,'date':'2026-09-23','event_id':'CLAIM-AMEND-W02-G6-MODELINFO-20260923','event':'CLAIM_CONTINUED',
+              'claim_id':os.environ['CLAIM_ID'],'status':'ACTIVE','owner':'chatgpt-gpt-5.6-sol','checkpoint':'CP03','canonical_task':'W02-17',
+              'base_head':os.environ['EXPECTED_MAIN'],'coordination':'Continue sole W02-17 G6 claim for exactly one ModelInfo protocol proof unit; no parity/denominator/task-frontier promotion.'})
+          probe=Path(os.environ['PROBE_PATH']); probe_sha=hashlib.sha256(probe.read_bytes()).hexdigest()
+          result={'schema_version':1,'date':'2026-09-23','project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','parent_wave':'CP03-W02','task':'W02-17','gate':'G6',
+              'claim_id':os.environ['CLAIM_ID'],'evidence_id':evid,'status':'PASS','validated_head':head,'github_actions_run_id':run_id,
+              'binding_capability_id':os.environ['CAPABILITY_ID'],'binding_capability_name':'ModelInfo','binding_surface_kind':'protocol_contract',
+              'binding_source_evidence_id':os.environ['SOURCE_EVIDENCE'],'binding_source_validated_head':os.environ['SOURCE_HEAD'],'executed_test_id':os.environ['TEST_ID'],
+              'source_probe_path':os.environ['PROBE_PATH'],'source_probe_sha256':probe_sha,'source_execution':False,'bindings_added_this_slice':1,
+              'bindings_validated_total':16,'unbound_remaining':31,'verified_capabilities':0,'parity_promotions':0,'global_denominator':7565,'openjarvis_obligations':646,
+              'model_executions':0,'provider_egress_executions':0,'tool_executions':0,'real_openjarvis_fallback_model_execution':'NOT_RUN','afm_inprocess_execution':'NOT_RUN',
+              'next_slice':'Continue W02-17 with another proof unit only when its own executed test or exact source evidence can be paired with an existing completed-task PASS receipt; AFM remains blocked pending compatible-host proof.'}
+          Path('sessions/20260922-w02-parity-graph/RESULT.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n')
+          Path('evidence/cp03/cp03-w02/W02-17/binding_model_info_protocol_report.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n')
+          append_once('ledgers/EVIDENCE_LEDGER.ndjson','evidence_id',evid,{
+              'schema_version':1,'date':'2026-09-23','evidence_id':evid,'status':'VERIFIED','type':'cp03_w02_g6_source_backed_modelinfo_protocol_binding',
+              'wave_id':'CP03-W02','support_wave':'CP03-W02-PARITY-GRAPH-20260922','validated_head':head,'github_actions_run_id':run_id,
+              'claim':'The owned pinned OpenJarvis frontend ModelInfo protocol contract is exact-source-probed at its frozen source location and bound only as a non-terminal EVIDENCE_BACKED_CANDIDATE to completed W02-08 model-bridge evidence. Canonical parity remains UNVERIFIED.',
+              'binding_capability_id':os.environ['CAPABILITY_ID'],'binding_source_evidence_id':os.environ['SOURCE_EVIDENCE'],'binding_source_validated_head':os.environ['SOURCE_HEAD'],
+              'executed_test_id':os.environ['TEST_ID'],'source_probe_sha256':probe_sha,'source_execution':False,'bindings_validated_total':16,'unbound_remaining':31,
+              'verified_capabilities':0,'parity_promotions':0,'global_denominator':7565,'openjarvis_obligations':646,'model_executions':0,'provider_egress_executions':0,'tool_executions':0,
+              'real_openjarvis_fallback_model_execution':'NOT_RUN','afm_inprocess_execution':'NOT_RUN'})
+          append_once('ledgers/RUN_LOG.ndjson','event_id','RUN-W02-PARITY-BINDING-MODELINFO-PROTOCOL-20260923',{
+              'schema_version':1,'date':'2026-09-23','event':'CP03_W02_G6_MODELINFO_PROTOCOL_BINDING_ADVANCED','event_id':'RUN-W02-PARITY-BINDING-MODELINFO-PROTOCOL-20260923',
+              'goal_id':'CLEVER-JARVIS-001','checkpoint':'CP03','iteration':'I03','wave_id':'CP03-W02','canonical_task':'W02-17','claim_id':os.environ['CLAIM_ID'],
+              'evidence_id':evid,'status':'ADVANCED','bindings_validated_total':16,'unbound_remaining':31,'verified_capabilities':0,'parity_promotions':0})
+          append_once('ledgers/WAVE_LEDGER.ndjson','event_id','WAVE-W02-PARITY-BINDING-MODELINFO-PROTOCOL-20260923',{
+              'schema_version':1,'date':'2026-09-23','event':'IMPLEMENTATION_VERIFICATION','event_id':'WAVE-W02-PARITY-BINDING-MODELINFO-PROTOCOL-20260923','checkpoint':'CP03','iteration':'I03',
+              'parent_wave':'CP03-W02','wave_id':'CP03-W02-PARITY-GRAPH-20260922','canonical_task':'W02-17','claim_id':os.environ['CLAIM_ID'],'gate':'G6','evidence_id':evid,
+              'status':'IN_PROGRESS','bindings_validated_total':16,'unbound_remaining':31,'parity_promotions':0})
+          append_once('ledgers/DECISION_LEDGER.ndjson','decision_id',dec,{
+              'schema_version':1,'date':'2026-09-23','decision_id':dec,'status':'ACCEPTED','task':'W02-17','evidence_id':evid,
+              'decision':'Bind cap_048295582ec38991a9519378 (ModelInfo protocol contract) only as non-terminal EVIDENCE_BACKED_CANDIDATE after exact pinned-source interface proof plus completed W02-08 evidence; do not promote parity.',
+              'context':'The source contract fixes id/object/created/owned_by at frontend/src/types/index.ts:160. This proves the frozen contract surface only; it does not prove frontend-server behavioral equivalence or terminal parity.'})
+          risk={'schema_version':1,'date':'2026-09-23','risk_id':risk_id,'severity':'P1','status':'OPEN','evidence_id':evid,
+              'risk':'W02-17 still has 31/47 proof units without explicit capability-to-test-to-evidence bindings; exact source proof for ModelInfo does not imply frontend/server behavioral parity.',
+              'mitigation':'Continue one capability-specific proof unit at a time; preserve NOT_RUN/BLOCKED/PLATFORM_GATED as non-proof. Keep AFM UNBOUND until compatible-host proof; denominator 7565, obligations 646, VERIFIED 0 and W02-18 BLOCKED.'}
+          if not any(r.get('risk_id')==risk_id and r.get('evidence_id')==evid for r in rows('ledgers/RISK_LEDGER.ndjson')):
+              with Path('ledgers/RISK_LEDGER.ndjson').open('a') as h: h.write(json.dumps(risk,sort_keys=True,separators=(',',':'))+'\n')
+          state=Path('STATE.md'); lines=state.read_text().splitlines(); lines=[x for x in lines if not x.startswith('- G6 explicit binding progress:')]
+          pos=next(i for i,x in enumerate(lines) if x.startswith('- Canonical task frontier:'))+1
+          lines.insert(pos,'- G6 explicit binding progress: `16/47` evidence-backed candidates; `31` UNBOUND; VERIFIED capabilities `0`; parity promotions `0`.')
           state.write_text('\n'.join(lines).rstrip()+'\n')
-
-          handoff=Path('HANDOFF.md'); text=handoff.read_text().rstrip()
-          marker='## W02-17 CLI model info command binding — runtime-backed partial verified'
-          note=f'''\n\n{marker}\n\n- `{evidence_id}`: `{cid}` (`info`, OWNED CLI command at `src/openjarvis/cli/model.py:87`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.\n- Capability-specific runtime proof executed pinned OpenJarvis `{os.environ['UPSTREAM_SHA']}` with `model info qwen3:0.6b` inside Docker `--network none`; exit `0`, target model ID observed, model/provider/tool executions `0`.\n- Formal G6 binding remains anchored to completed W02-08 `{os.environ['SOURCE_EVIDENCE']}` at exact SHA `{os.environ['SOURCE_HEAD']}` plus `{test_id}` and the runtime probe `{os.environ['PROBE_PATH']}`. This is evidence-backed candidate state only, not VERIFIED parity.\n- G6 is now 15 `EVIDENCE_BACKED_CANDIDATE` / 32 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged.\n- AFM `cap_ac38bf813e130d14927723d8` remains `UNBOUND`; direct AFM execution is still `NOT_RUN`. Real OpenJarvis fallback model execution also remains `NOT_RUN`. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.\n- Exact next slice: another W02-17 proof unit with its own executed test/exact evidence; never generalize this CLI proof to adjacent commands or promote parity without terminal evidence.\n'''
-          if marker not in text:
-              handoff.write_text(text+note)
+          hand=Path('HANDOFF.md'); text=hand.read_text().rstrip(); marker='## W02-17 ModelInfo protocol binding — source-backed partial verified'
+          note=f'''\n\n{marker}\n\n- `{evid}`: `cap_048295582ec38991a9519378` (`ModelInfo`, OWNED protocol contract at `frontend/src/types/index.ts:160`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.\n- Exact pinned source `{os.environ['UPSTREAM_SHA']}` was probed: fields are exactly `id:string`, `object:string`, `created:number`, `owned_by:string`; source execution is not claimed.\n- Formal G6 binding is anchored to completed W02-08 `{os.environ['SOURCE_EVIDENCE']}` at exact SHA `{os.environ['SOURCE_HEAD']}` plus `{os.environ['TEST_ID']}` and `{os.environ['PROBE_PATH']}`. This is candidate evidence only, not VERIFIED parity.\n- G6 is now 16 `EVIDENCE_BACKED_CANDIDATE` / 31 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged.\n- AFM `cap_ac38bf813e130d14927723d8` remains `UNBOUND`; AFM execution and real OpenJarvis fallback model execution remain `NOT_RUN`. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.\n- Exact next slice: another W02-17 proof unit with capability-specific executed or exact source evidence plus completed-task receipt; do not generalize this protocol proof to behavioral parity.\n'''
+          if marker not in text: hand.write_text(text+note)
           PY
-
           python scripts/cp03/w02_parity_graph.py --write
           python scripts/cp03/w02_parity_graph.py --check
           python scripts/context/build_context_pack.py
@@ -501,28 +314,23 @@ jobs:
         id: durable
         shell: bash
         env:
-          BINDING_HEAD: ${{ steps.binding.outputs.head }}
+          PROOF_HEAD: ${{ steps.proof.outputs.head }}
         run: |
           set -euo pipefail
           git fetch origin main
           test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
-          test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$BINDING_HEAD"
+          test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$PROOF_HEAD"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add \
-            sessions/20260922-w02-parity-graph/CLAIM.json \
-            sessions/20260922-w02-parity-graph/RESULT.json \
-            evidence/cp03/cp03-w02/W02-17/binding_cli_model_info_command_report.json \
-            reports/cp03/w02_parity graphs/cp03/w02_parity \
-            STATE.md HANDOFF.md \
-            ledgers/CLAIM_LEDGER.ndjson ledgers/EVIDENCE_LEDGER.ndjson ledgers/RUN_LOG.ndjson \
+          git add sessions/20260922-w02-parity-graph/CLAIM.json sessions/20260922-w02-parity-graph/RESULT.json \
+            evidence/cp03/cp03-w02/W02-17/binding_model_info_protocol_report.json reports/cp03/w02_parity graphs/cp03/w02_parity \
+            STATE.md HANDOFF.md ledgers/CLAIM_LEDGER.ndjson ledgers/EVIDENCE_LEDGER.ndjson ledgers/RUN_LOG.ndjson \
             ledgers/WAVE_LEDGER.ndjson ledgers/DECISION_LEDGER.ndjson ledgers/RISK_LEDGER.ndjson \
             .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
-          git commit -m 'CP03 W02-17: persist CLI model info G6 evidence and state'
-          final_head="$(git rev-parse HEAD)"
-          git push origin HEAD:"${GITHUB_REF_NAME}"
-          test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$final_head"
-          echo "head=$final_head" >> "$GITHUB_OUTPUT"
+          git commit -m 'CP03 W02-17: persist ModelInfo protocol G6 evidence and state'
+          final="$(git rev-parse HEAD)"; git push origin HEAD:"${GITHUB_REF_NAME}"
+          test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$final"
+          echo "head=$final" >> "$GITHUB_OUTPUT"
 
       - name: Final exact-head regression and gauntlet
         shell: bash
@@ -531,14 +339,9 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$FINAL_HEAD"
-          git fetch origin main
-          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          git fetch origin main; test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
           python scripts/cp03/w02_parity_graph.py --check
-          python -m unittest -v \
-            tests.test_cp03_w02_model_bridge \
-            tests.test_cp03_w02_parity_graph \
-            tests.test_cp03_w02_plan \
-            tests.test_cp03_w02_unary_release_regressions
+          python -m unittest -v tests.test_cp03_w02_model_bridge tests.test_cp03_w02_parity_graph tests.test_cp03_w02_plan tests.test_cp03_w02_unary_release_regressions
           python scripts/validate_agentic_state.py
           python scripts/context/validate_context_pack.py
           python scripts/context/build_context_pack.py --check
@@ -548,14 +351,11 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          state=Path('STATE.md').read_text()
-          assert '`15/47` evidence-backed candidates; `32` UNBOUND' in state
+          state=Path('STATE.md').read_text(); assert '`16/47` evidence-backed candidates; `31` UNBOUND' in state
           assert 'cap_ac38bf813e130d14927723d8' in state and 'remains `UNBOUND`' in state
-          graph=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
-          tasks={t['id']:t for t in graph['tasks']}
-          assert tasks['W02-17']['status']=='IN_PROGRESS'
-          assert tasks['W02-18']['status']=='BLOCKED' and tasks['W02-19']['status']=='BLOCKED'
-          assert graph['global_denominator']==7565 and graph['openjarvis_obligations']==646
+          g=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text()); t={x['id']:x for x in g['tasks']}
+          assert t['W02-17']['status']=='IN_PROGRESS' and t['W02-18']['status']=='BLOCKED' and t['W02-19']['status']=='BLOCKED'
+          assert g['global_denominator']==7565 and g['openjarvis_obligations']==646
           PY
           git diff --check
           printf 'FINAL_HEAD=%s\n' "$FINAL_HEAD" >> "$GITHUB_STEP_SUMMARY"
