@@ -243,3 +243,11 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - Formal G6 binding is anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4` plus `tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_cli_model_convert_command_binding_is_capability_specific_and_source_backed`. Candidate evidence only: VERIFIED parity remains 0.
 - G6 is now 20 `EVIDENCE_BACKED_CANDIDATE` / 27 `UNBOUND`; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. AFM and real fallback executions remain `NOT_RUN`; W02-18/W02-19 remain `BLOCKED`. The pre-existing InferenceStartEvent branch was deliberately left untouched to avoid scope collision.
 - Exact next slice: another W02-17 proof unit with capability-specific executed or exact pinned-source evidence plus completed-task receipt; do not infer conversion behavior from this source-backed command binding.
+
+## W02-17 CLI serve command binding — source-backed partial verified
+
+- `EVID-W02-PARITY-BINDING-CLI-SERVE-COMMAND-20260923`: `cap_039e17d615ba665937992b25` (`serve`, SHARED CLI command at `src/openjarvis/cli/serve.py:126`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.
+- Exact pinned source `72033b8ec288aa067ce4530ff9d96bf231e9c4e5` was AST-probed: command declaration, host/port/engine/model/agent options, and the `register_builtin_models()` call are present. Direct serve execution, server startup, network listening and credential injection remain `NOT_RUN`.
+- Formal G6 binding is anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4` plus `tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_cli_serve_command_binding_is_capability_specific_and_source_backed`. Because this proof unit is SHARED and terminal-ineligible in W02, no terminal attribution or parity promotion is made.
+- G6 is now 21 `EVIDENCE_BACKED_CANDIDATE` / 26 `UNBOUND`; VERIFIED 0; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. AFM/fallback remain `NOT_RUN`; W02-18/W02-19 stay `BLOCKED`; InferenceStartEvent is untouched.
+- Exact next slice: another W02-17 proof unit with capability-specific executed or exact pinned-source evidence plus a completed-task receipt; never infer server behavior from this source-only binding.
