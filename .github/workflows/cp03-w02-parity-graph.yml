@@ -105,36 +105,142 @@ jobs:
           git -C /tmp/openjarvis checkout -q --detach FETCH_HEAD
           test "$(git -C /tmp/openjarvis rev-parse HEAD)" = "$UPSTREAM_COMMIT"
           python - <<'PY'
-          import ast, hashlib, json, os
+          import ast
+          import hashlib
+          import json
+          import os
           from pathlib import Path
+
           src=Path('/tmp/openjarvis/src/openjarvis/server/routes.py')
-          raw=src.read_bytes(); text=raw.decode('utf-8'); sha=hashlib.sha256(raw).hexdigest()
+          raw=src.read_bytes()
+          text=raw.decode('utf-8')
+          source_sha=hashlib.sha256(raw).hexdigest()
           tree=ast.parse(text)
-          fn=next(n for n in tree.body if isinstance(n,ast.AsyncFunctionDef) and n.name=='reload_cloud_engine')
-          assert fn.lineno==1220
-          assert len(fn.decorator_list)==1
-          dec=fn.decorator_list[0]
-          assert isinstance(dec,ast.Call) and isinstance(dec.func,ast.Attribute) and dec.func.attr=='post'
-          assert len(dec.args)==1 and isinstance(dec.args[0],ast.Constant) and dec.args[0].value=='/v1/cloud/reload'
-          assert dec.lineno==1219
-          segment='\n'.join(text.splitlines()[1218:1293])
-          for marker in ('submitted_keys','os.environ','CloudEngine','cloud.health()','MultiEngine','inner._engines','inner._refresh_map()','request.app.state.engine_name = "multi"'):
-              assert marker in segment, marker
-          probe={'schema_version':1,'date':'2026-09-24','project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','task':'W02-17','gate':'G6','capability_id':os.environ['CAPABILITY_ID'],'capability_name':'POST /v1/cloud/reload','surface_kind':'http_route','ownership':'OWNED','terminal_eligible_in_w02':True,'upstream_commit':os.environ['UPSTREAM_COMMIT'],'source_path':'src/openjarvis/server/routes.py','source_line':dec.lineno,'source_function':'reload_cloud_engine','source_function_line':fn.lineno,'source_sha256':sha,'source_probe':'PASS','source_execution':False,'http_method':'POST','route_path':'/v1/cloud/reload','credential_key_filter':'*_API_KEY','reload_markers':['CloudEngine','cloud.health()','MultiEngine','inner._engines','inner._refresh_map()','engine_name=multi'],'route_runtime_execution':'NOT_RUN','cloud_engine_execution':'NOT_RUN','credential_injection_execution':'NOT_RUN','model_executions':0,'provider_egress_executions':0,'tool_executions':0,'canonical_parity_status':'UNVERIFIED','parity_promotions':0}
-          Path('evidence/cp03/cp03-w02/W02-17/binding_cloud_reload_route_source_probe.json').write_text(json.dumps(probe,indent=2,sort_keys=True)+'\n',encoding='utf-8')
-          p=Path('tests/test_cp03_w02_parity_graph.py'); t=p.read_text(encoding='utf-8')
+          target=None
+          for node in tree.body:
+              if isinstance(node, ast.AsyncFunctionDef) and node.name=='reload_cloud_engine':
+                  target=node
+                  break
+          assert target is not None
+          assert target.lineno==1219
+          route=None
+          for dec in target.decorator_list:
+              if isinstance(dec, ast.Call) and isinstance(dec.func, ast.Attribute):
+                  if isinstance(dec.func.value, ast.Name) and dec.func.value.id=='router' and dec.func.attr=='post':
+                      if dec.args and isinstance(dec.args[0], ast.Constant):
+                          route=dec.args[0].value
+          assert route=='/v1/cloud/reload'
+          decorator_line=target.decorator_list[0].lineno
+          assert decorator_line==1218
+          segment=ast.get_source_segment(text,target) or ''
+          required_markers=[
+              'submitted_keys',
+              'os.environ',
+              'CloudEngine',
+              'cloud.health()',
+              'MultiEngine',
+              'inner._engines',
+              'inner._refresh_map()',
+              'request.app.state.engine_name = "multi"',
+          ]
+          assert all(marker in segment for marker in required_markers)
+          probe={
+              'schema_version':1,
+              'date':'2026-09-24',
+              'project_id':'CLEVER-JARVIS-001',
+              'checkpoint':'CP03',
+              'task':'W02-17',
+              'gate':'G6',
+              'capability_id':os.environ['CAPABILITY_ID'],
+              'capability_name':'POST /v1/cloud/reload',
+              'surface_kind':'http_route',
+              'ownership':'OWNED',
+              'terminal_eligible_in_w02':True,
+              'upstream_commit':os.environ['UPSTREAM_COMMIT'],
+              'source_path':'src/openjarvis/server/routes.py',
+              'source_line':target.lineno,
+              'decorator_line':decorator_line,
+              'function_line':target.lineno,
+              'function':'reload_cloud_engine',
+              'http_method':'POST',
+              'route_path':route,
+              'source_sha256':source_sha,
+              'source_probe':'PASS',
+              'source_execution':False,
+              'route_runtime_execution':'NOT_RUN',
+              'cloud_engine_execution':'NOT_RUN',
+              'credential_injection_execution':'NOT_RUN',
+              'required_source_markers':required_markers,
+              'model_executions':0,
+              'provider_egress_executions':0,
+              'tool_executions':0,
+              'canonical_parity_status':'UNVERIFIED',
+              'parity_promotions':0,
+          }
+          Path('evidence/cp03/cp03-w02/W02-17/binding_cloud_reload_route_source_probe.json').write_text(
+              json.dumps(probe,indent=2,sort_keys=True)+'\n',encoding='utf-8'
+          )
+
+          p=Path('tests/test_cp03_w02_parity_graph.py')
+          t=p.read_text(encoding='utf-8')
           assert 'CLOUD_RELOAD_ROUTE_CAPABILITY_ID' not in t
-          old='PROVIDER_SAVINGS_PROTOCOL_CAPABILITY_ID = "cap_56d79a86da34eeeacdf49427"\n'; assert old in t
+          old='PROVIDER_SAVINGS_PROTOCOL_CAPABILITY_ID = "cap_56d79a86da34eeeacdf49427"\n'
+          assert old in t
           t=t.replace(old,old+'CLOUD_RELOAD_ROUTE_CAPABILITY_ID = "cap_098f4d18aa8447bd4e8150ab"\n',1)
-          marker='PROVIDER_SAVINGS_PROTOCOL_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_provider_savings_protocol_binding_is_capability_specific_and_source_backed"\n)\n'; assert marker in t
-          t=t.replace(marker,marker+'CLOUD_RELOAD_ROUTE_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_cloud_reload_route_binding_is_capability_specific_and_source_backed"\n)\n',1)
-          t=t.replace('def test_current_matrix_has_twenty_two_candidates_and_no_parity_promotion','def test_current_matrix_has_twenty_three_candidates_and_no_parity_promotion',1)
-          assert '== "EVIDENCE_BACKED_CANDIDATE" for row in rows), 22)' in t and '== "UNBOUND" for row in rows), 25)' in t
-          t=t.replace('== "EVIDENCE_BACKED_CANDIDATE" for row in rows), 22)','== "EVIDENCE_BACKED_CANDIDATE" for row in rows), 23)',1).replace('== "UNBOUND" for row in rows), 25)','== "UNBOUND" for row in rows), 24)',1)
-          tail='CLI_MODEL_CONVERT_COMMAND_CAPABILITY_ID, CLI_SERVE_COMMAND_CAPABILITY_ID, PROVIDER_SAVINGS_PROTOCOL_CAPABILITY_ID},'; assert tail in t
-          t=t.replace(tail,'CLI_MODEL_CONVERT_COMMAND_CAPABILITY_ID, CLI_SERVE_COMMAND_CAPABILITY_ID, PROVIDER_SAVINGS_PROTOCOL_CAPABILITY_ID, CLOUD_RELOAD_ROUTE_CAPABILITY_ID},',1)
-          block='        provider_savings_protocol = candidates[PROVIDER_SAVINGS_PROTOCOL_CAPABILITY_ID]\n        self.assertEqual(provider_savings_protocol["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(provider_savings_protocol["binding"]["terminal"])\n'; assert block in t
-          t=t.replace(block,block+'        cloud_reload_route = candidates[CLOUD_RELOAD_ROUTE_CAPABILITY_ID]\n        self.assertEqual(cloud_reload_route["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(cloud_reload_route["binding"]["terminal"])\n',1)
+          marker=(
+              'PROVIDER_SAVINGS_PROTOCOL_TEST_ID = (\n'
+              '    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n'
+              '    "test_provider_savings_protocol_binding_is_capability_specific_and_source_backed"\n'
+              ')\n'
+          )
+          assert marker in t
+          t=t.replace(
+              marker,
+              marker+
+              'CLOUD_RELOAD_ROUTE_TEST_ID = (\n'
+              '    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n'
+              '    "test_cloud_reload_route_binding_is_capability_specific_and_source_backed"\n'
+              ')\n',
+              1,
+          )
+          assert 'def test_current_matrix_has_twenty_two_candidates_and_no_parity_promotion' in t
+          t=t.replace(
+              'def test_current_matrix_has_twenty_two_candidates_and_no_parity_promotion',
+              'def test_current_matrix_has_twenty_three_candidates_and_no_parity_promotion',
+              1,
+          )
+          assert '== "EVIDENCE_BACKED_CANDIDATE" for row in rows), 22)' in t
+          assert '== "UNBOUND" for row in rows), 25)' in t
+          t=t.replace(
+              '== "EVIDENCE_BACKED_CANDIDATE" for row in rows), 22)',
+              '== "EVIDENCE_BACKED_CANDIDATE" for row in rows), 23)',
+              1,
+          ).replace(
+              '== "UNBOUND" for row in rows), 25)',
+              '== "UNBOUND" for row in rows), 24)',
+              1,
+          )
+          tail='CLI_MODEL_CONVERT_COMMAND_CAPABILITY_ID, CLI_SERVE_COMMAND_CAPABILITY_ID, PROVIDER_SAVINGS_PROTOCOL_CAPABILITY_ID},'
+          assert tail in t
+          t=t.replace(
+              tail,
+              'CLI_MODEL_CONVERT_COMMAND_CAPABILITY_ID, CLI_SERVE_COMMAND_CAPABILITY_ID, PROVIDER_SAVINGS_PROTOCOL_CAPABILITY_ID, CLOUD_RELOAD_ROUTE_CAPABILITY_ID},',
+              1,
+          )
+          block=(
+              '        provider_savings_protocol = candidates[PROVIDER_SAVINGS_PROTOCOL_CAPABILITY_ID]\n'
+              '        self.assertEqual(provider_savings_protocol["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n'
+              '        self.assertFalse(provider_savings_protocol["binding"]["terminal"])\n'
+          )
+          assert block in t
+          t=t.replace(
+              block,
+              block+
+              '        cloud_reload_route = candidates[CLOUD_RELOAD_ROUTE_CAPABILITY_ID]\n'
+              '        self.assertEqual(cloud_reload_route["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n'
+              '        self.assertFalse(cloud_reload_route["binding"]["terminal"])\n',
+              1,
+          )
           method_lines=[
               '    def test_cloud_reload_route_binding_is_capability_specific_and_source_backed(self) -> None:',
               '        row = next(row for row in self.result["rows"] if row["capability_id"] == CLOUD_RELOAD_ROUTE_CAPABILITY_ID)',
@@ -165,15 +271,14 @@ jobs:
               '        self.assertEqual(receipt["parity_promotions"],0)',
               '        probe=json.loads((ROOT / "evidence/cp03/cp03-w02/W02-17/binding_cloud_reload_route_source_probe.json").read_text(encoding="utf-8"))',
               '        self.assertEqual(probe["capability_id"], CLOUD_RELOAD_ROUTE_CAPABILITY_ID)',
-              '        self.assertEqual(probe["upstream_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")',
-              '        self.assertEqual(probe["source_path"], "src/openjarvis/server/routes.py")',
               '        self.assertEqual(probe["source_line"],1219)',
-              '        self.assertEqual(probe["source_function"],"reload_cloud_engine")',
-              '        self.assertEqual(probe["source_function_line"],1220)',
-              '        self.assertEqual(probe["source_probe"],"PASS")',
-              '        self.assertFalse(probe["source_execution"])',
+              '        self.assertEqual(probe["function_line"],1219)',
+              '        self.assertEqual(probe["decorator_line"],1218)',
+              '        self.assertEqual(probe["function"],"reload_cloud_engine")',
               '        self.assertEqual(probe["http_method"],"POST")',
               '        self.assertEqual(probe["route_path"],"/v1/cloud/reload")',
+              '        self.assertEqual(probe["source_probe"],"PASS")',
+              '        self.assertFalse(probe["source_execution"])',
               '        self.assertEqual(probe["route_runtime_execution"],"NOT_RUN")',
               '        self.assertEqual(probe["cloud_engine_execution"],"NOT_RUN")',
               '        self.assertEqual(probe["credential_injection_execution"],"NOT_RUN")',
@@ -184,54 +289,239 @@ jobs:
               '',
           ]
           method='\n'.join(method_lines)+'\n'
-          insert='    def test_cli_model_list_command_binding_is_capability_specific_and_source_backed(self) -> None:\n'; assert insert in t
-          t=t.replace(insert,method+insert,1); p.write_text(t,encoding='utf-8')
+          insert='    def test_cli_model_list_command_binding_is_capability_specific_and_source_backed(self) -> None:\n'
+          assert insert in t
+          t=t.replace(insert,method+insert,1)
+          p.write_text(t,encoding='utf-8')
           PY
+
           set +e
           python -m unittest -v "$TEST_ID" > /tmp/red.log 2>&1
           red=$?
           set -e
           test "$red" -ne 0
           grep -Eq 'AssertionError|EVIDENCE_BACKED_CANDIDATE|NoneType' /tmp/red.log
+
           python - <<'PY'
           import json, os
           from pathlib import Path
-          p=Path('inventory/cp03/w02_evidence_bindings.jsonl'); rows=[json.loads(x) for x in p.read_text().splitlines() if x.strip()]
+          p=Path('inventory/cp03/w02_evidence_bindings.jsonl')
+          rows=[json.loads(x) for x in p.read_text().splitlines() if x.strip()]
           assert len(rows)==22 and all(x['capability_id']!=os.environ['CAPABILITY_ID'] for x in rows)
-          rows.append({'capability_id':os.environ['CAPABILITY_ID'],'evidence_id':os.environ['SOURCE_EVIDENCE_ID'],'test_id':os.environ['TEST_ID'],'validated_head':os.environ['SOURCE_EVIDENCE_HEAD'],'expected_fields':{'status':'VERIFIED','native_engine_count':15,'native_import_failure_count':0,'native_model_count':69,'model_executions':0,'provider_egress_executions':0,'parity_promotions':0},'terminal':False})
+          rows.append({
+              'capability_id':os.environ['CAPABILITY_ID'],
+              'evidence_id':os.environ['SOURCE_EVIDENCE_ID'],
+              'test_id':os.environ['TEST_ID'],
+              'validated_head':os.environ['SOURCE_EVIDENCE_HEAD'],
+              'expected_fields':{
+                  'status':'VERIFIED',
+                  'native_engine_count':15,
+                  'native_import_failure_count':0,
+                  'native_model_count':69,
+                  'model_executions':0,
+                  'provider_egress_executions':0,
+                  'parity_promotions':0,
+              },
+              'terminal':False,
+          })
           p.write_text(''.join(json.dumps(x,separators=(',',':'))+'\n' for x in rows),encoding='utf-8')
           PY
+
           python -m unittest -v "$TEST_ID"
           python scripts/cp03/w02_parity_graph.py --write
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          s=json.loads(Path('reports/cp03/w02_parity/SUMMARY.json').read_text()); assert s['binding_counts']=={'EVIDENCE_BACKED_CANDIDATE':23,'UNBOUND':24}; assert s['verified_capabilities']==0 and s['parity_promotions']==0 and s['global_denominator']==7565 and s['openjarvis_obligations']==646
-          PY
+
           python - <<'PY'
           import hashlib, json, os
           from pathlib import Path
+
           def append_once(path,key,value,row):
-              p=Path(path); rows=[json.loads(x) for x in p.read_text().splitlines() if x.strip()]; assert all(x.get(key)!=value for x in rows), (path,key,value)
-              with p.open('a',encoding='utf-8') as f: f.write(json.dumps(row,sort_keys=True,separators=(',',':'))+'\n')
+              p=Path(path)
+              rows=[json.loads(x) for x in p.read_text().splitlines() if x.strip()]
+              assert all(x.get(key)!=value for x in rows), (path,key,value)
+              with p.open('a',encoding='utf-8') as f:
+                  f.write(json.dumps(row,sort_keys=True,separators=(',',':'))+'\n')
+
+          summary=json.loads(Path('reports/cp03/w02_parity/SUMMARY.json').read_text())
+          assert summary['binding_counts']=={'EVIDENCE_BACKED_CANDIDATE':23,'UNBOUND':24}
+          assert summary['verified_capabilities']==0 and summary['parity_promotions']==0
+          assert summary['global_denominator']==7565 and summary['openjarvis_obligations']==646
+
           probe=Path('evidence/cp03/cp03-w02/W02-17/binding_cloud_reload_route_source_probe.json')
-          report={'schema_version':1,'date':'2026-09-24','project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','task':'W02-17','gate':'G6','claim_id':os.environ['CLAIM_ID'],'evidence_id':os.environ['EVIDENCE_ID'],'status':'PASS','validated_base_head':os.environ['EXPECTED_MAIN'],'github_actions_run_id':int(os.environ['GITHUB_RUN_ID']),'binding_capability_id':os.environ['CAPABILITY_ID'],'binding_capability_name':'POST /v1/cloud/reload','binding_surface_kind':'http_route','binding_ownership':'OWNED','terminal_eligible_in_w02':True,'binding_source_evidence_id':os.environ['SOURCE_EVIDENCE_ID'],'binding_source_validated_head':os.environ['SOURCE_EVIDENCE_HEAD'],'binding_source_run_id':35552788123,'executed_test_id':os.environ['TEST_ID'],'source_probe_path':str(probe),'source_probe_sha256':hashlib.sha256(probe.read_bytes()).hexdigest(),'source_execution':False,'route_runtime_execution':'NOT_RUN','cloud_engine_execution':'NOT_RUN','credential_injection_execution':'NOT_RUN','bindings_added_this_slice':1,'bindings_validated_total':23,'unbound_remaining':24,'global_denominator':7565,'openjarvis_obligations':646,'verified_capabilities':0,'parity_promotions':0,'model_executions':0,'provider_egress_executions':0,'tool_executions':0,'afm_inprocess_execution':'NOT_RUN','real_openjarvis_fallback_model_execution':'NOT_RUN','inference_start_event_binding':'UNBOUND_UNTOUCHED','next_proof_unit':'cap_188be06cddde484a5bb440c7','next_slice':'Continue W02-17 with cap_188be06cddde484a5bb440c7 GET /v1/models only if capability-specific evidence can be proven without converting platform-gated or NOT_RUN behavior into PASS.'}
-          rp=Path('evidence/cp03/cp03-w02/W02-17/binding_cloud_reload_route_report.json'); rp.write_text(json.dumps(report,indent=2,sort_keys=True)+'\n')
+          report={
+              'schema_version':1,
+              'date':'2026-09-24',
+              'project_id':'CLEVER-JARVIS-001',
+              'checkpoint':'CP03',
+              'task':'W02-17',
+              'gate':'G6',
+              'claim_id':os.environ['CLAIM_ID'],
+              'evidence_id':os.environ['EVIDENCE_ID'],
+              'status':'PASS',
+              'validated_base_head':os.environ['EXPECTED_MAIN'],
+              'github_actions_run_id':int(os.environ['GITHUB_RUN_ID']),
+              'binding_capability_id':os.environ['CAPABILITY_ID'],
+              'binding_capability_name':'POST /v1/cloud/reload',
+              'binding_surface_kind':'http_route',
+              'binding_ownership':'OWNED',
+              'terminal_eligible_in_w02':True,
+              'binding_source_evidence_id':os.environ['SOURCE_EVIDENCE_ID'],
+              'binding_source_validated_head':os.environ['SOURCE_EVIDENCE_HEAD'],
+              'binding_source_run_id':35552788123,
+              'executed_test_id':os.environ['TEST_ID'],
+              'source_probe_path':str(probe),
+              'source_probe_sha256':hashlib.sha256(probe.read_bytes()).hexdigest(),
+              'source_execution':False,
+              'route_runtime_execution':'NOT_RUN',
+              'cloud_engine_execution':'NOT_RUN',
+              'credential_injection_execution':'NOT_RUN',
+              'bindings_added_this_slice':1,
+              'bindings_validated_total':23,
+              'unbound_remaining':24,
+              'global_denominator':7565,
+              'openjarvis_obligations':646,
+              'verified_capabilities':0,
+              'parity_promotions':0,
+              'model_executions':0,
+              'provider_egress_executions':0,
+              'tool_executions':0,
+              'afm_inprocess_execution':'NOT_RUN',
+              'real_openjarvis_fallback_model_execution':'NOT_RUN',
+              'inference_start_event_binding':'UNBOUND_UNTOUCHED',
+              'next_proof_unit':'cap_188be06cddde484a5bb440c7 — GET /v1/models',
+              'next_slice':'Continue W02-17 with cap_188be06cddde484a5bb440c7 only if capability-specific exact pinned-source or executed runtime evidence can be paired with a completed-task PASS receipt; preserve any platform gate as PLATFORM_GATED/UNBOUND rather than PASS.',
+          }
+          rp=Path('evidence/cp03/cp03-w02/W02-17/binding_cloud_reload_route_report.json')
+          rp.write_text(json.dumps(report,indent=2,sort_keys=True)+'\n')
+
           append_once('ledgers/EVIDENCE_LEDGER.ndjson','evidence_id',os.environ['EVIDENCE_ID'],{**report,'type':'CP03_W02_G6_CAPABILITY_BINDING','path':str(rp)})
-          append_once('ledgers/DECISION_LEDGER.ndjson','decision_id',os.environ['DECISION_ID'],{'schema_version':1,'date':'2026-09-24','decision_id':os.environ['DECISION_ID'],'status':'ACCEPTED','checkpoint':'CP03','task':'W02-17','decision':'Bind the frozen OpenJarvis POST /v1/cloud/reload route as a non-terminal EVIDENCE_BACKED_CANDIDATE only.','context':'Exact pinned source proves the route registration and source-level hot-reload path. W02-08 supplies the completed model-registration bridge receipt used by the G6 compiler. Credentials, CloudEngine health, route mutation and provider behavior were not executed, so this is not terminal parity evidence.','evidence_id':os.environ['EVIDENCE_ID'],'parity_promotions':0})
-          append_once('ledgers/RUN_LOG.ndjson','event_id','RUN-W02-G6-CLOUD-RELOAD-ROUTE-20260924',{'schema_version':1,'date':'2026-09-24','event':'CP03_W02_G6_CAPABILITY_BINDING','event_id':'RUN-W02-G6-CLOUD-RELOAD-ROUTE-20260924','goal_id':'CLEVER-JARVIS-001','checkpoint':'CP03','iteration':'I03','wave_id':'CP03-W02','canonical_task':'W02-17','claim_id':os.environ['CLAIM_ID'],'evidence_id':os.environ['EVIDENCE_ID'],'status':'ADVANCED','bindings_validated_total':23,'unbound_remaining':24,'verified_capabilities':0,'parity_promotions':0})
-          append_once('ledgers/WAVE_LEDGER.ndjson','event_id','WAVE-W02-G6-CLOUD-RELOAD-ROUTE-20260924',{'schema_version':1,'date':'2026-09-24','event':'WAVE_PROGRESS','event_id':'WAVE-W02-G6-CLOUD-RELOAD-ROUTE-20260924','checkpoint':'CP03','iteration':'I03','parent_wave':'CP03-W02','wave_id':os.environ['WAVE_ID'],'canonical_task':'W02-17','claim_id':os.environ['CLAIM_ID'],'gate':'G6','evidence_id':os.environ['EVIDENCE_ID'],'status':'IN_PROGRESS','bindings_validated_total':23,'unbound_remaining':24,'parity_promotions':0})
-          append_once('ledgers/RISK_LEDGER.ndjson','event_id','RISK-UPDATE-W02-G6-K47-BINDINGS-CLOUD-RELOAD-20260924',{'schema_version':1,'date':'2026-09-24','event_id':'RISK-UPDATE-W02-G6-K47-BINDINGS-CLOUD-RELOAD-20260924','risk_id':'RISK-W02-G6-K47-BINDINGS-PENDING-20260922','severity':'P1','status':'OPEN','task':'W02-17','evidence_id':os.environ['EVIDENCE_ID'],'risk':'G6 remains incomplete: 24/47 frozen W02 proof units are UNBOUND. Source-backed cloud reload route evidence does not prove credential injection, CloudEngine health, state mutation, provider egress behavior or behavioral parity.','mitigation':'Keep W02-17 IN_PROGRESS, VERIFIED=0 and W02-18 BLOCKED; require capability-specific runtime evidence before terminal parity and preserve platform-gated/NOT_RUN states as non-proof.'})
-          append_once('ledgers/CLAIM_LEDGER.ndjson','event_id','CLAIM-CONTINUE-W02-G6-CLOUD-RELOAD-ROUTE-20260924',{'schema_version':1,'date':'2026-09-24','event':'CONTINUE','event_id':'CLAIM-CONTINUE-W02-G6-CLOUD-RELOAD-ROUTE-20260924','claim_id':os.environ['CLAIM_ID'],'checkpoint':'CP03','canonical_task':'W02-17','wave_id':os.environ['WAVE_ID'],'owner':'chatgpt-gpt-5.6-sol','status':'ACTIVE','base_head':os.environ['EXPECTED_MAIN'],'coordination':'Continue the existing non-conflicting W02-17 G6 claim for one OWNED POST /v1/cloud/reload source-proof unit only; route/cloud/credential execution stays NOT_RUN, terminal attribution remains false, and parity/denominators/task frontier do not advance.'})
-          state=Path('STATE.md'); s=state.read_text(); old='- G6 explicit binding progress: `22/47` evidence-backed candidates; `25` UNBOUND; VERIFIED capabilities `0`; parity promotions `0`.'; new='- G6 explicit binding progress: `23/47` evidence-backed candidates; `24` UNBOUND; VERIFIED capabilities `0`; parity promotions `0`.'; assert old in s; state.write_text(s.replace(old,new,1))
-          hand=Path('HANDOFF.md'); h=hand.read_text().rstrip(); marker='## W02-17 cloud reload route binding — source-backed partial verified'; assert marker not in h
-          note='\n\n'+marker+'\n\n- `'+os.environ['EVIDENCE_ID']+'`: `cap_098f4d18aa8447bd4e8150ab` (`POST /v1/cloud/reload`, OWNED route at `src/openjarvis/server/routes.py:1219`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.\n- Exact pinned source `'+os.environ['UPSTREAM_COMMIT']+'` proves route registration plus the source-level CloudEngine/MultiEngine reload path. Route execution, CloudEngine execution and credential injection remain `NOT_RUN`; provider egress/model/tool executions are 0.\n- Formal G6 binding is anchored to completed W02-08 `'+os.environ['SOURCE_EVIDENCE_ID']+'` at exact SHA `'+os.environ['SOURCE_EVIDENCE_HEAD']+'` plus `'+os.environ['TEST_ID']+'`. Candidate evidence only: no terminal attribution, VERIFIED parity or promotion.\n- G6 is now 23 `EVIDENCE_BACKED_CANDIDATE` / 24 `UNBOUND`; denominator 7565 and OpenJarvis obligations 646 unchanged. AFM remains direct-host blocked, real fallback execution remains `NOT_RUN`, and W02-18/W02-19 remain `BLOCKED`.\n- Exact next proof unit in frozen order: `cap_188be06cddde484a5bb440c7` (`GET /v1/models`, apple_fm shim). Bind only with capability-specific evidence; preserve `PLATFORM_GATED`/`NOT_RUN`/`UNBOUND` if direct proof is unavailable.\n'
-          hand.write_text(h+note,encoding='utf-8')
-          cp=Path('sessions/20260922-w02-parity-graph/CLAIM.json'); c=json.loads(cp.read_text()); c['continuation_base_head']=os.environ['EXPECTED_MAIN']; cp.write_text(json.dumps(c,indent=2)+'\n')
-          result={'schema_version':1,'date':'2026-09-24','project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','task':'W02-17','wave_id':os.environ['WAVE_ID'],'claim_id':os.environ['CLAIM_ID'],'status':'ADVANCED','evidence_id':os.environ['EVIDENCE_ID'],'bindings_added_this_slice':1,'bindings_validated_total':23,'unbound_remaining':24,'verified_capabilities':0,'parity_promotions':0,'global_denominator':7565,'openjarvis_obligations':646,'route_runtime_execution':'NOT_RUN','cloud_engine_execution':'NOT_RUN','credential_injection_execution':'NOT_RUN','afm_inprocess_execution':'NOT_RUN','real_openjarvis_fallback_model_execution':'NOT_RUN','next_proof_unit':'cap_188be06cddde484a5bb440c7','next_task':'W02-17'}
+          append_once('ledgers/DECISION_LEDGER.ndjson','decision_id',os.environ['DECISION_ID'],{
+              'schema_version':1,
+              'date':'2026-09-24',
+              'decision_id':os.environ['DECISION_ID'],
+              'status':'ACCEPTED',
+              'checkpoint':'CP03',
+              'task':'W02-17',
+              'decision':'Bind the frozen OpenJarvis POST /v1/cloud/reload HTTP route as a non-terminal EVIDENCE_BACKED_CANDIDATE only.',
+              'context':'Exact pinned source proves the route identity and source-level CloudEngine/MultiEngine reload path. W02-08 supplies the completed model/engine bridge receipt used by the G6 compiler. The route, credential injection and cloud engine were not executed in this slice, so runtime behavior and parity remain unverified.',
+              'evidence_id':os.environ['EVIDENCE_ID'],
+              'parity_promotions':0,
+          })
+          append_once('ledgers/RUN_LOG.ndjson','event_id','RUN-W02-G6-CLOUD-RELOAD-ROUTE-20260924',{
+              'schema_version':1,
+              'date':'2026-09-24',
+              'event':'CP03_W02_G6_CAPABILITY_BINDING',
+              'event_id':'RUN-W02-G6-CLOUD-RELOAD-ROUTE-20260924',
+              'goal_id':'CLEVER-JARVIS-001',
+              'checkpoint':'CP03',
+              'iteration':'I03',
+              'wave_id':'CP03-W02',
+              'canonical_task':'W02-17',
+              'claim_id':os.environ['CLAIM_ID'],
+              'evidence_id':os.environ['EVIDENCE_ID'],
+              'status':'ADVANCED',
+              'bindings_validated_total':23,
+              'unbound_remaining':24,
+              'verified_capabilities':0,
+              'parity_promotions':0,
+          })
+          append_once('ledgers/WAVE_LEDGER.ndjson','event_id','WAVE-W02-G6-CLOUD-RELOAD-ROUTE-20260924',{
+              'schema_version':1,
+              'date':'2026-09-24',
+              'event':'WAVE_PROGRESS',
+              'event_id':'WAVE-W02-G6-CLOUD-RELOAD-ROUTE-20260924',
+              'checkpoint':'CP03',
+              'iteration':'I03',
+              'parent_wave':'CP03-W02',
+              'wave_id':os.environ['WAVE_ID'],
+              'canonical_task':'W02-17',
+              'claim_id':os.environ['CLAIM_ID'],
+              'gate':'G6',
+              'evidence_id':os.environ['EVIDENCE_ID'],
+              'status':'IN_PROGRESS',
+              'bindings_validated_total':23,
+              'unbound_remaining':24,
+              'parity_promotions':0,
+          })
+          append_once('ledgers/RISK_LEDGER.ndjson','event_id','RISK-UPDATE-W02-G6-K47-BINDINGS-CLOUD-RELOAD-20260924',{
+              'schema_version':1,
+              'date':'2026-09-24',
+              'event_id':'RISK-UPDATE-W02-G6-K47-BINDINGS-CLOUD-RELOAD-20260924',
+              'risk_id':'RISK-W02-G6-K47-BINDINGS-PENDING-20260922',
+              'severity':'P1',
+              'status':'OPEN',
+              'task':'W02-17',
+              'evidence_id':os.environ['EVIDENCE_ID'],
+              'risk':'G6 remains incomplete: 24/47 frozen W02 proof units are UNBOUND. Source-backed cloud-reload evidence does not prove runtime credential handling, cloud provider initialization, MultiEngine hot-reload behavior, egress semantics or behavioral parity.',
+              'mitigation':'Keep W02-17 IN_PROGRESS, VERIFIED=0 and W02-18 BLOCKED; require capability-specific runtime evidence before terminal parity and never convert NOT_RUN/PLATFORM_GATED into PASS.',
+          })
+          append_once('ledgers/CLAIM_LEDGER.ndjson','event_id','CLAIM-CONTINUE-W02-G6-CLOUD-RELOAD-ROUTE-20260924',{
+              'schema_version':1,
+              'date':'2026-09-24',
+              'event':'CONTINUE',
+              'event_id':'CLAIM-CONTINUE-W02-G6-CLOUD-RELOAD-ROUTE-20260924',
+              'claim_id':os.environ['CLAIM_ID'],
+              'checkpoint':'CP03',
+              'canonical_task':'W02-17',
+              'wave_id':os.environ['WAVE_ID'],
+              'owner':'chatgpt-gpt-5.6-sol',
+              'status':'ACTIVE',
+              'base_head':os.environ['EXPECTED_MAIN'],
+              'coordination':'Continue the existing non-conflicting W02-17 G6 claim for one OWNED POST /v1/cloud/reload source-proof unit only; runtime route/cloud/credential behavior stays NOT_RUN, terminal attribution remains false, and parity/denominators/task frontier do not advance.',
+          })
+
+          state=Path('STATE.md')
+          s=state.read_text()
+          old='- G6 explicit binding progress: `22/47` evidence-backed candidates; `25` UNBOUND; VERIFIED capabilities `0`; parity promotions `0`.'
+          new='- G6 explicit binding progress: `23/47` evidence-backed candidates; `24` UNBOUND; VERIFIED capabilities `0`; parity promotions `0`.'
+          assert old in s
+          state.write_text(s.replace(old,new,1))
+
+          hand=Path('HANDOFF.md')
+          h=hand.read_text().rstrip()
+          marker='## W02-17 cloud reload route binding — source-backed partial verified'
+          assert marker not in h
+          note=(
+              '\n\n'+marker+'\n\n'
+              '- `'+os.environ['EVIDENCE_ID']+'`: `cap_098f4d18aa8447bd4e8150ab` (`POST /v1/cloud/reload`, OWNED HTTP route at `src/openjarvis/server/routes.py:1219`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.\n'
+              '- Exact pinned source `'+os.environ['UPSTREAM_COMMIT']+'` was parsed and proves the POST route plus source-level `CloudEngine`/`MultiEngine` reload path. Source execution, route execution, cloud-engine execution and credential injection remain `NOT_RUN`.\n'
+              '- Formal G6 binding is anchored to completed W02-08 `'+os.environ['SOURCE_EVIDENCE_ID']+'` at exact SHA `'+os.environ['SOURCE_EVIDENCE_HEAD']+'` plus `'+os.environ['TEST_ID']+'`. Candidate evidence only: no terminal attribution, VERIFIED parity or promotion.\n'
+              '- G6 is now 23 `EVIDENCE_BACKED_CANDIDATE` / 24 `UNBOUND`; denominator 7565, OpenJarvis obligations 646, VERIFIED 0 and parity promotions 0 remain unchanged. AFM/fallback remain unproven and W02-18/W02-19 remain BLOCKED.\n'
+              '- Exact next proof unit in the frozen matrix is `cap_188be06cddde484a5bb440c7` (`GET /v1/models`). It must remain UNBOUND/PLATFORM_GATED if direct capability-specific proof cannot be obtained; do not infer PASS from W02-08 or catalog membership alone.'
+          )
+          hand.write_text(h+note+'\n')
+
+          claim_path=Path('sessions/20260922-w02-parity-graph/CLAIM.json')
+          claim=json.loads(claim_path.read_text())
+          assert claim['status']=='ACTIVE' and claim['claim_id']==os.environ['CLAIM_ID']
+          claim['continuation_base_head']=os.environ['EXPECTED_MAIN']
+          claim_path.write_text(json.dumps(claim,indent=2)+'\n')
+
+          result={
+              'schema_version':1,
+              'date':'2026-09-24',
+              'project_id':'CLEVER-JARVIS-001',
+              'checkpoint':'CP03',
+              'task':'W02-17',
+              'wave_id':os.environ['WAVE_ID'],
+              'claim_id':os.environ['CLAIM_ID'],
+              'status':'ADVANCED',
+              'evidence_id':os.environ['EVIDENCE_ID'],
+              'bindings_added_this_slice':1,
+              'bindings_validated_total':23,
+              'unbound_remaining':24,
+              'verified_capabilities':0,
+              'parity_promotions':0,
+              'global_denominator':7565,
+              'openjarvis_obligations':646,
+              'route_runtime_execution':'NOT_RUN',
+              'cloud_engine_execution':'NOT_RUN',
+              'credential_injection_execution':'NOT_RUN',
+              'real_openjarvis_fallback_model_execution':'NOT_RUN',
+              'next_proof_unit':'cap_188be06cddde484a5bb440c7',
+          }
           Path('sessions/20260922-w02-parity-graph/RESULT.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n')
           PY
-          python scripts/cp03/w02_parity_graph.py --write
+
           python scripts/context/build_context_pack.py
 
       - name: Full regression gauntlet and exact-head CAS commit
@@ -249,15 +539,38 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          s=json.loads(Path('reports/cp03/w02_parity/SUMMARY.json').read_text()); assert s['binding_counts']=={'EVIDENCE_BACKED_CANDIDATE':23,'UNBOUND':24}; assert s['global_denominator']==7565 and s['openjarvis_obligations']==646 and s['verified_capabilities']==0 and s['parity_promotions']==0
+          s=json.loads(Path('reports/cp03/w02_parity/SUMMARY.json').read_text())
+          assert s['binding_counts']=={'EVIDENCE_BACKED_CANDIDATE':23,'UNBOUND':24}
+          assert s['global_denominator']==7565 and s['openjarvis_obligations']==646
+          assert s['verified_capabilities']==0 and s['parity_promotions']==0
           m=[json.loads(x) for x in Path('reports/cp03/w02_parity/PROOF_MATRIX.jsonl').read_text().splitlines() if x.strip()]
-          target=next(x for x in m if x['capability_id']=='cap_098f4d18aa8447bd4e8150ab'); assert target['w02_evidence_state']=='EVIDENCE_BACKED_CANDIDATE' and target['ownership']=='OWNED' and target['terminal_eligible_in_w02'] is True and target['canonical_parity_status']=='UNVERIFIED' and target['verified'] is False and target['parity_promotion'] is False and target['binding']['terminal'] is False
-          afm=next(x for x in m if x['capability_id']=='cap_ac38bf813e130d14927723d8'); assert afm['w02_evidence_state']=='UNBOUND' and afm['canonical_parity_status']=='UNVERIFIED'
-          start=next(x for x in m if x['capability_id']=='cap_a97068215f50aeff0353f6e9'); assert start['w02_evidence_state']=='UNBOUND' and start['binding'] is None
-          g=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text()); t={x['id']:x for x in g['tasks']}; assert g['first_executable_task']=='W02-17' and t['W02-17']['status']=='IN_PROGRESS' and t['W02-18']['status']=='BLOCKED' and t['W02-19']['status']=='BLOCKED'
-          ctx=json.loads(Path('.agentic/context/CURRENT_CONTEXT.json').read_text()); claim=next(x for x in ctx['active_claims'] if x['claim_id']=='CLAIM-CP03-W02-PARITY-GRAPH-20260922'); assert claim['wave_id']=='CP03-W02-PARITY-GRAPH-20260922' and claim['status']=='ACTIVE'; assert 'EVID-W02-PARITY-BINDING-CLOUD-RELOAD-ROUTE-20260924' in set(ctx['evidence_ids']); assert 'DEC-W02-G6-CLOUD-RELOAD-ROUTE-BINDING-20260924' in set(ctx['accepted_decision_ids'])
-          probe=json.loads(Path('evidence/cp03/cp03-w02/W02-17/binding_cloud_reload_route_source_probe.json').read_text()); assert probe['source_execution'] is False and probe['route_runtime_execution']=='NOT_RUN' and probe['cloud_engine_execution']=='NOT_RUN' and probe['credential_injection_execution']=='NOT_RUN' and probe['model_executions']==0 and probe['provider_egress_executions']==0 and probe['tool_executions']==0 and probe['parity_promotions']==0
-          ev=[json.loads(x) for x in Path('ledgers/EVIDENCE_LEDGER.ndjson').read_text().splitlines() if x.strip()]; fallback=next(x for x in ev if x.get('evidence_id')=='EVID-W02-FALLBACK-ADAPTER-20260922'); assert fallback['real_openjarvis_fallback_model_execution']=='NOT_RUN'
+          target=next(x for x in m if x['capability_id']=='cap_098f4d18aa8447bd4e8150ab')
+          assert target['w02_evidence_state']=='EVIDENCE_BACKED_CANDIDATE'
+          assert target['ownership']=='OWNED' and target['terminal_eligible_in_w02'] is True
+          assert target['canonical_parity_status']=='UNVERIFIED' and target['verified'] is False and target['parity_promotion'] is False
+          assert target['binding']['terminal'] is False
+          afm=next(x for x in m if x['capability_id']=='cap_ac38bf813e130d14927723d8')
+          assert afm['w02_evidence_state']=='UNBOUND' and afm['canonical_parity_status']=='UNVERIFIED'
+          start=next(x for x in m if x['capability_id']=='cap_a97068215f50aeff0353f6e9')
+          assert start['w02_evidence_state']=='UNBOUND' and start['binding'] is None
+          g=json.loads(Path('iterations/03/waves/CP03-W02/TASK_GRAPH.json').read_text())
+          t={x['id']:x for x in g['tasks']}
+          assert g['first_executable_task']=='W02-17' and t['W02-17']['status']=='IN_PROGRESS'
+          assert t['W02-18']['status']=='BLOCKED' and t['W02-19']['status']=='BLOCKED'
+          ctx=json.loads(Path('.agentic/context/CURRENT_CONTEXT.json').read_text())
+          claim=next(x for x in ctx['active_claims'] if x['claim_id']=='CLAIM-CP03-W02-PARITY-GRAPH-20260922')
+          assert claim['wave_id']=='CP03-W02-PARITY-GRAPH-20260922' and claim['status']=='ACTIVE'
+          assert 'EVID-W02-PARITY-BINDING-CLOUD-RELOAD-ROUTE-20260924' in set(ctx['evidence_ids'])
+          assert 'DEC-W02-G6-CLOUD-RELOAD-ROUTE-BINDING-20260924' in set(ctx['accepted_decision_ids'])
+          probe=json.loads(Path('evidence/cp03/cp03-w02/W02-17/binding_cloud_reload_route_source_probe.json').read_text())
+          assert probe['source_execution'] is False
+          assert probe['route_runtime_execution']=='NOT_RUN'
+          assert probe['cloud_engine_execution']=='NOT_RUN'
+          assert probe['credential_injection_execution']=='NOT_RUN'
+          assert probe['model_executions']==0 and probe['provider_egress_executions']==0 and probe['tool_executions']==0 and probe['parity_promotions']==0
+          ev=[json.loads(x) for x in Path('ledgers/EVIDENCE_LEDGER.ndjson').read_text().splitlines() if x.strip()]
+          fallback=next(x for x in ev if x.get('evidence_id')=='EVID-W02-FALLBACK-ADAPTER-20260922')
+          assert fallback['real_openjarvis_fallback_model_execution']=='NOT_RUN'
           PY
           git diff --check
           test -n "$(git status --porcelain)"
