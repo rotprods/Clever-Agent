@@ -186,3 +186,12 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - Regression guard requires `UNBOUND`, absent binding and canonical parity `UNVERIFIED`; `afm` execution remains `NOT_RUN`, never PASS.
 - G6 stays 14 candidates / 33 UNBOUND; VERIFIED 0; parity promotions 0; denominator 7565; OpenJarvis obligations 646. W02-17 remains IN_PROGRESS; W02-18/W02-19 remain BLOCKED.
 - Next: direct compatible-host `afm` proof, or another W02-17 proof unit only with its own executed test and exact completed-task evidence.
+
+## W02-17 CLI model info command binding — runtime-backed partial verified
+
+- `EVID-W02-PARITY-BINDING-CLI-MODEL-INFO-COMMAND-20260923`: `cap_075a2380f9db372754f08116` (`info`, OWNED CLI command at `src/openjarvis/cli/model.py:87`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.
+- Capability-specific runtime proof executed pinned OpenJarvis `72033b8ec288aa067ce4530ff9d96bf231e9c4e5` with `model info qwen3:0.6b` inside Docker `--network none`; exit `0`, target model ID observed, model/provider/tool executions `0`.
+- Formal G6 binding remains anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4` plus `tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_cli_model_info_command_binding_is_capability_specific_and_runtime_backed` and the runtime probe `evidence/cp03/cp03-w02/W02-17/binding_cli_model_info_command_runtime_probe.json`. This is evidence-backed candidate state only, not VERIFIED parity.
+- G6 is now 15 `EVIDENCE_BACKED_CANDIDATE` / 32 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged.
+- AFM `cap_ac38bf813e130d14927723d8` remains `UNBOUND`; direct AFM execution is still `NOT_RUN`. Real OpenJarvis fallback model execution also remains `NOT_RUN`. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.
+- Exact next slice: another W02-17 proof unit with its own executed test/exact evidence; never generalize this CLI proof to adjacent commands or promote parity without terminal evidence.
