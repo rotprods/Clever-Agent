@@ -1,0 +1,59 @@
+{
+  "canonical_parity_status": "UNVERIFIED",
+  "capability_id": "cap_56d79a86da34eeeacdf49427",
+  "capability_name": "ProviderSavings",
+  "checkpoint": "CP03",
+  "date": "2026-09-24",
+  "gate": "G6",
+  "interface_fields": [
+    {
+      "name": "provider",
+      "type": "string"
+    },
+    {
+      "name": "label",
+      "type": "string"
+    },
+    {
+      "name": "input_cost",
+      "type": "number"
+    },
+    {
+      "name": "output_cost",
+      "type": "number"
+    },
+    {
+      "name": "total_cost",
+      "type": "number"
+    },
+    {
+      "name": "energy_wh",
+      "type": "number"
+    },
+    {
+      "name": "energy_joules",
+      "type": "number"
+    },
+    {
+      "name": "flops",
+      "type": "number"
+    }
+  ],
+  "model_executions": 0,
+  "ownership": "OWNED",
+  "parity_promotions": 0,
+  "project_id": "CLEVER-JARVIS-001",
+  "provider_egress_executions": 0,
+  "provider_savings_runtime_execution": "NOT_RUN",
+  "schema_version": 1,
+  "source_execution": false,
+  "source_line": 167,
+  "source_path": "frontend/src/types/index.ts",
+  "source_probe": "PASS",
+  "source_sha256": "45e499e92306e7387ab99b2ee52f89fe18a63dd3f8bc8d33b7325582bf24e242",
+  "surface_kind": "protocol_contract",
+  "task": "W02-17",
+  "terminal_eligible_in_w02": true,
+  "tool_executions": 0,
+  "upstream_commit": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5"
+}

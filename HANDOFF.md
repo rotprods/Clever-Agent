@@ -251,3 +251,11 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - Formal G6 binding is anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4` plus `tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_cli_serve_command_binding_is_capability_specific_and_source_backed`. Because this proof unit is SHARED and terminal-ineligible in W02, no terminal attribution or parity promotion is made.
 - G6 is now 21 `EVIDENCE_BACKED_CANDIDATE` / 26 `UNBOUND`; VERIFIED 0; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. AFM/fallback remain `NOT_RUN`; W02-18/W02-19 stay `BLOCKED`; InferenceStartEvent is untouched.
 - Exact next slice: another W02-17 proof unit with capability-specific executed or exact pinned-source evidence plus a completed-task receipt; never infer server behavior from this source-only binding.
+
+## W02-17 ProviderSavings protocol binding — source-backed partial verified
+
+- `EVID-W02-PARITY-BINDING-PROVIDER-SAVINGS-PROTOCOL-20260924`: `cap_56d79a86da34eeeacdf49427` (`ProviderSavings`, OWNED protocol contract at `frontend/src/types/index.ts:167`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.
+- Exact pinned source `72033b8ec288aa067ce4530ff9d96bf231e9c4e5` was probed with the eight frozen string/number fields. Source execution and runtime provider-savings behavior remain `NOT_RUN`.
+- Formal G6 binding is anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4` plus `tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_provider_savings_protocol_binding_is_capability_specific_and_source_backed`. Candidate evidence only: no terminal attribution, VERIFIED parity or promotion.
+- G6 is now 22 `EVIDENCE_BACKED_CANDIDATE` / 25 `UNBOUND`; VERIFIED 0; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. AFM/fallback remain `NOT_RUN`; W02-18/W02-19 stay `BLOCKED`; InferenceStartEvent remains untouched.
+- Exact next slice: another W02-17 proof unit with capability-specific executed or exact pinned-source evidence plus a completed-task receipt; do not infer runtime savings/accounting behavior from this source contract.
