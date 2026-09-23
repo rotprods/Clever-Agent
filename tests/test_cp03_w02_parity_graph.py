@@ -232,6 +232,18 @@ class W02ParityGraphTests(unittest.TestCase):
         self.assertEqual(binding["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")
         self.assertEqual(binding["test_id"], NIM_TEST_ID)
         self.assertFalse(binding["terminal"])
+        self.assertEqual(
+            binding["expected_fields"],
+            {
+                "status": "VERIFIED",
+                "native_engine_count": 15,
+                "native_import_failure_count": 0,
+                "native_model_count": 69,
+                "model_executions": 0,
+                "provider_egress_executions": 0,
+                "parity_promotions": 0,
+            },
+        )
 
         evidence = graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")
         receipt = evidence["EVID-W02-MODEL-BRIDGE-20260921"]
