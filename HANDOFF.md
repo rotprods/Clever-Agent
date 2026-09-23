@@ -106,3 +106,11 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - G6 is now 5 `EVIDENCE_BACKED_CANDIDATE` / 42 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged.
 - `NOT_RUN`, `BLOCKED`, `PLATFORM_GATED` and waivers remain non-proof. Real OpenJarvis fallback model execution remains `NOT_RUN`. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.
 - Exact next slice: bind the next W02 capability only when its own executed test can be named and traced to an exact completed-task receipt.
+
+## W02-17 GemmaCpp registry binding — partial verified
+
+- `EVID-W02-PARITY-BINDING-GEMMA-CPP-20260923`: `cap_5cf599d5c98778fc324cbd0c` (`gemma_cpp`, OWNED registry registration) is bound to completed W02-08 evidence `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4`.
+- Capability-specific executed test: `tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_gemma_cpp_registry_binding_is_capability_specific_and_evidence_backed`; it resolves frozen source `src/openjarvis/engine/gemma_cpp.py:24` to native catalog `openjarvis.engine.gemma_cpp.GemmaCppEngine`, state `REGISTERED`, with zero model/provider execution.
+- G6 is now 6 `EVIDENCE_BACKED_CANDIDATE` / 41 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged.
+- `NOT_RUN`, `BLOCKED`, `PLATFORM_GATED` and waivers remain non-proof. Real OpenJarvis fallback model execution remains `NOT_RUN`. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.
+- Exact next slice: bind the next W02 capability only when its own executed test can be named and traced to an exact completed-task receipt.
