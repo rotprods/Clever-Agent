@@ -219,3 +219,11 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - Formal G6 binding remains anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4` plus the capability-specific regression `test_cli_model_list_command_binding_is_capability_specific_and_source_backed`. This is candidate evidence only, not VERIFIED parity.
 - G6 is now 17 `EVIDENCE_BACKED_CANDIDATE` / 30 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged. AFM remains `UNBOUND`; AFM and real fallback executions remain `NOT_RUN`; W02-18/W02-19 remain `BLOCKED`.
 - Exact next slice: another W02-17 proof unit with capability-specific executed or exact pinned-source evidence plus completed-task receipt; do not infer runtime behavior from this source-backed command binding.
+
+## W02-17 CLI model group binding — source-backed partial verified
+
+- `EVID-W02-PARITY-BINDING-CLI-MODEL-GROUP-20260923`: `cap_263641071dc7bb5251e3339b` (`model`, OWNED CLI group at `src/openjarvis/cli/model.py:29`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.
+- Exact pinned source `72033b8ec288aa067ce4530ff9d96bf231e9c4e5` was fetched and AST-probed: `@click.group()` is line 28 and `model()` is line 29; source SHA-256 is `4b8efbf289b2aad39d0996df3ecc5182d613ea51b72ad52e47b722323dfa73af`. Direct model-group execution remains `NOT_RUN`.
+- Formal G6 binding is anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4` plus `tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_cli_model_group_command_binding_is_capability_specific_and_source_backed`. Candidate evidence only: VERIFIED parity remains 0.
+- G6 is now 18 `EVIDENCE_BACKED_CANDIDATE` / 29 `UNBOUND`; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. AFM and real fallback executions remain `NOT_RUN`; W02-18/W02-19 remain `BLOCKED`.
+- Exact next slice: another W02-17 proof unit with capability-specific executed or exact pinned-source evidence plus completed-task receipt; do not infer runtime behavior from this source-backed group binding.
