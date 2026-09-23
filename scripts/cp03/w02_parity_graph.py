@@ -90,6 +90,8 @@ def latest_by(rows: Iterable[dict[str, Any]], key: str) -> dict[str, dict[str, A
 def task_proofs_by_evidence(task_graph: dict[str, Any]) -> dict[str, dict[str, Any]]:
     proofs: dict[str, dict[str, Any]] = {}
     for task in task_graph.get("tasks", []):
+        if task.get("status") != "COMPLETE":
+            continue
         for proof in task.get("proof", []):
             evidence_id = proof.get("evidence_id")
             if not evidence_id:

@@ -478,6 +478,52 @@ class W02ParityGraphTests(unittest.TestCase):
         self.assertEqual(candidate["w02_evidence_state"], "EVIDENCE_BACKED_CANDIDATE")
         self.assertNotEqual(candidate["binding"]["evidence_id"], "EVID-W02-FALLBACK-ADAPTER-20260922")
 
+    def test_in_progress_task_proof_cannot_back_binding(self) -> None:
+        cid = self.result["rows"][0]["capability_id"]
+        evidence_id = "EVID-SYNTHETIC-IN-PROGRESS"
+        head = "a" * 40
+        task_proofs = graph.task_proofs_by_evidence(
+            {
+                "tasks": [
+                    {
+                        "id": "W02-17",
+                        "status": "IN_PROGRESS",
+                        "proof": [
+                            {
+                                "evidence_id": evidence_id,
+                                "result": "PASS",
+                                "validated_head": head,
+                            }
+                        ],
+                    }
+                ]
+            }
+        )
+        self.assertNotIn(evidence_id, task_proofs)
+        binding = {
+            "capability_id": cid,
+            "evidence_id": evidence_id,
+            "test_id": "synthetic.in_progress.must_not_bind",
+            "validated_head": head,
+            "expected_fields": {"status": "VERIFIED"},
+            "terminal": False,
+        }
+        evidence = {
+            evidence_id: {
+                "evidence_id": evidence_id,
+                "status": "VERIFIED",
+                "validated_head": head,
+            }
+        }
+        with self.assertRaisesRegex(graph.ParityGraphError, "completed task proof"):
+            graph.validate_binding(
+                binding,
+                proof_unit_ids={cid},
+                shared_ids=set(),
+                evidence_catalog=evidence,
+                task_proofs=task_proofs,
+            )
+
     def test_forged_evidence_id_is_rejected(self) -> None:
         cid = self.result["rows"][0]["capability_id"]
         binding = {
