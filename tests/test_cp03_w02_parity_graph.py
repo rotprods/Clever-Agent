@@ -22,6 +22,7 @@ CLI_MODEL_INFO_REGISTER_BUILTIN_CAPABILITY_ID = "cap_bdc045630a6fcf4735394782"
 CLI_CHAT_REGISTER_BUILTIN_CAPABILITY_ID = "cap_63d29e906eae343ae8c88a05"
 CLI_ASK_REGISTER_BUILTIN_CAPABILITY_ID = "cap_e0f19ffe0e3814a158b2f56d"
 CLI_SERVE_REGISTER_BUILTIN_CAPABILITY_ID = "cap_e924254fa9cf1fde7a4f78b8"
+AFM_INPROCESS_CAPABILITY_ID = "cap_ac38bf813e130d14927723d8"
 OLLAMA_TEST_ID = (
     "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
     "test_ollama_registry_binding_is_capability_specific_and_evidence_backed"
@@ -817,6 +818,45 @@ class W02ParityGraphTests(unittest.TestCase):
         self.assertEqual(catalog["model_executions"],0)
         self.assertEqual(catalog["provider_egress_executions"],0)
         self.assertEqual(catalog["parity_promotions"],0)
+
+    def test_afm_inprocess_registry_remains_unbound_when_only_shim_catalog_is_observed(self) -> None:
+        row = next(row for row in self.result["rows"] if row["capability_id"] == AFM_INPROCESS_CAPABILITY_ID)
+        self.assertEqual(row["ownership"], "OWNED")
+        self.assertEqual(row["surface_kind"], "registry_registration")
+        self.assertEqual(row["source_path"], "src/openjarvis/engine/apple_fm.py")
+        self.assertEqual(row["source_line"], 171)
+        self.assertEqual(row["name"], "afm")
+        self.assertEqual(row["source_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")
+        self.assertEqual(row["w02_evidence_state"], "UNBOUND")
+        self.assertIsNone(row["binding"])
+        self.assertEqual(row["canonical_parity_status"], "UNVERIFIED")
+        self.assertFalse(row["verified"])
+        self.assertFalse(row["parity_promotion"])
+
+        probe=json.loads((ROOT / "evidence/cp03/cp03-w02/W02-17/afm_optional_engine_source_probe.json").read_text(encoding="utf-8"))
+        self.assertEqual(probe["capability_id"], AFM_INPROCESS_CAPABILITY_ID)
+        self.assertEqual(probe["upstream_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")
+        self.assertEqual(probe["decorator_registry_key"], "afm")
+        self.assertEqual(probe["decorator_line"], 171)
+        self.assertEqual(probe["optional_import_module"], "apple_fm")
+        self.assertEqual(probe["optional_import_exceptions_swallowed"], ["ImportError", "OSError"])
+        self.assertFalse(probe["w02_catalog_has_afm"])
+        self.assertTrue(probe["w02_catalog_has_apple_fm"])
+        self.assertEqual(probe["capability_status"], "BLOCKED_UNOBSERVABLE_OPTIONAL_IMPORT")
+        self.assertFalse(probe["binding_created"])
+        self.assertEqual(probe["canonical_parity_status"], "UNVERIFIED")
+        self.assertEqual(probe["afm_engine_execution"], "NOT_RUN")
+        self.assertFalse(probe["source_execution"])
+        self.assertEqual(probe["parity_promotions"], 0)
+
+        catalog=json.loads((ROOT / "evidence/cp03/cp03-w02/W02-08/native_catalog.json").read_text(encoding="utf-8"))
+        keys={engine["key"] for engine in catalog["engines"]}
+        self.assertIn("apple_fm", keys)
+        self.assertNotIn("afm", keys)
+        self.assertEqual(catalog["import_failures"], [])
+        self.assertEqual(catalog["model_executions"], 0)
+        self.assertEqual(catalog["provider_egress_executions"], 0)
+        self.assertEqual(catalog["parity_promotions"], 0)
 
     def test_graph_projects_all_four_planes_without_promotion(self) -> None:
         value = self.result["graph"]
