@@ -154,3 +154,11 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - G6 is now 11 `EVIDENCE_BACKED_CANDIDATE` / 36 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged.
 - `NOT_RUN`, `BLOCKED`, `PLATFORM_GATED`, source-only proof and waivers remain non-proof for VERIFIED parity. Real OpenJarvis fallback model execution remains `NOT_RUN`. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.
 - Exact next slice: bind the next W02 capability only when its own executed test can be named and traced to exact completed-task evidence; do not infer behavioral parity from source presence alone.
+
+## W02-17 CLI chat register_builtin_models binding — partial verified
+
+- `EVID-W02-PARITY-BINDING-CLI-CHAT-REGISTER-BUILTIN-20260923`: `cap_63d29e906eae343ae8c88a05` (`register_builtin_models`, OWNED registry registration) is bound to completed W02-08 evidence `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4` plus an exact pinned-source probe for `src/openjarvis/cli/chat_cmd.py:130`.
+- Capability-specific executed G6 test: `tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_cli_chat_register_builtin_binding_is_capability_specific_and_evidence_backed`. The source probe proves `chat` calls `register_builtin_models` before `get_engine` at upstream `72033b8ec288aa067ce4530ff9d96bf231e9c4e5`; W02-08 separately persists 69 registered `ModelSpec` entries. The CLI `chat` command itself remains `NOT_RUN` in this slice.
+- G6 is now 12 `EVIDENCE_BACKED_CANDIDATE` / 35 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged.
+- `NOT_RUN`, `BLOCKED`, `PLATFORM_GATED`, source-only proof and waivers remain non-proof for VERIFIED parity. Real OpenJarvis fallback model execution remains `NOT_RUN`. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.
+- Exact next slice: bind the next W02 capability only when its own executed test can be named and traced to exact completed-task evidence; do not infer behavioral parity from source presence alone.
