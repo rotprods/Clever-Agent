@@ -1,8 +1,8 @@
-name: CP03 W02 G6 GemmaCpp Capability Binding
+name: CP03 W02 G6 OpenAI Compat Register Binding
 
 on:
   push:
-    branches: [wave/cp03/w02-parity-gemma-binding-20260923]
+    branches: [wave/cp03/w02-parity-openai-compat-register-binding-20260923]
     paths:
       - '.github/workflows/cp03-w02-parity-graph.yml'
 
@@ -14,13 +14,13 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  EXPECTED_MAIN: 24a2531b337dac5a8878daeff9511435c7b2eda4
+  EXPECTED_MAIN: 776380a6358585c3be91823570838ea4c8aa1e0b
   CLAIM_ID: CLAIM-CP03-W02-PARITY-GRAPH-20260922
   BINDINGS_PATH: inventory/cp03/w02_evidence_bindings.jsonl
-  CAPABILITY_ID: cap_5cf599d5c98778fc324cbd0c
+  CAPABILITY_ID: cap_5411f850a1935d329d2c53a0
   SOURCE_EVIDENCE: EVID-W02-MODEL-BRIDGE-20260921
   SOURCE_HEAD: a866c335a0f9cad75122c8eb7c5310d358f6aad4
-  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_gemma_cpp_registry_binding_is_capability_specific_and_evidence_backed
+  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_openai_compat_register_binding_is_capability_specific_and_evidence_backed
 
 jobs:
   verify-bind-persist:
@@ -80,7 +80,7 @@ jobs:
           python -m scripts.parity.ledger --check --source-repo openjarvis
           git diff --check
 
-      - name: Add exact GemmaCpp binding candidate and RED/green test
+      - name: Add exact OpenAI-compat register binding candidate and RED-green test
         shell: bash
         run: |
           set -euo pipefail
@@ -92,7 +92,7 @@ jobs:
           bindings_path=Path(os.environ['BINDINGS_PATH'])
           capability_id=os.environ['CAPABILITY_ID']
           rows=[json.loads(line) for line in bindings_path.read_text(encoding='utf-8').splitlines() if line.strip()]
-          assert len(rows)==5, rows
+          assert len(rows)==6, rows
           assert not any(row.get('capability_id')==capability_id for row in rows)
           rows.append({
               'capability_id': capability_id,
@@ -114,27 +114,27 @@ jobs:
 
           test_path=Path('tests/test_cp03_w02_parity_graph.py')
           text=test_path.read_text(encoding='utf-8')
-          needle='NIM_CAPABILITY_ID = "cap_fa50b5646f0cfab91c7efec5"\n'
+          needle='GEMMA_CPP_CAPABILITY_ID = "cap_5cf599d5c98778fc324cbd0c"\n'
           assert needle in text
-          text=text.replace(needle,needle+'GEMMA_CPP_CAPABILITY_ID = "cap_5cf599d5c98778fc324cbd0c"\n',1)
+          text=text.replace(needle,needle+'OPENAI_COMPAT_REGISTER_CAPABILITY_ID = "cap_5411f850a1935d329d2c53a0"\n',1)
 
-          nim_test='''NIM_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_nim_registry_binding_is_capability_specific_and_evidence_backed"\n)\n'''
-          assert nim_test in text
-          text=text.replace(nim_test,nim_test+'''GEMMA_CPP_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_gemma_cpp_registry_binding_is_capability_specific_and_evidence_backed"\n)\n''',1)
+          gemma_test='''GEMMA_CPP_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_gemma_cpp_registry_binding_is_capability_specific_and_evidence_backed"\n)\n'''
+          assert gemma_test in text
+          text=text.replace(gemma_test,gemma_test+'''OPENAI_COMPAT_REGISTER_TEST_ID = (\n    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."\n    "test_openai_compat_register_binding_is_capability_specific_and_evidence_backed"\n)\n''',1)
 
-          text=text.replace('def test_current_matrix_has_five_candidates_and_no_parity_promotion', 'def test_current_matrix_has_six_candidates_and_no_parity_promotion', 1)
-          text=text.replace('self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 5)', 'self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 6)', 1)
-          text=text.replace('self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 42)', 'self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 41)', 1)
-          old_set='{SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID, LITELLM_CAPABILITY_ID, CLOUD_CAPABILITY_ID, NIM_CAPABILITY_ID}'
+          text=text.replace('def test_current_matrix_has_six_candidates_and_no_parity_promotion', 'def test_current_matrix_has_seven_candidates_and_no_parity_promotion', 1)
+          text=text.replace('self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 6)', 'self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 7)', 1)
+          text=text.replace('self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 41)', 'self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 40)', 1)
+          old_set='{SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID, LITELLM_CAPABILITY_ID, CLOUD_CAPABILITY_ID, NIM_CAPABILITY_ID, GEMMA_CPP_CAPABILITY_ID}'
           assert old_set in text
-          text=text.replace(old_set,'{SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID, LITELLM_CAPABILITY_ID, CLOUD_CAPABILITY_ID, NIM_CAPABILITY_ID, GEMMA_CPP_CAPABILITY_ID}',1)
-          nim_candidate='''        nim = candidates[NIM_CAPABILITY_ID]\n        self.assertEqual(nim["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(nim["binding"]["terminal"])\n'''
-          assert nim_candidate in text
-          text=text.replace(nim_candidate,nim_candidate+'''        gemma_cpp = candidates[GEMMA_CPP_CAPABILITY_ID]\n        self.assertEqual(gemma_cpp["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(gemma_cpp["binding"]["terminal"])\n''',1)
+          text=text.replace(old_set,'{SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID, LITELLM_CAPABILITY_ID, CLOUD_CAPABILITY_ID, NIM_CAPABILITY_ID, GEMMA_CPP_CAPABILITY_ID, OPENAI_COMPAT_REGISTER_CAPABILITY_ID}',1)
+          gemma_candidate='''        gemma_cpp = candidates[GEMMA_CPP_CAPABILITY_ID]\n        self.assertEqual(gemma_cpp["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(gemma_cpp["binding"]["terminal"])\n'''
+          assert gemma_candidate in text
+          text=text.replace(gemma_candidate,gemma_candidate+'''        openai_compat_register = candidates[OPENAI_COMPAT_REGISTER_CAPABILITY_ID]\n        self.assertEqual(openai_compat_register["binding"]["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertFalse(openai_compat_register["binding"]["terminal"])\n''',1)
 
           marker='    def test_graph_projects_all_four_planes_without_promotion(self) -> None:\n'
           assert marker in text
-          method='''    def test_gemma_cpp_registry_binding_is_capability_specific_and_evidence_backed(self) -> None:\n        row = next(row for row in self.result["rows"] if row["capability_id"] == GEMMA_CPP_CAPABILITY_ID)\n        self.assertEqual(row["ownership"], "OWNED")\n        self.assertEqual(row["surface_kind"], "registry_registration")\n        self.assertEqual(row["source_path"], "src/openjarvis/engine/gemma_cpp.py")\n        self.assertEqual(row["source_line"], 24)\n        self.assertEqual(row["name"], "gemma_cpp")\n        self.assertEqual(row["canonical_parity_status"], "UNVERIFIED")\n        self.assertFalse(row["verified"])\n        self.assertFalse(row["parity_promotion"])\n        binding = row["binding"]\n        self.assertEqual(binding["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertEqual(binding["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")\n        self.assertEqual(binding["test_id"], GEMMA_CPP_TEST_ID)\n        self.assertFalse(binding["terminal"])\n\n        evidence = graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")\n        receipt = evidence["EVID-W02-MODEL-BRIDGE-20260921"]\n        self.assertEqual(receipt["status"], "VERIFIED")\n        self.assertEqual(receipt["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")\n        self.assertEqual(receipt["native_engine_count"], 15)\n        self.assertEqual(receipt["native_import_failure_count"], 0)\n        self.assertEqual(receipt["native_model_count"], 69)\n        self.assertEqual(receipt["model_executions"], 0)\n        self.assertEqual(receipt["provider_egress_executions"], 0)\n        self.assertEqual(receipt["parity_promotions"], 0)\n\n        catalog = json.loads(\n            (ROOT / "evidence/cp03/cp03-w02/W02-08/native_catalog.json").read_text(encoding="utf-8")\n        )\n        matches = [engine for engine in catalog["engines"] if engine["key"] == "gemma_cpp"]\n        self.assertEqual(\n            matches,\n            [\n                {\n                    "implementation": "openjarvis.engine.gemma_cpp.GemmaCppEngine",\n                    "key": "gemma_cpp",\n                    "native_type": "ABCMeta",\n                    "state": "REGISTERED",\n                }\n            ],\n        )\n        self.assertEqual(catalog["model_executions"], 0)\n        self.assertEqual(catalog["provider_egress_executions"], 0)\n        self.assertEqual(catalog["parity_promotions"], 0)\n\n'''
+          method='''    def test_openai_compat_register_binding_is_capability_specific_and_evidence_backed(self) -> None:\n        row = next(row for row in self.result["rows"] if row["capability_id"] == OPENAI_COMPAT_REGISTER_CAPABILITY_ID)\n        self.assertEqual(row["ownership"], "OWNED")\n        self.assertEqual(row["surface_kind"], "registry_registration")\n        self.assertEqual(row["source_path"], "src/openjarvis/engine/openai_compat_engines.py")\n        self.assertEqual(row["source_line"], 27)\n        self.assertEqual(row["name"], "register")\n        self.assertEqual(row["canonical_parity_status"], "UNVERIFIED")\n        self.assertFalse(row["verified"])\n        self.assertFalse(row["parity_promotion"])\n        binding = row["binding"]\n        self.assertEqual(binding["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")\n        self.assertEqual(binding["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")\n        self.assertEqual(binding["test_id"], OPENAI_COMPAT_REGISTER_TEST_ID)\n        self.assertFalse(binding["terminal"])\n\n        evidence = graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")\n        receipt = evidence["EVID-W02-MODEL-BRIDGE-20260921"]\n        self.assertEqual(receipt["status"], "VERIFIED")\n        self.assertEqual(receipt["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")\n        self.assertEqual(receipt["native_engine_count"], 15)\n        self.assertEqual(receipt["native_import_failure_count"], 0)\n        self.assertEqual(receipt["native_model_count"], 69)\n        self.assertEqual(receipt["model_executions"], 0)\n        self.assertEqual(receipt["provider_egress_executions"], 0)\n        self.assertEqual(receipt["parity_promotions"], 0)\n\n        catalog = json.loads(\n            (ROOT / "evidence/cp03/cp03-w02/W02-08/native_catalog.json").read_text(encoding="utf-8")\n        )\n        expected = {\n            "apple_fm": "abc.AppleFmEngine",\n            "exo": "abc.ExoEngine",\n            "lemonade": "abc.LemonadeEngine",\n            "llamacpp": "abc.LlamaCppEngine",\n            "lmstudio": "abc.LMStudioEngine",\n            "mlx": "abc.MLXEngine",\n            "nexa": "abc.NexaEngine",\n            "sglang": "abc.SGLangEngine",\n            "uzu": "abc.UzuEngine",\n            "vllm": "abc.VLLMEngine",\n        }\n        observed = {\n            engine["key"]: engine["implementation"]\n            for engine in catalog["engines"]\n            if engine["key"] in expected\n        }\n        self.assertEqual(observed, expected)\n        for engine in catalog["engines"]:\n            if engine["key"] in expected:\n                self.assertEqual(engine["state"], "REGISTERED")\n                self.assertEqual(engine["native_type"], "ABCMeta")\n        self.assertEqual(catalog["model_executions"], 0)\n        self.assertEqual(catalog["provider_egress_executions"], 0)\n        self.assertEqual(catalog["parity_promotions"], 0)\n\n'''
           text=text.replace(marker,method+marker,1)
           test_path.write_text(text,encoding='utf-8')
           PY
@@ -147,29 +147,23 @@ jobs:
           import json
           from pathlib import Path
           summary=json.loads(Path('reports/cp03/w02_parity/SUMMARY.json').read_text())
-          assert summary['binding_counts']=={'UNBOUND':41,'EVIDENCE_BACKED_CANDIDATE':6}, summary
+          assert summary['binding_counts']=={'UNBOUND':40,'EVIDENCE_BACKED_CANDIDATE':7}, summary
           assert summary['verified_capabilities']==0
           assert summary['parity_promotions']==0
           assert summary['global_denominator']==7565
           assert summary['openjarvis_obligations']==646
           rows=[json.loads(x) for x in Path('reports/cp03/w02_parity/PROOF_MATRIX.jsonl').read_text().splitlines() if x.strip()]
-          row=next(x for x in rows if x['capability_id']=='cap_5cf599d5c98778fc324cbd0c')
+          row=next(x for x in rows if x['capability_id']=='cap_5411f850a1935d329d2c53a0')
           assert row['ownership']=='OWNED'
-          assert row['name']=='gemma_cpp'
+          assert row['name']=='register'
           assert row['surface_kind']=='registry_registration'
-          assert row['source_path']=='src/openjarvis/engine/gemma_cpp.py'
-          assert row['source_line']==24
+          assert row['source_path']=='src/openjarvis/engine/openai_compat_engines.py'
+          assert row['source_line']==27
           assert row['canonical_parity_status']=='UNVERIFIED'
           assert row['verified'] is False and row['parity_promotion'] is False
           assert row['binding']['evidence_id']=='EVID-W02-MODEL-BRIDGE-20260921'
           assert row['binding']['validated_head']=='a866c335a0f9cad75122c8eb7c5310d358f6aad4'
           assert row['binding']['terminal'] is False
-          catalog=json.loads(Path('evidence/cp03/cp03-w02/W02-08/native_catalog.json').read_text())
-          match=[x for x in catalog['engines'] if x['key']=='gemma_cpp']
-          assert match==[{'implementation':'openjarvis.engine.gemma_cpp.GemmaCppEngine','key':'gemma_cpp','native_type':'ABCMeta','state':'REGISTERED'}]
-          assert catalog['model_executions']==0
-          assert catalog['provider_egress_executions']==0
-          assert catalog['parity_promotions']==0
           PY
           git diff --check
 
@@ -201,7 +195,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$BINDINGS_PATH" tests/test_cp03_w02_parity_graph.py reports/cp03/w02_parity graphs/cp03/w02_parity
-          git commit -m 'CP03 W02-17: add GemmaCpp capability-specific G6 binding'
+          git commit -m 'CP03 W02-17: add OpenAI-compat register G6 binding'
           binding_head="$(git rev-parse HEAD)"
           git push origin HEAD:"${GITHUB_REF_NAME}"
           test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$binding_head"
@@ -217,8 +211,8 @@ jobs:
           import json, os
           from pathlib import Path
 
-          evidence_id='EVID-W02-PARITY-BINDING-GEMMA-CPP-20260923'
-          decision_id='DEC-W02-G6-GEMMA-CPP-CAPABILITY-BINDING-20260923'
+          evidence_id='EVID-W02-PARITY-BINDING-OPENAI-COMPAT-REGISTER-20260923'
+          decision_id='DEC-W02-G6-OPENAI-COMPAT-REGISTER-BINDING-20260923'
           risk_id='RISK-W02-G6-K47-BINDINGS-PENDING-20260922'
           head=os.environ['BINDING_HEAD']
           main=os.environ['EXPECTED_MAIN']
@@ -245,11 +239,11 @@ jobs:
           claim['continuation_base_head']=main
           claim_path.write_text(json.dumps(claim,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
           claim_event={
-              'schema_version':1,'date':'2026-09-23','event':'CONTINUATION','event_id':'CLAIM-CONT-W02-G6-GEMMA-CPP-20260923',
+              'schema_version':1,'date':'2026-09-23','event':'CONTINUATION','event_id':'CLAIM-CONT-W02-G6-OPENAI-COMPAT-REGISTER-20260923',
               'project_id':'CLEVER-JARVIS-001','checkpoint':'CP03','parent_wave':'CP03-W02','canonical_task':'W02-17',
               'wave_id':'CP03-W02-PARITY-GRAPH-20260922','claim_id':os.environ['CLAIM_ID'],'owner':'chatgpt-gpt-5.6-sol',
               'status':'ACTIVE','base_head':main,'scope':claim['scope'],
-              'coordination':'Continue the existing non-conflicting W02-17 G6 claim from exact main. Add exactly one capability-specific GemmaCpp registry binding; no parity promotion, denominator mutation, W02-18 opening, provider egress or tool execution.'
+              'coordination':'Continue the existing non-conflicting W02-17 G6 claim from exact main. Add exactly one capability-specific OpenAI-compatible register binding; no parity promotion, denominator mutation, W02-18 opening, provider egress or tool execution.'
           }
           append_once('ledgers/CLAIM_LEDGER.ndjson','event_id',claim_event['event_id'],claim_event)
 
@@ -257,51 +251,51 @@ jobs:
               'schema_version':1,'date':'2026-09-23','project_id':'CLEVER-JARVIS-001','checkpoint':'CP03',
               'parent_wave':'CP03-W02','task':'W02-17','gate':'G6','status':'PASS','evidence_id':evidence_id,
               'claim_id':os.environ['CLAIM_ID'],'validated_head':head,'github_actions_run_id':run_id,
-              'bindings_validated_total':6,'bindings_added_this_slice':1,'binding_capability_id':capability_id,
-              'binding_capability_name':'gemma_cpp','binding_source_evidence_id':source_evidence,
+              'bindings_validated_total':7,'bindings_added_this_slice':1,'binding_capability_id':capability_id,
+              'binding_capability_name':'register','binding_source_evidence_id':source_evidence,
               'binding_source_validated_head':source_head,'binding_source_run_id':35552788123,
               'executed_test_id':test_id,'source_artifact_path':'evidence/cp03/cp03-w02/W02-08/native_catalog.json',
-              'source_artifact_match':{'key':'gemma_cpp','implementation':'openjarvis.engine.gemma_cpp.GemmaCppEngine','state':'REGISTERED'},
-              'unbound_remaining':41,'verified_capabilities':0,'parity_promotions':0,
+              'source_artifact_match':{'source_path':'src/openjarvis/engine/openai_compat_engines.py','source_line':27,'registered_keys':['apple_fm','exo','lemonade','llamacpp','lmstudio','mlx','nexa','sglang','uzu','vllm']},
+              'unbound_remaining':40,'verified_capabilities':0,'parity_promotions':0,
               'global_denominator':7565,'openjarvis_obligations':646,'model_executions':0,
               'provider_egress_executions':0,'tool_executions':0,'real_openjarvis_fallback_model_execution':'NOT_RUN',
               'next_slice':'Bind the next W02 capability only when a capability-specific executed test and exact completed-task evidence receipt can be named.'
           }
           Path('sessions/20260922-w02-parity-graph/RESULT.json').write_text(json.dumps(result,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
-          Path('evidence/cp03/cp03-w02/W02-17/binding_gemma_cpp_report.json').write_text(json.dumps(result,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          Path('evidence/cp03/cp03-w02/W02-17/binding_openai_compat_register_report.json').write_text(json.dumps(result,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
 
           evidence={
               'schema_version':1,'date':'2026-09-23','evidence_id':evidence_id,'status':'VERIFIED',
-              'type':'cp03_w02_g6_capability_specific_gemma_cpp_binding','wave_id':'CP03-W02',
+              'type':'cp03_w02_g6_capability_specific_openai_compat_register_binding','wave_id':'CP03-W02',
               'support_wave':'CP03-W02-PARITY-GRAPH-20260922','validated_head':head,'github_actions_run_id':run_id,
-              'claim':'The owned OpenJarvis GemmaCpp registry-registration proof unit is bound to the completed exact-head W02-08 bridge receipt and a capability-specific G6 test that verifies the exact persisted native-catalog row. This creates only an EVIDENCE_BACKED_CANDIDATE; canonical parity remains UNVERIFIED.',
+              'claim':'The owned OpenJarvis openai_compat_engines register proof unit is bound to the completed exact-head W02-08 bridge receipt and a capability-specific G6 test that verifies the exact frozen source surface and its persisted registered engine set. This creates only an EVIDENCE_BACKED_CANDIDATE; canonical parity remains UNVERIFIED.',
               'binding_capability_id':capability_id,'binding_source_evidence_id':source_evidence,
               'binding_source_validated_head':source_head,'executed_test_id':test_id,
-              'bindings_validated_total':6,'unbound_remaining':41,'verified_capabilities':0,'parity_promotions':0,
+              'bindings_validated_total':7,'unbound_remaining':40,'verified_capabilities':0,'parity_promotions':0,
               'global_denominator':7565,'openjarvis_obligations':646,'model_executions':0,
               'provider_egress_executions':0,'tool_executions':0,'real_openjarvis_fallback_model_execution':'NOT_RUN'
           }
           append_once('ledgers/EVIDENCE_LEDGER.ndjson','evidence_id',evidence_id,evidence)
-          append_once('ledgers/RUN_LOG.ndjson','event_id','RUN-W02-PARITY-BINDING-GEMMA-CPP-20260923',{
-              'schema_version':1,'date':'2026-09-23','event':'CP03_W02_G6_GEMMA_CPP_BINDING_ADVANCED',
-              'event_id':'RUN-W02-PARITY-BINDING-GEMMA-CPP-20260923','goal_id':'CLEVER-JARVIS-001','checkpoint':'CP03',
+          append_once('ledgers/RUN_LOG.ndjson','event_id','RUN-W02-PARITY-BINDING-OPENAI-COMPAT-REGISTER-20260923',{
+              'schema_version':1,'date':'2026-09-23','event':'CP03_W02_G6_OPENAI_COMPAT_REGISTER_BINDING_ADVANCED',
+              'event_id':'RUN-W02-PARITY-BINDING-OPENAI-COMPAT-REGISTER-20260923','goal_id':'CLEVER-JARVIS-001','checkpoint':'CP03',
               'iteration':'I03','wave_id':'CP03-W02','canonical_task':'W02-17','claim_id':os.environ['CLAIM_ID'],
-              'evidence_id':evidence_id,'status':'ADVANCED','bindings_validated_total':6,'unbound_remaining':41,
+              'evidence_id':evidence_id,'status':'ADVANCED','bindings_validated_total':7,'unbound_remaining':40,
               'verified_capabilities':0,'parity_promotions':0})
-          append_once('ledgers/WAVE_LEDGER.ndjson','event_id','WAVE-W02-PARITY-BINDING-GEMMA-CPP-20260923',{
+          append_once('ledgers/WAVE_LEDGER.ndjson','event_id','WAVE-W02-PARITY-BINDING-OPENAI-COMPAT-REGISTER-20260923',{
               'schema_version':1,'date':'2026-09-23','event':'IMPLEMENTATION_VERIFICATION',
-              'event_id':'WAVE-W02-PARITY-BINDING-GEMMA-CPP-20260923','checkpoint':'CP03','iteration':'I03',
+              'event_id':'WAVE-W02-PARITY-BINDING-OPENAI-COMPAT-REGISTER-20260923','checkpoint':'CP03','iteration':'I03',
               'parent_wave':'CP03-W02','wave_id':'CP03-W02-PARITY-GRAPH-20260922','canonical_task':'W02-17',
               'claim_id':os.environ['CLAIM_ID'],'gate':'G6','evidence_id':evidence_id,'status':'IN_PROGRESS',
-              'bindings_validated_total':6,'unbound_remaining':41,'parity_promotions':0})
+              'bindings_validated_total':7,'unbound_remaining':40,'parity_promotions':0})
           append_once('ledgers/DECISION_LEDGER.ndjson','decision_id',decision_id,{
               'schema_version':1,'date':'2026-09-23','decision_id':decision_id,'status':'ACCEPTED','task':'W02-17',
               'evidence_id':evidence_id,
-              'decision':'Reuse of a completed W02-08 catalog receipt is allowed only through a distinct capability-specific executed G6 test for each concrete registry surface. The binding remains a candidate mapping, never an automatic parity promotion.',
-              'context':'GemmaCpp is a separate frozen owned registry-registration surface at src/openjarvis/engine/gemma_cpp.py:24. The persisted W02-08 native catalog contains its exact registered implementation and reports zero model/provider execution.'})
+              'decision':'Bind the generic OpenAI-compatible engine registration surface only through a capability-specific test that resolves the frozen source row and proves the complete persisted native registration set from the completed W02-08 receipt. Keep the result non-terminal and parity-unverified.',
+              'context':'The source proof unit is register at src/openjarvis/engine/openai_compat_engines.py:27. W02-08 persisted ten OpenAI-compatible engine registrations with zero model/provider execution and no import failures.'})
           risk={
               'schema_version':1,'date':'2026-09-23','risk_id':risk_id,'severity':'P1','status':'OPEN','evidence_id':evidence_id,
-              'risk':'W02-17 still has 41/47 proof units without explicit capability-to-test-to-evidence bindings; task-level PASS receipts, catalog membership, NOT_RUN/BLOCKED/PLATFORM_GATED fields and waivers must not be widened into capability parity.',
+              'risk':'W02-17 still has 40/47 proof units without explicit capability-to-test-to-evidence bindings; task-level PASS receipts, catalog membership, NOT_RUN/BLOCKED/PLATFORM_GATED fields and waivers must not be widened into capability parity.',
               'mitigation':'Continue one capability-specific executed-test binding at a time with exact source/evidence SHA and field expectations. Keep canonical parity UNVERIFIED, shared capabilities non-terminal, denominators frozen and W02-18 BLOCKED until G6 is actually complete.'}
           if not any(r.get('risk_id')==risk_id and r.get('evidence_id')==evidence_id for r in read_rows('ledgers/RISK_LEDGER.ndjson')):
               with Path('ledgers/RISK_LEDGER.ndjson').open('a',encoding='utf-8') as handle:
@@ -310,13 +304,13 @@ jobs:
           state_path=Path('STATE.md')
           lines=[line for line in state_path.read_text(encoding='utf-8').splitlines() if not line.startswith('- G6 explicit binding progress:')]
           insert_at=next(i for i,line in enumerate(lines) if line.startswith('- Canonical task frontier:'))+1
-          lines.insert(insert_at,'- G6 explicit binding progress: `6/47` evidence-backed candidates; `41` UNBOUND; VERIFIED capabilities `0`; parity promotions `0`.')
+          lines.insert(insert_at,'- G6 explicit binding progress: `7/47` evidence-backed candidates; `40` UNBOUND; VERIFIED capabilities `0`; parity promotions `0`.')
           state_path.write_text('\n'.join(lines).rstrip()+'\n',encoding='utf-8')
 
           handoff_path=Path('HANDOFF.md')
           handoff=handoff_path.read_text(encoding='utf-8').rstrip()
-          marker='## W02-17 GemmaCpp registry binding — partial verified'
-          note=f'''\n\n{marker}\n\n- `{evidence_id}`: `{capability_id}` (`gemma_cpp`, OWNED registry registration) is bound to completed W02-08 evidence `{source_evidence}` at exact SHA `{source_head}`.\n- Capability-specific executed test: `{test_id}`; it resolves frozen source `src/openjarvis/engine/gemma_cpp.py:24` to native catalog `openjarvis.engine.gemma_cpp.GemmaCppEngine`, state `REGISTERED`, with zero model/provider execution.\n- G6 is now 6 `EVIDENCE_BACKED_CANDIDATE` / 41 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged.\n- `NOT_RUN`, `BLOCKED`, `PLATFORM_GATED` and waivers remain non-proof. Real OpenJarvis fallback model execution remains `NOT_RUN`. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.\n- Exact next slice: bind the next W02 capability only when its own executed test can be named and traced to an exact completed-task receipt.\n'''
+          marker='## W02-17 OpenAI-compat register binding — partial verified'
+          note=f'''\n\n{marker}\n\n- `{evidence_id}`: `{capability_id}` (`register`, OWNED registry registration) is bound to completed W02-08 evidence `{source_evidence}` at exact SHA `{source_head}`.\n- Capability-specific executed test: `{test_id}`; it resolves frozen source `src/openjarvis/engine/openai_compat_engines.py:27` and verifies the ten persisted OpenAI-compatible registered engine keys with zero model/provider execution.\n- G6 is now 7 `EVIDENCE_BACKED_CANDIDATE` / 40 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged.\n- `NOT_RUN`, `BLOCKED`, `PLATFORM_GATED` and waivers remain non-proof. Real OpenJarvis fallback model execution remains `NOT_RUN`. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.\n- Exact next slice: bind the next W02 capability only when its own executed test can be named and traced to an exact completed-task receipt.\n'''
           if marker not in handoff:
               handoff_path.write_text(handoff+note,encoding='utf-8')
           PY
@@ -347,13 +341,13 @@ jobs:
           git add \
             sessions/20260922-w02-parity-graph/CLAIM.json \
             sessions/20260922-w02-parity-graph/RESULT.json \
-            evidence/cp03/cp03-w02/W02-17/binding_gemma_cpp_report.json \
+            evidence/cp03/cp03-w02/W02-17/binding_openai_compat_register_report.json \
             reports/cp03/w02_parity graphs/cp03/w02_parity \
             STATE.md HANDOFF.md \
             ledgers/CLAIM_LEDGER.ndjson ledgers/EVIDENCE_LEDGER.ndjson ledgers/RUN_LOG.ndjson \
             ledgers/WAVE_LEDGER.ndjson ledgers/DECISION_LEDGER.ndjson ledgers/RISK_LEDGER.ndjson \
             .agentic/context/CURRENT_CONTEXT.json .agentic/context/CURRENT_CONTEXT.md
-          git commit -m 'CP03 W02-17: persist GemmaCpp capability binding evidence'
+          git commit -m 'CP03 W02-17: persist OpenAI-compat register binding evidence'
           final_head="$(git rev-parse HEAD)"
           git push origin HEAD:"${GITHUB_REF_NAME}"
           test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$final_head"
