@@ -178,3 +178,11 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - G6 is now 14 `EVIDENCE_BACKED_CANDIDATE` / 33 `UNBOUND`; VERIFIED remains 0 and parity promotions remain 0. Denominator 7565 and OpenJarvis obligations 646 are unchanged.
 - `NOT_RUN`, `BLOCKED`, `PLATFORM_GATED`, source-only proof and waivers remain non-proof for VERIFIED parity. Real OpenJarvis fallback model execution remains `NOT_RUN`. W02-17 stays `IN_PROGRESS`; W02-18/W02-19 stay `BLOCKED`.
 - Exact next slice: bind the next W02 capability only when its own executed test can be named and traced to exact completed-task evidence; do not infer behavioral parity from source presence alone.
+
+## W02-17 AFM optional-engine negative guard — blocker recorded
+
+- `EVID-W02-PARITY-BLOCKER-AFM-OPTIONAL-20260923` records the false-binding hazard for `cap_ac38bf813e130d14927723d8`: pinned source key is `afm`; W02-08 observed only distinct `apple_fm`.
+- Upstream optional loading swallows `ImportError`/`OSError`, so `import_failures=[]` does not prove `afm` loaded.
+- Regression guard requires `UNBOUND`, absent binding and canonical parity `UNVERIFIED`; `afm` execution remains `NOT_RUN`, never PASS.
+- G6 stays 14 candidates / 33 UNBOUND; VERIFIED 0; parity promotions 0; denominator 7565; OpenJarvis obligations 646. W02-17 remains IN_PROGRESS; W02-18/W02-19 remain BLOCKED.
+- Next: direct compatible-host `afm` proof, or another W02-17 proof unit only with its own executed test and exact completed-task evidence.
