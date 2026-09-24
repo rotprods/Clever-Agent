@@ -1,0 +1,37 @@
+{
+  "canonical_parity_status": "UNVERIFIED",
+  "capability_id": "cap_ce98b24c0ed43607f27027a3",
+  "capability_name": "ask",
+  "checkpoint": "CP03",
+  "cli_command_execution": "NOT_RUN",
+  "date": "2026-09-24",
+  "direct_inference_execution": "NOT_RUN",
+  "facets": [
+    "W02",
+    "W03",
+    "W04",
+    "W05"
+  ],
+  "model_executions": 0,
+  "ownership": "SHARED",
+  "parity_promotions": 0,
+  "project_id": "CLEVER-JARVIS-001",
+  "provider_egress_executions": 0,
+  "schema_version": 1,
+  "source_blob_sha1": "464f590c3204ce055524bae7f649c0951417c649",
+  "source_execution": false,
+  "source_line": 749,
+  "source_path": "src/openjarvis/cli/ask.py",
+  "source_probe": "PASS",
+  "source_sha256": "f03c0ba6fbf6da8ef46061b61bbef0be842f227511589208197b25b2cfc175b3",
+  "surface_kind": "cli_command",
+  "task": "W02-17",
+  "terminal_eligible_in_w02": false,
+  "tool_executions": 0,
+  "upstream_commit": "72033b8ec288aa067ce4530ff9d96bf231e9c4e5",
+  "w02_source_facts": [
+    "register_builtin_models",
+    "engine_selection",
+    "research_branch"
+  ]
+}
