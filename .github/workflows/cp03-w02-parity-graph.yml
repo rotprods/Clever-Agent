@@ -1,8 +1,8 @@
-name: CP03 W02 G6 Nexa models source binding
+name: CP03 W02 G6 core server health source binding
 
 on:
   push:
-    branches: [wave/cp03/w02-parity-nexa-models-20260924]
+    branches: [wave/cp03/w02-parity-server-health-20260924]
     paths:
       - '.github/workflows/cp03-w02-parity-graph.yml'
 
@@ -14,19 +14,19 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  EXPECTED_MAIN: f52a62ec930d8f9a3270e8b88eb74c9a6a496963
+  EXPECTED_MAIN: a0d10061e96f8a42e622945a9d73c3297352c405
   UPSTREAM_COMMIT: 72033b8ec288aa067ce4530ff9d96bf231e9c4e5
   CLAIM_ID: CLAIM-CP03-W02-PARITY-GRAPH-20260922
   WAVE_ID: CP03-W02-PARITY-GRAPH-20260922
-  CAPABILITY_ID: cap_8dbeb91d13034dded222493b
-  EVIDENCE_ID: EVID-W02-PARITY-BINDING-NEXA-MODELS-20260924
-  DECISION_ID: DEC-W02-G6-NEXA-MODELS-BINDING-20260924
+  CAPABILITY_ID: cap_575541e84f43f012a9239ad2
+  EVIDENCE_ID: EVID-W02-PARITY-BINDING-SERVER-HEALTH-20260924
+  DECISION_ID: DEC-W02-G6-SERVER-HEALTH-BINDING-20260924
   SOURCE_EVIDENCE_ID: EVID-W02-MODEL-BRIDGE-20260921
   SOURCE_EVIDENCE_HEAD: a866c335a0f9cad75122c8eb7c5310d358f6aad4
-  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_nexa_models_binding_is_capability_specific_and_source_backed
+  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_server_health_binding_is_capability_specific_and_source_backed
 
 jobs:
-  bind-nexa-models:
+  bind-server-health:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -72,7 +72,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python sessions/20260922-w02-parity-graph/run_nexa_models_wave.py
+          python sessions/20260922-w02-parity-graph/run_server_health_wave.py
           git diff --check
           test -n "$(git status --porcelain)"
 
@@ -81,9 +81,9 @@ jobs:
           test "$(git merge-base origin/main HEAD)" = "$EXPECTED_MAIN"
           test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$GITHUB_SHA"
 
-          rm sessions/20260922-w02-parity-graph/run_nexa_models_wave.py
+          rm sessions/20260922-w02-parity-graph/run_server_health_wave.py
           git config user.name 'clever-agent-wave'
           git config user.email 'actions@users.noreply.github.com'
           git add -A
-          git commit -m 'CP03 W02-17: bind Nexa models source proof'
+          git commit -m 'CP03 W02-17: bind core server health source proof'
           git push origin "HEAD:${GITHUB_REF_NAME}"
