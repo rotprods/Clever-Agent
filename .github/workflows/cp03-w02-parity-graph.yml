@@ -1,8 +1,9 @@
-name: CP03 W02 G6 learned router exact-head wave
+name: CP03 W02 G6 server chat completions exact-head wave
+# Recovery: run 36023395569 failed closed because source_line 159 is the function declaration; corrected runner asserts decorator at 158 and function at 159.
 
 on:
   push:
-    branches: [wave/cp03/w02-parity-learned-router-20260924]
+    branches: [wave/cp03/w02-parity-server-chat-completions-20260924]
     paths:
       - '.github/workflows/cp03-w02-parity-graph.yml'
 
@@ -10,17 +11,17 @@ permissions:
   contents: write
 
 concurrency:
-  group: cp03-w02-parity-learned-router
+  group: cp03-w02-parity-server-chat-completions
   cancel-in-progress: false
 
 env:
-  EXPECTED_MAIN: c5dfe79caa1788271fa57b1437ff9668dbae7ecf
+  EXPECTED_MAIN: 4c9fb0da8aad0e56030c5a69a3b06b9263fbba23
   UPSTREAM_COMMIT: 72033b8ec288aa067ce4530ff9d96bf231e9c4e5
-  CAPABILITY_ID: cap_cc6d3df603b0ebde91766a13
-  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_learned_router_binding_is_capability_specific_and_source_backed
+  CAPABILITY_ID: cap_56358709cbc328e25ed1afff
+  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_server_chat_completions_binding_is_capability_specific_and_source_backed
 
 jobs:
-  advance-learned-router:
+  advance-server-chat-completions:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -61,11 +62,11 @@ jobs:
           git -C /tmp/openjarvis checkout -q --detach FETCH_HEAD
           test "$(git -C /tmp/openjarvis rev-parse HEAD)" = "$UPSTREAM_COMMIT"
 
-      - name: RED to GREEN learned router slice and full G6 gauntlet
+      - name: RED to GREEN server chat completions slice and full G6 gauntlet
         shell: bash
         run: |
           set -euo pipefail
-          python sessions/20260922-w02-parity-graph/run_learned_router_wave.py
+          python sessions/20260922-w02-parity-graph/run_server_chat_completions_wave.py
           git diff --check
 
       - name: CAS persist only validated state
@@ -83,5 +84,5 @@ jobs:
           git config user.name 'clever-agent-wave'
           git config user.email 'actions@users.noreply.github.com'
           git add -A
-          git commit -m 'CP03 W02-17: bind learned router source proof'
+          git commit -m 'CP03 W02-17: bind server chat completions source proof'
           git push origin "HEAD:${GITHUB_REF_NAME}"
