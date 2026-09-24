@@ -33,6 +33,7 @@ SOURCE_EVIDENCE_HEAD = "a866c335a0f9cad75122c8eb7c5310d358f6aad4"
 SOURCE_PATH = "src/openjarvis/server/routes.py"
 SOURCE_LINE = 159
 SOURCE_BLOB_SHA1 = "16b584c21320d292cc2f0f99d1d0f6d0f40e6f3d"
+HISTORICAL_RED_RUN_ID = 36023395569
 BINDINGS_BEFORE = 35
 BINDINGS_AFTER = 36
 UNBOUND_BEFORE = 12
@@ -174,7 +175,9 @@ def build_source_probe() -> dict:
     for needle in required:
         assert needle in text, needle
     lines = text.splitlines()
-    assert lines[SOURCE_LINE - 1].strip() == '@router.post("/v1/chat/completions")'
+    # Frozen obligation source_line=159 anchors the function declaration; the decorator is line 158.
+    assert lines[SOURCE_LINE - 1].strip() == "async def chat_completions(request_body: ChatCompletionRequest, request: Request):"
+    assert lines[SOURCE_LINE - 2].strip() == '@router.post("/v1/chat/completions")'
     return {
         "agent_execution": "NOT_RUN",
         "canonical_parity_status": "UNVERIFIED",
@@ -183,6 +186,8 @@ def build_source_probe() -> dict:
         "checkpoint": "CP03",
         "date": "2026-09-24",
         "direct_route_execution": "NOT_RUN",
+        "historical_red_root_cause": "source_line 159 anchors async function declaration; initial runner incorrectly asserted decorator at line 159 (actual decorator line 158)",
+        "historical_red_run_id": HISTORICAL_RED_RUN_ID,
         "model_executions": 0,
         "ownership": "SHARED",
         "parity_promotions": 0,
@@ -299,6 +304,7 @@ def patch_binding_and_tests(probe: dict) -> None:
         self.assertEqual(probe["direct_route_execution"], "NOT_RUN")
         self.assertEqual(probe["streaming_execution"], "NOT_RUN")
         self.assertEqual(probe["agent_execution"], "NOT_RUN")
+        self.assertEqual(probe["historical_red_run_id"], 36023395569)
         self.assertEqual(probe["model_executions"], 0)
         self.assertEqual(probe["provider_egress_executions"], 0)
         self.assertEqual(probe["tool_executions"], 0)
@@ -336,6 +342,8 @@ def persist(probe: dict) -> None:
         "gate": "G6",
         "github_actions_run_id": RUN_ID,
         "global_denominator": 7565,
+        "historical_red_root_cause": probe["historical_red_root_cause"],
+        "historical_red_run_id": HISTORICAL_RED_RUN_ID,
         "model_executions": 0,
         "next_slice": "Continue W02-17 with one non-conflicting proof unit only when capability-specific execution or exact pinned-source evidence can be paired with an exact completed-task PASS receipt. Preserve AFM/fallback NOT_RUN and extant Apple-FM/cloud-reload/InferenceStartEvent/server-delete-model scopes.",
         "openjarvis_obligations": 646,
@@ -383,9 +391,9 @@ def persist(probe: dict) -> None:
         ROOT / "ledgers/DECISION_LEDGER.ndjson",
         {
             "checkpoint": "CP03",
-            "context": "Exact pinned OpenJarvis source proves the core POST /v1/chat/completions route and its dispatch branches. W02-08 is reused only as the exact completed binding receipt. Route/agent/stream/model execution remain NOT_RUN and SHARED ownership forbids terminal W02 attribution.",
+            "context": "Exact pinned OpenJarvis source proves the core POST /v1/chat/completions route and dispatch branches. The first gate failed closed because source_line 159 identifies the function declaration while its decorator is line 158; the corrected probe retains that RED as historical evidence. W02-08 is reused only as the exact completed binding receipt. Route/agent/stream/model execution remain NOT_RUN and SHARED ownership forbids terminal W02 attribution.",
             "date": "2026-09-24",
-            "decision": "Bind the frozen core server chat-completions route as a non-terminal EVIDENCE_BACKED_CANDIDATE only.",
+            "decision": "Bind the frozen core server chat-completions route as a non-terminal EVIDENCE_BACKED_CANDIDATE only after correcting and retesting the exact source-line invariant.",
             "decision_id": DECISION_ID,
             "evidence_id": EVIDENCE_ID,
             "parity_promotions": 0,
@@ -408,6 +416,7 @@ def persist(probe: dict) -> None:
             "event_id": RUN_EVENT_ID,
             "evidence_id": EVIDENCE_ID,
             "goal_id": "CLEVER-JARVIS-001",
+            "historical_red_run_id": HISTORICAL_RED_RUN_ID,
             "iteration": "I03",
             "parity_promotions": 0,
             "schema_version": 1,
@@ -467,6 +476,7 @@ def persist(probe: dict) -> None:
 
 - `{EVIDENCE_ID}`: `{CAPABILITY_ID}` (`POST /v1/chat/completions`, SHARED core server route at `{SOURCE_PATH}:{SOURCE_LINE}`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.
 - Exact pinned OpenJarvis `{UPSTREAM_COMMIT}` proves the route declaration plus engine/agent/model resolution and distinct stream-tools, stream-agent, stream-direct, nonstream-agent and nonstream-direct dispatch branches. Route, stream, agent, model, provider and tool execution remain `NOT_RUN`/0.
+- Historical RED run `{HISTORICAL_RED_RUN_ID}` failed closed because the initial probe treated source line 159 as the decorator; the frozen row actually anchors the async function declaration at line 159 and the decorator at line 158. The corrected invariant is retained and retested.
 - Binding is anchored to completed W02-08 `{SOURCE_EVIDENCE_ID}` at exact SHA `{SOURCE_EVIDENCE_HEAD}`. SHARED ownership is terminal-ineligible in W02, so no terminal attribution or parity promotion is made.
 - G6 is now 36 `EVIDENCE_BACKED_CANDIDATE` / 11 `UNBOUND`; VERIFIED 0; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. W02-17 remains `IN_PROGRESS`; W02-18/W02-19 remain `BLOCKED`.
 - Existing AFM/Apple-FM/cloud-reload/InferenceStartEvent/server-delete-model scopes were not mutated; AFM and real fallback model execution remain `NOT_RUN`.
@@ -525,6 +535,7 @@ def main() -> None:
         "verified_capabilities": 0,
         "parity_promotions": 0,
         "evidence_id": EVIDENCE_ID,
+        "historical_red_run_id": HISTORICAL_RED_RUN_ID,
     }, sort_keys=True))
 
 
