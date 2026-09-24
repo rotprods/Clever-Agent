@@ -1,8 +1,8 @@
-name: CP03 W02 G6 InferenceEndEvent protocol binding
+name: CP03 W02 G6 Nexa health source binding
 
 on:
   push:
-    branches: [wave/cp03/w02-parity-inference-end-event-20260924]
+    branches: [wave/cp03/w02-parity-nexa-health-20260924]
     paths:
       - '.github/workflows/cp03-w02-parity-graph.yml'
 
@@ -14,19 +14,19 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  EXPECTED_MAIN: 8b2873e16c99a6969a810344a026a75012462d39
+  EXPECTED_MAIN: 3589c94fa7fe39d627621ddd105264c5aed72b78
   UPSTREAM_COMMIT: 72033b8ec288aa067ce4530ff9d96bf231e9c4e5
   CLAIM_ID: CLAIM-CP03-W02-PARITY-GRAPH-20260922
   WAVE_ID: CP03-W02-PARITY-GRAPH-20260922
-  CAPABILITY_ID: cap_a2a75f0ee048f59cf65c028b
-  EVIDENCE_ID: EVID-W02-PARITY-BINDING-INFERENCE-END-EVENT-PROTOCOL-20260924
-  DECISION_ID: DEC-W02-G6-INFERENCE-END-EVENT-PROTOCOL-BINDING-20260924
+  CAPABILITY_ID: cap_3201c665f15075280227bc01
+  EVIDENCE_ID: EVID-W02-PARITY-BINDING-NEXA-HEALTH-20260924
+  DECISION_ID: DEC-W02-G6-NEXA-HEALTH-BINDING-20260924
   SOURCE_EVIDENCE_ID: EVID-W02-MODEL-BRIDGE-20260921
   SOURCE_EVIDENCE_HEAD: a866c335a0f9cad75122c8eb7c5310d358f6aad4
-  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_inference_end_event_protocol_binding_is_capability_specific_and_source_backed
+  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_nexa_health_binding_is_capability_specific_and_source_backed
 
 jobs:
-  bind-inference-end-event:
+  bind-nexa-health:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -72,7 +72,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python sessions/20260922-w02-parity-graph/run_inference_end_event_wave.py
+          python sessions/20260922-w02-parity-graph/run_nexa_health_wave.py
           git diff --check
           test -n "$(git status --porcelain)"
 
@@ -81,9 +81,9 @@ jobs:
           test "$(git merge-base origin/main HEAD)" = "$EXPECTED_MAIN"
           test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$GITHUB_SHA"
 
-          rm sessions/20260922-w02-parity-graph/run_inference_end_event_wave.py
+          rm sessions/20260922-w02-parity-graph/run_nexa_health_wave.py
           git config user.name 'clever-agent-wave'
           git config user.email 'actions@users.noreply.github.com'
           git add -A
-          git commit -m 'CP03 W02-17: bind InferenceEndEvent source proof'
+          git commit -m 'CP03 W02-17: bind Nexa health source proof'
           git push origin "HEAD:${GITHUB_REF_NAME}"
