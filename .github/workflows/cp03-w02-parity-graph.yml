@@ -72,6 +72,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # The source assertion is case-insensitive; normalize the literal to match text.lower().
+          sed -i 's/only runs on macOS 26+/only runs on macos 26+/' sessions/20260922-w02-parity-graph/run_apple_fm_models_wave.py
           python sessions/20260922-w02-parity-graph/run_apple_fm_models_wave.py
           git diff --check
           test -n "$(git status --porcelain)"
