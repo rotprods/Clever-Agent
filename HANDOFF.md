@@ -336,3 +336,12 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - G6 is now 31 `EVIDENCE_BACKED_CANDIDATE` / 16 `UNBOUND`; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. W02-17 remains `IN_PROGRESS`; W02-18/W02-19 remain `BLOCKED`.
 - Existing AFM/Apple-FM/cloud-reload/InferenceStartEvent/server-delete-model branches were not touched.
 - Exact next slice: another branch-free W02-17 proof unit with capability-specific execution or exact pinned-source evidence paired to an exact completed-task PASS receipt; AFM compatible-host proof and real fallback-model execution remain unresolved.
+
+## W02-17 heuristic router binding — source-backed partial verified
+
+- `EVID-W02-PARITY-BINDING-HEURISTIC-ROUTER-20260924`: `cap_1defee98e7075463dcf65434` (`heuristic`, OWNED at `src/openjarvis/learning/routing/heuristic_policy.py:12`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.
+- Exact pinned OpenJarvis `72033b8ec288aa067ce4530ff9d96bf231e9c4e5` proves guarded import-time `RouterPolicyRegistry.register_value("heuristic", HeuristicRouter)` registration. Router-policy execution remains `NOT_RUN`; model/provider/tool executions remain 0.
+- Binding is anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4`. This is candidate evidence only: VERIFIED parity remains 0.
+- G6 is now 32 `EVIDENCE_BACKED_CANDIDATE` / 15 `UNBOUND`; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. W02-17 remains `IN_PROGRESS`; W02-18/W02-19 remain `BLOCKED`.
+- Existing AFM/Apple-FM/cloud-reload/InferenceStartEvent/server-delete-model branches were not touched.
+- Exact next slice: another branch-free W02-17 proof unit with capability-specific execution or exact pinned-source evidence paired to an exact completed-task PASS receipt; AFM compatible-host proof and real fallback-model execution remain unresolved.
