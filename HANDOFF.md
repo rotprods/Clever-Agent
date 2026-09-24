@@ -363,3 +363,12 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - G6 is now 34 `EVIDENCE_BACKED_CANDIDATE` / 13 `UNBOUND`; VERIFIED 0; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. W02-17 remains `IN_PROGRESS`; W02-18/W02-19 remain `BLOCKED`.
 - Existing Apple-FM/cloud-reload/InferenceStartEvent/server-delete-model scopes were not mutated. AFM compatible-host proof and real fallback-model execution remain unresolved and `NOT_RUN`.
 - Exact next slice: another non-conflicting W02-17 proof unit with capability-specific execution or exact pinned-source evidence paired to an exact completed-task PASS receipt.
+
+## W02-17 learned router binding — source-backed partial verified
+
+- `EVID-W02-PARITY-BINDING-LEARNED-ROUTER-20260924`: `cap_cc6d3df603b0ebde91766a13` (`learned`, SHARED registry registration at `src/openjarvis/learning/routing/learned_router.py:231`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.
+- Exact pinned OpenJarvis `72033b8ec288aa067ce4530ff9d96bf231e9c4e5` proves guarded import-time `RouterPolicyRegistry.register_value("learned", LearnedRouterPolicy)` registration. Learned-router execution remains `NOT_RUN`; model/provider/tool executions remain 0.
+- Binding is anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4`. SHARED ownership is terminal-ineligible in W02, so no terminal attribution or parity promotion is made.
+- G6 is now 35 `EVIDENCE_BACKED_CANDIDATE` / 12 `UNBOUND`; VERIFIED 0; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. W02-17 remains `IN_PROGRESS`; W02-18/W02-19 remain `BLOCKED`.
+- Existing AFM/Apple-FM/cloud-reload/InferenceStartEvent/server-delete-model scopes were not mutated; AFM and real fallback model execution remain `NOT_RUN`.
+- Exact next slice: another non-conflicting W02-17 proof unit with capability-specific execution or exact pinned-source evidence paired to an exact completed-task PASS receipt.

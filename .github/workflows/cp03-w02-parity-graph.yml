@@ -1,8 +1,8 @@
-name: CP03 W02 G6 CLI chat exact-head wave
+name: CP03 W02 G6 learned router exact-head wave
 
 on:
   push:
-    branches: [wave/cp03/w02-parity-cli-chat-command-20260924]
+    branches: [wave/cp03/w02-parity-learned-router-20260924]
     paths:
       - '.github/workflows/cp03-w02-parity-graph.yml'
 
@@ -10,17 +10,17 @@ permissions:
   contents: write
 
 concurrency:
-  group: cp03-w02-parity-cli-chat-command
+  group: cp03-w02-parity-learned-router
   cancel-in-progress: false
 
 env:
-  EXPECTED_MAIN: 07d26a0dcff9e3892ea51989f6dee8a002eeff0f
+  EXPECTED_MAIN: c5dfe79caa1788271fa57b1437ff9668dbae7ecf
   UPSTREAM_COMMIT: 72033b8ec288aa067ce4530ff9d96bf231e9c4e5
-  CAPABILITY_ID: cap_fc0aa6591af55f5edc7f3a40
-  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_cli_chat_command_binding_is_capability_specific_and_source_backed
+  CAPABILITY_ID: cap_cc6d3df603b0ebde91766a13
+  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_learned_router_binding_is_capability_specific_and_source_backed
 
 jobs:
-  advance-cli-chat-command:
+  advance-learned-router:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -61,11 +61,11 @@ jobs:
           git -C /tmp/openjarvis checkout -q --detach FETCH_HEAD
           test "$(git -C /tmp/openjarvis rev-parse HEAD)" = "$UPSTREAM_COMMIT"
 
-      - name: RED to GREEN CLI chat slice and full G6 gauntlet
+      - name: RED to GREEN learned router slice and full G6 gauntlet
         shell: bash
         run: |
           set -euo pipefail
-          python sessions/20260922-w02-parity-graph/run_cli_chat_command_wave.py
+          python sessions/20260922-w02-parity-graph/run_learned_router_wave.py
           git diff --check
 
       - name: CAS persist only validated state
@@ -83,5 +83,5 @@ jobs:
           git config user.name 'clever-agent-wave'
           git config user.email 'actions@users.noreply.github.com'
           git add -A
-          git commit -m 'CP03 W02-17: bind CLI chat source proof'
+          git commit -m 'CP03 W02-17: bind learned router source proof'
           git push origin "HEAD:${GITHUB_REF_NAME}"
