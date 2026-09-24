@@ -372,3 +372,13 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - G6 is now 35 `EVIDENCE_BACKED_CANDIDATE` / 12 `UNBOUND`; VERIFIED 0; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. W02-17 remains `IN_PROGRESS`; W02-18/W02-19 remain `BLOCKED`.
 - Existing AFM/Apple-FM/cloud-reload/InferenceStartEvent/server-delete-model scopes were not mutated; AFM and real fallback model execution remain `NOT_RUN`.
 - Exact next slice: another non-conflicting W02-17 proof unit with capability-specific execution or exact pinned-source evidence paired to an exact completed-task PASS receipt.
+
+## W02-17 server chat-completions binding — source-backed partial verified
+
+- `EVID-W02-PARITY-BINDING-SERVER-CHAT-COMPLETIONS-20260924`: `cap_56358709cbc328e25ed1afff` (`POST /v1/chat/completions`, SHARED core server route at `src/openjarvis/server/routes.py:159`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.
+- Exact pinned OpenJarvis `72033b8ec288aa067ce4530ff9d96bf231e9c4e5` proves the route declaration plus engine/agent/model resolution and distinct stream-tools, stream-agent, stream-direct, nonstream-agent and nonstream-direct dispatch branches. Route, stream, agent, model, provider and tool execution remain `NOT_RUN`/0.
+- Historical RED run `36023395569` failed closed because the initial probe treated source line 159 as the decorator; the frozen row actually anchors the async function declaration at line 159 and the decorator at line 158. The corrected invariant is retained and retested.
+- Binding is anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4`. SHARED ownership is terminal-ineligible in W02, so no terminal attribution or parity promotion is made.
+- G6 is now 36 `EVIDENCE_BACKED_CANDIDATE` / 11 `UNBOUND`; VERIFIED 0; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. W02-17 remains `IN_PROGRESS`; W02-18/W02-19 remain `BLOCKED`.
+- Existing AFM/Apple-FM/cloud-reload/InferenceStartEvent/server-delete-model scopes were not mutated; AFM and real fallback model execution remain `NOT_RUN`.
+- Exact next slice: another non-conflicting W02-17 proof unit with capability-specific execution or exact pinned-source evidence paired to an exact completed-task PASS receipt.
