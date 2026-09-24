@@ -1,4 +1,5 @@
 name: CP03 W02 G6 server chat completions exact-head wave
+# Recovery: run 36023395569 failed closed because source_line 159 is the function declaration; corrected runner asserts decorator at 158 and function at 159.
 
 on:
   push:
