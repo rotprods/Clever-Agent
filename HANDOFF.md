@@ -276,3 +276,12 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - Collision avoidance: the extant cloud-reload and InferenceStartEvent branches were not touched; both capabilities remain `UNBOUND`. AFM and real fallback remain `NOT_RUN`.
 - G6 is now 24 `EVIDENCE_BACKED_CANDIDATE` / 23 `UNBOUND`; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. W02-17 remains `IN_PROGRESS`; W02-18/W02-19 remain `BLOCKED`.
 - Exact next slice: another branch-free W02-17 proof unit with capability-specific executed or exact pinned-source evidence paired to an exact completed-task PASS receipt.
+
+## W02-17 Nexa GET /v1/models binding — source-backed partial verified
+
+- `EVID-W02-PARITY-BINDING-NEXA-MODELS-20260924`: `cap_8dbeb91d13034dded222493b` (`GET /v1/models`, OWNED route at `src/openjarvis/engine/nexa_shim.py:83`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.
+- Exact pinned source `72033b8ec288aa067ce4530ff9d96bf231e9c4e5` proves the FastAPI GET route and static model-list schema (`object=list`, model id `nexa`, object `model`, owner `nexa`). Nexa SDK initialization, HTTP listener and route runtime remain `NOT_RUN`.
+- Formal G6 binding is anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4`; that receipt records the `nexa` native engine as `REGISTERED`, with zero model/provider execution. Candidate evidence only: VERIFIED parity remains 0.
+- Collision avoidance: extant cloud-reload and InferenceStartEvent branches were not touched; both capabilities remain `UNBOUND`. AFM and real fallback remain `NOT_RUN`.
+- G6 is now 25 `EVIDENCE_BACKED_CANDIDATE` / 22 `UNBOUND`; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. W02-17 remains `IN_PROGRESS`; W02-18/W02-19 remain `BLOCKED`.
+- Exact next slice: another branch-free W02-17 proof unit with capability-specific executed or exact pinned-source evidence paired to an exact completed-task PASS receipt.
