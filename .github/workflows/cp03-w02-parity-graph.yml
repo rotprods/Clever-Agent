@@ -1,8 +1,8 @@
-name: CP03 W02 G6 vllm-pearl-mining exact-head wave
+name: CP03 W02 G6 CLI chat exact-head wave
 
 on:
   push:
-    branches: [wave/cp03/w02-parity-vllm-pearl-mining-20260924]
+    branches: [wave/cp03/w02-parity-cli-chat-command-20260924]
     paths:
       - '.github/workflows/cp03-w02-parity-graph.yml'
 
@@ -10,17 +10,17 @@ permissions:
   contents: write
 
 concurrency:
-  group: cp03-w02-parity-vllm-pearl-mining
+  group: cp03-w02-parity-cli-chat-command
   cancel-in-progress: false
 
 env:
-  EXPECTED_MAIN: 5ff6d3223e2d2f2c7377b446878f4355dd4f9cd3
+  EXPECTED_MAIN: 07d26a0dcff9e3892ea51989f6dee8a002eeff0f
   UPSTREAM_COMMIT: 72033b8ec288aa067ce4530ff9d96bf231e9c4e5
-  CAPABILITY_ID: cap_1ec0c952d6796991c21dc790
-  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_vllm_pearl_mining_binding_is_capability_specific_and_source_backed
+  CAPABILITY_ID: cap_fc0aa6591af55f5edc7f3a40
+  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_cli_chat_command_binding_is_capability_specific_and_source_backed
 
 jobs:
-  advance-vllm-pearl-mining:
+  advance-cli-chat-command:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -61,11 +61,11 @@ jobs:
           git -C /tmp/openjarvis checkout -q --detach FETCH_HEAD
           test "$(git -C /tmp/openjarvis rev-parse HEAD)" = "$UPSTREAM_COMMIT"
 
-      - name: RED to GREEN vllm-pearl-mining slice and full G6 gauntlet
+      - name: RED to GREEN CLI chat slice and full G6 gauntlet
         shell: bash
         run: |
           set -euo pipefail
-          python sessions/20260922-w02-parity-graph/run_vllm_pearl_mining_wave.py
+          python sessions/20260922-w02-parity-graph/run_cli_chat_command_wave.py
           git diff --check
 
       - name: CAS persist only validated state
@@ -83,5 +83,5 @@ jobs:
           git config user.name 'clever-agent-wave'
           git config user.email 'actions@users.noreply.github.com'
           git add -A
-          git commit -m 'CP03 W02-17: bind vllm-pearl-mining source proof'
+          git commit -m 'CP03 W02-17: bind CLI chat source proof'
           git push origin "HEAD:${GITHUB_REF_NAME}"
