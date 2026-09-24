@@ -294,3 +294,12 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - Collision avoidance: cloud-reload, InferenceStartEvent and Apple FM parallel branches were not touched. AFM compatible-host proof and real fallback model execution remain `NOT_RUN`.
 - G6 is now 26 `EVIDENCE_BACKED_CANDIDATE` / 21 `UNBOUND`; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. W02-17 remains `IN_PROGRESS`; W02-18/W02-19 remain `BLOCKED`.
 - Exact next slice: another branch-free W02-17 proof unit with capability-specific executed or exact pinned-source evidence paired to an exact completed-task PASS receipt.
+
+## W02-17 core server GET /v1/models binding — source-backed partial verified
+
+- `EVID-W02-PARITY-BINDING-SERVER-MODELS-20260924`: `cap_e54461a19afaa2112911c49b` (`GET /v1/models`, OWNED route at `src/openjarvis/server/routes.py:1107`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.
+- Exact pinned source `72033b8ec288aa067ce4530ff9d96bf231e9c4e5` proves route declaration, `engine.list_models()` delegation, direct-cloud filtering, local fallback and embed-only filtering. HTTP listener, route runtime and engine/model-list execution remain `NOT_RUN`.
+- Formal G6 binding is anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4`; candidate evidence only: VERIFIED parity remains 0.
+- Collision avoidance: cloud-reload, InferenceStartEvent and Apple FM parallel branches were not touched. AFM compatible-host proof and real fallback model execution remain `NOT_RUN`.
+- G6 is now 27 `EVIDENCE_BACKED_CANDIDATE` / 20 `UNBOUND`; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. W02-17 remains `IN_PROGRESS`; W02-18/W02-19 remain `BLOCKED`.
+- Exact next slice: another branch-free W02-17 proof unit with capability-specific executed or exact pinned-source evidence paired to an exact completed-task PASS receipt.
