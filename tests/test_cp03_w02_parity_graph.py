@@ -42,6 +42,7 @@ CLI_SERVE_COMMAND_CAPABILITY_ID = "cap_039e17d615ba665937992b25"
 CLI_ASK_COMMAND_CAPABILITY_ID = "cap_ce98b24c0ed43607f27027a3"
 HEURISTIC_ROUTER_CAPABILITY_ID = "cap_1defee98e7075463dcf65434"
 VLLM_PEARL_MINING_CAPABILITY_ID = "cap_1ec0c952d6796991c21dc790"
+CLI_CHAT_COMMAND_CAPABILITY_ID = "cap_fc0aa6591af55f5edc7f3a40"
 OLLAMA_TEST_ID = (
     "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
     "test_ollama_registry_binding_is_capability_specific_and_evidence_backed"
@@ -170,6 +171,10 @@ VLLM_PEARL_MINING_TEST_ID = (
     "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
     "test_vllm_pearl_mining_binding_is_capability_specific_and_source_backed"
 )
+CLI_CHAT_COMMAND_TEST_ID = (
+    "tests.test_cp03_w02_parity_graph.W02ParityGraphTests."
+    "test_cli_chat_command_binding_is_capability_specific_and_source_backed"
+)
 
 
 class W02ParityGraphTests(unittest.TestCase):
@@ -195,13 +200,13 @@ class W02ParityGraphTests(unittest.TestCase):
         self.assertEqual(summary["verified_capabilities"], 0)
         self.assertEqual(len(self.result["rows"]), 47)
 
-    def test_current_matrix_has_thirty_three_candidates_and_no_parity_promotion(self) -> None:
+    def test_current_matrix_has_thirty_four_candidates_and_no_parity_promotion(self) -> None:
         rows = self.result["rows"]
         self.assertTrue(all(row["canonical_parity_status"] == "UNVERIFIED" for row in rows))
         self.assertTrue(all(row["verified"] is False for row in rows))
         self.assertTrue(all(row["parity_promotion"] is False for row in rows))
-        self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 33)
-        self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 14)
+        self.assertEqual(sum(row["w02_evidence_state"] == "EVIDENCE_BACKED_CANDIDATE" for row in rows), 34)
+        self.assertEqual(sum(row["w02_evidence_state"] == "UNBOUND" for row in rows), 13)
         self.assertEqual(sum(row["ownership"] == "OWNED" for row in rows), 37)
         self.assertEqual(sum(row["ownership"] == "SHARED" for row in rows), 10)
         candidates = {
@@ -211,7 +216,7 @@ class W02ParityGraphTests(unittest.TestCase):
         }
         self.assertEqual(
             set(candidates),
-            {SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID, LITELLM_CAPABILITY_ID, CLOUD_CAPABILITY_ID, NIM_CAPABILITY_ID, GEMMA_CPP_CAPABILITY_ID, OPENAI_COMPAT_REGISTER_CAPABILITY_ID, MODEL_REGISTER_VALUE_CAPABILITY_ID, MODEL_REGISTER_VALUE_1088_CAPABILITY_ID, CLI_MODEL_LIST_REGISTER_BUILTIN_CAPABILITY_ID, CLI_MODEL_INFO_REGISTER_BUILTIN_CAPABILITY_ID, CLI_CHAT_REGISTER_BUILTIN_CAPABILITY_ID, CLI_ASK_REGISTER_BUILTIN_CAPABILITY_ID, CLI_SERVE_REGISTER_BUILTIN_CAPABILITY_ID, CLI_MODEL_INFO_COMMAND_CAPABILITY_ID, MODEL_INFO_PROTOCOL_CAPABILITY_ID, CLI_MODEL_LIST_COMMAND_CAPABILITY_ID, CLI_MODEL_GROUP_COMMAND_CAPABILITY_ID, CLI_MODEL_PULL_COMMAND_CAPABILITY_ID, CLI_MODEL_CONVERT_COMMAND_CAPABILITY_ID, CLI_SERVE_COMMAND_CAPABILITY_ID, CLI_ASK_COMMAND_CAPABILITY_ID, PROVIDER_SAVINGS_PROTOCOL_CAPABILITY_ID, INFERENCE_END_EVENT_PROTOCOL_CAPABILITY_ID, NEXA_HEALTH_CAPABILITY_ID, NEXA_MODELS_CAPABILITY_ID, NEXA_CHAT_COMPLETIONS_CAPABILITY_ID, SERVER_HEALTH_CAPABILITY_ID, SERVER_MODELS_CAPABILITY_ID, SERVER_MODEL_PULL_CAPABILITY_ID, SERVER_INFO_CAPABILITY_ID, HEURISTIC_ROUTER_CAPABILITY_ID, VLLM_PEARL_MINING_CAPABILITY_ID},
+            {SEED_CAPABILITY_ID, OLLAMA_CAPABILITY_ID, LITELLM_CAPABILITY_ID, CLOUD_CAPABILITY_ID, NIM_CAPABILITY_ID, GEMMA_CPP_CAPABILITY_ID, OPENAI_COMPAT_REGISTER_CAPABILITY_ID, MODEL_REGISTER_VALUE_CAPABILITY_ID, MODEL_REGISTER_VALUE_1088_CAPABILITY_ID, CLI_MODEL_LIST_REGISTER_BUILTIN_CAPABILITY_ID, CLI_MODEL_INFO_REGISTER_BUILTIN_CAPABILITY_ID, CLI_CHAT_REGISTER_BUILTIN_CAPABILITY_ID, CLI_ASK_REGISTER_BUILTIN_CAPABILITY_ID, CLI_SERVE_REGISTER_BUILTIN_CAPABILITY_ID, CLI_MODEL_INFO_COMMAND_CAPABILITY_ID, MODEL_INFO_PROTOCOL_CAPABILITY_ID, CLI_MODEL_LIST_COMMAND_CAPABILITY_ID, CLI_MODEL_GROUP_COMMAND_CAPABILITY_ID, CLI_MODEL_PULL_COMMAND_CAPABILITY_ID, CLI_MODEL_CONVERT_COMMAND_CAPABILITY_ID, CLI_SERVE_COMMAND_CAPABILITY_ID, CLI_ASK_COMMAND_CAPABILITY_ID, PROVIDER_SAVINGS_PROTOCOL_CAPABILITY_ID, INFERENCE_END_EVENT_PROTOCOL_CAPABILITY_ID, NEXA_HEALTH_CAPABILITY_ID, NEXA_MODELS_CAPABILITY_ID, NEXA_CHAT_COMPLETIONS_CAPABILITY_ID, SERVER_HEALTH_CAPABILITY_ID, SERVER_MODELS_CAPABILITY_ID, SERVER_MODEL_PULL_CAPABILITY_ID, SERVER_INFO_CAPABILITY_ID, HEURISTIC_ROUTER_CAPABILITY_ID, VLLM_PEARL_MINING_CAPABILITY_ID, CLI_CHAT_COMMAND_CAPABILITY_ID},
         )
         seed = candidates[SEED_CAPABILITY_ID]
         self.assertEqual(seed["binding"]["evidence_id"], "EVID-W02-UNARY-INFERENCE-20260921")
@@ -326,6 +331,46 @@ class W02ParityGraphTests(unittest.TestCase):
         self.assertFalse(probe["source_execution"])
         self.assertEqual(probe["cli_command_execution"], "NOT_RUN")
         self.assertEqual(probe["direct_inference_execution"], "NOT_RUN")
+        self.assertEqual(probe["facets"], ["W02", "W03", "W04", "W05"])
+        self.assertEqual(probe["model_executions"], 0)
+        self.assertEqual(probe["provider_egress_executions"], 0)
+        self.assertEqual(probe["tool_executions"], 0)
+        self.assertEqual(probe["parity_promotions"], 0)
+
+    def test_cli_chat_command_binding_is_capability_specific_and_source_backed(self) -> None:
+        row = next(row for row in self.result["rows"] if row["capability_id"] == CLI_CHAT_COMMAND_CAPABILITY_ID)
+        self.assertEqual(row["ownership"], "SHARED")
+        self.assertEqual(row["surface_kind"], "cli_command")
+        self.assertEqual(row["source_path"], "src/openjarvis/cli/chat_cmd.py")
+        self.assertEqual(row["source_line"], 82)
+        self.assertEqual(row["name"], "chat")
+        self.assertFalse(row["terminal_eligible_in_w02"])
+        self.assertEqual(row["source_commit"], "72033b8ec288aa067ce4530ff9d96bf231e9c4e5")
+        self.assertEqual(row["w02_evidence_state"], "EVIDENCE_BACKED_CANDIDATE")
+        self.assertEqual(row["canonical_parity_status"], "UNVERIFIED")
+        self.assertFalse(row["verified"])
+        self.assertFalse(row["parity_promotion"])
+        binding = row["binding"]
+        self.assertEqual(binding["evidence_id"], "EVID-W02-MODEL-BRIDGE-20260921")
+        self.assertEqual(binding["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")
+        self.assertEqual(binding["test_id"], CLI_CHAT_COMMAND_TEST_ID)
+        self.assertFalse(binding["terminal"])
+        receipt = graph.latest_by(graph.read_jsonl(ROOT / graph.EVIDENCE_LEDGER_PATH), "evidence_id")["EVID-W02-MODEL-BRIDGE-20260921"]
+        self.assertEqual(receipt["status"], "VERIFIED")
+        self.assertEqual(receipt["validated_head"], "a866c335a0f9cad75122c8eb7c5310d358f6aad4")
+        self.assertEqual(receipt["native_engine_count"], 15)
+        self.assertEqual(receipt["native_import_failure_count"], 0)
+        self.assertEqual(receipt["native_model_count"], 69)
+        self.assertEqual(receipt["model_executions"], 0)
+        self.assertEqual(receipt["provider_egress_executions"], 0)
+        self.assertEqual(receipt["parity_promotions"], 0)
+        probe = json.loads((ROOT / "evidence/cp03/cp03-w02/W02-17/binding_cli_chat_command_source_probe.json").read_text(encoding="utf-8"))
+        self.assertEqual(probe["capability_id"], CLI_CHAT_COMMAND_CAPABILITY_ID)
+        self.assertEqual(probe["source_line"], 82)
+        self.assertEqual(probe["source_probe"], "PASS")
+        self.assertFalse(probe["source_execution"])
+        self.assertEqual(probe["cli_command_execution"], "NOT_RUN")
+        self.assertEqual(probe["interactive_chat_execution"], "NOT_RUN")
         self.assertEqual(probe["facets"], ["W02", "W03", "W04", "W05"])
         self.assertEqual(probe["model_executions"], 0)
         self.assertEqual(probe["provider_egress_executions"], 0)
