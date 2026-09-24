@@ -1,0 +1,87 @@
+name: CP03 W02 G6 Nexa chat completions exact-head wave
+
+on:
+  push:
+    branches: [wave/cp03/w02-parity-nexa-chat-completions-20260924]
+    paths:
+      - '.github/workflows/cp03-w02-parity-nexa-chat-completions.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cp03-w02-parity-nexa-chat-completions
+  cancel-in-progress: false
+
+env:
+  EXPECTED_MAIN: baee58d3fa6f98cccfe147fe579ef2b79558e727
+  UPSTREAM_COMMIT: 72033b8ec288aa067ce4530ff9d96bf231e9c4e5
+  CAPABILITY_ID: cap_b3ec181ff1adb5d3ea8163a0
+  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_nexa_chat_completions_binding_is_capability_specific_and_source_backed
+
+jobs:
+  advance-nexa-chat-completions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Exact-head durable preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$GITHUB_SHA"
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git merge-base origin/main HEAD)" = "$EXPECTED_MAIN"
+          python scripts/validate_agentic_state.py
+          python scripts/context/validate_context_pack.py
+          python scripts/context/build_context_pack.py --check
+          python scripts/context/validate_next_actions.py
+          python scripts/cp03/validate_w02_plan.py
+          python -m scripts.parity.ledger --check --source-repo openjarvis
+          python scripts/cp03/w02_parity_graph.py --check
+          git diff --check
+
+      - name: Fetch exact pinned OpenJarvis source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/openjarvis
+          git init -q /tmp/openjarvis
+          git -C /tmp/openjarvis remote add origin https://github.com/open-jarvis/OpenJarvis.git
+          git -C /tmp/openjarvis fetch -q --depth=1 origin "$UPSTREAM_COMMIT"
+          git -C /tmp/openjarvis checkout -q --detach FETCH_HEAD
+          test "$(git -C /tmp/openjarvis rev-parse HEAD)" = "$UPSTREAM_COMMIT"
+
+      - name: RED to GREEN Nexa route slice and full G6 gauntlet
+        shell: bash
+        run: |
+          set -euo pipefail
+          python sessions/20260922-w02-parity-graph/run_nexa_chat_completions_wave.py
+          git diff --check
+
+      - name: CAS persist only validated state
+        shell: bash
+        run: |
+          set -euo pipefail
+          if test -z "$(git status --porcelain)"; then
+            echo "No durable mutation required; exact branch head already validates."
+            exit 0
+          fi
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git merge-base origin/main HEAD)" = "$EXPECTED_MAIN"
+          test "$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'clever-agent-wave'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git commit -m 'CP03 W02-17: bind Nexa chat-completions source proof'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
