@@ -1,24 +1,24 @@
-name: CP03 W02 G6 core server models exact-head wave
+name: CP03 W02 G6 core server model pull exact-head wave
 
 on:
   push:
-    branches: [wave/cp03/w02-parity-server-models-20260924]
+    branches: [wave/cp03/w02-parity-server-model-pull-20260924]
 
 permissions:
   contents: write
 
 concurrency:
-  group: cp03-w02-parity-server-models
+  group: cp03-w02-parity-server-model-pull
   cancel-in-progress: false
 
 env:
-  EXPECTED_MAIN: 3e237c46577c9c3284e22403d71caa7a1362b20f
+  EXPECTED_MAIN: 2e6aaeebab85293c5458faa9e0216f0a1c98b8ec
   UPSTREAM_COMMIT: 72033b8ec288aa067ce4530ff9d96bf231e9c4e5
-  CAPABILITY_ID: cap_e54461a19afaa2112911c49b
-  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_server_models_binding_is_capability_specific_and_source_backed
+  CAPABILITY_ID: cap_abafd7c735464aaecfe109d7
+  TEST_ID: tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_server_model_pull_binding_is_capability_specific_and_source_backed
 
 jobs:
-  advance-server-models:
+  advance-server-model-pull:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -63,7 +63,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python sessions/20260922-w02-parity-graph/run_server_models_wave.py
+          python sessions/20260922-w02-parity-graph/run_server_model_pull_wave.py
           git diff --check
 
       - name: CAS persist only validated state
@@ -81,5 +81,5 @@ jobs:
           git config user.name 'clever-agent-wave'
           git config user.email 'actions@users.noreply.github.com'
           git add -A
-          git commit -m 'CP03 W02-17: bind core server models source proof'
+          git commit -m 'CP03 W02-17: bind core server model-pull source proof'
           git push origin "HEAD:${GITHUB_REF_NAME}"
