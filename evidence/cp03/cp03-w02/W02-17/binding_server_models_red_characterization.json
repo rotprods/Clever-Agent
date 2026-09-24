@@ -1,0 +1,10 @@
+{
+  "canonical_parity_status": "UNVERIFIED",
+  "capability_id": "cap_e54461a19afaa2112911c49b",
+  "date": "2026-09-24",
+  "expected_pre_binding_state": "UNBOUND",
+  "observed_pre_binding_state": "UNBOUND",
+  "result": "RED_CHARACTERIZATION_CONFIRMED",
+  "schema_version": 1,
+  "task": "W02-17"
+}
