@@ -259,3 +259,11 @@ W02-16 is evidence-backed COMPLETE: prior P02 recovery/flakiness remains PASS an
 - Formal G6 binding is anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4` plus `tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_provider_savings_protocol_binding_is_capability_specific_and_source_backed`. Candidate evidence only: no terminal attribution, VERIFIED parity or promotion.
 - G6 is now 22 `EVIDENCE_BACKED_CANDIDATE` / 25 `UNBOUND`; VERIFIED 0; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. AFM/fallback remain `NOT_RUN`; W02-18/W02-19 stay `BLOCKED`; InferenceStartEvent remains untouched.
 - Exact next slice: another W02-17 proof unit with capability-specific executed or exact pinned-source evidence plus a completed-task receipt; do not infer runtime savings/accounting behavior from this source contract.
+
+## W02-17 InferenceEndEvent protocol binding — source-backed partial verified
+
+- `EVID-W02-PARITY-BINDING-INFERENCE-END-EVENT-PROTOCOL-20260924`: `cap_a2a75f0ee048f59cf65c028b` (`InferenceEndEvent`, OWNED protocol contract at `frontend/src/types/index.ts:19`) is now a non-terminal `EVIDENCE_BACKED_CANDIDATE`.
+- Exact pinned source `72033b8ec288aa067ce4530ff9d96bf231e9c4e5` proves only the three-field TypeScript contract (`model:string`, `engine:string`, `turn:number`). Source execution and runtime event emission/consumption remain `NOT_RUN`.
+- Formal G6 binding remains anchored to completed W02-08 `EVID-W02-MODEL-BRIDGE-20260921` at exact SHA `a866c335a0f9cad75122c8eb7c5310d358f6aad4` plus `tests.test_cp03_w02_parity_graph.W02ParityGraphTests.test_inference_end_event_protocol_binding_is_capability_specific_and_source_backed`. Candidate evidence only: no terminal attribution, VERIFIED parity or promotion.
+- G6 is now 23 `EVIDENCE_BACKED_CANDIDATE` / 24 `UNBOUND`; VERIFIED 0; parity promotions 0; denominator 7565 and OpenJarvis obligations 646 unchanged. AFM/fallback remain `NOT_RUN`; InferenceStartEvent remains untouched; W02-18/W02-19 stay `BLOCKED`.
+- Exact next slice: another W02-17 proof unit with capability-specific executed or exact pinned-source evidence plus a completed-task receipt; do not infer runtime event semantics from this source contract.
